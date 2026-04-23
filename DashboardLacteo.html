@@ -20,29 +20,22 @@ tailwind.config = {
         "primary-container": "#c026d3",
         "primary-fixed": "#f5d0fe",
         "primary-fixed-dim": "#e879f9",
-
         secondary: "#db2777",
         "secondary-container": "#fbcfe8",
         "secondary-fixed": "#fbcfe8",
         "secondary-fixed-dim": "#f472b6",
-
         tertiary: "#7e22ce",
         "tertiary-container": "#c4b5fd",
-
         background: "#faf5ff",
         surface: "#ffffff",
-
         "on-primary": "#ffffff",
         "on-secondary": "#ffffff",
         "on-surface": "#1f012a",
         "on-surface-variant": "#6b21a8",
-
         error: "#dc2626",
         "error-container": "#fee2e2",
-
         outline: "#e9d5ff",
         "outline-variant": "#f3e8ff",
-
         "surface-container-low": "#fdf4ff",
         "surface-container": "#fae8ff",
         "surface-container-high": "#f5d0fe",
@@ -65,7 +58,6 @@ body {
 
 <body class="bg-background text-on-surface font-body-md antialiased">
 
-<!-- HEADER -->
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm shadow-purple-500/10">
   <div class="flex items-center gap-3">
     <div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center">
@@ -79,18 +71,15 @@ body {
   </button>
 </header>
 
-<main class="pt-20 pb-24 px-4 max-w-7xl mx-auto">
+<main class="pt-20 pb-32 px-4 max-w-7xl mx-auto">
 
-<!-- BIENVENIDA -->
 <section class="mb-6">
   <h2 class="text-3xl font-bold text-primary">Bienvenido</h2>
   <p class="text-on-surface-variant">Sistema de ventas activo</p>
 </section>
 
-<!-- DASHBOARD -->
 <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
 
-<!-- VENTAS -->
 <div class="md:col-span-8 bg-white p-4 rounded-xl border border-outline shadow-sm">
   <span class="text-secondary text-xs uppercase">Ventas Hoy</span>
   <div class="flex items-center gap-2 mt-2">
@@ -99,50 +88,50 @@ body {
   </div>
 </div>
 
-<!-- BOTONES -->
 <div class="md:col-span-4 grid grid-cols-2 gap-2">
 
-<button class="bg-primary text-white p-4 rounded-xl flex flex-col items-center gap-2">
+<button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary hover:bg-primary-container text-white p-4 rounded-xl flex flex-col items-center gap-2 transition-colors">
   <span class="material-symbols-outlined text-3xl">add_shopping_cart</span>
-  Nueva Venta
+  <span class="text-sm font-semibold">Nueva Venta</span>
 </button>
 
-<button class="bg-secondary text-white p-4 rounded-xl flex flex-col items-center gap-2">
+<button onclick="window.location.href='ControldeInventario.html'" class="bg-secondary hover:bg-secondary-container text-white p-4 rounded-xl flex flex-col items-center gap-2 transition-colors">
   <span class="material-symbols-outlined text-3xl">inventory</span>
-  Stock
+  <span class="text-sm font-semibold">Stock</span>
 </button>
 
-<button class="bg-surface-container p-4 rounded-xl flex flex-col items-center gap-2 border border-outline">
+<button onclick="window.location.href='GestióndeClientes.html'" class="bg-surface-container hover:bg-surface-container-high p-4 rounded-xl flex flex-col items-center gap-2 border border-outline transition-colors">
   <span class="material-symbols-outlined text-3xl">group</span>
-  Clientes
+  <span class="text-sm font-semibold">Clientes</span>
 </button>
 
-<button class="bg-surface-container p-4 rounded-xl flex flex-col items-center gap-2 border border-outline">
+<button onclick="window.location.href='GestióndeDespachos.html'" class="bg-surface-container hover:bg-surface-container-high p-4 rounded-xl flex flex-col items-center gap-2 border border-outline transition-colors">
   <span class="material-symbols-outlined text-3xl">local_shipping</span>
-  Entregas
+  <span class="text-sm font-semibold">Entregas</span>
 </button>
 
 </div>
 
-<!-- ALERTA STOCK -->
 <div class="md:col-span-6 bg-white p-4 rounded-xl border border-outline shadow-sm">
-  <h3 class="text-lg font-bold text-error mb-2">Stock Bajo</h3>
+  <h3 class="text-lg font-bold text-error mb-2 flex items-center gap-2">
+      <span class="material-symbols-outlined">warning</span> Stock Bajo
+  </h3>
   <p class="text-sm">Leche: 10 unidades</p>
 </div>
 
-<!-- PEDIDOS -->
 <div class="md:col-span-6 bg-white p-4 rounded-xl border border-outline shadow-sm">
-  <h3 class="text-lg font-bold text-primary mb-2">Pedidos Activos</h3>
-  <p class="text-sm">Supermercado Central</p>
+  <h3 class="text-lg font-bold text-primary mb-2 flex items-center gap-2">
+      <span class="material-symbols-outlined">pending_actions</span> Pedidos Activos
+  </h3>
+  <p class="text-sm">Supermercado Central - <span class="text-secondary">En espera</span></p>
 </div>
 
 </div>
 
-<!-- TABLA -->
 <section class="mt-8">
-  <h3 class="text-2xl font-bold mb-4">Inventario</h3>
+  <h3 class="text-2xl font-bold mb-4">Estado de Inventario</h3>
 
-  <div class="overflow-x-auto border border-outline rounded-xl">
+  <div class="overflow-x-auto border border-outline rounded-xl bg-white">
     <table class="w-full text-left">
       <thead class="bg-surface-container">
         <tr>
@@ -151,18 +140,16 @@ body {
           <th class="p-3">Estado</th>
         </tr>
       </thead>
-
       <tbody>
         <tr class="border-t">
-          <td class="p-3">Leche</td>
+          <td class="p-3 font-medium">Leche Entera</td>
           <td class="p-3">50</td>
-          <td class="p-3 text-green-600">OK</td>
+          <td class="p-3"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs">OK</span></td>
         </tr>
-
         <tr class="border-t">
-          <td class="p-3">Queso</td>
+          <td class="p-3 font-medium">Queso Fresco</td>
           <td class="p-3">10</td>
-          <td class="p-3 text-red-500">Bajo</td>
+          <td class="p-3"><span class="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">Crítico</span></td>
         </tr>
       </tbody>
     </table>
@@ -171,22 +158,26 @@ body {
 
 </main>
 
-<!-- NAV -->
-<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-2 shadow">
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
   
-  <button class="text-primary flex flex-col items-center">
+  <button onclick="window.location.href='DashboardLácteo.html'" class="text-primary flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">home</span>
-    <span class="text-xs">Inicio</span>
+    <span class="text-[10px] font-bold">Inicio</span>
   </button>
 
-  <button class="flex flex-col items-center text-on-surface-variant">
+  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">receipt</span>
-    <span class="text-xs">Ventas</span>
+    <span class="text-[10px]">Ventas</span>
   </button>
 
-  <button class="flex flex-col items-center text-on-surface-variant">
+  <button onclick="window.location.href='ControldeInventario.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">inventory</span>
-    <span class="text-xs">Stock</span>
+    <span class="text-[10px]">Stock</span>
+  </button>
+
+  <button onclick="window.location.href='GestióndeDespachos.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1">
+    <span class="material-symbols-outlined">local_shipping</span>
+    <span class="text-[10px]">Entregas</span>
   </button>
 
 </nav>

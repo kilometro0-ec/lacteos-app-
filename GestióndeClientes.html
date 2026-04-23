@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dairy Logic - Customer Management</title>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#a21caf",
+        "primary-container": "#c026d3",
+        secondary: "#db2777",
+        "secondary-container": "#fbcfe8",
+
+        background: "#faf5ff",
+        surface: "#ffffff",
+
+        "on-primary": "#ffffff",
+        "on-surface": "#1f012a",
+        "on-surface-variant": "#6b21a8",
+
+        outline: "#e9d5ff",
+        "outline-variant": "#f3e8ff",
+
+        error: "#dc2626",
+      }
+    }
+  }
+}
+</script>
+
+<style>
+body { font-family: 'Work Sans', sans-serif; }
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+}
+</style>
+
+</head>
+
+<body class="bg-background text-on-surface">
+
+<!-- HEADER -->
+<header class="fixed top-0 left-0 w-full flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm shadow-purple-500/10">
+  <div class="flex items-center gap-3">
+    <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary">person</span>
+    </div>
+    <h1 class="text-xl font-bold text-primary">Dairy Logic</h1>
+  </div>
+
+  <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</header>
+
+<main class="pt-20 pb-24 px-4 max-w-7xl mx-auto">
+
+<!-- HEADER ACCIONES -->
+<div class="flex justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-primary">Clientes</h2>
+    <p class="text-on-surface-variant">Gestiona tus clientes</p>
+  </div>
+
+  <button class="bg-primary text-white px-4 py-2 rounded-xl flex items-center gap-2 shadow-lg shadow-purple-500/30">
+    <span class="material-symbols-outlined">person_add</span>
+    Nuevo Cliente
+  </button>
+</div>
+
+<!-- BUSQUEDA -->
+<div class="grid md:grid-cols-4 gap-3 mb-6">
+
+  <input class="md:col-span-2 px-4 py-3 border border-outline rounded-xl bg-purple-50 focus:ring-2 focus:ring-primary outline-none"
+    placeholder="Buscar cliente..." />
+
+  <select class="px-4 py-3 border border-outline rounded-xl">
+    <option>Tipo</option>
+    <option>Retail</option>
+    <option>Mayorista</option>
+  </select>
+
+  <select class="px-4 py-3 border border-outline rounded-xl">
+    <option>Orden</option>
+    <option>A-Z</option>
+  </select>
+
+</div>
+
+<!-- TARJETAS -->
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+<!-- CLIENTE -->
+<div class="bg-white border border-outline rounded-xl p-4 shadow-sm">
+
+  <div class="flex justify-between mb-3">
+    <span class="bg-purple-100 text-primary px-2 py-1 rounded-full text-xs">Mayorista</span>
+    <span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+  </div>
+
+  <h3 class="font-bold text-lg">Cliente Ejemplo</h3>
+  <p class="text-sm text-on-surface-variant">cliente@email.com</p>
+  <p class="text-sm text-on-surface-variant">099999999</p>
+
+  <div class="mt-4 p-3 bg-green-100 rounded-xl text-green-700 text-sm">
+    Entregado
+  </div>
+
+</div>
+
+<!-- CLIENTE -->
+<div class="bg-white border border-outline rounded-xl p-4 shadow-sm">
+
+  <div class="flex justify-between mb-3">
+    <span class="bg-pink-100 text-secondary px-2 py-1 rounded-full text-xs">Retail</span>
+    <span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+  </div>
+
+  <h3 class="font-bold text-lg">Tienda Central</h3>
+  <p class="text-sm text-on-surface-variant">tienda@mail.com</p>
+  <p class="text-sm text-on-surface-variant">098888888</p>
+
+  <div class="mt-4 p-3 bg-yellow-100 rounded-xl text-yellow-700 text-sm">
+    En ruta
+  </div>
+
+</div>
+
+</div>
+
+</main>
+
+<!-- NAV -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around bg-white border-t border-outline py-2">
+
+  <button class="text-on-surface-variant">
+    <span class="material-symbols-outlined">home</span>
+  </button>
+
+  <button class="text-on-surface-variant">
+    <span class="material-symbols-outlined">receipt</span>
+  </button>
+
+  <button class="text-on-surface-variant">
+    <span class="material-symbols-outlined">inventory</span>
+  </button>
+
+  <button class="text-primary">
+    <span class="material-symbols-outlined">group</span>
+  </button>
+
+</nav>
+
+</body>
+</html>

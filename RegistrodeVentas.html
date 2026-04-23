@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dairy Logic - Sales Entry</title>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        primary: "#a21caf",
+        "primary-container": "#c026d3",
+        secondary: "#db2777",
+        "secondary-container": "#fbcfe8",
+
+        background: "#faf5ff",
+        surface: "#ffffff",
+
+        "on-primary": "#ffffff",
+        "on-surface": "#1f012a",
+        "on-surface-variant": "#6b21a8",
+
+        outline: "#e9d5ff",
+        "outline-variant": "#f3e8ff",
+
+        error: "#dc2626",
+      }
+    }
+  }
+}
+</script>
+
+<style>
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+}
+.zebra-table tr:nth-child(even) {
+  background-color: #faf5ff;
+}
+</style>
+
+</head>
+
+<body class="bg-background text-on-surface font-[Work_Sans]">
+
+<!-- HEADER -->
+<header class="fixed top-0 left-0 w-full flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm shadow-purple-500/10">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary">person</span>
+    </div>
+    <h1 class="text-xl font-bold text-primary">Dairy Logic</h1>
+  </div>
+
+  <span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</header>
+
+<main class="pt-20 pb-32 px-4 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
+
+<!-- IZQUIERDA -->
+<div class="md:col-span-8 space-y-4">
+
+<!-- CLIENTE -->
+<section class="bg-white p-4 rounded-xl border border-outline shadow-sm">
+  <h2 class="text-lg font-bold text-primary mb-2">Seleccionar Cliente</h2>
+
+  <input class="w-full h-12 px-4 bg-purple-50 border border-outline rounded-xl focus:ring-2 focus:ring-primary outline-none"
+    placeholder="Buscar cliente..." />
+</section>
+
+<!-- PRODUCTOS -->
+<section>
+  <h2 class="text-lg font-bold mb-3 text-primary">Productos</h2>
+
+  <div class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+
+    <!-- PRODUCTO -->
+    <div class="bg-white p-3 rounded-xl border border-outline shadow-sm">
+      <h4 class="font-bold">Leche 1L</h4>
+      <p class="text-sm text-on-surface-variant">$2.45</p>
+
+      <div class="flex justify-between mt-2">
+        <button class="text-primary">-</button>
+        <span>0</span>
+        <button class="text-primary">+</button>
+      </div>
+    </div>
+
+    <div class="bg-white p-3 rounded-xl border border-outline shadow-sm">
+      <h4 class="font-bold">Queso</h4>
+      <p class="text-sm text-on-surface-variant">$4.80</p>
+
+      <div class="flex justify-between mt-2">
+        <button class="text-primary">-</button>
+        <span>0</span>
+        <button class="text-primary">+</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div>
+
+<!-- DERECHA -->
+<div class="md:col-span-4">
+
+<section class="bg-white rounded-xl border border-outline shadow-md overflow-hidden">
+
+  <div class="bg-primary text-white p-4">
+    <h3 class="text-lg font-bold">Resumen</h3>
+  </div>
+
+  <div class="p-4">
+
+    <table class="w-full zebra-table">
+      <tr>
+        <td>Leche</td>
+        <td>2</td>
+        <td class="text-right">$5</td>
+      </tr>
+    </table>
+
+    <div class="mt-4">
+      <div class="flex justify-between">
+        <span>Total</span>
+        <span class="font-bold">$5</span>
+      </div>
+    </div>
+
+    <button class="w-full mt-4 bg-primary text-white py-3 rounded-xl font-bold shadow-lg shadow-purple-500/30">
+      Completar Venta
+    </button>
+
+  </div>
+
+</section>
+
+</div>
+
+</main>
+
+<!-- NAV -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around bg-white border-t border-outline py-2">
+
+  <button class="text-primary">
+    <span class="material-symbols-outlined">home</span>
+  </button>
+
+  <button class="text-primary">
+    <span class="material-symbols-outlined">receipt</span>
+  </button>
+
+  <button class="text-primary">
+    <span class="material-symbols-outlined">inventory</span>
+  </button>
+
+</nav>
+
+</body>
+</html>

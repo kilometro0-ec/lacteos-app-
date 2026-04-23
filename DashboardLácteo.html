@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dairy Logic - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "inverse-on-surface": "#f0f0f3",
+            "on-secondary-fixed": "#001e30",
+            "surface": "#f9f9fc",
+            "primary-container": "#0052cc",
+            "surface-tint": "#0c56d0",
+            "on-secondary-fixed-variant": "#004b70",
+            "secondary-fixed-dim": "#90cdfd",
+            "surface-variant": "#e2e2e5",
+            "surface-container-highest": "#e2e2e5",
+            "on-primary": "#ffffff",
+            "surface-container": "#eeeef0",
+            "tertiary-fixed-dim": "#c9c6bf",
+            "on-tertiary-fixed": "#1c1c17",
+            "secondary-fixed": "#cae6ff",
+            "on-tertiary-container": "#d5d3cb",
+            "surface-dim": "#dadadc",
+            "on-error-container": "#93000a",
+            "on-surface": "#1a1c1e",
+            "on-tertiary": "#ffffff",
+            "on-surface-variant": "#434654",
+            "tertiary-fixed": "#e5e2db",
+            "tertiary": "#44443e",
+            "outline-variant": "#c3c6d6",
+            "secondary": "#1c648e",
+            "tertiary-container": "#5c5b55",
+            "inverse-primary": "#b2c5ff",
+            "on-secondary-container": "#025881",
+            "error-container": "#ffdad6",
+            "surface-container-low": "#f3f3f6",
+            "on-primary-fixed": "#001848",
+            "on-background": "#1a1c1e",
+            "inverse-surface": "#2f3133",
+            "secondary-container": "#90cdfd",
+            "surface-bright": "#f9f9fc",
+            "primary": "#003d9b",
+            "on-primary-fixed-variant": "#0040a2",
+            "on-secondary": "#ffffff",
+            "surface-container-high": "#e8e8ea",
+            "primary-fixed": "#dae2ff",
+            "error": "#ba1a1a",
+            "primary-fixed-dim": "#b2c5ff",
+            "outline": "#737685",
+            "on-error": "#ffffff",
+            "on-primary-container": "#c4d2ff",
+            "surface-container-lowest": "#ffffff",
+            "background": "#f9f9fc",
+            "on-tertiary-fixed-variant": "#474741"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "16px",
+            "margin": "24px",
+            "lg": "40px",
+            "base": "8px",
+            "xl": "64px",
+            "xs": "4px",
+            "md": "24px",
+            "sm": "12px"
+          },
+          "fontFamily": {
+            "body-lg": ["Work Sans"],
+            "body-md": ["Work Sans"],
+            "label-md": ["Work Sans"],
+            "h2": ["Work Sans"],
+            "label-sm": ["Work Sans"],
+            "h1": ["Work Sans"],
+            "h3": ["Work Sans"]
+          },
+          "fontSize": {
+            "body-lg": ["18px", {"lineHeight": "1.5", "fontWeight": "400"}],
+            "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+            "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "500"}],
+            "h2": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+            "label-sm": ["12px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}],
+            "h1": ["40px", {"lineHeight": "1.2", "fontWeight": "700"}],
+            "h3": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased">
+<!-- TopAppBar Component -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm shadow-blue-500/5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border border-primary/10">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Professional headshot of a warehouse manager in a clean white environment with natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAD5b4vAeg6_XmvxInMSktCnRynhhxwiNMnQl8nprzg90azKS6mnw7-eTr3nhuRd1rXksJ1zXGmII6oDqDoZOymDRCQhDLmOnx_JpC18bWs8ka4GqDN58Qr3NUvMbQiCwHRujPJsv3Dls29HBkJIA1k6sA7Jz5RDQ2q6aeuyzI3knZ-FaCamyijJXsGdBcgZC70Nvd3RhuDnIDFnrjNYA58mcMCGIlk1vqHi5HhLrmooQSxoqiyQ8GPybqAj0wGtNEYgerWiJDdCGg"/>
+</div>
+<h1 class="font-['Work_Sans'] font-semibold tracking-tight text-xl font-bold text-blue-700 dark:text-blue-400">Dairy Logic</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 rounded-lg">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</header>
+<main class="pt-20 pb-24 px-gutter max-w-7xl mx-auto">
+<!-- Welcome Section -->
+<section class="mb-md">
+<h2 class="font-h2 text-h2 text-primary mb-xs">Welcome back, Carlos</h2>
+<p class="font-body-md text-on-surface-variant">Cold chain integrity: 100%. All systems nominal.</p>
+</section>
+<!-- Bento Grid Dashboard -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-md">
+<!-- Sales Metric Card -->
+<div class="md:col-span-8 bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-between overflow-hidden relative group">
+<div class="absolute top-0 right-0 p-lg opacity-10">
+<span class="material-symbols-outlined text-[120px]" data-icon="trending_up">trending_up</span>
+</div>
+<div>
+<span class="font-label-sm text-secondary uppercase tracking-widest">Today's Sales</span>
+<div class="flex items-baseline gap-2 mt-xs">
+<span class="font-h1 text-h1 text-on-surface">$12,480.00</span>
+<span class="font-label-md text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+12.5%</span>
+</div>
+</div>
+<div class="mt-lg flex gap-4">
+<div class="flex-1 h-32 rounded-lg bg-surface-container-low flex items-end p-2 gap-1">
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 40%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 60%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 45%"></div>
+<div class="w-full bg-primary-container rounded-t-sm" style="height: 85%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 55%"></div>
+<div class="w-full bg-secondary-container rounded-t-sm" style="height: 70%"></div>
+</div>
+</div>
+</div>
+<!-- Quick Actions -->
+<div class="md:col-span-4 grid grid-cols-2 gap-sm">
+<button class="flex flex-col items-center justify-center gap-2 bg-primary text-on-primary p-md rounded-xl shadow-md active:scale-95 transition-all">
+<span class="material-symbols-outlined text-3xl" data-icon="add_shopping_cart">add_shopping_cart</span>
+<span class="font-label-sm">New Sale</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 bg-secondary text-on-secondary p-md rounded-xl shadow-md active:scale-95 transition-all">
+<span class="material-symbols-outlined text-3xl" data-icon="inventory">inventory</span>
+<span class="font-label-sm">Scan SKU</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 bg-surface-container-high text-on-surface p-md rounded-xl active:scale-95 transition-all border border-outline-variant">
+<span class="material-symbols-outlined text-3xl" data-icon="local_shipping">local_shipping</span>
+<span class="font-label-sm">Log Delivery</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 bg-surface-container-high text-on-surface p-md rounded-xl active:scale-95 transition-all border border-outline-variant">
+<span class="material-symbols-outlined text-3xl" data-icon="print">print</span>
+<span class="font-label-sm">Invoices</span>
+</button>
+</div>
+<!-- Active Orders -->
+<div class="md:col-span-6 bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-h3 text-h3 text-on-surface">Active Orders</h3>
+<span class="font-label-md text-primary">View All</span>
+</div>
+<div class="space-y-sm">
+<div class="flex items-center justify-between p-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">Supermercado Central</p>
+<p class="font-label-sm text-on-surface-variant">ORD-2940 • 12 Items</p>
+</div>
+</div>
+<span class="px-3 py-1 rounded-full bg-blue-100 text-primary font-label-sm">In Transit</span>
+</div>
+<div class="flex items-center justify-between p-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+<span class="material-symbols-outlined" data-icon="store">store</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">Bodega San Jose</p>
+<p class="font-label-sm text-on-surface-variant">ORD-2941 • 5 Items</p>
+</div>
+</div>
+<span class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 font-label-sm">Packing</span>
+</div>
+</div>
+</div>
+<!-- Low Stock Alerts -->
+<div class="md:col-span-6 bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm">
+<div class="flex justify-between items-center mb-md">
+<h3 class="font-h3 text-h3 text-error">Low Stock Alerts</h3>
+<span class="material-symbols-outlined text-error" data-icon="warning">warning</span>
+</div>
+<div class="grid grid-cols-2 gap-sm">
+<div class="bg-error-container/30 p-sm rounded-xl border border-error/10 relative overflow-hidden">
+<img alt="Leche" class="w-full h-24 object-cover rounded-lg mb-xs opacity-90" data-alt="A clean glass bottle of fresh milk on a marble surface with soft blue daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfmU-jD-ZkPqxV5NL7dtUwAallE6HA41IwIBZtFB20P9LgcQleqbjIlSkTsFOdgnkwev4w_uH9_0HTqQK0LVU6_QHA5Z-7lkjG9h8F_lRL4M0nZBg9phn6z3Qzw14vMugHhmC3o2qV5fqvJLpz6K-Gdx3OYgJy-INZZiIJJyOGETyii8DpQwH4S69YqpMQOwwjOmZgA_K_JFvMmTUDyy82-cDGCr5zKa7eriX75aSmFeYSJBP_NGAS55qnIThJxVpipESTBik4VJc"/>
+<p class="font-label-md text-on-surface">Leche Entera</p>
+<p class="font-h3 text-h3 text-error">12 <span class="text-body-md font-normal">units</span></p>
+<div class="absolute top-2 right-2 bg-error text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">CRITICAL</div>
+</div>
+<div class="bg-tertiary-fixed p-sm rounded-xl border border-outline-variant relative">
+<img alt="Queso Fresco" class="w-full h-24 object-cover rounded-lg mb-xs opacity-90" data-alt="A wedge of fresh white artisanal cheese on a wooden board with clean minimal styling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZyRe4-tQTigsAII46YCvCSi-yFhH5_2KzFIS5VrjgJVdPEZqBfOoOX0M5DvyQ_aXQG1jC_FYgiZhUEbEJGeaajOCE7m3xDbcuQvEuBarvogdMKaoJJ-agYNzlef5gso8-bdQPOSdphIThSnN-TKcEnuDHkbdHfas_ZJVdHSYRXkTp2P30cCaJ0v-yRPbDLntxwXHKfy1syvI-CJQazxmpazocDtrj8t__HeRvxULP6NQJDPFjUY6U-SPVtOBmJ01zCJrOZqrBNyY"/>
+<p class="font-label-md text-on-surface">Queso Fresco</p>
+<p class="font-h3 text-h3 text-on-tertiary-fixed-variant">45 <span class="text-body-md font-normal">units</span></p>
+<div class="absolute top-2 right-2 bg-tertiary-container text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">LOW</div>
+</div>
+</div>
+<button class="w-full mt-md py-sm bg-surface-container text-primary font-label-md rounded-lg border border-primary/20">
+          Generate Restock Order
+        </button>
+</div>
+</div>
+<!-- Inventory Overview Table -->
+<section class="mt-xl">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-h2 text-h2 text-on-surface">Inventory Insights</h3>
+<div class="flex gap-2">
+<button class="px-sm py-xs bg-white border border-outline-variant rounded-lg font-label-md flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span> Filter
+          </button>
+<button class="px-sm py-xs bg-white border border-outline-variant rounded-lg font-label-md flex items-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span> Export
+          </button>
+</div>
+</div>
+<div class="overflow-x-auto rounded-xl border border-outline-variant bg-white">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="p-md font-label-sm text-secondary">PRODUCT</th>
+<th class="p-md font-label-sm text-secondary">SKU ID</th>
+<th class="p-md font-label-sm text-secondary">STOCK LEVEL</th>
+<th class="p-md font-label-sm text-secondary">TEMP. LOG</th>
+<th class="p-md font-label-sm text-secondary">STATUS</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+<td class="p-md font-body-md text-on-surface">Yogurt Natural 1L</td>
+<td class="p-md font-label-md text-on-surface-variant">DY-YOG-01</td>
+<td class="p-md">
+<div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-3/4"></div>
+</div>
+</td>
+<td class="p-md font-label-md text-primary">3.8°C</td>
+<td class="p-md"><span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-label-sm">Optimal</span></td>
+</tr>
+<tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors bg-surface-container-low/30">
+<td class="p-md font-body-md text-on-surface">Mantequilla Salada 250g</td>
+<td class="p-md font-label-md text-on-surface-variant">DY-BUT-04</td>
+<td class="p-md">
+<div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-primary w-1/2"></div>
+</div>
+</td>
+<td class="p-md font-label-md text-primary">4.1°C</td>
+<td class="p-md"><span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full font-label-sm">Optimal</span></td>
+</tr>
+<tr class="hover:bg-slate-50 transition-colors">
+<td class="p-md font-body-md text-on-surface">Crema para Batir</td>
+<td class="p-md font-label-md text-on-surface-variant">DY-CRM-09</td>
+<td class="p-md">
+<div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-amber-500 w-1/5"></div>
+</div>
+</td>
+<td class="p-md font-label-md text-primary">3.9°C</td>
+<td class="p-md"><span class="px-3 py-1 bg-amber-100 text-amber-700 rounded-full font-label-sm">Alert</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Component -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 pb-safe bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_12px_rgba(0,82,204,0.04)]">
+<a class="flex flex-col items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-xl px-3 py-1 transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="home" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-['Work_Sans'] text-[10px] font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 hover:text-blue-600 dark:hover:text-blue-300 transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Work_Sans'] text-[10px] font-medium">Sales</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 hover:text-blue-600 dark:hover:text-blue-300 transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-['Work_Sans'] text-[10px] font-medium">Stock</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 hover:text-blue-600 dark:hover:text-blue-300 transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Work_Sans'] text-[10px] font-medium">Customers</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 px-3 py-1 hover:text-blue-600 dark:hover:text-blue-300 transition-all duration-200 active:scale-95" href="#">
+<span class="material-symbols-outlined" data-icon="local_shipping">local_shipping</span>
+<span class="font-['Work_Sans'] text-[10px] font-medium">Delivery</span>
+</a>
+</nav>
+</body></html>

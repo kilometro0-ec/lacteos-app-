@@ -77,7 +77,7 @@
                     <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input type="text" id="reg-ci" placeholder="CI / RUC" class="input-sutil">
-                        <input type="tel" id="reg-tel" placeholder="Teléfono (ej: 0984...)" class="input-sutil">
+                        <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
                     </div>
                     <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
                 </div>
@@ -258,21 +258,23 @@ async function finalizarVenta() {
             });
         }
         
-        // RECUPERAR TELÉFONO DEL CLIENTE DESDE LA LISTA CARGADA
         const cliEncontrado = clientesData.find(c => c.Nombre === cliNombre);
         let rawTel = cliEncontrado?.Teléfono?.toString() || "";
         
-        // LIMPIAR Y FORMATEAR EL NÚMERO (Si no tiene 593, agregarlo)
-        let limpio = rawTel.replace(/\D/g, ''); // Solo números
-        if (limpio.startsWith('0')) limpio = limpio.substring(1); // Quitar el 0 inicial si existe
-        if (!limpio.startsWith('593')) limpio = '593' + limpio; // Asegurar código de país
+        // LIMPIAR Y FORMATEAR EL NÚMERO
+        let limpio = rawTel.replace(/\D/g, ''); 
+        if (limpio.startsWith('0')) limpio = limpio.substring(1); 
+        if (!limpio.startsWith('593')) limpio = '593' + limpio; 
         
         let mensajeFull = `*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cliNombre}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
         
+        // CAMBIO CRÍTICO: Usar wa.me directo en lugar de api.whatsapp.com/send
         const urlwa = `https://wa.me/${limpio}?text=${encodeURIComponent(mensajeFull)}`;
+        
+        // Abrir en una pestaña nueva
         window.open(urlwa, '_blank');
         
-        setTimeout(() => location.reload(), 1500);
+        setTimeout(() => location.reload(), 2000);
 
     } catch(e) { 
         console.error(e);

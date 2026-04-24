@@ -4,188 +4,134 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Lógica Láctea | Inventario Pro</title>
-
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
-
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;700;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-
-    <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" }
-        }
-      }
-    }
-    </script>
-
     <style>
       body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-      
-      /* Animación de carga */
       .rotate-animation { animation: spin 1s linear infinite; }
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-      /* Tarjeta Crítica (Poco Stock) */
-      .card-critica { border: 2px solid #dc2626 !important; background-color: #fef2f2; }
-
-      /* ANIMACIÓN DE BORRADO */
-      .fade-out-delete {
-        animation: fadeScale 0.5s forwards;
-        pointer-events: none;
-      }
-
-      @keyframes fadeScale {
-        0% { opacity: 1; transform: scale(1); }
-        100% { opacity: 0; transform: scale(0.7); filter: blur(4px); }
-      }
-
-      /* Barra de borrar flotante */
-      #delete-bar {
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      }
+      .fade-out-delete { animation: fadeScale 0.5s forwards; pointer-events: none; }
+      @keyframes fadeScale { 100% { opacity: 0; transform: scale(0.7); filter: blur(4px); } }
+      #delete-bar { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
 
-<body class="bg-background text-gray-900 pb-44">
+<body class="bg-[#faf5ff] text-gray-900 pb-44">
 
-<header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
+<header class="fixed top-0 w-full h-16 bg-white border-b border-[#e9d5ff] flex justify-between items-center px-4 shadow-sm z-50">
   <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
-    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-black">LL</div>
-    <h1 class="text-xl font-extrabold text-primary tracking-tight">Inventario</h1>
+    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#a21caf] font-black">LL</div>
+    <h1 class="text-xl font-extrabold text-[#a21caf]">Inventario</h1>
   </div>
-  <button onclick="cargarInventario()" class="p-2 text-primary hover:bg-purple-50 rounded-full">
+  <button onclick="cargarInventario()" class="p-2 text-[#a21caf] hover:bg-purple-50 rounded-full">
       <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
   </button>
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
-  
   <section class="grid grid-cols-3 gap-3">
-    <div class="bg-white p-4 rounded-[1.5rem] border border-outline text-center shadow-sm">
+    <div class="bg-white p-4 rounded-3xl border border-[#e9d5ff] text-center shadow-sm">
       <p class="text-[9px] text-gray-400 uppercase font-black mb-1">Valor Neto</p>
-      <h2 id="valor-bodega" class="text-sm font-black text-primary">$0.00</h2>
+      <h2 id="valor-bodega" class="text-sm font-black text-[#a21caf]">$0.00</h2>
     </div>
-    <div class="bg-red-50 p-4 rounded-[1.5rem] border border-red-100 text-center">
+    <div class="bg-red-50 p-4 rounded-3xl border border-red-100 text-center">
       <p class="text-[9px] text-red-600 uppercase font-black mb-1">Críticos</p>
       <h2 id="count-critico" class="text-sm font-black text-red-600">0</h2>
     </div>
-    <div class="bg-white p-4 rounded-[1.5rem] border border-outline text-center shadow-sm">
+    <div class="bg-white p-4 rounded-3xl border border-[#e9d5ff] text-center shadow-sm">
       <p class="text-[9px] text-green-600 uppercase font-black mb-1">SKU</p>
       <h2 id="total-sku" class="text-sm font-black text-green-600">0</h2>
     </div>
   </section>
 
-  <div class="px-1">
-    <input type="text" id="filtroProd" oninput="filtrarPantalla()" placeholder="🔍 Buscar por nombre o ID..." class="w-full bg-white border-outline rounded-2xl p-4 font-bold text-sm shadow-sm focus:ring-primary focus:border-primary">
-  </div>
+  <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar..." class="w-full bg-white border-[#e9d5ff] rounded-2xl p-4 font-bold text-sm shadow-sm focus:ring-[#a21caf]">
 
   <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="col-span-full text-center py-20 text-gray-400 italic font-bold">Sincronizando...</div>
+      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando...</div>
   </div>
 
   <div class="fixed bottom-24 left-0 w-full px-4 z-40">
-    <button onclick="abrirModalNuevo()" class="w-full bg-primary text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase active:scale-95 transition-transform">
+    <button onclick="abrirModalNuevo()" class="w-full bg-[#a21caf] text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase active:scale-95 transition-transform">
         <span class="material-symbols-outlined">add_circle</span> Nuevo Producto
     </button>
   </div>
 
   <div id="delete-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-gray-900 text-white p-4 rounded-3xl shadow-2xl z-[60] flex justify-between items-center transform translate-y-32 opacity-0 pointer-events-none transition-all">
       <div class="flex items-center gap-3">
-          <span id="selected-count" class="bg-primary text-white w-7 h-7 flex items-center justify-center rounded-full text-xs font-black">0</span>
+          <span id="selected-count" class="bg-[#a21caf] text-white w-7 h-7 flex items-center justify-center rounded-full text-xs font-black">0</span>
           <p class="font-bold text-sm">Seleccionados</p>
       </div>
       <button onclick="confirmarBorrado()" class="bg-red-500 hover:bg-red-600 px-5 py-2 rounded-2xl font-black text-xs uppercase flex items-center gap-2">
           <span class="material-symbols-outlined text-sm">delete</span> Borrar
       </button>
   </div>
-
 </main>
 
 <div id="modalNuevo" class="fixed inset-0 bg-black/70 z-[70] hidden flex items-center justify-center p-4 backdrop-blur-md">
-  <div class="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border border-outline">
-    <h3 id="modal-titulo" class="text-2xl font-black text-primary mb-6 uppercase tracking-tight">Entrada de Stock</h3>
+  <div class="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border border-[#e9d5ff]">
+    <h3 id="modal-titulo" class="text-2xl font-black text-[#a21caf] mb-6 uppercase tracking-tight">Stock</h3>
     <form id="formProducto" class="space-y-4">
-      <input type="text" id="nombreP" required placeholder="Nombre del Producto" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
+      <input type="text" id="nombreP" required placeholder="Nombre" class="w-full bg-gray-50 border-[#e9d5ff] rounded-2xl p-4 font-bold focus:bg-white">
       <div class="grid grid-cols-2 gap-4">
-        <input type="number" id="stockP" required placeholder="Cantidad" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
-        <input type="number" step="0.01" id="costoP" required placeholder="Costo Dist." class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
+        <input type="number" id="stockP" required placeholder="Cantidad" class="w-full bg-gray-50 border-[#e9d5ff] rounded-2xl p-4 font-bold focus:bg-white">
+        <input type="number" step="0.01" id="costoP" required placeholder="Costo" class="w-full bg-gray-50 border-[#e9d5ff] rounded-2xl p-4 font-bold focus:bg-white">
       </div>
-      <input type="number" step="0.01" id="ventaP" required placeholder="Precio Venta (PVP)" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
+      <input type="number" step="0.01" id="ventaP" required placeholder="Precio Venta" class="w-full bg-gray-50 border-[#e9d5ff] rounded-2xl p-4 font-bold focus:bg-white">
       <div class="flex flex-col gap-2 pt-4">
-        <button type="submit" id="btnGuardar" class="w-full py-5 bg-primary text-white rounded-2xl font-black shadow-lg uppercase">Procesar</button>
+        <button type="submit" id="btnGuardar" class="w-full py-5 bg-[#a21caf] text-white rounded-2xl font-black shadow-lg uppercase">Procesar</button>
         <button type="button" onclick="cerrarModal()" class="w-full py-2 text-gray-400 font-bold uppercase text-[10px]">Cerrar</button>
       </div>
     </form>
   </div>
 </div>
 
-<div id="menu-container"></div>
-
 <script>
 let inventarioLocal = [];
 let seleccionados = new Set();
 
-async function iniciarApp() {
-    try {
-        const resp = await fetch('menu.html');
-        if (resp.ok) document.getElementById('menu-container').innerHTML = await resp.text();
-    } catch (e) { console.error("Error menú:", e); }
-    cargarInventario();
-}
+// Función vital: Convierte lo que viene de Excel (coma) a número JS (punto)
+const aNum = (v) => v ? parseFloat(v.toString().replace(',', '.')) : 0;
 
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
   icon?.classList.add('rotate-animation');
   try {
     inventarioLocal = await DairyAPI.obtenerDatos("Inventario");
-    renderizarGrid(inventarioLocal);
+    renderizar(inventarioLocal);
     seleccionados.clear();
-    actualizarBarraBorrado();
-  } catch (e) { console.error("Error:", e); }
+    actualizarBarra();
+  } catch (e) { console.error(e); }
   icon?.classList.remove('rotate-animation');
 }
 
-function renderizarGrid(lista) {
+function renderizar(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
     let totalCosto = 0, criticos = 0;
 
     lista.forEach((prod, index) => {
-        const stock = parseInt(prod.Stock) || 0;
-        const pvp = parseFloat(prod.Precio_Venta) || 0;
-        const costo = parseFloat(prod.Precio_Distribuidor) || 0;
-        const esCritico = stock <= 5;
-        if(esCritico) criticos++;
+        const stock = aNum(prod.Stock);
+        const pvp = aNum(prod.Precio_Venta);
+        const costo = aNum(prod.Precio_Distribuidor);
+        if(stock <= 5) criticos++;
         totalCosto += (costo * stock);
 
         const cardId = `card-${index}`;
-
         container.innerHTML += `
-        <div id="${cardId}" class="relative bg-white p-4 rounded-[2.5rem] border ${esCritico ? 'card-critica' : 'border-outline'} shadow-sm active:scale-95 transition-all flex flex-col justify-between h-44 overflow-hidden">
-          
+        <div id="${cardId}" class="relative bg-white p-4 rounded-[2.5rem] border ${stock <= 5 ? 'border-red-500 bg-red-50' : 'border-[#e9d5ff]'} shadow-sm flex flex-col justify-between h-44 overflow-hidden active:scale-95 transition-all">
           <div class="absolute top-4 right-4 z-10">
-            <input type="checkbox" onchange="toggleSeleccion('${cardId}', '${prod.Producto}', this)" class="w-6 h-6 rounded-full border-2 border-outline text-primary focus:ring-primary checked:bg-primary">
+            <input type="checkbox" onchange="toggleSel('${cardId}', '${prod.Producto}', this)" class="w-6 h-6 rounded-full border-2 border-[#e9d5ff] text-[#a21caf] focus:ring-[#a21caf] checked:bg-[#a21caf]">
           </div>
-
           <div onclick="abrirModalSumar('${prod.Producto}')" class="h-full flex flex-col justify-between pt-2">
             <div>
-              <p class="text-[15px] font-black text-primary mb-0.5 leading-none">${prod.ID || 'S/N'}</p> 
+              <p class="text-[14px] font-black text-[#a21caf] mb-0.5">${prod.ID || 'S/N'}</p> 
               <h3 class="font-bold text-[11px] leading-tight uppercase text-gray-700 line-clamp-2">${prod.Producto}</h3>
             </div>
             <div class="flex justify-between items-end">
-                <div>
-                  <p class="text-[8px] text-gray-400 font-black uppercase">PVP</p>
-                  <p class="text-primary font-black text-lg">$${pvp.toFixed(2)}</p>
-                </div>
-                <div class="text-right">
-                  <p class="text-[8px] text-gray-400 font-black uppercase">Stock</p>
-                  <span class="text-xs px-3 py-1 rounded-xl ${esCritico ? 'bg-red-600 text-white' : 'bg-purple-100 text-primary'} font-black italic">
-                    ${stock}
-                  </span>
-                </div>
+                <div><p class="text-[8px] text-gray-400 font-black uppercase">PVP</p><p class="text-[#a21caf] font-black text-lg">$${pvp.toFixed(2)}</p></div>
+                <div class="text-right"><p class="text-[8px] text-gray-400 font-black uppercase">Stock</p><span class="text-xs px-3 py-1 rounded-xl ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black">${stock}</span></div>
             </div>
           </div>
         </div>`;
@@ -196,55 +142,39 @@ function renderizarGrid(lista) {
     document.getElementById('total-sku').innerText = lista.length;
 }
 
-function toggleSeleccion(cardId, nombreProd, el) {
-    const card = document.getElementById(cardId);
+function toggleSel(id, nombre, el) {
     if (el.checked) {
-        seleccionados.add({ cardId, nombreProd });
-        card.classList.add('ring-2', 'ring-primary', 'bg-purple-50');
+        seleccionados.add({ cardId: id, nombreProd: nombre });
+        document.getElementById(id).classList.add('ring-2', 'ring-[#a21caf]');
     } else {
-        seleccionados.forEach(item => { if(item.cardId === cardId) seleccionados.delete(item); });
-        card.classList.remove('ring-2', 'ring-primary', 'bg-purple-50');
+        seleccionados.forEach(it => { if(it.cardId === id) seleccionados.delete(it); });
+        document.getElementById(id).classList.remove('ring-2', 'ring-[#a21caf]');
     }
-    actualizarBarraBorrado();
+    actualizarBarra();
 }
 
-function actualizarBarraBorrado() {
+function actualizarBarra() {
     const bar = document.getElementById('delete-bar');
-    const label = document.getElementById('selected-count');
-    if (seleccionados.size > 0) {
-        label.innerText = seleccionados.size;
-        bar.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
-    } else {
-        bar.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
-    }
+    document.getElementById('selected-count').innerText = seleccionados.size;
+    if (seleccionados.size > 0) bar.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
+    else bar.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
 }
 
 async function confirmarBorrado() {
-    if (!confirm(`¿Eliminar ${seleccionados.size} productos permanentemente?`)) return;
-
+    if (!confirm(`¿Eliminar ${seleccionados.size} productos?`)) return;
     const items = Array.from(seleccionados);
-    
-    // 1. Animación visual
-    items.forEach(item => {
-        document.getElementById(item.cardId).classList.add('fade-out-delete');
-    });
-
-    // 2. Proceso en DB
+    items.forEach(it => document.getElementById(it.cardId).classList.add('fade-out-delete'));
     try {
-        for (const item of items) {
-            await DairyAPI.enviarDatos("Inventario", {
-                pestaña: "Inventario",
-                accion: "eliminar",
-                Producto: item.nombreProd
-            });
+        for (const it of items) {
+            await DairyAPI.enviarDatos("Inventario", { pestaña: "Inventario", accion: "eliminar", Producto: it.nombreProd });
         }
         setTimeout(cargarInventario, 600);
-    } catch (e) { alert("Error de red"); }
+    } catch (e) { alert("Error de conexión"); }
 }
 
-function filtrarPantalla() {
+function filtrar() {
     const b = document.getElementById('filtroProd').value.toLowerCase();
-    renderizarGrid(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b) || p.ID?.toLowerCase().includes(b)));
+    renderizar(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b)));
 }
 
 function abrirModalSumar(n) {
@@ -253,8 +183,8 @@ function abrirModalSumar(n) {
     document.getElementById('modal-titulo').innerText = "Abastecer";
     document.getElementById('nombreP').value = p.Producto;
     document.getElementById('nombreP').readOnly = true;
-    document.getElementById('costoP').value = p.Precio_Distribuidor;
-    document.getElementById('ventaP').value = p.Precio_Venta;
+    document.getElementById('costoP').value = aNum(p.Precio_Distribuidor);
+    document.getElementById('ventaP').value = aNum(p.Precio_Venta);
     document.getElementById('modalNuevo').classList.remove('hidden');
 }
 
@@ -268,7 +198,7 @@ function abrirModalNuevo() {
 document.getElementById('formProducto').onsubmit = async (e) => {
     e.preventDefault();
     const btn = document.getElementById('btnGuardar');
-    btn.disabled = true; btn.innerText = "Registrando...";
+    btn.disabled = true; btn.innerText = "Procesando...";
     await DairyAPI.enviarDatos("Inventario", {
         pestaña: "Inventario",
         Producto: document.getElementById('nombreP').value,
@@ -282,7 +212,7 @@ document.getElementById('formProducto').onsubmit = async (e) => {
 };
 
 function cerrarModal() { document.getElementById('modalNuevo').classList.add('hidden'); }
-window.onload = iniciarApp;
+window.onload = cargarInventario;
 </script>
 </body>
 </html>

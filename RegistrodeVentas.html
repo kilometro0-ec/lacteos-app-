@@ -15,7 +15,6 @@
                     colors: { 
                         primary: "#a21caf", 
                         secondary: "#db2777", 
-                        error: "#ef4444",
                         background: "#faf5ff", 
                         outline: "#e9d5ff" 
                     }
@@ -27,23 +26,23 @@
         .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
         .active-icon { font-variation-settings: 'FILL' 1; }
         .out-of-stock { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+        body { font-family: 'Work Sans', sans-serif; }
         
         @keyframes pulse-red {
-            0%, 100% { border-color: #e9d5ff; box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
-            50% { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+            0%, 100% { border-color: #e9d5ff; }
+            50% { border-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
         }
         .stock-critico { animation: pulse-red 1.5s infinite; border-width: 2px; }
-        body { font-family: 'Work Sans', sans-serif; }
     </style>
 </head>
-<body class="bg-background text-on-surface pb-40">
+<body class="bg-background text-slate-900 pb-40">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
     <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
         <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
             <span class="material-symbols-outlined text-3xl active-icon">opacity</span>
         </div>
-        <h1 class="text-xl font-extrabold text-primary tracking-tight">Ventas</h1>
+        <h1 class="text-xl font-extrabold text-primary tracking-tight uppercase italic">Ventas</h1>
     </div>
     <button onclick="iniciar()" class="p-2 text-primary active:rotate-180 transition-transform duration-500">
         <span class="material-symbols-outlined">sync</span>
@@ -53,11 +52,11 @@
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
     
     <div class="grid grid-cols-2 gap-4">
-        <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg shadow-purple-100">
+        <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg">
             <span class="text-[10px] uppercase font-black tracking-widest opacity-80">Pedidos Hoy</span>
             <h3 id="card-cant-ventas" class="text-3xl font-black">0</h3>
         </div>
-        <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
+        <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm text-center">
             <span class="text-[10px] text-secondary uppercase font-black tracking-widest">Total</span>
             <h3 id="card-monto-ventas" class="text-3xl font-black text-primary">$0.00</h3>
         </div>
@@ -72,13 +71,13 @@
                         <span class="material-symbols-outlined text-sm">person_add</span> NUEVO
                     </button>
                 </div>
-                <select id="select-cliente" class="w-full h-14 px-4 bg-purple-50 border-none rounded-2xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-primary appearance-none text-lg">
+                <select id="select-cliente" class="w-full h-14 px-4 bg-purple-50 border-none rounded-2xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-primary text-lg">
                     <option value="">-- Seleccionar Cliente --</option>
                 </select>
             </section>
 
             <section>
-                <h2 class="text-xs font-black text-gray-400 uppercase mb-4 ml-2 tracking-widest">Catálogo de Productos</h2>
+                <h2 class="text-xs font-black text-gray-400 uppercase mb-4 ml-2 tracking-widest">Catálogo</h2>
                 <div id="contenedor-productos" class="grid grid-cols-2 gap-4"></div>
             </section>
         </div>
@@ -86,20 +85,27 @@
         <div class="lg:col-span-5">
             <section class="bg-white rounded-[2.5rem] border-2 border-outline shadow-xl sticky top-20 overflow-hidden">
                 <div class="bg-secondary p-5 text-white flex justify-between items-center">
-                    <h3 class="font-black text-xs tracking-widest uppercase">Resumen de Venta</h3>
+                    <h3 class="font-black text-xs tracking-widest uppercase">Carrito de Compra</h3>
                     <span class="material-symbols-outlined active-icon">shopping_cart</span>
                 </div>
                 <div class="p-6">
                     <div id="lista-carrito" class="space-y-3 mb-6 max-h-80 overflow-y-auto">
-                        <p id="carrito-vacio" class="text-center text-gray-400 py-10 italic text-sm font-medium">El carrito está vacío</p>
+                        <p id="carrito-vacio" class="text-center text-gray-400 py-10 italic text-sm">El carrito está vacío</p>
                     </div>
-                    <div class="border-t-2 border-dashed border-outline pt-6">
-                        <div class="flex justify-between text-3xl font-black text-gray-900">
-                            <span class="text-primary text-xl uppercase mt-1">Total</span>
-                            <span id="total-venta">$0.00</span>
+
+                    <div class="mt-4 pb-4 border-t border-dashed border-outline pt-4">
+                        <label class="text-[10px] font-black text-gray-400 uppercase mb-2 block">Fecha Programada de Entrega</label>
+                        <input type="date" id="fecha-entrega" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl font-bold text-primary focus:ring-primary focus:border-primary">
+                    </div>
+
+                    <div class="border-t-2 border-outline pt-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-primary text-xs font-black uppercase">Monto Total</span>
+                            <span id="total-venta" class="text-3xl font-black text-gray-900">$0.00</span>
                         </div>
                     </div>
-                    <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full mt-8 bg-primary text-white py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all uppercase tracking-tight">
+
+                    <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full mt-8 bg-primary text-white py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all uppercase tracking-tight italic">
                         Confirmar Venta
                     </button>
                 </div>
@@ -111,34 +117,15 @@
 <div id="modalCliente" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-black text-primary uppercase tracking-tight">Nuevo Registro</h3>
+            <h3 class="text-xl font-black text-primary uppercase tracking-tight italic">Nuevo Cliente</h3>
             <button onclick="cerrarModalCliente()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="grid grid-cols-1 gap-4">
-            <input type="text" id="nuevo-nombre" placeholder="Nombre completo" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl focus:border-primary outline-none font-bold">
-            
-            <div class="space-y-1">
-                <input type="text" id="nuevo-identificacion" 
-                       placeholder="Cédula o RUC" 
-                       inputmode="numeric"
-                       oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 13)"
-                       class="w-full p-4 bg-gray-50 border border-outline rounded-2xl focus:border-primary outline-none font-bold">
-                <p id="id-error" class="text-[10px] text-red-500 font-black hidden px-1 uppercase">Mínimo 10 números</p>
-            </div>
-
-            <div class="flex gap-2">
-                <div class="w-20 bg-gray-100 flex items-center justify-center rounded-2xl font-black text-gray-400 text-sm border border-outline">+593</div>
-                <input type="tel" id="nuevo-tel" 
-                       placeholder="999888777" 
-                       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-                       class="flex-1 p-4 bg-gray-50 border border-outline rounded-2xl focus:border-primary outline-none font-bold">
-            </div>
-            
-            <input type="text" id="nuevo-dir" placeholder="Dirección de entrega" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl focus:border-primary outline-none font-bold">
-            
-            <button onclick="guardarCliente()" id="btn-save" class="w-full py-4 bg-secondary text-white rounded-2xl font-black shadow-lg mt-4 uppercase tracking-widest text-sm">
-                Guardar Cliente
-            </button>
+            <input type="text" id="nuevo-nombre" placeholder="Nombre completo" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl focus:border-primary font-bold">
+            <input type="text" id="nuevo-identificacion" placeholder="Cédula o RUC" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl focus:border-primary font-bold">
+            <input type="tel" id="nuevo-tel" placeholder="Teléfono" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl focus:border-primary font-bold">
+            <input type="text" id="nuevo-dir" placeholder="Dirección de entrega" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl focus:border-primary font-bold">
+            <button onclick="guardarCliente()" id="btn-save" class="w-full py-4 bg-secondary text-white rounded-2xl font-black shadow-lg mt-4 uppercase">Guardar</button>
         </div>
     </div>
 </div>
@@ -149,12 +136,9 @@
 let carrito = {};
 let productosData = [];
 
-// CARGAR MENU Y DATOS
 async function iniciar() {
-    // Carga el menú externo
     fetch('menu.html').then(r => r.text()).then(data => {
         document.getElementById('menu-container').innerHTML = data;
-        marcarBotonActivo();
     });
 
     try {
@@ -164,36 +148,25 @@ async function iniciar() {
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        // Stats Rápidas
         const hoy = new Date().toLocaleDateString();
         const vHoy = ventas.filter(v => new Date(v.Fecha).toLocaleDateString() === hoy);
         document.getElementById('card-cant-ventas').innerText = vHoy.length;
-        const totalSumado = vHoy.reduce((acc, v) => acc + (parseFloat(v["Precio Total"] || v.total) || 0), 0);
+        
+        const totalSumado = vHoy.reduce((acc, v) => {
+            const val = v["Precio Total"] || v.total || 0;
+            return acc + parseFloat(val.toString().replace(',', '.')) || 0;
+        }, 0);
         document.getElementById('card-monto-ventas').innerText = `$${totalSumado.toFixed(2)}`;
 
-        // Cargar Clientes al Select
         const select = document.getElementById('select-cliente');
         select.innerHTML = '<option value="">-- Seleccionar Cliente --</option>';
         clientes.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.Nombre;
-            opt.textContent = c.Nombre;
-            select.appendChild(opt);
+            select.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
         });
 
         productosData = productos;
         renderizarProductos();
     } catch (e) { console.error(e); }
-}
-
-function marcarBotonActivo() {
-    const botones = document.querySelectorAll('.nav-item');
-    botones.forEach(btn => {
-        if (btn.getAttribute('onclick')?.includes('RegistrodeVentas.html')) {
-            btn.classList.add('text-primary');
-            btn.classList.remove('text-gray-400');
-        }
-    });
 }
 
 function renderizarProductos() {
@@ -203,20 +176,20 @@ function renderizarProductos() {
         const stock = parseInt(p.Stock) || 0;
         const critico = stock > 0 && stock <= 5;
         const idClean = p.Producto.replace(/\s+/g, '');
+        const precio = parseFloat(p.Precio_Venta.toString().replace(',', '.')) || 0;
         
         container.innerHTML += `
-            <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex flex-col justify-between 
-                ${stock <= 0 ? 'out-of-stock' : ''} ${critico ? 'stock-critico' : ''}">
+            <div class="bg-white p-5 rounded-[2rem] border-2 ${stock <= 0 ? 'out-of-stock' : 'border-outline'} ${critico ? 'stock-critico' : ''} shadow-sm flex flex-col justify-between">
                 <div>
-                    <h4 class="font-extrabold text-gray-800 text-sm mb-1 leading-tight h-10 overflow-hidden">${p.Producto}</h4>
-                    <span class="text-[10px] font-black ${stock < 10 ? 'text-secondary' : 'text-primary'} uppercase tracking-tighter">Disponible: ${stock}</span>
+                    <h4 class="font-extrabold text-slate-800 text-sm leading-tight h-10 overflow-hidden uppercase">${p.Producto}</h4>
+                    <span class="text-[10px] font-black ${stock < 10 ? 'text-secondary' : 'text-primary'} uppercase">Stock: ${stock}</span>
                 </div>
                 <div class="mt-4">
-                    <p class="text-2xl font-black text-gray-900 mb-3">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
-                    <div class="flex items-center justify-between bg-purple-50 rounded-2xl p-1 border border-purple-100">
-                        <button onclick="cambiarCant('${p.Producto}', -1)" class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center font-black text-primary active:scale-90">-</button>
+                    <p class="text-2xl font-black text-slate-900 mb-3">$${precio.toFixed(2)}</p>
+                    <div class="flex items-center justify-between bg-purple-50 rounded-2xl p-1">
+                        <button onclick="cambiarCant('${p.Producto}', -1)" class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center font-black text-primary">-</button>
                         <span id="cant-${idClean}" class="text-lg font-black w-8 text-center text-primary">0</span>
-                        <button onclick="cambiarCant('${p.Producto}', 1)" class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center font-black text-primary active:scale-90">+</button>
+                        <button onclick="cambiarCant('${p.Producto}', 1)" class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center font-black text-primary">+</button>
                     </div>
                 </div>
             </div>`;
@@ -237,40 +210,39 @@ function cambiarCant(nombre, delta) {
 function actualizarCarritoUI() {
     const lista = document.getElementById('lista-carrito');
     const totalLabel = document.getElementById('total-venta');
-    const vacio = document.getElementById('carrito-vacio');
     lista.innerHTML = "";
     let total = 0;
-    let items = 0;
+    let tieneItems = false;
+    
     Object.keys(carrito).forEach(n => {
         if (carrito[n] > 0) {
-            items++;
+            tieneItems = true;
             const p = productosData.find(prod => prod.Producto === n);
-            const sub = carrito[n] * p.Precio_Venta;
+            const precio = parseFloat(p.Precio_Venta.toString().replace(',', '.')) || 0;
+            const sub = carrito[n] * precio;
             total += sub;
             lista.innerHTML += `
-                <div class="flex justify-between items-center bg-purple-50/50 p-4 rounded-2xl border border-purple-100 border-dashed">
-                    <div class="flex flex-col">
-                        <span class="text-xs font-extrabold text-gray-800">${n}</span>
-                        <span class="text-[10px] font-black text-primary">CANTIDAD: ${carrito[n]}</span>
-                    </div>
-                    <span class="font-black text-lg text-primary">$${sub.toFixed(2)}</span>
+                <div class="flex justify-between items-center bg-purple-50 p-4 rounded-2xl border border-dashed border-outline">
+                    <div><p class="text-xs font-bold">${n}</p><p class="text-[10px] font-black text-primary">Cant: ${carrito[n]}</p></div>
+                    <span class="font-black text-lg">$${sub.toFixed(2)}</span>
                 </div>`;
         }
     });
     totalLabel.innerText = `$${total.toFixed(2)}`;
-    vacio.style.display = items > 0 ? 'none' : 'block';
+    document.getElementById('carrito-vacio').style.display = tieneItems ? 'none' : 'block';
 }
 
 async function finalizarVenta() {
     const cliente = document.getElementById('select-cliente').value;
-    if (!cliente) return alert("Error: Selecciona un cliente primero");
+    const fEntrega = document.getElementById('fecha-entrega').value;
+    if (!cliente) return alert("Selecciona un cliente");
+    if (!fEntrega) return alert("Selecciona fecha de entrega");
     
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if (items.length === 0) return alert("Error: El carrito está vacío");
+    if (items.length === 0) return alert("Carrito vacío");
     
     const btn = document.getElementById('btn-finalizar');
-    btn.disabled = true; 
-    btn.innerText = "PROCESANDO...";
+    btn.disabled = true; btn.innerText = "PROCESANDO...";
     
     try {
         for (const item of items) {
@@ -281,49 +253,31 @@ async function finalizarVenta() {
                 Producto: item,
                 Cantidad: carrito[item], 
                 Precio_PVP: p.Precio_Venta, 
-                "Precio Total": carrito[item] * p.Precio_Venta,
-                Estado: "PENDIENTE",
-                Fecha: new Date().toISOString()
+                Fecha_Entrega: fEntrega
             });
         }
-        alert("Venta guardada como PENDIENTE para despacho");
+        alert("¡Venta registrada con éxito!");
         location.reload();
     } catch (e) { 
         alert("Error de conexión"); 
-        btn.disabled = false; 
-        btn.innerText = "CONFIRMAR VENTA"; 
+        btn.disabled = false; btn.innerText = "Confirmar Venta"; 
     }
 }
 
-// FUNCIONES DEL MODAL CLIENTE
 function abrirModalCliente() { document.getElementById('modalCliente').classList.remove('hidden'); }
-function cerrarModalCliente() { 
-    document.getElementById('modalCliente').classList.add('hidden'); 
-    document.getElementById('id-error').classList.add('hidden');
-}
+function cerrarModalCliente() { document.getElementById('modalCliente').classList.add('hidden'); }
 
 async function guardarCliente() {
     const nombre = document.getElementById('nuevo-nombre').value;
-    const iden = document.getElementById('nuevo-identificacion').value;
-    const tel = document.getElementById('nuevo-tel').value;
-    const dir = document.getElementById('nuevo-dir').value;
-
-    if(iden.length < 10) return document.getElementById('id-error').classList.remove('hidden');
-    if(!nombre || !tel) return alert("Completa los campos obligatorios");
-    
     const btn = document.getElementById('btn-save');
-    btn.innerText = "GUARDANDO...";
-    btn.disabled = true;
-
+    btn.innerText = "GUARDANDO..."; btn.disabled = true;
     await DairyAPI.enviarDatos("Clientes", {
         pestaña: "Clientes",
-        ID: iden,
+        ID: document.getElementById('nuevo-identificacion').value,
         Nombre: nombre,
-        Teléfono: "+593" + tel,
-        Dirección: dir,
-        Fecha: new Date().toLocaleDateString()
+        Teléfono: document.getElementById('nuevo-tel').value,
+        Dirección: document.getElementById('nuevo-dir').value
     });
-    
     cerrarModalCliente();
     iniciar();
 }

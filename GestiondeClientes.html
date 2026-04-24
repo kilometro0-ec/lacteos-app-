@@ -7,8 +7,6 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-    <link rel="stylesheet" href="estilos-lacteos.css">
-
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
@@ -31,8 +29,6 @@
         .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
         .active-icon { font-variation-settings: 'FILL' 1 !important; }
         body { font-family: 'Work Sans', sans-serif; }
-        /* Clases de apoyo por si no están en tu CSS */
-        .card-cliente { background: white; border-radius: 2rem; border: 1px solid #e9d5ff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
     </style>
 </head>
 
@@ -53,18 +49,18 @@
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
   
   <section class="grid grid-cols-2 gap-4">
-    <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg">
+    <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg text-center">
       <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Total Registrados</p>
       <h2 id="total-clientes" class="text-3xl font-black">0</h2>
     </div>
-    <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex flex-col justify-center">
+    <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex flex-col justify-center text-center">
       <p class="text-[10px] text-secondary uppercase font-black tracking-widest">Nuevos (Mes)</p>
       <h2 id="clientes-mes" class="text-3xl font-black text-secondary">0</h2>
     </div>
   </section>
 
   <section id="lista-clientes" class="space-y-4">
-      <div class="text-center py-20 text-gray-400 italic font-bold">Cargando directorio...</div>
+      <div class="text-center py-20 text-gray-400 italic font-bold">Analizando historial de pedidos...</div>
   </section>
 
 </main>
@@ -73,13 +69,14 @@
 
 <script>
 let clientesData = [];
+let ventasData = [];
 
 async function iniciar() {
     fetch('menu.html').then(r => r.text()).then(data => {
         document.getElementById('menu-container').innerHTML = data;
         marcarBotonActivo();
     });
-    cargarClientes();
+    cargarDatos();
 }
 
 function marcarBotonActivo() {
@@ -92,10 +89,17 @@ function marcarBotonActivo() {
     });
 }
 
-async function cargarClientes() {
+async function cargarDatos() {
     try {
-        const clientes = await DairyAPI.obtenerDatos("Clientes");
+        // Cargamos Ventas y Clientes en paralelo
+        const [clientes, ventas] = await Promise.all([
+            DairyAPI.obtenerDatos("Clientes"),
+            DairyAPI.obtenerDatos("Ventas")
+        ]);
+
         clientesData = clientes;
+        ventasData = ventas;
+        
         renderizarClientes(clientes);
 
         document.getElementById('total-clientes').innerText = clientes.length;
@@ -103,7 +107,6 @@ async function cargarClientes() {
         const esteMes = new Date().getMonth();
         const nuevos = clientes.filter(c => {
             if(!c.Fecha) return false;
-            // Manejo de fechas tipo DD/MM/YYYY o ISO
             const partes = c.Fecha.split('/');
             const mesFecha = partes.length > 1 ? parseInt(partes[1]) - 1 : new Date(c.Fecha).getMonth();
             return mesFecha === esteMes;
@@ -111,7 +114,7 @@ async function cargarClientes() {
         document.getElementById('clientes-mes').innerText = nuevos;
 
     } catch (e) {
-        console.error("Error cargando clientes:", e);
+        console.error("Error cargando datos:", e);
         document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-400">Error al conectar con la base de datos</p>`;
     }
 }
@@ -126,7 +129,13 @@ function renderizarClientes(lista) {
     }
 
     lista.forEach(c => {
-        // Formateo de teléfono para WhatsApp (Igual que en ventas)
+        // CONTAR PEDIDOS: Filtramos las ventas donde el cliente coincida
+        // Usamos trim() y toLowerCase() para evitar errores por espacios o mayúsculas
+        const numeroPedidos = ventasData.filter(v => 
+            String(v.Cliente).trim().toLowerCase() === String(c.Nombre).trim().toLowerCase()
+        ).length;
+
+        // Formateo de teléfono para WhatsApp
         let rawTel = c.Teléfono?.toString() || "";
         let limpio = rawTel.replace(/\D/g, ''); 
         if (limpio.startsWith('0')) limpio = limpio.substring(1); 
@@ -134,26 +143,36 @@ function renderizarClientes(lista) {
 
         container.innerHTML += `
             <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all">
-                <div class="w-14 h-14 rounded-[1.2rem] bg-purple-50 flex items-center justify-center text-primary">
-                    <span class="material-symbols-outlined text-3xl">account_circle</span>
-                </div>
-                <div class="flex-1">
-                    <h3 class="font-black text-gray-800 leading-tight uppercase text-sm">${c.Nombre}</h3>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${c.CI_RUC || c.ID || 'S/N Cédula'}</p>
-                    <div class="flex gap-3 mt-2">
-                        <a href="https://wa.me/${limpio}" target="_blank" class="flex items-center gap-1 text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase">
-                            <span class="material-symbols-outlined text-sm">chat</span> WhatsApp
-                        </a>
-                        <a href="tel:${rawTel}" class="flex items-center gap-1 text-[10px] font-black text-primary bg-purple-50 px-2 py-1 rounded-lg uppercase">
-                            <span class="material-symbols-outlined text-sm">call</span> Llamar
-                        </a>
+                <div class="relative">
+                    <div class="w-14 h-14 rounded-[1.2rem] bg-purple-50 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-3xl">account_circle</span>
+                    </div>
+                    <div class="absolute -top-2 -right-2 bg-secondary text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+                        ${numeroPedidos}
                     </div>
                 </div>
+
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                         <h3 class="font-black text-gray-800 leading-tight uppercase text-sm">${c.Nombre}</h3>
+                    </div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${c.CI_RUC || 'S/N Cédula'}</p>
+                    
+                    <div class="flex gap-2 mt-2">
+                        <a href="https://wa.me/${limpio}" target="_blank" class="flex items-center gap-1 text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase">
+                            <span class="material-symbols-outlined text-xs">chat</span> WhatsApp
+                        </a>
+                        <span class="text-[9px] font-black text-primary bg-purple-50 px-2 py-1 rounded-lg uppercase">
+                            ${numeroPedidos} COMPRAS
+                        </span>
+                    </div>
+                </div>
+
                 <div class="text-right">
-                    <span class="text-[9px] font-black text-gray-300 block mb-1">UBICACIÓN</span>
                     <button onclick="verMapa('${c.Dirección}')" class="text-primary hover:scale-110 transition-transform">
                         <span class="material-symbols-outlined active-icon text-3xl">location_on</span>
                     </button>
+                    <p class="text-[8px] font-black text-gray-400 mt-1 uppercase">Mapa</p>
                 </div>
             </div>`;
     });
@@ -162,16 +181,14 @@ function renderizarClientes(lista) {
 function filtrarClientes() {
     const busqueda = document.getElementById('buscador').value.toLowerCase();
     const filtrados = clientesData.filter(c => 
-        c.Nombre.toLowerCase().includes(busqueda) || 
-        (c.CI_RUC && c.CI_RUC.toString().includes(busqueda)) ||
-        (c.ID && c.ID.toString().includes(busqueda))
+        String(c.Nombre).toLowerCase().includes(busqueda) || 
+        (c.CI_RUC && String(c.CI_RUC).includes(busqueda))
     );
     renderizarClientes(filtrados);
 }
 
 function verMapa(dir) {
     if(!dir || dir === "undefined" || dir.trim() === "") return alert("Dirección no registrada");
-    // URL Corregida para Google Maps
     const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`;
     window.open(url, '_blank');
 }

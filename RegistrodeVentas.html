@@ -32,6 +32,8 @@ tailwind.config = {
 <style>
 .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
 .zebra-table tr:nth-child(even) { background-color: #faf5ff; }
+/* Estilo para productos agotados */
+.out-of-stock { opacity: 0.5; pointer-events: none; grayscale: 1; }
 </style>
 </head>
 
@@ -85,7 +87,7 @@ tailwind.config = {
       <div class="bg-primary text-white p-4 flex justify-between items-center">
         <div class="flex items-center gap-2">
           <span class="material-symbols-outlined">shopping_cart</span>
-          <h3 class="font-bold">Resumen</h3>
+          <h3 class="font-bold">Resumen de Venta</h3>
         </div>
         <button onclick="limpiarCarrito()" class="text-[10px] bg-white/20 px-2 py-1 rounded">LIMPIAR</button>
       </div>
@@ -121,13 +123,32 @@ tailwind.config = {
 
 <div id="modalCliente" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
   <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl">
-    <h3 class="text-xl font-bold text-primary mb-4">Registrar Nuevo Cliente</h3>
+    <h3 class="text-xl font-bold text-primary mb-4 flex items-center gap-2">
+      <span class="material-symbols-outlined">person_add</span> Registro de Cliente
+    </h3>
     <div class="space-y-4">
-      <input type="text" id="nuevo-nombre" placeholder="Nombre completo" class="w-full p-3 border border-outline rounded-xl">
-      <input type="text" id="nuevo-id" placeholder="Teléfono o Cédula" class="w-full p-3 border border-outline rounded-xl">
-      <div class="flex gap-2">
-        <button onclick="cerrarModalCliente()" class="flex-1 py-3 text-gray-500 font-bold">CANCELAR</button>
-        <button onclick="guardarCliente()" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold">GUARDAR</button>
+      <div>
+        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre Completo</label>
+        <input type="text" id="nuevo-nombre" class="w-full p-3 border border-outline rounded-xl focus:ring-2 focus:ring-primary outline-none">
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Teléfono</label>
+          <input type="text" id="nuevo-tel" class="w-full p-3 border border-outline rounded-xl focus:ring-2 focus:ring-primary outline-none">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Cédula / ID</label>
+          <input type="text" id="nuevo-id" class="w-full p-3 border border-outline rounded-xl focus:ring-2 focus:ring-primary outline-none">
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Dirección</label>
+        <input type="text" id="nuevo-dir" class="w-full p-3 border border-outline rounded-xl focus:ring-2 focus:ring-primary outline-none">
+      </div>
+      
+      <div class="flex gap-2 pt-2">
+        <button onclick="cerrarModalCliente()" class="flex-1 py-3 text-gray-500 font-bold hover:bg-gray-50 rounded-xl">CANCELAR</button>
+        <button id="btn-guardar-cliente" onclick="guardarCliente()" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold shadow-lg">GUARDAR</button>
       </div>
     </div>
   </div>
@@ -153,18 +174,22 @@ let carrito = {};
 let productosData = [];
 
 async function iniciar() {
-    // 1. Cargar Clientes (Datalist)
-    const clientes = await DairyAPI.obtenerDatos("Clientes");
-    const dl = document.getElementById('lista-clientes');
-    clientes.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.Nombre;
-        dl.appendChild(opt);
-    });
+    try {
+        // 1. Cargar Clientes para el buscador
+        const clientes = await DairyAPI.obtenerDatos("Clientes");
+        const dl = document.getElementById('lista-clientes');
+        clientes.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.Nombre;
+            dl.appendChild(opt);
+        });
 
-    // 2. Cargar Productos
-    productosData = await DairyAPI.obtenerDatos("Inventario");
-    renderizarProductos();
+        // 2. Cargar Productos del Inventario
+        productosData = await DairyAPI.obtenerDatos("Inventario");
+        renderizarProductos();
+    } catch (e) {
+        console.error("Error al iniciar:", e);
+    }
 }
 
 function renderizarProductos() {
@@ -172,18 +197,20 @@ function renderizarProductos() {
     container.innerHTML = "";
     
     productosData.forEach(p => {
-        const stock = parseInt(p.Stock);
+        const stock = parseInt(p.Stock) || 0;
+        const nombreID = p.Producto.replace(/\s+/g, '');
+        
         container.innerHTML += `
-            <div class="bg-white p-4 rounded-xl border border-outline shadow-sm">
+            <div class="bg-white p-4 rounded-xl border border-outline shadow-sm ${stock <= 0 ? 'out-of-stock' : ''}">
                 <div class="flex justify-between items-start mb-1">
                     <h4 class="font-bold text-gray-700">${p.Producto}</h4>
                     <span class="text-[10px] ${stock <= 5 ? 'text-red-600 font-bold' : 'text-gray-400'}">Stock: ${stock}</span>
                 </div>
-                <p class="text-lg font-black text-secondary mb-3">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
+                <p class="text-lg font-black text-secondary mb-3">$${parseFloat(p.Precio_Venta || 0).toFixed(2)}</p>
                 <div class="flex items-center justify-between bg-purple-50 rounded-lg p-1">
-                    <button onclick="cambiarCant('${p.Producto}', -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold">-</button>
-                    <span id="cant-${p.Producto.replace(/\s+/g, '')}" class="font-bold">0</span>
-                    <button onclick="cambiarCant('${p.Producto}', 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold">+</button>
+                    <button onclick="cambiarCant('${p.Producto}', -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold hover:bg-primary hover:text-white transition-colors">-</button>
+                    <span id="cant-${nombreID}" class="font-bold">0</span>
+                    <button onclick="cambiarCant('${p.Producto}', 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold hover:bg-primary hover:text-white transition-colors">+</button>
                 </div>
             </div>`;
     });
@@ -199,6 +226,8 @@ function cambiarCant(nombre, delta) {
         carrito[nombre] = nuevoValor;
         document.getElementById(`cant-${nombre.replace(/\s+/g, '')}`).innerText = nuevoValor;
         actualizarCarritoUI();
+    } else if (nuevoValor > prod.Stock) {
+        alert("No hay suficiente stock");
     }
 }
 
@@ -217,7 +246,7 @@ function actualizarCarritoUI() {
             tabla.innerHTML += `
                 <tr class="border-b border-outline/50">
                     <td class="py-2">${nombre}</td>
-                    <td class="py-2 text-center">${carrito[nombre]}</td>
+                    <td class="py-2 text-center font-bold">${carrito[nombre]}</td>
                     <td class="py-2 text-right font-bold">$${subtotal.toFixed(2)}</td>
                 </tr>`;
         }
@@ -228,46 +257,68 @@ function actualizarCarritoUI() {
 
 async function finalizarVenta() {
     const cliente = document.getElementById('search-cliente').value;
-    if (!cliente) return alert("Selecciona un cliente");
-    if (Object.values(carrito).every(v => v === 0)) return alert("El carrito está vacío");
+    if (!cliente) return alert("Por favor, selecciona un cliente.");
+    
+    const itemsVenta = Object.keys(carrito).filter(n => carrito[n] > 0);
+    if (itemsVenta.length === 0) return alert("El carrito está vacío.");
 
     const btn = document.getElementById('btn-finalizar');
     btn.disabled = true;
-    btn.innerText = "PROCESANDO...";
+    btn.innerText = "REGISTRANDO...";
 
     try {
-        // Aquí enviarías al Apps Script un registro por cada producto
-        for (const nombre in carrito) {
-            if (carrito[nombre] > 0) {
-                const prod = productosData.find(p => p.Producto === nombre);
-                await DairyAPI.enviarDatos("Ventas", {
-                    pestaña: "Ventas",
-                    cliente: cliente,
-                    producto: nombre,
-                    cantidad: carrito[nombre],
-                    precio_usado: prod.Precio_Venta,
-                    total: carrito[nombre] * prod.Precio_Venta
-                });
-            }
+        for (const nombre of itemsVenta) {
+            const prod = productosData.find(p => p.Producto === nombre);
+            await DairyAPI.enviarDatos("Ventas", {
+                pestaña: "Ventas",
+                cliente: cliente,
+                producto: nombre,
+                cantidad: carrito[nombre],
+                precio_usado: prod.Precio_Venta,
+                total: carrito[nombre] * prod.Precio_Venta
+            });
         }
-        alert("¡Venta Exitosa!");
+        alert("¡Venta completada con éxito!");
         location.reload();
     } catch (e) {
-        alert("Error al guardar");
+        alert("Error al procesar la venta.");
         btn.disabled = false;
         btn.innerText = "COMPLETAR VENTA";
     }
 }
 
+// Funciones del Modal Cliente
 function abrirModalCliente() { document.getElementById('modalCliente').classList.remove('hidden'); }
 function cerrarModalCliente() { document.getElementById('modalCliente').classList.add('hidden'); }
 
 async function guardarCliente() {
-    const nombre = document.getElementById('nuevo-nombre').value;
-    if (!nombre) return;
-    await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", Nombre: nombre, ID: document.getElementById('nuevo-id').value });
-    alert("Cliente registrado");
-    location.reload();
+    const nombre = document.getElementById('nuevo-nombre').value.trim();
+    const id = document.getElementById('nuevo-id').value.trim();
+    const tel = document.getElementById('nuevo-tel').value.trim();
+    const dir = document.getElementById('nuevo-dir').value.trim();
+    const btn = document.getElementById('btn-guardar-cliente');
+
+    if (!nombre || !id) return alert("Nombre e ID son obligatorios.");
+
+    btn.disabled = true;
+    btn.innerText = "GUARDANDO...";
+
+    try {
+        await DairyAPI.enviarDatos("Clientes", {
+            pestaña: "Clientes",
+            ID: id,
+            Nombre: nombre,
+            Teléfono: tel,
+            Dirección: dir,
+            Fecha: new Date().toLocaleDateString()
+        });
+        alert("Cliente registrado.");
+        location.reload();
+    } catch (e) {
+        alert("Error al registrar cliente.");
+        btn.disabled = false;
+        btn.innerText = "GUARDAR";
+    }
 }
 
 function limpiarCarrito() {

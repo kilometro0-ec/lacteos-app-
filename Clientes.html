@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Lógica Láctea | Directorio de Clientes</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="api-config.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#a21caf",
+            secondary: "#db2777",
+            background: "#faf5ff",
+            outline: "#e9d5ff"
+          }
+        }
+      }
+    }
+    </script>
+
+    <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+    .active-icon { font-variation-settings: 'FILL' 1 !important; }
+    body { font-family: 'Work Sans', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-background text-gray-900 pb-40">
+
+<header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
+  <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
+    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary">
+        <span class="material-symbols-outlined text-3xl active-icon">group</span>
+    </div>
+    <h1 class="text-xl font-extrabold text-primary tracking-tight">Clientes</h1>
+  </div>
+  <div class="relative">
+      <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar..." class="w-32 focus:w-48 transition-all bg-purple-50 border-none rounded-full px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-primary">
+  </div>
+</header>
+
+<main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
+  
+  <section class="grid grid-cols-2 gap-4">
+    <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg">
+      <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Total Registrados</p>
+      <h2 id="total-clientes" class="text-3xl font-black">0</h2>
+    </div>
+    <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex flex-col justify-center">
+      <p class="text-[10px] text-secondary uppercase font-black tracking-widest">Nuevos (Mes)</p>
+      <h2 id="clientes-mes" class="text-3xl font-black text-secondary">0</h2>
+    </div>
+  </section>
+
+  <section id="lista-clientes" class="space-y-4">
+      <div class="text-center py-20 text-gray-400 italic font-bold">Cargando directorio...</div>
+  </section>
+
+</main>
+
+<div id="menu-container"></div>
+
+<script>
+let clientesData = [];
+
+async function iniciar() {
+    // Carga el menú
+    fetch('menu.html').then(r => r.text()).then(data => {
+        document.getElementById('menu-container').innerHTML = data;
+        marcarBotonActivo();
+    });
+    cargarClientes();
+}
+
+function marcarBotonActivo() {
+    // Ajusta según el nombre de tu archivo en el menú
+    const botones = document.querySelectorAll('.nav-item');
+    botones.forEach(btn => {
+        if (btn.getAttribute('onclick')?.includes('Clientes.html')) {
+            btn.classList.add('text-primary');
+            btn.classList.remove('text-gray-400');
+        }
+    });
+}
+
+async function cargarClientes() {
+    try {
+        const clientes = await DairyAPI.obtenerDatos("Clientes");
+        clientesData = clientes;
+        renderizarClientes(clientes);
+
+        // Stats
+        document.getElementById('total-clientes').innerText = clientes.length;
+        
+        // Simulación de filtro por mes (si tienes columna Fecha)
+        const esteMes = new Date().getMonth();
+        const nuevos = clientes.filter(c => {
+            if(!c.Fecha) return false;
+            // Asumiendo formato DD/MM/YYYY o similar
+            const partes = c.Fecha.split('/');
+            return parseInt(partes[1]) - 1 === esteMes;
+        }).length;
+        document.getElementById('clientes-mes').innerText = nuevos;
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function renderizarClientes(lista) {
+    const container = document.getElementById('lista-clientes');
+    container.innerHTML = "";
+
+    if(lista.length === 0) {
+        container.innerHTML = `<p class="text-center text-gray-400 font-bold py-10">No se encontraron clientes</p>`;
+        return;
+    }
+
+    lista.forEach(c => {
+        container.innerHTML += `
+            <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all">
+                <div class="w-14 h-14 rounded-[1.2rem] bg-purple-50 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined text-3xl">account_circle</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-black text-gray-800 leading-tight">${c.Nombre}</h3>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${c.ID || 'S/N Cédula'}</p>
+                    <div class="flex gap-3 mt-2">
+                        <a href="https://wa.me/${c.Teléfono?.replace(/[^0-9]/g, '')}" class="flex items-center gap-1 text-[10px] font-black text-success bg-green-50 px-2 py-1 rounded-lg uppercase">
+                            <span class="material-symbols-outlined text-sm">chat</span> WhatsApp
+                        </a>
+                        <a href="tel:${c.Teléfono}" class="flex items-center gap-1 text-[10px] font-black text-primary bg-purple-50 px-2 py-1 rounded-lg uppercase">
+                            <span class="material-symbols-outlined text-sm">call</span> Llamar
+                        </a>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-[9px] font-black text-gray-300 block mb-1">UBICACIÓN</span>
+                    <button onclick="verMapa('${c.Dirección}')" class="text-primary">
+                        <span class="material-symbols-outlined active-icon">location_on</span>
+                    </button>
+                </div>
+            </div>`;
+    });
+}
+
+function filtrarClientes() {
+    const busqueda = document.getElementById('buscador').value.toLowerCase();
+    const filtrados = clientesData.filter(c => 
+        c.Nombre.toLowerCase().includes(busqueda) || 
+        (c.ID && c.ID.includes(busqueda))
+    );
+    renderizarClientes(filtrados);
+}
+
+function verMapa(dir) {
+    if(!dir || dir === "undefined") return alert("Dirección no registrada");
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
+}
+
+window.onload = iniciar;
+</script>
+</body>
+</html>

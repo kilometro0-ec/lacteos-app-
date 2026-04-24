@@ -7,6 +7,7 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
+    <link rel="stylesheet" href="estilos-lacteos.css">
 
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -27,9 +28,11 @@
     </script>
 
     <style>
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-    .active-icon { font-variation-settings: 'FILL' 1 !important; }
-    body { font-family: 'Work Sans', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+        .active-icon { font-variation-settings: 'FILL' 1 !important; }
+        body { font-family: 'Work Sans', sans-serif; }
+        /* Clases de apoyo por si no están en tu CSS */
+        .card-cliente { background: white; border-radius: 2rem; border: 1px solid #e9d5ff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
     </style>
 </head>
 
@@ -72,7 +75,6 @@
 let clientesData = [];
 
 async function iniciar() {
-    // Carga el menú
     fetch('menu.html').then(r => r.text()).then(data => {
         document.getElementById('menu-container').innerHTML = data;
         marcarBotonActivo();
@@ -81,7 +83,6 @@ async function iniciar() {
 }
 
 function marcarBotonActivo() {
-    // Ajusta según el nombre de tu archivo en el menú
     const botones = document.querySelectorAll('.nav-item');
     botones.forEach(btn => {
         if (btn.getAttribute('onclick')?.includes('Clientes.html')) {
@@ -97,21 +98,21 @@ async function cargarClientes() {
         clientesData = clientes;
         renderizarClientes(clientes);
 
-        // Stats
         document.getElementById('total-clientes').innerText = clientes.length;
         
-        // Simulación de filtro por mes (si tienes columna Fecha)
         const esteMes = new Date().getMonth();
         const nuevos = clientes.filter(c => {
             if(!c.Fecha) return false;
-            // Asumiendo formato DD/MM/YYYY o similar
+            // Manejo de fechas tipo DD/MM/YYYY o ISO
             const partes = c.Fecha.split('/');
-            return parseInt(partes[1]) - 1 === esteMes;
+            const mesFecha = partes.length > 1 ? parseInt(partes[1]) - 1 : new Date(c.Fecha).getMonth();
+            return mesFecha === esteMes;
         }).length;
         document.getElementById('clientes-mes').innerText = nuevos;
 
     } catch (e) {
-        console.error(e);
+        console.error("Error cargando clientes:", e);
+        document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-400">Error al conectar con la base de datos</p>`;
     }
 }
 
@@ -125,27 +126,33 @@ function renderizarClientes(lista) {
     }
 
     lista.forEach(c => {
+        // Formateo de teléfono para WhatsApp (Igual que en ventas)
+        let rawTel = c.Teléfono?.toString() || "";
+        let limpio = rawTel.replace(/\D/g, ''); 
+        if (limpio.startsWith('0')) limpio = limpio.substring(1); 
+        if (limpio.length > 0 && !limpio.startsWith('593')) limpio = '593' + limpio;
+
         container.innerHTML += `
             <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all">
                 <div class="w-14 h-14 rounded-[1.2rem] bg-purple-50 flex items-center justify-center text-primary">
                     <span class="material-symbols-outlined text-3xl">account_circle</span>
                 </div>
                 <div class="flex-1">
-                    <h3 class="font-black text-gray-800 leading-tight">${c.Nombre}</h3>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${c.ID || 'S/N Cédula'}</p>
+                    <h3 class="font-black text-gray-800 leading-tight uppercase text-sm">${c.Nombre}</h3>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${c.CI_RUC || c.ID || 'S/N Cédula'}</p>
                     <div class="flex gap-3 mt-2">
-                        <a href="https://wa.me/${c.Teléfono?.replace(/[^0-9]/g, '')}" class="flex items-center gap-1 text-[10px] font-black text-success bg-green-50 px-2 py-1 rounded-lg uppercase">
+                        <a href="https://wa.me/${limpio}" target="_blank" class="flex items-center gap-1 text-[10px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase">
                             <span class="material-symbols-outlined text-sm">chat</span> WhatsApp
                         </a>
-                        <a href="tel:${c.Teléfono}" class="flex items-center gap-1 text-[10px] font-black text-primary bg-purple-50 px-2 py-1 rounded-lg uppercase">
+                        <a href="tel:${rawTel}" class="flex items-center gap-1 text-[10px] font-black text-primary bg-purple-50 px-2 py-1 rounded-lg uppercase">
                             <span class="material-symbols-outlined text-sm">call</span> Llamar
                         </a>
                     </div>
                 </div>
                 <div class="text-right">
                     <span class="text-[9px] font-black text-gray-300 block mb-1">UBICACIÓN</span>
-                    <button onclick="verMapa('${c.Dirección}')" class="text-primary">
-                        <span class="material-symbols-outlined active-icon">location_on</span>
+                    <button onclick="verMapa('${c.Dirección}')" class="text-primary hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined active-icon text-3xl">location_on</span>
                     </button>
                 </div>
             </div>`;
@@ -156,14 +163,17 @@ function filtrarClientes() {
     const busqueda = document.getElementById('buscador').value.toLowerCase();
     const filtrados = clientesData.filter(c => 
         c.Nombre.toLowerCase().includes(busqueda) || 
-        (c.ID && c.ID.includes(busqueda))
+        (c.CI_RUC && c.CI_RUC.toString().includes(busqueda)) ||
+        (c.ID && c.ID.toString().includes(busqueda))
     );
     renderizarClientes(filtrados);
 }
 
 function verMapa(dir) {
-    if(!dir || dir === "undefined") return alert("Dirección no registrada");
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
+    if(!dir || dir === "undefined" || dir.trim() === "") return alert("Dirección no registrada");
+    // URL Corregida para Google Maps
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`;
+    window.open(url, '_blank');
 }
 
 window.onload = iniciar;

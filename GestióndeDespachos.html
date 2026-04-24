@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" } } }
+            theme: { extend: { colors: { primary: "#a21caf", secondary: "#7e22ce", background: "#faf5ff", outline: "#e9d5ff" } } }
         }
     </script>
 </head>
@@ -32,19 +32,31 @@
     <div id="contenedor-pedidos" class="space-y-4">
         <div class="text-center py-20 text-gray-400">
             <span class="material-symbols-outlined animate-spin text-4xl">sync</span>
-            <p class="mt-2 font-bold">Cargando pedidos de hoy...</p>
+            <p class="mt-2 font-bold">Consolidando pedidos...</p>
         </div>
     </div>
 </main>
 
-<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50 px-2">
     <button onclick="window.location.href='DashboardLácteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
         <span class="material-symbols-outlined">home</span>
-        <span class="text-[10px] font-bold">Inicio</span>
+        <span class="text-[9px] font-bold">Inicio</span>
+    </button>
+    <button onclick="window.location.href='RegistrodeVentas.html'" class="text-gray-400 flex flex-col items-center gap-1">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span class="text-[9px] font-bold">Ventas</span>
+    </button>
+    <button onclick="window.location.href='GestiondeClientes.html'" class="text-gray-400 flex flex-col items-center gap-1">
+        <span class="material-symbols-outlined">group</span>
+        <span class="text-[9px] font-bold">Clientes</span>
+    </button>
+    <button onclick="window.location.href='ControldeInventario.html'" class="text-gray-400 flex flex-col items-center gap-1">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span class="text-[9px] font-bold">Stock</span>
     </button>
     <button class="text-primary flex flex-col items-center gap-1 font-bold">
         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">local_shipping</span>
-        <span class="text-[10px]">Entregas</span>
+        <span class="text-[9px] font-bold">Despachos</span>
     </button>
 </nav>
 
@@ -52,74 +64,87 @@
 async function cargarDatos() {
     const contenedor = document.getElementById('contenedor-pedidos');
     try {
-        // 1. Obtener datos de la API
         const [ventas, clientes] = await Promise.all([
             DairyAPI.obtenerDatos("Ventas"),
             DairyAPI.obtenerDatos("Clientes")
         ]);
 
         if (!ventas || ventas.length === 0) {
-            contenedor.innerHTML = `
-                <div class="text-center py-20 text-gray-400">
-                    <span class="material-symbols-outlined text-5xl">list_alt</span>
-                    <p class="mt-2 font-bold">No hay pedidos registrados en Ventas.</p>
-                </div>`;
+            contenedor.innerHTML = `<p class="text-center py-20 text-gray-400 font-bold text-sm">No hay pedidos pendientes.</p>`;
             return;
         }
 
-        contenedor.innerHTML = ""; // Limpiar el loader
+        // --- LÓGICA DE AGRUPACIÓN POR CLIENTE ---
+        const pedidosAgrupados = {};
 
-        // 2. Procesar y mostrar (Más recientes primero)
-        ventas.reverse().forEach(venta => {
-            // Buscamos al cliente para extraer dirección y teléfono
+        ventas.forEach(v => {
+            const nombreCliente = String(v.Cliente).trim();
+            if (!pedidosAgrupados[nombreCliente]) {
+                pedidosAgrupados[nombreCliente] = {
+                    cliente: nombreCliente,
+                    productos: [],
+                    totalVenta: 0,
+                    fecha: v.Fecha
+                };
+            }
+            pedidosAgrupados[nombreCliente].productos.push({
+                nombre: v.Producto,
+                cant: v.Cantidad
+            });
+            pedidosAgrupados[nombreCliente].totalVenta += parseFloat(v["Precio Total"] || 0);
+        });
+
+        contenedor.innerHTML = "";
+
+        Object.values(pedidosAgrupados).reverse().forEach(pedido => {
             const clienteInfo = clientes.find(c => 
-                String(c.Nombre).trim().toLowerCase() === String(venta.Cliente).trim().toLowerCase()
+                String(c.Nombre).trim().toLowerCase() === pedido.cliente.toLowerCase()
             );
 
-            // Manejo seguro de datos de columnas con espacios
-            const total = venta["Precio Total"] || "0.00";
-            const direccion = clienteInfo ? (clienteInfo.Dirección || "Sin dirección") : "Dirección no encontrada";
-            
-            // CORRECCIÓN CRÍTICA: Convertir teléfono a String antes de usar replace
+            const direccion = clienteInfo ? (clienteInfo.Dirección || "Sin dirección") : "Dirección no registrada";
             const telfRaw = clienteInfo ? (clienteInfo.Teléfono || "") : "";
-            const telfString = String(telfRaw); 
-            const linkWhatsApp = telfString.replace(/[^0-9]/g, '');
+            const telfString = String(telfRaw);
+            const linkWA = telfString.replace(/[^0-9]/g, '');
+
+            // Generar lista de productos para la tarjeta
+            const listaHTML = pedido.productos.map(p => 
+                `<div class="flex justify-between text-[11px] border-b border-purple-50 py-1">
+                    <span class="font-medium text-gray-600">${p.nombre}</span>
+                    <span class="font-black text-primary">x${p.cant}</span>
+                </div>`
+            ).join('');
 
             contenedor.innerHTML += `
                 <div class="bg-white p-5 rounded-3xl border border-outline shadow-sm space-y-4">
-                    <div class="flex justify-between items-start">
-                        <div class="flex items-center gap-2">
-                            <span class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
-                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Por Despachar</span>
-                        </div>
-                        <span class="text-[10px] font-bold text-gray-400">${new Date(venta.Fecha).toLocaleDateString()}</span>
+                    <div class="flex justify-between items-center">
+                        <span class="bg-orange-100 text-orange-600 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Pendiente</span>
+                        <span class="text-[10px] font-bold text-gray-400">${new Date(pedido.fecha).toLocaleDateString()}</span>
                     </div>
 
                     <div>
-                        <h2 class="text-lg font-black text-gray-800 leading-tight">${venta.Cliente}</h2>
-                        <div class="flex items-center gap-1 text-primary mt-1">
-                            <span class="material-symbols-outlined text-sm">shopping_basket</span>
-                            <p class="text-xs font-bold uppercase">${venta.Producto} (x${venta.Cantidad})</p>
+                        <h2 class="text-lg font-black text-gray-800 leading-tight">${pedido.cliente}</h2>
+                        <div class="mt-3 space-y-1">
+                            ${listaHTML}
                         </div>
                     </div>
 
                     <div class="bg-purple-50 p-3 rounded-2xl flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary">location_on</span>
-                        <p class="text-xs font-medium text-gray-600 leading-relaxed">${direccion}</p>
+                        <span class="material-symbols-outlined text-primary text-sm">location_on</span>
+                        <p class="text-[11px] font-medium text-gray-600 leading-relaxed">${direccion}</p>
                     </div>
 
-                    <div class="flex justify-between items-center pt-2 border-t border-dashed border-outline">
+                    <div class="flex justify-between items-center pt-2">
                         <div>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">Total a Cobrar</p>
-                            <p class="text-xl font-black text-gray-900">$${total}</p>
+                            <p class="text-[9px] font-bold text-gray-400 uppercase leading-none">Total Pedido</p>
+                            <p class="text-xl font-black text-gray-900">$${pedido.totalVenta.toFixed(2)}</p>
                         </div>
                         <div class="flex gap-2">
-                            ${linkWhatsApp ? `
-                                <a href="https://wa.me/${linkWhatsApp}" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm active:scale-90 transition-transform">
+                            ${linkWA ? `
+                                <a href="https://wa.me/${linkWA}" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center">
                                     <span class="material-symbols-outlined">chat</span>
                                 </a>
                             ` : ''}
-                            <button onclick="marcarEntregado(this)" class="h-12 bg-primary text-white px-6 rounded-2xl text-[10px] font-black shadow-lg shadow-purple-100 active:scale-95 transition-transform">
+                            <button onclick="this.closest('.bg-white').style.opacity='0.5'" class="h-12 bg-primary text-white px-5 rounded-2xl text-[10px] font-black shadow-lg shadow-purple-100">
                                 ENTREGADO
                             </button>
                         </div>
@@ -129,25 +154,12 @@ async function cargarDatos() {
         });
 
     } catch (error) {
-        console.error("Error en Despachos:", error);
-        contenedor.innerHTML = `
-            <div class="text-center py-20 text-red-400">
-                <span class="material-symbols-outlined text-5xl">warning</span>
-                <p class="mt-2 font-bold">Error al cargar datos de la nube.</p>
-                <p class="text-[10px]">${error.message}</p>
-            </div>`;
+        console.error(error);
+        contenedor.innerHTML = `<p class="text-center text-red-500 py-10 font-bold">Error de sincronización.</p>`;
     }
-}
-
-function marcarEntregado(btn) {
-    const card = btn.closest('.bg-white');
-    card.style.opacity = "0.4";
-    card.style.pointerEvents = "none";
-    alert("Pedido marcado como entregado (Solo visual).");
 }
 
 window.onload = cargarDatos;
 </script>
-
 </body>
 </html>

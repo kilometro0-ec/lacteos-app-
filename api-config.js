@@ -1,4 +1,4 @@
-const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbxKA9S1YAhpz_p-DYgc8Jqf7sk4dDn4l8INmB1QlwrfZFGp44zS1dX1He7Jj3h4sBc1Tw/exec";
+const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbxzudWsrBzDZq2K-DECE8ozEBch8bg4TO5Q4oPJfhXP-KLeavb9l0lo9viHXmhDFzt_3Q/exec";
 
 const DairyAPI = {
   // Función para leer datos (Inventario o Pedidos)

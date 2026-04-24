@@ -29,37 +29,16 @@
     <style>
         body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; }
         .card-sutil { background: white; border-radius: 2rem; border: 1px solid #e9d5ff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-        .input-sutil { background-color: #fdfaff; border: 1px solid #e9d5ff; border-radius: 1rem; padding: 1rem; width: 100%; transition: all 0.2s; }
+        .input-sutil { background-color: #fdfaff; border: 1px solid #e9d5ff; border-radius: 1rem; padding: 1rem; width: 100%; transition: all 0.2s; font-size: 14px; }
         .input-sutil:focus { outline: none; border-color: #a21caf; ring: 2px; ring-color: #a21caf; }
         .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 1.5rem; transition: all 0.2s; }
         .btn-magenta:active { transform: scale(0.95); }
+        .btn-outline { border: 2px solid #e9d5ff; color: #a21caf; font-weight: 800; text-transform: uppercase; border-radius: 1.5rem; }
         
-        /* Corrección Modal */
-        #modal-cliente { transition: opacity 0.3s ease; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body class="pb-24">
-
-<div id="modal-cliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-outline">
-        <div class="flex items-center gap-2 mb-6">
-            <span class="material-symbols-outlined text-primary">person_add</span>
-            <h2 class="text-xl font-black text-primary tracking-tighter uppercase">Nuevo Cliente</h2>
-        </div>
-        <div class="space-y-3">
-            <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
-            <input type="text" id="reg-ci" placeholder="Cédula / RUC" class="input-sutil">
-            <input type="tel" id="reg-tel" placeholder="Teléfono (Ej: 098...)" class="input-sutil">
-            <input type="text" id="reg-dir" placeholder="Dirección de entrega" class="input-sutil">
-            
-            <div class="flex gap-3 pt-4">
-                <button onclick="cerrarModalCliente()" class="flex-1 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cancelar</button>
-                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="flex-[2] btn-magenta py-4 shadow-lg shadow-pink-100">Guardar</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <header class="h-16 bg-white border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
     <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
@@ -74,25 +53,51 @@
 <main class="mt-6 px-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
     
     <div class="lg:col-span-7 space-y-4">
+        
         <section class="card-sutil p-5">
-            <div class="flex justify-between items-center mb-3">
-                <span class="text-[10px] font-black text-primary uppercase tracking-widest">Cliente</span>
-                <button onclick="abrirModalCliente()" class="text-[10px] font-black text-secondary hover:underline">+ NUEVO</button>
+            <div id="vista-seleccion-cliente">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-[10px] font-black text-primary uppercase tracking-widest">Cliente Existente</span>
+                    <button onclick="alternarFormularioCliente(true)" class="text-[10px] font-black text-secondary bg-pink-50 px-3 py-1 rounded-full">+ NUEVO REGISTRO</button>
+                </div>
+                <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold text-slate-700">
+                    <option value="">-- Buscar Cliente --</option>
+                </select>
             </div>
-            <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold text-slate-700">
-                <option value="">-- Buscar Cliente --</option>
-            </select>
+
+            <div id="vista-nuevo-cliente" class="hidden space-y-4 animate-in fade-in duration-300">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-sm font-black text-secondary uppercase tracking-tight">Registro de Nuevo Cliente</h2>
+                    <button onclick="alternarFormularioCliente(false)" class="material-symbols-outlined text-slate-400">close</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
+                    <input type="text" id="reg-ci" placeholder="Cédula / RUC" class="input-sutil">
+                    <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
+                    <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
+                </div>
+                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4 shadow-lg shadow-pink-100 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">person_add</span>
+                    GUARDAR Y SELECCIONAR
+                </button>
+            </div>
         </section>
 
+        <div class="flex items-center gap-2 px-2">
+            <span class="material-symbols-outlined text-primary text-sm">grid_view</span>
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Catálogo Disponible</span>
+        </div>
         <section id="contenedor-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></section>
     </div>
 
     <div class="lg:col-span-5">
         <section class="card-sutil overflow-hidden sticky top-24 border-2 border-primary/10 shadow-xl">
             <div class="bg-primary p-6 text-white">
-                <p class="text-[10px] font-black opacity-70 uppercase tracking-widest mb-1">Orden de Pedido</p>
-                <h2 id="cliente-resumen" class="text-xl font-black uppercase truncate tracking-tighter">SIN SELECCIONAR</h2>
-                <div class="mt-2 flex justify-between items-center">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[10px] font-black opacity-70 uppercase tracking-widest mb-1">Orden de Pedido</p>
+                        <h2 id="cliente-resumen" class="text-xl font-black uppercase truncate tracking-tighter">SIN SELECCIONAR</h2>
+                    </div>
                     <span id="num-orden" class="text-[10px] bg-white/20 px-2 py-1 rounded-lg font-mono">---</span>
                 </div>
             </div>
@@ -101,7 +106,7 @@
                 <div id="lista-carrito" class="space-y-2 max-h-64 overflow-y-auto pr-2">
                     <div id="carrito-vacio" class="text-center py-10">
                         <span class="material-symbols-outlined text-slate-200 text-5xl">shopping_basket</span>
-                        <p class="text-slate-300 text-xs font-bold italic mt-2">Carrito vacío</p>
+                        <p class="text-slate-300 text-xs font-bold italic mt-2">No hay productos seleccionados</p>
                     </div>
                 </div>
 
@@ -110,14 +115,14 @@
                     <input type="date" id="fecha-entrega" class="input-sutil font-bold text-primary">
                 </div>
 
-                <div class="flex justify-between items-end">
-                    <span class="text-xs font-black text-slate-400 uppercase mb-1">Total a Cobrar</span>
+                <div class="flex justify-between items-end border-t border-outline pt-4">
+                    <span class="text-xs font-black text-slate-400 uppercase mb-1">Total a Pagar</span>
                     <span id="total-venta" class="text-4xl font-black text-slate-900 tracking-tighter">$0.00</span>
                 </div>
 
                 <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100 flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined">check_circle</span>
-                    CONFIRMAR PEDIDO
+                    <span class="material-symbols-outlined">send_to_mobile</span>
+                    FINALIZAR PEDIDO
                 </button>
             </div>
         </section>
@@ -135,17 +140,18 @@ function generarIDOrden() {
     document.getElementById('num-orden').innerText = idOrdenActual;
 }
 
-// FUNCIONES DE MODAL CORREGIDAS
-function abrirModalCliente() {
-    const modal = document.getElementById('modal-cliente');
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
-
-function cerrarModalCliente() {
-    const modal = document.getElementById('modal-cliente');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
+// LÓGICA DE INTERFAZ DE CLIENTE
+function alternarFormularioCliente(mostrarNuevo) {
+    const vistaSel = document.getElementById('vista-seleccion-cliente');
+    const vistaNuevo = document.getElementById('vista-nuevo-cliente');
+    
+    if(mostrarNuevo) {
+        vistaSel.classList.add('hidden');
+        vistaNuevo.classList.remove('hidden');
+    } else {
+        vistaSel.classList.remove('hidden');
+        vistaNuevo.classList.add('hidden');
+    }
 }
 
 async function guardarNuevoCliente() {
@@ -153,18 +159,28 @@ async function guardarNuevoCliente() {
     if(!n || !t) return alert("Nombre y Teléfono son obligatorios");
     
     const btn = document.getElementById('btn-guardar-cli');
-    btn.innerText = "GUARDANDO...";
+    btn.innerText = "REGISTRANDO...";
     btn.disabled = true;
 
     try {
         await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", Nombre: n, CI: c, Teléfono: t, Dirección: d });
-        cerrarModalCliente();
-        await iniciar(); // Recargar lista de clientes
-        alert("Cliente registrado con éxito");
+        
+        // Recargar datos y auto-seleccionar al nuevo cliente
+        await iniciar(); 
+        document.getElementById('select-cliente').value = n;
+        actualizarNombreCarrito();
+        alternarFormularioCliente(false);
+        
+        // Limpiar campos
+        document.getElementById('reg-nombre').value = "";
+        document.getElementById('reg-ci').value = "";
+        document.getElementById('reg-tel').value = "";
+        document.getElementById('reg-dir').value = "";
+
     } catch(e) { 
-        alert("Error al guardar cliente"); 
+        alert("Error al conectar con la base de datos"); 
     } finally {
-        btn.innerText = "GUARDAR";
+        btn.innerText = "GUARDAR Y SELECCIONAR";
         btn.disabled = false;
     }
 }
@@ -182,7 +198,7 @@ async function iniciar() {
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
         });
         renderizarProductos();
-    } catch(e) { console.error("Error al cargar datos:", e); }
+    } catch(e) { console.error(e); }
 }
 
 function actualizarNombreCarrito() { 
@@ -194,10 +210,13 @@ function renderizarProductos() {
     productosData.forEach(p => {
         const s = parseInt(p.Stock) || 0, pr = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
         cont.innerHTML += `
-            <div class="card-sutil p-4 flex flex-col justify-between min-h-[140px] ${s <= 0 ? 'opacity-40 grayscale pointer-events-none' : ''}">
+            <div class="card-sutil p-4 flex flex-col justify-between min-h-[150px] ${s <= 0 ? 'opacity-40 grayscale pointer-events-none' : ''}">
                 <div>
-                    <h4 class="font-black text-[10px] uppercase text-slate-400 truncate leading-tight">${p.Producto}</h4>
-                    <p class="text-xs text-primary font-bold">Stock: ${s}</p>
+                    <h4 class="font-black text-[10px] uppercase text-slate-400 truncate leading-tight mb-1">${p.Producto}</h4>
+                    <div class="flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full ${s < 10 ? 'bg-amber-400' : 'bg-green-400'}"></span>
+                        <p class="text-[10px] text-slate-500 font-bold">${s} disponibles</p>
+                    </div>
                 </div>
                 <div>
                     <p class="text-xl font-black text-slate-800">$${pr.toFixed(2)}</p>
@@ -229,7 +248,7 @@ function actualizarCarritoUI() {
             const sub = carrito[n] * parseFloat(p.Precio_Venta.toString().replace(',','.'));
             t += sub;
             l.innerHTML += `
-                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl border border-outline">
+                <div class="flex justify-between items-center p-3 bg-purple-50/50 rounded-xl border border-outline">
                     <span class="text-xs font-bold text-slate-700">${carrito[n]}x ${n}</span>
                     <span class="text-xs font-black text-primary">$${sub.toFixed(2)}</span>
                 </div>`;
@@ -241,13 +260,13 @@ function actualizarCarritoUI() {
 
 async function finalizarVenta() {
     const cli = document.getElementById('select-cliente').value, f = document.getElementById('fecha-entrega').value;
-    if(!cli || !f) return alert("Selecciona cliente y fecha de entrega");
+    if(!cli || !f) return alert("Debes seleccionar un cliente y una fecha de entrega");
     
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(items.length === 0) return alert("Agrega al menos un producto");
+    if(items.length === 0) return alert("El carrito está vacío");
     
     const btn = document.getElementById('btn-finalizar');
-    btn.innerText = "PROCESANDO...";
+    btn.innerText = "ENVIANDO DATOS...";
     btn.disabled = true;
 
     try {
@@ -276,8 +295,8 @@ async function finalizarVenta() {
         
         location.reload();
     } catch(e) { 
-        alert("Error al registrar venta"); 
-        btn.innerText = "CONFIRMAR PEDIDO";
+        alert("Error en el servidor"); 
+        btn.innerText = "FINALIZAR PEDIDO";
         btn.disabled = false;
     }
 }

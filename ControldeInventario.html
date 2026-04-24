@@ -19,8 +19,8 @@ tailwind.config = {
       colors: {
         primary: "#a21caf",
         "primary-container": "#f5d0fe",
-        secondary: "#db2777",
-        success: "#16a34a",
+        secondary: "#db2777", // Fucsia para Ventas
+        success: "#16a34a",   // Verde para Entregas
         background: "#faf5ff",
         surface: "#ffffff",
         outline: "#e9d5ff",
@@ -37,7 +37,7 @@ body { font-family: 'Work Sans', sans-serif; }
 .rotate-animation { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* Resalte Crítico: Solo para stock <= 5 */
+/* Resalte Crítico (<= 5) */
 @keyframes blink-red {
   0% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
   50% { border-color: #fca5a5; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1); }
@@ -82,7 +82,7 @@ body { font-family: 'Work Sans', sans-serif; }
   </section>
 
   <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <div class="col-span-full text-center py-10 text-gray-400 italic">Cargando datos...</div>
+      <div class="col-span-full text-center py-10 text-gray-400 italic">Cargando datos del servidor...</div>
   </div>
 
   <button onclick="abrirModalNuevo()" class="w-full bg-primary text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all">
@@ -97,7 +97,7 @@ body { font-family: 'Work Sans', sans-serif; }
     </h3>
     <form id="formProducto" class="space-y-4">
       <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Nombre del Producto</label>
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Producto</label>
         <input type="text" id="nombreP" required autocomplete="off" class="w-full border-outline rounded-xl p-3 focus:ring-primary">
       </div>
       <div class="grid grid-cols-2 gap-4">
@@ -123,13 +123,21 @@ body { font-family: 'Work Sans', sans-serif; }
 </div>
 
 <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
-  <button onclick="window.location.href='DashboardLacteo.html'" class="text-gray-400 flex flex-col items-center">
+  <button onclick="window.location.href='DashboardLacteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">home</span>
     <span class="text-[10px]">Inicio</span>
   </button>
-  <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center font-bold">
+  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-secondary flex flex-col items-center gap-1 font-bold">
+    <span class="material-symbols-outlined">receipt</span>
+    <span class="text-[10px]">Ventas</span>
+  </button>
+  <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center gap-1 font-bold">
     <span class="material-symbols-outlined">inventory</span>
     <span class="text-[10px]">Stock</span>
+  </button>
+  <button onclick="window.location.href='GestióndeDespachos.html'" class="text-success flex flex-col items-center gap-1 font-bold">
+    <span class="material-symbols-outlined">local_shipping</span>
+    <span class="text-[10px]">Entregas</span>
   </button>
 </nav>
 
@@ -171,34 +179,27 @@ async function cargarInventario() {
     document.getElementById('total-sku').innerText = inventario.length;
 
   } catch (e) {
-    console.error("Error:", e);
-    document.getElementById('grid-productos').innerHTML = `<div class="col-span-full text-center py-10 text-red-500 font-bold italic">Error de conexión.</div>`;
+    console.error(e);
   } finally {
     if (icon) icon.classList.remove('rotate-animation');
   }
 }
 
-// Para sumar stock a producto que ya existe
 function abrirModalSumar(nombre) {
   const prod = inventarioLocal.find(p => p.Producto === nombre);
   if (!prod) return;
-
   document.getElementById('modal-titulo').innerText = "Sumar Stock";
   document.getElementById('label-cantidad').innerText = "Cantidad a SUMAR";
-  
   document.getElementById('nombreP').value = prod.Producto;
   document.getElementById('nombreP').readOnly = true;
   document.getElementById('costoP').value = prod.Precio_Distribuidor;
   document.getElementById('ventaP').value = prod.Precio_Venta;
-  
   document.getElementById('modalNuevo').classList.remove('hidden');
 }
 
-// Para producto nuevo
 function abrirModalNuevo() {
   document.getElementById('modal-titulo').innerText = "Nuevo Producto";
   document.getElementById('label-cantidad').innerText = "Stock Inicial";
-  
   document.getElementById('formProducto').reset();
   document.getElementById('nombreP').readOnly = false;
   document.getElementById('modalNuevo').classList.remove('hidden');
@@ -209,29 +210,23 @@ document.getElementById('formProducto').onsubmit = async (e) => {
   const btn = document.getElementById('btnGuardar');
   if (btn.disabled) return;
 
-  const nombre = document.getElementById('nombreP').value.trim();
-  const cantidad = document.getElementById('stockP').value;
-
-  btn.innerText = "ENVIANDO...";
+  btn.innerText = "PROCESANDO...";
   btn.disabled = true;
 
   try {
-    // IMPORTANTE: Solo enviamos la cantidad que el usuario escribió.
-    // Tu Apps Script recibirá esto y lo sumará al stock que ya existe en Sheets.
+    // ENVIAMOS SOLO LA CANTIDAD NUEVA (El Apps Script suma el resto)
     await DairyAPI.enviarDatos("Inventario", {
         pestaña: "Inventario",
-        Producto: nombre,
-        Cantidad: cantidad, 
+        Producto: document.getElementById('nombreP').value.trim(),
+        Cantidad: document.getElementById('stockP').value, 
         Precio_Distribuidor: document.getElementById('costoP').value,
         Precio_Venta: document.getElementById('ventaP').value
     });
     
     cerrarModal();
-    // Recarga después de 1 segundo para dar tiempo a Sheets
-    setTimeout(() => { cargarInventario(); }, 1200);
-
+    setTimeout(() => { cargarInventario(); }, 1500);
   } catch (err) {
-    alert("Error al procesar el stock.");
+    alert("Error de conexión");
   } finally {
     btn.innerText = "PROCESAR";
     btn.disabled = false;

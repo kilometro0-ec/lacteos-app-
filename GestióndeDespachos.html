@@ -3,47 +3,44 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Lógica Láctea - Gestión de Despachos</title>
+    <title>Despachos - Lógica Láctea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
-        tailwind.config = {
-            theme: { extend: { colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" } } }
-        }
+        tailwind.config = { theme: { extend: { colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" } } } }
     </script>
+    <style>
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0; }
+        .active-icon { font-variation-settings: 'FILL' 1; }
+    </style>
 </head>
 <body class="bg-background text-gray-900 font-[Work_Sans] pb-32">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
-    <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
-            <span class="material-symbols-outlined text-3xl">local_shipping</span>
-        </div>
-        <h1 class="text-xl font-bold text-primary">Despachos</h1>
+    <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary text-3xl">local_shipping</span>
+        <h1 class="text-xl font-extrabold text-primary tracking-tight">Despachos</h1>
     </div>
-    <button onclick="cargarDatos()" class="p-2 text-primary">
+    <button onclick="cargarDatos()" class="p-2 text-primary active:rotate-180 transition-transform">
         <span class="material-symbols-outlined">refresh</span>
     </button>
 </header>
 
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-6">
-    
     <div class="grid grid-cols-2 gap-4">
-        <div class="bg-white p-4 rounded-3xl border border-outline shadow-sm text-center">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Por Entregar</p>
+        <div class="bg-white p-4 rounded-3xl border border-outline text-center shadow-sm">
+            <p class="text-[10px] font-black text-gray-400 uppercase">Pendientes</p>
             <p id="cant-pendientes" class="text-3xl font-black text-orange-500">0</p>
         </div>
-        <div class="bg-white p-4 rounded-3xl border border-outline shadow-sm text-center">
-            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Entregados</p>
+        <div class="bg-white p-4 rounded-3xl border border-outline text-center shadow-sm">
+            <p class="text-[10px] font-black text-gray-400 uppercase">Entregados Hoy</p>
             <p id="cant-entregados" class="text-3xl font-black text-green-500">0</p>
         </div>
     </div>
 
-    <div id="contenedor-pedidos" class="space-y-4">
-        <div class="text-center py-20 text-gray-400 italic">Consolidando despachos...</div>
-    </div>
+    <div id="contenedor-pedidos" class="space-y-4"></div>
 </main>
 
 <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50 px-2">
@@ -64,17 +61,18 @@
         <span class="text-[9px] font-bold">Stock</span>
     </button>
     <button class="text-primary flex flex-col items-center gap-1 font-bold">
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">local_shipping</span>
+        <span class="material-symbols-outlined active-icon">local_shipping</span>
         <span class="text-[9px] font-bold">Despachos</span>
     </button>
 </nav>
 
 <script>
-let listaGlobalPedidos = [];
 let entregadosHoy = 0;
 
 async function cargarDatos() {
     const contenedor = document.getElementById('contenedor-pedidos');
+    contenedor.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold">Sincronizando...</div>`;
+    
     try {
         const [ventas, clientes] = await Promise.all([
             DairyAPI.obtenerDatos("Ventas"),
@@ -82,90 +80,84 @@ async function cargarDatos() {
         ]);
 
         const agrupados = {};
-        ventas.forEach(v => {
+        // Filtrar solo los que NO están entregados
+        ventas.filter(v => v.Estado !== "ENTREGADO").forEach(v => {
             const nom = String(v.Cliente).trim();
             if (!agrupados[nom]) {
                 agrupados[nom] = {
                     cliente: nom,
-                    productos: [],
+                    items: [],
                     total: 0,
                     fecha: v.Fecha,
                     info: clientes.find(c => String(c.Nombre).trim().toLowerCase() === nom.toLowerCase())
                 };
             }
-            agrupados[nom].productos.push(`${v.Producto} (x${v.Cantidad})`);
+            agrupados[nom].items.push({ p: v.Producto, c: v.Cantidad });
             agrupados[nom].total += parseFloat(v["Precio Total"] || 0);
         });
 
-        listaGlobalPedidos = Object.values(agrupados).reverse();
-        renderizar();
+        const lista = Object.values(agrupados).reverse();
+        document.getElementById('cant-pendientes').innerText = lista.length;
+        document.getElementById('cant-entregados').innerText = entregadosHoy;
+        contenedor.innerHTML = "";
+
+        if (lista.length === 0) {
+            contenedor.innerHTML = `<p class="text-center py-20 text-gray-400 font-bold">¡Todo entregado!</p>`;
+            return;
+        }
+
+        lista.forEach((p, idx) => {
+            const telf = p.info ? String(p.info.Teléfono || "").replace(/[^0-9]/g, '') : "";
+            const filasProd = p.items.map(i => `
+                <div class="flex justify-between border-b border-purple-50 py-2">
+                    <span class="text-xs text-gray-700 font-medium">${i.p}</span>
+                    <span class="text-xs font-black text-primary">x${i.c}</span>
+                </div>
+            `).join('');
+
+            contenedor.innerHTML += `
+                <div id="card-${idx}" class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-black text-gray-800">${p.cliente}</h2>
+                        <span class="text-[10px] font-bold text-gray-400">${new Date(p.fecha).toLocaleDateString()}</span>
+                    </div>
+                    <div class="space-y-1">${filasProd}</div>
+                    <div class="bg-purple-50 p-3 rounded-2xl flex items-start gap-2">
+                        <span class="material-symbols-outlined text-primary text-sm">location_on</span>
+                        <p class="text-[11px] text-gray-600">${p.info ? p.info.Dirección : 'Dirección no registrada'}</p>
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <p class="text-xl font-black text-gray-900">$${p.total.toFixed(2)}</p>
+                        <div class="flex gap-2">
+                            ${telf ? `<a href="https://wa.me/${telf}" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center"><span class="material-symbols-outlined">chat</span></a>` : ''}
+                            <button onclick="completarEntrega('${p.cliente}', 'card-${idx}')" class="h-12 bg-primary text-white px-6 rounded-2xl text-[10px] font-black shadow-lg shadow-purple-100">ENTREGADO</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
     } catch (e) {
-        contenedor.innerHTML = `<p class="text-center text-red-500 font-bold p-10">Error de conexión.</p>`;
+        contenedor.innerHTML = `<p class="text-center text-red-500 py-20 font-bold">Error al conectar.</p>`;
     }
 }
 
-function renderizar() {
-    const contenedor = document.getElementById('contenedor-pedidos');
-    contenedor.innerHTML = "";
-    
-    document.getElementById('cant-pendientes').innerText = listaGlobalPedidos.length;
-    document.getElementById('cant-entregados').innerText = entregadosHoy;
-
-    if (listaGlobalPedidos.length === 0) {
-        contenedor.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold">No hay pedidos pendientes por entregar.</div>`;
-        return;
-    }
-
-    listaGlobalPedidos.forEach((p, index) => {
-        const telf = p.info ? String(p.info.Teléfono || "").replace(/[^0-9]/g, '') : "";
-        const direccion = p.info ? (p.info.Dirección || "Sin dirección") : "Dirección no registrada";
-
-        contenedor.innerHTML += `
-            <div id="card-${index}" class="bg-white p-5 rounded-3xl border border-outline shadow-sm space-y-4 transition-all duration-500">
-                <div class="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase">
-                    <span>Pendiente</span>
-                    <span>${new Date(p.fecha).toLocaleDateString()}</span>
-                </div>
-
-                <div>
-                    <h2 class="text-lg font-black text-gray-800 leading-tight">${p.cliente}</h2>
-                    <div class="text-[11px] text-primary font-bold mt-1 uppercase">
-                        ${p.productos.join(' / ')}
-                    </div>
-                </div>
-
-                <div class="bg-purple-50 p-3 rounded-2xl flex items-start gap-2">
-                    <span class="material-symbols-outlined text-primary text-sm">location_on</span>
-                    <p class="text-[11px] font-medium text-gray-600">${direccion}</p>
-                </div>
-
-                <div class="flex justify-between items-center pt-2">
-                    <p class="text-xl font-black text-gray-900">$${p.total.toFixed(2)}</p>
-                    <div class="flex gap-2">
-                        ${telf ? `<a href="https://wa.me/${telf}" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center"><span class="material-symbols-outlined">chat</span></a>` : ''}
-                        <button onclick="marcarComoEntregado(${index})" class="h-12 bg-primary text-white px-5 rounded-2xl text-[10px] font-black shadow-lg">ENTREGADO</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function marcarComoEntregado(index) {
-    const card = document.getElementById(`card-${index}`);
-    
-    // Efecto visual de desaparición
-    card.style.transform = "translateX(100px)";
-    card.style.opacity = "0";
-
-    setTimeout(() => {
-        // Actualizar contadores
+async function completarEntrega(cliente, cardId) {
+    const card = document.getElementById(cardId);
+    card.style.opacity = "0.5";
+    try {
+        await DairyAPI.enviarDatos("Ventas", { 
+            accion: "marcar_entregado", 
+            pestaña: "Ventas", 
+            Cliente: cliente 
+        });
+        card.remove();
         entregadosHoy++;
-        // Eliminar de la lista de pendientes
-        listaGlobalPedidos.splice(index, 1);
-        // Volver a dibujar la lista
-        renderizar();
-    }, 500);
+        document.getElementById('cant-entregados').innerText = entregadosHoy;
+        const pends = document.getElementById('cant-pendientes');
+        pends.innerText = parseInt(pends.innerText) - 1;
+    } catch (e) {
+        alert("Error al actualizar");
+        card.style.opacity = "1";
+    }
 }
 
 window.onload = cargarDatos;

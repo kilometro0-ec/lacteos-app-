@@ -3,11 +3,11 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Lógica Láctea | Directorio de Clientes</title>
+    <title>Lógica Láctea | Ranking de Clientes</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <script>
@@ -28,7 +28,7 @@
     <style>
         .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
         .active-icon { font-variation-settings: 'FILL' 1 !important; }
-        body { font-family: 'Work Sans', sans-serif; }
+        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 
@@ -37,9 +37,9 @@
 <header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
   <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
     <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary">
-        <span class="material-symbols-outlined text-3xl active-icon">group</span>
+        <span class="material-symbols-outlined text-3xl active-icon">workspace_premium</span>
     </div>
-    <h1 class="text-xl font-extrabold text-primary tracking-tight">Clientes</h1>
+    <h1 class="text-xl font-black text-primary tracking-tight">Ranking Clientes</h1>
   </div>
   <div class="relative">
       <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar..." class="w-32 focus:w-48 transition-all bg-purple-50 border-none rounded-full px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-primary">
@@ -50,17 +50,17 @@
   
   <section class="grid grid-cols-2 gap-4">
     <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg text-center">
-      <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Total Registrados</p>
+      <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Clientes Activos</p>
       <h2 id="total-clientes" class="text-3xl font-black">0</h2>
     </div>
     <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex flex-col justify-center text-center">
-      <p class="text-[10px] text-secondary uppercase font-black tracking-widest">Nuevos (Mes)</p>
-      <h2 id="clientes-mes" class="text-3xl font-black text-secondary">0</h2>
+      <p class="text-[10px] text-secondary uppercase font-black tracking-widest">Entregas Totales</p>
+      <h2 id="total-entregas" class="text-3xl font-black text-secondary">0</h2>
     </div>
   </section>
 
   <section id="lista-clientes" class="space-y-4">
-      <div class="text-center py-20 text-gray-400 italic font-bold">Analizando historial de pedidos...</div>
+      <div class="text-center py-20 text-gray-400 italic font-bold">Calculando ranking de entregas...</div>
   </section>
 
 </main>
@@ -69,53 +69,44 @@
 
 <script>
 let clientesData = [];
-let ventasData = [];
+let ventasEntregadas = [];
 
 async function iniciar() {
     fetch('menu.html').then(r => r.text()).then(data => {
         document.getElementById('menu-container').innerHTML = data;
-        marcarBotonActivo();
     });
     cargarDatos();
 }
 
-function marcarBotonActivo() {
-    const botones = document.querySelectorAll('.nav-item');
-    botones.forEach(btn => {
-        if (btn.getAttribute('onclick')?.includes('Clientes.html')) {
-            btn.classList.add('text-primary');
-            btn.classList.remove('text-gray-400');
-        }
-    });
-}
-
 async function cargarDatos() {
     try {
-        // Cargamos Ventas y Clientes en paralelo
         const [clientes, ventas] = await Promise.all([
             DairyAPI.obtenerDatos("Clientes"),
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        clientesData = clientes;
-        ventasData = ventas;
+        // Filtramos solo las ventas que ya fueron entregadas
+        ventasEntregadas = ventas.filter(v => String(v.Estado).trim().toUpperCase() === "ENTREGADO");
         
-        renderizarClientes(clientes);
+        // Mapeamos los clientes agregando su conteo de entregas para poder ordenar
+        clientesData = clientes.map(c => {
+            const conteo = ventasEntregadas.filter(v => 
+                String(v.Cliente).trim().toLowerCase() === String(c.Nombre).trim().toLowerCase()
+            ).length;
+            return { ...c, totalEntregas: conteo };
+        });
+
+        // REORDENAR: De mayor a menor número de entregas
+        clientesData.sort((a, b) => b.totalEntregas - a.totalEntregas);
+
+        renderizarClientes(clientesData);
 
         document.getElementById('total-clientes').innerText = clientes.length;
-        
-        const esteMes = new Date().getMonth();
-        const nuevos = clientes.filter(c => {
-            if(!c.Fecha) return false;
-            const partes = c.Fecha.split('/');
-            const mesFecha = partes.length > 1 ? parseInt(partes[1]) - 1 : new Date(c.Fecha).getMonth();
-            return mesFecha === esteMes;
-        }).length;
-        document.getElementById('clientes-mes').innerText = nuevos;
+        document.getElementById('total-entregas').innerText = ventasEntregadas.length;
 
     } catch (e) {
-        console.error("Error cargando datos:", e);
-        document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-400">Error al conectar con la base de datos</p>`;
+        console.error("Error:", e);
+        document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-400">Error de conexión</p>`;
     }
 }
 
@@ -124,18 +115,11 @@ function renderizarClientes(lista) {
     container.innerHTML = "";
 
     if(lista.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 font-bold py-10">No se encontraron clientes</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 font-bold py-10">No hay datos disponibles</p>`;
         return;
     }
 
     lista.forEach(c => {
-        // CONTAR PEDIDOS: Filtramos las ventas donde el cliente coincida
-        // Usamos trim() y toLowerCase() para evitar errores por espacios o mayúsculas
-        const numeroPedidos = ventasData.filter(v => 
-            String(v.Cliente).trim().toLowerCase() === String(c.Nombre).trim().toLowerCase()
-        ).length;
-
-        // Formateo de teléfono para WhatsApp
         let rawTel = c.Teléfono?.toString() || "";
         let limpio = rawTel.replace(/\D/g, ''); 
         if (limpio.startsWith('0')) limpio = limpio.substring(1); 
@@ -143,36 +127,31 @@ function renderizarClientes(lista) {
 
         container.innerHTML += `
             <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all">
-                <div class="relative">
-                    <div class="w-14 h-14 rounded-[1.2rem] bg-purple-50 flex items-center justify-center text-primary">
-                        <span class="material-symbols-outlined text-3xl">account_circle</span>
-                    </div>
-                    <div class="absolute -top-2 -right-2 bg-secondary text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
-                        ${numeroPedidos}
-                    </div>
+                <div class="w-14 h-14 rounded-[1.2rem] bg-purple-50 flex items-center justify-center text-primary shrink-0">
+                    <span class="material-symbols-outlined text-3xl">person</span>
                 </div>
 
-                <div class="flex-1">
-                    <div class="flex items-center gap-2">
-                         <h3 class="font-black text-gray-800 leading-tight uppercase text-sm">${c.Nombre}</h3>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-baseline gap-2">
+                         <h3 class="font-extrabold text-gray-800 leading-tight uppercase text-sm truncate">${c.Nombre}</h3>
+                         <span class="text-2xl font-black text-primary">${c.totalEntregas}</span>
                     </div>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">${c.CI_RUC || 'S/N Cédula'}</p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter mb-2">${c.CI_RUC || 'S/N Cédula'}</p>
                     
-                    <div class="flex gap-2 mt-2">
-                        <a href="https://wa.me/${limpio}" target="_blank" class="flex items-center gap-1 text-[9px] font-black text-green-600 bg-green-50 px-2 py-1 rounded-lg uppercase">
+                    <div class="flex gap-2">
+                        <a href="https://wa.me/${limpio}" target="_blank" class="flex items-center gap-1 text-[9px] font-black text-green-600 bg-green-50 px-3 py-1.5 rounded-xl uppercase">
                             <span class="material-symbols-outlined text-xs">chat</span> WhatsApp
                         </a>
-                        <span class="text-[9px] font-black text-primary bg-purple-50 px-2 py-1 rounded-lg uppercase">
-                            ${numeroPedidos} COMPRAS
-                        </span>
+                        <div class="flex items-center gap-1 text-[9px] font-black text-secondary bg-pink-50 px-3 py-1.5 rounded-xl uppercase">
+                            <span class="material-symbols-outlined text-xs">task_alt</span> Entregados
+                        </div>
                     </div>
                 </div>
 
-                <div class="text-right">
-                    <button onclick="verMapa('${c.Dirección}')" class="text-primary hover:scale-110 transition-transform">
-                        <span class="material-symbols-outlined active-icon text-3xl">location_on</span>
+                <div class="shrink-0">
+                    <button onclick="verMapa('${c.Dirección}')" class="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined active-icon text-2xl">location_on</span>
                     </button>
-                    <p class="text-[8px] font-black text-gray-400 mt-1 uppercase">Mapa</p>
                 </div>
             </div>`;
     });
@@ -181,16 +160,14 @@ function renderizarClientes(lista) {
 function filtrarClientes() {
     const busqueda = document.getElementById('buscador').value.toLowerCase();
     const filtrados = clientesData.filter(c => 
-        String(c.Nombre).toLowerCase().includes(busqueda) || 
-        (c.CI_RUC && String(c.CI_RUC).includes(busqueda))
+        String(c.Nombre).toLowerCase().includes(busqueda)
     );
     renderizarClientes(filtrados);
 }
 
 function verMapa(dir) {
     if(!dir || dir === "undefined" || dir.trim() === "") return alert("Dirección no registrada");
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`;
-    window.open(url, '_blank');
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
 }
 
 window.onload = iniciar;

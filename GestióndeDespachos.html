@@ -22,7 +22,6 @@
             0% { transform: translateX(0); opacity: 1; }
             100% { transform: translateX(150%); opacity: 0; }
         }
-        /* Ajuste de fuente global para mejor lectura */
         body { font-size: 16px; }
     </style>
 </head>
@@ -34,8 +33,12 @@
         <h1 class="text-2xl font-extrabold text-primary tracking-tight">Despachos</h1>
     </div>
     <div class="flex gap-2">
-        <button onclick="reiniciarContadoresHoy()" class="p-2 text-gray-400"><span class="material-symbols-outlined">delete_history</span></button>
-        <button onclick="cargarDatos()" class="p-2 text-primary active:rotate-180 transition-transform"><span class="material-symbols-outlined">refresh</span></button>
+        <button onclick="reiniciarContadoresHoy()" class="p-2 text-gray-400">
+            <span class="material-symbols-outlined">delete_history</span>
+        </button>
+        <button onclick="cargarDatos()" class="p-2 text-primary active:rotate-180 transition-transform">
+            <span class="material-symbols-outlined">refresh</span>
+        </button>
     </div>
 </header>
 
@@ -63,20 +66,24 @@
 <div id="menu-container"></div>
 
 <script>
-// Cargar contadores desde la memoria del navegador (Persistencia)
+// Persistencia de datos
 let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, items: 0 };
 
+// Cargar Menú y resaltar botón
 fetch('menu.html').then(r => r.text()).then(data => {
     document.getElementById('menu-container').innerHTML = data;
     marcarBotonActivo();
 });
 
 function marcarBotonActivo() {
-    const pagina = "GestióndeDespachos.html";
-    document.querySelectorAll('#menu-container button').forEach(btn => {
-        if (btn.getAttribute('onclick')?.includes(pagina)) {
-            btn.classList.add('text-primary', 'font-bold');
-            btn.querySelector('.material-symbols-outlined').classList.add('active-icon');
+    const paginaActual = window.location.pathname.split("/").pop() || "GestióndeDespachos.html";
+    const botones = document.querySelectorAll('.nav-item');
+    
+    botones.forEach(btn => {
+        const link = btn.getAttribute('onclick');
+        if (link && link.includes(paginaActual)) {
+            btn.classList.remove('text-gray-400');
+            btn.classList.add('text-primary');
         }
     });
 }
@@ -106,7 +113,7 @@ async function cargarDatos() {
                 };
             }
             const cantidad = parseFloat(v.Cantidad) || 0;
-            const pvp = parseFloat(v["Precio PVP"] || v.Precio_PVP || 0); // Maneja ambas nomenclaturas
+            const pvp = parseFloat(v["Precio PVP"] || v.Precio_PVP || 0);
             agrupados[nom].items.push({ p: v.Producto, c: cantidad, pvp: pvp });
             agrupados[nom].totalDinero += parseFloat(v["Precio Total"] || 0);
             totalItemsGlobalPendientes += cantidad;
@@ -129,7 +136,7 @@ async function cargarDatos() {
                 <div class="flex justify-between items-center border-b border-purple-50 py-3">
                     <div class="flex flex-col">
                         <span class="text-base text-gray-800 font-bold">${i.p}</span>
-                        <span class="text-xs text-primary font-black">$${i.pvp.toFixed(2)} c/u</span>
+                        <span class="text-xs text-primary font-black tracking-wide">$${i.pvp.toFixed(2)} c/u</span>
                     </div>
                     <span class="text-lg font-black text-primary bg-purple-100 px-3 py-1 rounded-xl">x${i.c}</span>
                 </div>
@@ -182,7 +189,6 @@ async function confirmarEntrega(cliente, cardId, cantItems) {
             card.remove();
             statsSesion.pedidos += 1;
             statsSesion.items += cantItems;
-            // Guardar en memoria para que no se borre al refrescar
             localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
             actualizarPantallaContadores(
                 parseInt(document.getElementById('pedidos-pend').innerText) - 1,

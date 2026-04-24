@@ -342,7 +342,8 @@ async function finalizarVenta() {
         
         const cObj = clientesData.find(c => c.Nombre === cli);
         let tel = "593" + (cObj?.Teléfono?.toString().replace(/\D/g, '').slice(-9) || "");
-        window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(`*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cli}\n*Entrega:* ${f}\n\n*DETALLE:*\n${det}\n*TOTAL: $${total.toFixed(2)}*`)}`, '_blank');
+      // Cambia la línea de window.open por esta para probar:
+window.open(`https://wa.me/${tel}?text=${encodeURIComponent(mensaje)}`, '_blank');
         location.reload();
     } catch(e) { 
         alert("Error de red"); 

@@ -23,7 +23,6 @@
         }
     </script>
     <style>
-        /* Aplicando la fuente Work Sans a todo el documento */
         body { 
             font-family: 'Work Sans', sans-serif; 
             -webkit-tap-highlight-color: transparent; 
@@ -31,12 +30,15 @@
         .out-of-stock { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
         .stock-critico { border: 2px solid #ef4444 !important; }
         
-        /* Estilo para los títulos en cursiva del diseño anterior */
         .brand-title {
             font-style: italic;
             font-weight: 800;
             letter-spacing: -0.05em;
         }
+        
+        /* Scrollbar estética para el carrito */
+        #lista-carrito::-webkit-scrollbar { width: 4px; }
+        #lista-carrito::-webkit-scrollbar-thumb { background: #e9d5ff; border-radius: 10px; }
     </style>
 </head>
 <body class="bg-background pb-40">
@@ -90,7 +92,7 @@
                     </div>
                     
                     <div class="pt-4 border-t border-dashed border-outline">
-                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Fecha de Entrega</label>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Fecha Programada de Entrega</label>
                         <input type="date" id="fecha-entrega" class="w-full p-4 bg-gray-50 border-none rounded-2xl font-bold text-primary focus:ring-2 focus:ring-primary">
                     </div>
 
@@ -138,7 +140,7 @@ async function iniciar() {
         document.getElementById('card-monto-ventas').innerText = `$${totalSumado.toFixed(2)}`;
 
         renderizarProductos();
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("Error de inicio:", e); }
 }
 
 function actualizarNombreCarrito() {
@@ -204,27 +206,26 @@ function actualizarCarritoUI() {
 async function finalizarVenta() {
     const cliNombre = document.getElementById('select-cliente').value;
     const fecha = document.getElementById('fecha-entrega').value;
-    if(!cliNombre || !fecha) return alert("Falta cliente o fecha de entrega");
+    if(!cliNombre || !fecha) return alert("Selecciona cliente y fecha de entrega");
     
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(items.length === 0) return alert("Carrito vacío");
+    if(items.length === 0) return alert("El carrito está vacío");
 
     const btn = document.getElementById('btn-finalizar');
-    btn.disabled = true; btn.innerText = "REGISTRANDO...";
+    btn.disabled = true; 
+    btn.innerText = "REGISTRANDO...";
 
     try {
-        let txtWA = `*LÓGICA LÁCTEA - PEDIDO CONFIRMADO*\n\n`;
-        txtWA += `*Cliente:* ${cliNombre}\n`;
-        txtWA += `*Entrega:* ${fecha}\n\n`;
-        txtWA += `*DETALLE:*\n`;
-
         let totalGral = 0;
+        let listaProductosTxt = "";
+
+        // Proceso de guardado
         for(const n of items) {
             const p = productosData.find(x => x.Producto === n);
-            const pvp = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
-            const sub = carrito[n] * pvp;
+            const pvpVal = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
+            const sub = carrito[n] * pvpVal;
             totalGral += sub;
-            txtWA += `• ${carrito[n]} x ${n} ($${sub.toFixed(2)})\n`;
+            listaProductosTxt += `• ${carrito[n]} x ${n} ($${sub.toFixed(2)})\n`;
 
             await DairyAPI.enviarDatos("Ventas", {
                 pestaña: "Ventas", Cliente: cliNombre, Producto: n,
@@ -232,14 +233,45 @@ async function finalizarVenta() {
             });
         }
 
+        // Construir mensaje WhatsApp
+        let txtWA = `*LÓGICA LÁCTEA - PEDIDO CONFIRMADO*\n\n`;
+        txtWA += `*Cliente:* ${cliNombre}\n`;
+        txtWA += `*Entrega:* ${fecha}\n\n`;
+        txtWA += `*DETALLE:*\n${listaProductosTxt}`;
         txtWA += `\n*TOTAL A PAGAR: $${totalGral.toFixed(2)}*`;
+        
         const cliObj = clientesData.find(c => c.Nombre === cliNombre);
-        const tel = cliObj ? cliObj.Teléfono.replace(/\D/g, '') : "593";
+        
+        // Formatear Teléfono
+        let tel = "593"; 
+        if (cliObj && cliObj.Teléfono) {
+            let numLimpio = cliObj.Teléfono.toString().replace(/\D/g, '');
+            if (numLimpio.startsWith('0')) {
+                tel = "593" + numLimpio.substring(1);
+            } else if (numLimpio.length < 10) {
+                tel = "593" + numLimpio;
+            } else {
+                tel = numLimpio;
+            }
+        }
 
-        alert("Venta registrada. Abriendo WhatsApp...");
-        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(txtWA)}`, '_blank');
-        location.reload();
-    } catch(e) { alert("Error de red"); btn.disabled = false; }
+        const urlFinal = `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(txtWA)}`;
+        
+        alert("¡Venta Exitosa! Abriendo WhatsApp del cliente...");
+        
+        // Abrir WhatsApp con respaldo por si falla window.open
+        const waWindow = window.open(urlFinal, '_blank');
+        if (!waWindow) {
+            location.href = urlFinal;
+        } else {
+            location.reload();
+        }
+
+    } catch(e) { 
+        alert("Error de conexión. Intenta de nuevo."); 
+        btn.disabled = false; 
+        btn.innerText = "Confirmar Pedido"; 
+    }
 }
 
 window.onload = iniciar;

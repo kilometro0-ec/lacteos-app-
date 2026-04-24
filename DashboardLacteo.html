@@ -32,8 +32,6 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
     .rotate-animation { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    
-    /* Clase para los iconos rellenos del menú cuando están activos */
     .active-icon { font-variation-settings: 'FILL' 1 !important; }
     </style>
 </head>
@@ -51,32 +49,46 @@
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
 
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-      <div class="md:col-span-8 bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-        <span class="text-secondary text-xs uppercase font-black tracking-widest">Ventas del Día</span>
-        <div class="flex items-center gap-2 mt-2">
-          <span id="ventas-hoy" class="text-5xl font-black tracking-tighter text-gray-900">$0.00</span>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+        <span class="text-secondary text-[10px] uppercase font-black tracking-widest">Ventas Totales</span>
+        <div class="flex items-center gap-2 mt-1">
+          <span id="ventas-hoy" class="text-3xl font-black tracking-tighter text-gray-900">$0.00</span>
         </div>
       </div>
 
-      <div class="md:col-span-4 grid grid-cols-2 gap-2">
+      <div class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+        <span class="text-primary text-[10px] uppercase font-black tracking-widest">Valor Invertido</span>
+        <div class="flex items-center gap-2 mt-1">
+          <span id="valor-invertido" class="text-3xl font-black tracking-tighter text-gray-900">$0.00</span>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm border-success/30">
+        <span class="text-success text-[10px] uppercase font-black tracking-widest">Ganancia Bruta</span>
+        <div class="flex items-center gap-2 mt-1">
+          <span id="ganancia-total" class="text-3xl font-black tracking-tighter text-success">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
         <button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
           <span class="material-symbols-outlined text-2xl">add_shopping_cart</span>
-          <span class="text-[10px] font-black uppercase">Nueva Venta</span>
+          <span class="text-[10px] font-black uppercase tracking-tighter">Nueva Venta</span>
         </button>
         <button onclick="window.location.href='ControldeInventario.html'" class="bg-secondary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
           <span class="material-symbols-outlined text-2xl">inventory</span>
-          <span class="text-[10px] font-black uppercase">Stock</span>
+          <span class="text-[10px] font-black uppercase tracking-tighter">Stock</span>
         </button>
         <button onclick="window.location.href='GestiondeClientes.html'" class="bg-white border-2 border-outline p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95">
           <span class="material-symbols-outlined text-2xl text-primary">group</span>
-          <span class="text-[10px] font-black uppercase text-primary">Clientes</span>
+          <span class="text-[10px] font-black uppercase text-primary tracking-tighter">Clientes</span>
         </button>
         <button onclick="window.location.href='GestióndeDespachos.html'" class="bg-success text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-green-100">
           <span class="material-symbols-outlined text-2xl">local_shipping</span>
-          <span class="text-[10px] font-black uppercase text-white">Ruta</span>
+          <span class="text-[10px] font-black uppercase tracking-tighter">Ruta</span>
         </button>
-      </div>
     </div>
 
     <section class="bg-white p-5 rounded-[2.5rem] border border-outline shadow-sm">
@@ -90,7 +102,7 @@
 
     <section>
       <div class="flex justify-between items-center mb-4 px-2">
-        <h3 class="text-xl font-black tracking-tight">Estado de Stock</h3>
+        <h3 class="text-xl font-black tracking-tight">Estado de Stock <span class="text-xs font-normal text-slate-400">(Auto-ordenado)</span></h3>
         <button id="btn-refresh" onclick="cargarDatos()" class="text-primary text-xs font-black flex items-center gap-2 bg-white px-4 py-2 rounded-2xl border border-outline active:bg-purple-50 shadow-sm transition-all">
             <span id="icon-refresh" class="material-symbols-outlined text-sm">refresh</span> ACTUALIZAR
         </button>
@@ -111,22 +123,17 @@
         </table>
       </div>
     </section>
-
 </main>
 
 <div id="menu-container"></div>
 
 <script>
-// 1. CARGAR EL MENÚ EXTERNO
-fetch('menu.html')
-    .then(response => response.text())
-    .then(data => {
-        document.getElementById('menu-container').innerHTML = data;
-        marcarBotonActivo();
-    });
+fetch('menu.html').then(r => r.text()).then(d => {
+    document.getElementById('menu-container').innerHTML = d;
+    marcarBotonActivo();
+});
 
 function marcarBotonActivo() {
-    // Detectamos si es el Dashboard o el Inicio
     const botones = document.querySelectorAll('.nav-item');
     botones.forEach(btn => {
         if (btn.getAttribute('onclick')?.includes('DashboardLácteo.html')) {
@@ -136,55 +143,80 @@ function marcarBotonActivo() {
     });
 }
 
-// 2. LÓGICA DE DATOS DEL DASHBOARD
 async function cargarDatos() {
     const icon = document.getElementById('icon-refresh');
     icon.classList.add('rotate-animation');
 
     try {
-        // Cargar Ventas, Inventario y Despachos en paralelo
         const [inventario, ventas] = await Promise.all([
             DairyAPI.obtenerDatos("Inventario"),
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        // Renderizar Inventario
+        // 1. LÓGICA DE INVENTARIO: ORDENAR DE MENOR A MAYOR STOCK
         const tabla = document.getElementById('tabla-inventario');
         tabla.innerHTML = "";
-        inventario.slice(0, 5).forEach(prod => {
+        
+        const inventarioOrdenado = inventario.sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0));
+
+        inventarioOrdenado.forEach(prod => {
             const stock = parseFloat(prod.Stock) || 0;
-            const esBajo = stock <= 10;
+            let statusHTML = "";
+            
+            // LÓGICA DE ESTADOS: Óptimo (>10), Crítico (<=5)
+            if (stock <= 5) {
+                statusHTML = `<span class="bg-red-100 text-red-600 text-[9px] font-black px-2 py-1 rounded-full uppercase">Crítico</span>`;
+            } else if (stock > 10) {
+                statusHTML = `<span class="bg-green-100 text-green-600 text-[9px] font-black px-2 py-1 rounded-full uppercase">Óptimo</span>`;
+            } else {
+                statusHTML = `<span class="bg-amber-100 text-amber-600 text-[9px] font-black px-2 py-1 rounded-full uppercase">Regular</span>`;
+            }
+
             tabla.innerHTML += `
                 <tr class="border-t border-purple-50">
                     <td class="p-4 font-extrabold text-gray-800">${prod.Producto}</td>
-                    <td class="p-4 text-center font-black text-lg">${stock}</td>
-                    <td class="p-4 text-center">
-                        <div class="w-3 h-3 rounded-full mx-auto ${esBajo ? 'bg-red-500 animate-pulse' : 'bg-green-500'}"></div>
-                    </td>
+                    <td class="p-4 text-center font-black text-lg ${stock <= 5 ? 'text-red-500' : 'text-gray-700'}">${stock}</td>
+                    <td class="p-4 text-center">${statusHTML}</td>
                 </tr>`;
         });
 
-        // Calcular Ventas del Día (Filtrando por fecha de hoy si la tienes en el Excel)
-        const totalVentas = ventas.reduce((acc, v) => acc + (parseFloat(v["Precio Total"]) || 0), 0);
-        document.getElementById('ventas-hoy').innerText = `$${totalVentas.toFixed(2)}`;
+        // 2. LÓGICA DE MÉTRICAS FINANCIERAS
+        let totalVendido = 0;
+        let totalInvertido = 0;
 
-        // Cargar Despachos Pendientes (de la misma lógica que GestióndeDespachos)
+        // Calcular Valor Invertido (Costo Unitario * Stock actual)
+        inventario.forEach(p => {
+            const costo = parseFloat(p.Costo_Unitario?.toString().replace(',','.')) || 0;
+            const stock = parseFloat(p.Stock) || 0;
+            totalInvertido += (costo * stock);
+        });
+
+        // Calcular Ventas Totales
+        ventas.forEach(v => {
+            totalVendido += (parseFloat(v["Precio Total"]?.toString().replace(',','.')) || 0);
+        });
+
+        const ganancia = totalVendido - totalInvertido;
+
+        document.getElementById('ventas-hoy').innerText = `$${totalVendido.toFixed(2)}`;
+        document.getElementById('valor-invertido').innerText = `$${totalInvertido.toFixed(2)}`;
+        document.getElementById('ganancia-total').innerText = `$${ganancia.toFixed(2)}`;
+
+        // 3. PRÓXIMAS ENTREGAS
         const listaEntregas = document.getElementById('lista-entregas');
         const pendientes = ventas.filter(v => v.Estado === "PENDIENTE");
-        
-        // Agrupar por cliente para mostrar los 3 primeros en el Dashboard
         const clientesUnicos = [...new Set(pendientes.map(v => v.Cliente))].slice(0, 3);
 
         listaEntregas.innerHTML = "";
         if (clientesUnicos.length === 0) {
-            listaEntregas.innerHTML = `<p class="text-center py-4 text-gray-400 font-bold">No hay entregas pendientes</p>`;
+            listaEntregas.innerHTML = `<p class="text-center py-4 text-gray-400 font-bold">Sin entregas para hoy</p>`;
         } else {
             clientesUnicos.forEach(cliente => {
                 listaEntregas.innerHTML += `
                     <div class="flex justify-between items-center bg-green-50 p-4 rounded-2xl border border-green-100">
                         <div>
                             <p class="text-sm font-black text-green-800 uppercase tracking-tight">${cliente}</p>
-                            <p class="text-[10px] font-bold text-green-600">CLIENTE PENDIENTE</p>
+                            <p class="text-[10px] font-bold text-green-600">PEDIDO PENDIENTE</p>
                         </div>
                         <span class="material-symbols-outlined text-green-600 active-icon">local_shipping</span>
                     </div>`;
@@ -192,7 +224,7 @@ async function cargarDatos() {
         }
 
     } catch (e) {
-        console.error("Error al cargar dashboard:", e);
+        console.error("Error Dashboard:", e);
     } finally {
         setTimeout(() => icon.classList.remove('rotate-animation'), 800);
     }

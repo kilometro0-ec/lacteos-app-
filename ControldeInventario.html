@@ -19,8 +19,6 @@ tailwind.config = {
       colors: {
         primary: "#a21caf",
         "primary-container": "#f5d0fe",
-        secondary: "#db2777",
-        success: "#16a34a",
         background: "#faf5ff",
         surface: "#ffffff",
         outline: "#e9d5ff",
@@ -36,6 +34,14 @@ tailwind.config = {
 body { font-family: 'Work Sans', sans-serif; }
 .rotate-animation { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Resalte exclusivo para Stock Crítico (<= 5) */
+@keyframes pulse-red-border {
+  0% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
+  50% { border-color: #fca5a5; box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.1); }
+  100% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
+}
+.card-critica { animation: pulse-red-border 2s infinite; border-width: 2px !important; }
 </style>
 </head>
 
@@ -48,52 +54,38 @@ body { font-family: 'Work Sans', sans-serif; }
     </div>
     <h1 class="text-xl font-bold text-primary">Lógica Láctea</h1>
   </div>
-  <div class="flex gap-2">
-    <button onclick="cargarInventario()" class="p-2 text-primary hover:bg-primary-container rounded-full transition-colors">
-        <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
-    </button>
-  </div>
+  <button onclick="cargarInventario()" class="p-2 text-primary hover:bg-primary-container rounded-full transition-colors">
+      <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
+  </button>
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto">
+  <section class="mb-6">
+    <h1 class="text-3xl font-bold text-primary">Control de Stock</h1>
+  </section>
 
-<section class="mb-6">
-  <h1 class="text-3xl font-bold text-primary">Control de Stock</h1>
-</section>
-
-<section class="grid grid-cols-3 gap-2 mb-8">
-  <div class="bg-white p-3 rounded-xl border border-outline shadow-sm flex flex-col items-center text-center">
-    <p class="text-[8px] text-gray-400 uppercase font-black mb-1">Valor Bodega</p>
-    <h2 id="valor-bodega" class="text-sm font-bold text-primary">$0.00</h2>
-  </div>
-
-  <div class="bg-red-50 p-3 rounded-xl border border-red-100 shadow-sm flex flex-col items-center text-center">
-    <p class="text-[8px] text-red-600 uppercase font-black mb-1">Críticos</p>
-    <h2 id="count-critico" class="text-sm font-bold text-red-600">0</h2>
-  </div>
-
-  <div class="bg-white p-3 rounded-xl border border-outline shadow-sm flex flex-col items-center text-center">
-    <p class="text-[8px] text-success uppercase font-black mb-1">Total SKUs</p>
-    <h2 id="total-sku" class="text-sm font-bold text-success">0</h2>
-  </div>
-</section>
-
-<div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-    <div class="col-span-full text-center py-10 text-gray-400 italic">Conectando con inventario...</div>
-</div>
-
-<section class="bg-primary text-white p-6 rounded-3xl shadow-xl shadow-purple-200">
-  <div class="flex flex-col gap-4">
-    <div>
-        <h2 class="text-xl font-bold">Gestión de Existencias</h2>
-        <p class="text-purple-200 text-xs">Busca o agrega productos nuevos</p>
+  <section class="grid grid-cols-3 gap-2 mb-8">
+    <div class="bg-white p-3 rounded-xl border border-outline shadow-sm flex flex-col items-center text-center">
+      <p class="text-[8px] text-gray-400 uppercase font-black mb-1">Valor Bodega</p>
+      <h2 id="valor-bodega" class="text-sm font-bold text-primary">$0.00</h2>
     </div>
-    <button onclick="abrirModal()" class="w-full bg-white text-primary py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-purple-50 transition-all active:scale-95">
-        <span class="material-symbols-outlined">add_box</span> AGREGAR STOCK / NUEVO
-    </button>
-  </div>
-</section>
+    <div class="bg-red-50 p-3 rounded-xl border border-red-100 shadow-sm flex flex-col items-center text-center">
+      <p class="text-[8px] text-red-600 uppercase font-black mb-1">Críticos (≤5)</p>
+      <h2 id="count-critico" class="text-sm font-bold text-red-600">0</h2>
+    </div>
+    <div class="bg-white p-3 rounded-xl border border-outline shadow-sm flex flex-col items-center text-center">
+      <p class="text-[8px] text-success uppercase font-black mb-1">Total SKUs</p>
+      <h2 id="total-sku" class="text-sm font-bold text-success">0</h2>
+    </div>
+  </section>
 
+  <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="col-span-full text-center py-10 text-gray-400 italic">Sincronizando inventario...</div>
+  </div>
+
+  <button onclick="abrirModal()" class="w-full bg-primary text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all">
+      <span class="material-symbols-outlined">add_box</span> AGREGAR STOCK / NUEVO
+  </button>
 </main>
 
 <div id="modalNuevo" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
@@ -109,7 +101,7 @@ body { font-family: 'Work Sans', sans-serif; }
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Cantidad</label>
+          <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Cantidad a Sumar</label>
           <input type="number" id="stockP" required placeholder="0" class="w-full border-outline rounded-xl p-3">
         </div>
         <div>
@@ -130,21 +122,13 @@ body { font-family: 'Work Sans', sans-serif; }
 </div>
 
 <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
-  <button onclick="window.location.href='DashboardLacteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
+  <button onclick="window.location.href='DashboardLacteo.html'" class="text-gray-400 flex flex-col items-center">
     <span class="material-symbols-outlined">home</span>
     <span class="text-[10px]">Inicio</span>
   </button>
-  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-gray-400 flex flex-col items-center gap-1">
-    <span class="material-symbols-outlined">receipt</span>
-    <span class="text-[10px]">Ventas</span>
-  </button>
-  <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center gap-1 font-bold">
+  <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center font-bold">
     <span class="material-symbols-outlined">inventory</span>
     <span class="text-[10px]">Stock</span>
-  </button>
-  <button onclick="window.location.href='GestióndeDespachos.html'" class="text-success flex flex-col items-center gap-1">
-    <span class="material-symbols-outlined">local_shipping</span>
-    <span class="text-[10px]">Entregas</span>
   </button>
 </nav>
 
@@ -156,13 +140,11 @@ async function cargarInventario() {
   if (icon) icon.classList.add('rotate-animation');
   
   try {
-    // CORRECCIÓN: Usar el método que sí funciona en el Dashboard
     const inventario = await DairyAPI.obtenerDatos("Inventario");
     inventarioLocal = inventario;
 
     const container = document.getElementById('grid-productos');
     const dataList = document.getElementById('lista-productos');
-    
     container.innerHTML = "";
     dataList.innerHTML = "";
     
@@ -171,7 +153,7 @@ async function cargarInventario() {
 
     inventario.forEach(prod => {
       const stock = parseInt(prod.Stock) || 0;
-      const esCritico = stock < 15;
+      const esCritico = stock <= 5; // Solo resalta si es menor o igual a 5
       if(esCritico) criticos++;
       totalCosto += (parseFloat(prod.Precio_Distribuidor) || 0) * stock;
 
@@ -180,7 +162,7 @@ async function cargarInventario() {
       dataList.appendChild(option);
 
       container.innerHTML += `
-        <div class="bg-white p-3 rounded-2xl border ${esCritico ? 'border-red-200' : 'border-outline'} shadow-sm relative">
+        <div class="bg-white p-3 rounded-2xl border ${esCritico ? 'card-critica' : 'border-outline'} shadow-sm relative">
           <h3 class="font-bold text-[10px] truncate mb-1 uppercase text-gray-600">${prod.Producto}</h3>
           <div class="flex justify-between items-center">
               <p class="text-primary font-black text-xs">$${parseFloat(prod.Precio_Venta || 0).toFixed(2)}</p>
@@ -194,16 +176,15 @@ async function cargarInventario() {
     document.getElementById('total-sku').innerText = inventario.length;
 
   } catch (e) {
-    console.error("Error cargando inventario:", e);
-    document.getElementById('grid-productos').innerHTML = `<div class="col-span-full text-center py-10 text-red-500 italic">Error de conexión con la hoja.</div>`;
+    console.error(e);
   } finally {
     if (icon) icon.classList.remove('rotate-animation');
   }
 }
 
 document.getElementById('nombreP').addEventListener('input', function(e) {
-  const nombreBuscado = e.target.value.toLowerCase().trim();
-  const producto = inventarioLocal.find(p => p.Producto.toLowerCase().trim() === nombreBuscado);
+  const nombre = e.target.value.toLowerCase().trim();
+  const producto = inventarioLocal.find(p => p.Producto.toLowerCase().trim() === nombre);
   
   const costoInput = document.getElementById('costoP');
   const ventaInput = document.getElementById('ventaP');
@@ -226,25 +207,31 @@ document.getElementById('nombreP').addEventListener('input', function(e) {
 document.getElementById('formProducto').onsubmit = async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnGuardar');
+  const nombreInput = document.getElementById('nombreP').value.trim();
+  const cantidadNueva = parseInt(document.getElementById('stockP').value) || 0;
+
+  // LÓGICA DE SUMA: Buscar stock actual en el inventario que ya tenemos cargado
+  const itemExistente = inventarioLocal.find(p => p.Producto.toLowerCase().trim() === nombreInput.toLowerCase());
+  const stockAnterior = itemExistente ? parseInt(itemExistente.Stock) : 0;
+  const stockTotalParaEnviar = stockAnterior + cantidadNueva;
+
   btn.innerText = "PROCESANDO...";
   btn.disabled = true;
 
   try {
-    // CORRECCIÓN: Usar enviarDatos del API Config
     await DairyAPI.enviarDatos("Inventario", {
         pestaña: "Inventario",
-        Producto: document.getElementById('nombreP').value,
-        Cantidad: document.getElementById('stockP').value,
+        Producto: nombreInput,
+        Cantidad: stockTotalParaEnviar, // Se envía la suma total
         Precio_Distribuidor: document.getElementById('costoP').value,
         Precio_Venta: document.getElementById('ventaP').value
     });
     
     cerrarModal();
-    cargarInventario();
+    await cargarInventario();
     document.getElementById('formProducto').reset();
-    alert("Inventario actualizado");
   } catch (err) {
-    alert("Error al guardar datos");
+    alert("Error de conexión");
   } finally {
     btn.innerText = "PROCESAR";
     btn.disabled = false;

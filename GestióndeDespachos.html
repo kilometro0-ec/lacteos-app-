@@ -14,17 +14,16 @@
     <style>
         .material-symbols-outlined { font-variation-settings: 'FILL' 0; }
         .active-icon { font-variation-settings: 'FILL' 1; }
-        
-        /* Animación de deslizamiento hacia la derecha */
         .anim-slide-out {
             animation: slideRight 0.6s forwards cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none;
         }
-
         @keyframes slideRight {
             0% { transform: translateX(0); opacity: 1; }
             100% { transform: translateX(150%); opacity: 0; }
         }
+        /* Ajuste de fuente global para mejor lectura */
+        body { font-size: 16px; }
     </style>
 </head>
 <body class="bg-background text-gray-900 font-[Work_Sans] pb-32">
@@ -32,75 +31,59 @@
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
     <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-primary text-3xl">local_shipping</span>
-        <h1 class="text-xl font-extrabold text-primary tracking-tight">Despachos</h1>
+        <h1 class="text-2xl font-extrabold text-primary tracking-tight">Despachos</h1>
     </div>
-    <button onclick="cargarDatos()" class="p-2 text-primary active:rotate-180 transition-transform">
-        <span class="material-symbols-outlined">refresh</span>
-    </button>
+    <div class="flex gap-2">
+        <button onclick="reiniciarContadoresHoy()" class="p-2 text-gray-400"><span class="material-symbols-outlined">delete_history</span></button>
+        <button onclick="cargarDatos()" class="p-2 text-primary active:rotate-180 transition-transform"><span class="material-symbols-outlined">refresh</span></button>
+    </div>
 </header>
 
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-4">
     <div class="grid grid-cols-2 gap-3">
-        <div class="bg-white p-3 rounded-3xl border border-orange-100 shadow-sm">
-            <p class="text-[9px] font-black text-orange-400 uppercase text-center tracking-tighter">Por Despachar</p>
-            <div class="flex justify-around items-end mt-1">
-                <div class="text-center">
-                    <p id="pedidos-pend" class="text-2xl font-black text-orange-600">0</p>
-                    <p class="text-[8px] font-bold text-gray-400">Pedidos</p>
-                </div>
-                <div class="text-center">
-                    <p id="items-pend" class="text-2xl font-black text-orange-600">0</p>
-                    <p class="text-[8px] font-bold text-gray-400">Ítems</p>
-                </div>
+        <div class="bg-white p-4 rounded-3xl border border-orange-100 shadow-sm text-center">
+            <p class="text-xs font-black text-orange-400 uppercase">Por Despachar</p>
+            <div class="flex justify-around mt-2">
+                <div><p id="pedidos-pend" class="text-3xl font-black text-orange-600">0</p><p class="text-[10px] font-bold text-gray-400">Pedidos</p></div>
+                <div><p id="items-pend" class="text-3xl font-black text-orange-600">0</p><p class="text-[10px] font-bold text-gray-400">Ítems</p></div>
             </div>
         </div>
-        <div class="bg-white p-3 rounded-3xl border border-green-100 shadow-sm">
-            <p class="text-[9px] font-black text-green-400 uppercase text-center tracking-tighter">Entregados Hoy</p>
-            <div class="flex justify-around items-end mt-1">
-                <div class="text-center">
-                    <p id="pedidos-ent" class="text-2xl font-black text-green-600">0</p>
-                    <p class="text-[8px] font-bold text-gray-400">Pedidos</p>
-                </div>
-                <div class="text-center">
-                    <p id="items-ent" class="text-2xl font-black text-green-600">0</p>
-                    <p class="text-[8px] font-bold text-gray-400">Ítems</p>
-                </div>
+        <div class="bg-white p-4 rounded-3xl border border-green-100 shadow-sm text-center">
+            <p class="text-xs font-black text-green-400 uppercase">Entregados Hoy</p>
+            <div class="flex justify-around mt-2">
+                <div><p id="pedidos-ent" class="text-3xl font-black text-green-600">0</p><p class="text-[10px] font-bold text-gray-400">Pedidos</p></div>
+                <div><p id="items-ent" class="text-3xl font-black text-green-600">0</p><p class="text-[10px] font-bold text-gray-400">Ítems</p></div>
             </div>
         </div>
     </div>
 
-    <div id="contenedor-pedidos" class="space-y-4 overflow-hidden pt-2"></div>
+    <div id="contenedor-pedidos" class="space-y-5 pt-2"></div>
 </main>
 
 <div id="menu-container"></div>
 
 <script>
-let statsSesion = { pedidos: 0, items: 0 };
+// Cargar contadores desde la memoria del navegador (Persistencia)
+let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, items: 0 };
 
-// 1. CARGADOR DEL MENÚ EXTERNO
-fetch('menu.html')
-    .then(response => response.text())
-    .then(data => {
-        document.getElementById('menu-container').innerHTML = data;
-        marcarBotonActivo();
-    });
+fetch('menu.html').then(r => r.text()).then(data => {
+    document.getElementById('menu-container').innerHTML = data;
+    marcarBotonActivo();
+});
 
 function marcarBotonActivo() {
-    const paginaActual = "GestióndeDespachos.html"; // Asegúrate que coincida con el nombre de tu archivo
-    const botones = document.querySelectorAll('#menu-container button');
-    botones.forEach(btn => {
-        if (btn.getAttribute('onclick')?.includes(paginaActual)) {
+    const pagina = "GestióndeDespachos.html";
+    document.querySelectorAll('#menu-container button').forEach(btn => {
+        if (btn.getAttribute('onclick')?.includes(pagina)) {
             btn.classList.add('text-primary', 'font-bold');
-            btn.classList.remove('text-gray-400');
             btn.querySelector('.material-symbols-outlined').classList.add('active-icon');
         }
     });
 }
 
-// 2. LÓGICA DE DATOS
 async function cargarDatos() {
     const contenedor = document.getElementById('contenedor-pedidos');
-    contenedor.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold italic">Sincronizando ruta...</div>`;
+    contenedor.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold text-lg italic">Actualizando ruta...</div>`;
     
     try {
         const [ventas, clientes] = await Promise.all([
@@ -111,7 +94,6 @@ async function cargarDatos() {
         const agrupados = {};
         let totalItemsGlobalPendientes = 0;
 
-        // Solo procesamos lo PENDIENTE
         ventas.filter(v => v.Estado === "PENDIENTE").forEach(v => {
             const nom = String(v.Cliente).trim();
             if (!agrupados[nom]) {
@@ -124,22 +106,18 @@ async function cargarDatos() {
                 };
             }
             const cantidad = parseFloat(v.Cantidad) || 0;
-            agrupados[nom].items.push({ p: v.Producto, c: cantidad });
+            const pvp = parseFloat(v["Precio PVP"] || v.Precio_PVP || 0); // Maneja ambas nomenclaturas
+            agrupados[nom].items.push({ p: v.Producto, c: cantidad, pvp: pvp });
             agrupados[nom].totalDinero += parseFloat(v["Precio Total"] || 0);
             totalItemsGlobalPendientes += cantidad;
         });
 
         const lista = Object.values(agrupados).reverse();
-        
-        // Actualizar contadores superiores
-        document.getElementById('pedidos-pend').innerText = lista.length;
-        document.getElementById('items-pend').innerText = totalItemsGlobalPendientes;
-        document.getElementById('pedidos-ent').innerText = statsSesion.pedidos;
-        document.getElementById('items-ent').innerText = statsSesion.items;
+        actualizarPantallaContadores(lista.length, totalItemsGlobalPendientes);
 
         contenedor.innerHTML = "";
         if (lista.length === 0) {
-            contenedor.innerHTML = `<p class="text-center py-20 text-gray-400 font-bold italic">No hay despachos pendientes.</p>`;
+            contenedor.innerHTML = `<p class="text-center py-20 text-gray-400 font-bold text-xl">Ruta limpia. ¡Buen trabajo!</p>`;
             return;
         }
 
@@ -148,29 +126,35 @@ async function cargarDatos() {
             const sumaItemsEnCard = ped.items.reduce((acc, curr) => acc + curr.c, 0);
             
             const filasHTML = ped.items.map(i => `
-                <div class="flex justify-between border-b border-purple-50 py-2">
-                    <span class="text-xs text-gray-700 font-medium">${i.p}</span>
-                    <span class="text-xs font-black text-primary">x${i.c}</span>
+                <div class="flex justify-between items-center border-b border-purple-50 py-3">
+                    <div class="flex flex-col">
+                        <span class="text-base text-gray-800 font-bold">${i.p}</span>
+                        <span class="text-xs text-primary font-black">$${i.pvp.toFixed(2)} c/u</span>
+                    </div>
+                    <span class="text-lg font-black text-primary bg-purple-100 px-3 py-1 rounded-xl">x${i.c}</span>
                 </div>
             `).join('');
 
             contenedor.innerHTML += `
-                <div id="card-${idx}" class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-lg font-black text-gray-800 leading-tight">${ped.cliente}</h2>
-                        <span class="text-[10px] font-bold text-gray-400">${new Date(ped.fecha).toLocaleDateString()}</span>
+                <div id="card-${idx}" class="bg-white p-6 rounded-[2.5rem] border-2 border-outline shadow-md space-y-4">
+                    <div class="flex justify-between items-start">
+                        <h2 class="text-xl font-black text-gray-800 uppercase tracking-tight w-2/3">${ped.cliente}</h2>
+                        <span class="text-[11px] font-black bg-gray-100 px-3 py-1 rounded-full text-gray-500">${new Date(ped.fecha).toLocaleDateString()}</span>
                     </div>
                     <div class="space-y-0">${filasHTML}</div>
-                    <div class="bg-purple-50 p-3 rounded-2xl flex items-start gap-2">
-                        <span class="material-symbols-outlined text-primary text-sm">location_on</span>
-                        <p class="text-[11px] text-gray-600">${ped.info ? ped.info.Dirección : 'Sin dirección guardada'}</p>
+                    <div class="bg-purple-50 p-4 rounded-2xl flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary text-2xl">location_on</span>
+                        <p class="text-sm font-bold text-gray-600">${ped.info ? ped.info.Dirección : 'Sin dirección'}</p>
                     </div>
                     <div class="flex justify-between items-center pt-2">
-                        <p class="text-xl font-black text-gray-900">$${ped.totalDinero.toFixed(2)}</p>
+                        <div>
+                            <p class="text-[10px] font-black text-gray-400 uppercase">Total a Cobrar</p>
+                            <p class="text-3xl font-black text-gray-900">$${ped.totalDinero.toFixed(2)}</p>
+                        </div>
                         <div class="flex gap-2">
-                            ${telf ? `<a href="https://wa.me/${telf}" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center"><span class="material-symbols-outlined">chat</span></a>` : ''}
+                            ${telf ? `<a href="https://wa.me/${telf}" class="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm"><span class="material-symbols-outlined text-3xl">chat</span></a>` : ''}
                             <button onclick="confirmarEntrega('${ped.cliente}', 'card-${idx}', ${sumaItemsEnCard})" 
-                                    class="h-12 bg-primary text-white px-6 rounded-2xl text-[10px] font-black shadow-lg active:scale-95 transition-transform">
+                                    class="h-14 bg-primary text-white px-6 rounded-2xl text-xs font-black shadow-lg active:scale-90 transition-transform">
                                 ENTREGADO
                             </button>
                         </div>
@@ -178,40 +162,44 @@ async function cargarDatos() {
                 </div>`;
         });
     } catch (e) {
-        contenedor.innerHTML = `<p class="text-center text-red-500 py-20 font-bold">Error de conexión.</p>`;
+        contenedor.innerHTML = `<p class="text-center text-red-500 py-20 font-bold">Error de sincronización</p>`;
     }
 }
 
-async function confirmarEntrega(cliente, cardId, cantidadItemsEnCard) {
+function actualizarPantallaContadores(pPend, iPend) {
+    document.getElementById('pedidos-pend').innerText = pPend;
+    document.getElementById('items-pend').innerText = iPend;
+    document.getElementById('pedidos-ent').innerText = statsSesion.pedidos;
+    document.getElementById('items-ent').innerText = statsSesion.items;
+}
+
+async function confirmarEntrega(cliente, cardId, cantItems) {
     const card = document.getElementById(cardId);
     card.classList.add('anim-slide-out');
-
     try {
-        await DairyAPI.enviarDatos("Ventas", { 
-            accion: "marcar_entregado", 
-            pestaña: "Ventas", 
-            Cliente: cliente 
-        });
-
+        await DairyAPI.enviarDatos("Ventas", { accion: "marcar_entregado", pestaña: "Ventas", Cliente: cliente });
         setTimeout(() => {
             card.remove();
-            // Actualizar datos de sesión (Lo que se ha hecho hoy)
             statsSesion.pedidos += 1;
-            statsSesion.items += cantidadItemsEnCard;
-
-            document.getElementById('pedidos-ent').innerText = statsSesion.pedidos;
-            document.getElementById('items-ent').innerText = statsSesion.items;
-            
-            // Restar de los pendientes visualmente
-            const pendsPed = document.getElementById('pedidos-pend');
-            pendsPed.innerText = Math.max(0, parseInt(pendsPed.innerText) - 1);
-            
-            const pendsItem = document.getElementById('items-pend');
-            pendsItem.innerText = Math.max(0, parseInt(pendsItem.innerText) - cantidadItemsEnCard);
+            statsSesion.items += cantItems;
+            // Guardar en memoria para que no se borre al refrescar
+            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
+            actualizarPantallaContadores(
+                parseInt(document.getElementById('pedidos-pend').innerText) - 1,
+                parseInt(document.getElementById('items-pend').innerText) - cantItems
+            );
         }, 600);
     } catch (e) {
-        alert("Error de red al actualizar estado");
+        alert("Error de red");
         card.classList.remove('anim-slide-out');
+    }
+}
+
+function reiniciarContadoresHoy() {
+    if(confirm("¿Reiniciar contadores de entregas de hoy?")) {
+        statsSesion = { pedidos: 0, items: 0 };
+        localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
+        cargarDatos();
     }
 }
 

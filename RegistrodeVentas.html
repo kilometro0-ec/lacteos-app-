@@ -4,11 +4,11 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#a21caf">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3050/3050158.png">
 
     <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ventas - Lógica Láctea</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
@@ -40,10 +40,10 @@
         .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; letter-spacing: 0.025em; display: flex; align-items: center; justify-content: center; gap: 12px; }
         .btn-magenta:active { transform: scale(0.96); }
         .hidden { display: none !important; }
-        .fade-in-sutil { animation: fadeIn 0.4s ease-out; }
+        .fade-in-sutil { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilos para el pintado del menú activo (Viene de menu.html) */
+        /* Estilos para el menú activo (se carga de menu.html) */
         .active-nav { color: #a21caf !important; }
         .active-nav .icon-box {
             background-color: #f5f3ff !important;
@@ -73,34 +73,27 @@
             <div id="vista-seleccion-cliente" class="fade-in-sutil">
                 <div class="flex justify-between items-center mb-4 px-2">
                     <span class="text-[10px] font-black text-primary uppercase tracking-widest">Seleccionar Cliente</span>
-                    <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-black text-white bg-secondary px-4 py-2 rounded-full shadow-sm">+ NUEVO CLIENTE</button>
+                    <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-black text-white bg-secondary px-4 py-2 rounded-full shadow-sm">+ NUEVO</button>
                 </div>
                 <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold">
-                    <option value="">-- Buscar en la lista --</option>
+                    <option value="">-- Buscar cliente --</option>
                 </select>
             </div>
 
             <div id="vista-nuevo-cliente" class="hidden space-y-4 fade-in-sutil">
                 <div class="flex justify-between items-center px-2">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-secondary">person_add</span>
-                        <h2 class="text-sm font-black text-secondary uppercase tracking-tight">Nuevo Registro</h2>
-                    </div>
-                    <button onclick="alternarFormularioCliente(false)" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                        <span class="material-symbols-outlined text-sm">close</span>
-                    </button>
+                    <h2 class="text-sm font-black text-secondary uppercase">Nuevo Registro</h2>
+                    <button onclick="alternarFormularioCliente(false)" class="text-slate-400"><span class="material-symbols-outlined">close</span></button>
                 </div>
                 <div class="space-y-3">
                     <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-3">
                         <input type="text" id="reg-ci" placeholder="CI / RUC" class="input-sutil">
                         <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
                     </div>
                     <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
                 </div>
-                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4">
-                    <span class="material-symbols-outlined text-base">task_alt</span> GUARDAR Y SELECCIONAR
-                </button>
+                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4">GUARDAR</button>
             </div>
         </section>
 
@@ -110,8 +103,8 @@
                     <span class="material-symbols-outlined text-primary opacity-40 group-focus-within:opacity-100 transition-opacity">search</span>
                 </div>
                 <input type="text" id="buscarProducto" oninput="filtrarProductos()" 
-                       placeholder="Buscar producto (Queso, Yogurt...)" 
-                       class="input-sutil pl-12 border-2 border-outline focus:border-primary font-bold">
+                       placeholder="Buscar sabor o producto..." 
+                       class="input-sutil pl-12 border-2 border-outline focus:border-primary font-bold text-lg">
             </div>
         </div>
         
@@ -120,39 +113,30 @@
 
     <div class="lg:col-span-5">
         <section class="card-sutil overflow-hidden sticky top-24 border-2 border-primary/5 shadow-xl">
-            <div class="bg-gradient-to-br from-primary to-purple-700 p-7 text-white">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[10px] font-black opacity-60 uppercase tracking-widest mb-1">Resumen de Venta</p>
-                        <h2 id="cliente-resumen" class="text-2xl font-black uppercase truncate tracking-tighter leading-none">SIN SELECCIONAR</h2>
-                    </div>
-                    <span id="num-orden" class="text-[9px] bg-white/20 px-3 py-1.5 rounded-full font-mono font-bold">---</span>
+            <div class="bg-gradient-to-br from-primary to-purple-700 p-6 text-white">
+                <p class="text-[10px] font-black opacity-60 uppercase mb-1">Resumen de Venta</p>
+                <h2 id="cliente-resumen" class="text-2xl font-black uppercase truncate tracking-tighter">SIN SELECCIONAR</h2>
+                <div class="mt-2 flex justify-between items-center">
+                    <span id="num-orden" class="text-[10px] bg-white/20 px-3 py-1 rounded-full font-mono font-bold">---</span>
+                    <input type="date" id="fecha-entrega" class="bg-white/10 border-none rounded-lg text-[11px] font-bold py-1 px-2 text-white outline-none">
                 </div>
             </div>
             
-            <div class="p-7 space-y-6">
-                <div id="lista-carrito" class="space-y-3 max-h-64 overflow-y-auto pr-1">
-                    <div id="carrito-vacio" class="text-center py-12">
-                        <div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <span class="material-symbols-outlined text-slate-200 text-3xl">shopping_cart_checkout</span>
-                        </div>
-                        <p class="text-slate-300 text-xs font-bold italic">Selecciona productos</p>
+            <div class="p-6 space-y-6">
+                <div id="lista-carrito" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                    <div id="carrito-vacio" class="text-center py-8">
+                        <p class="text-slate-300 text-xs font-bold italic text-center">No hay productos seleccionados</p>
                     </div>
                 </div>
-                <div class="pt-5 border-t border-purple-50">
-                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-2 px-1">Fecha Programada</label>
-                    <input type="date" id="fecha-entrega" class="input-sutil font-bold text-primary">
-                </div>
-                <div class="flex justify-between items-end px-1">
-                    <span class="text-xs font-black text-slate-400 uppercase">Total Pedido</span>
+                
+                <div class="flex justify-between items-end border-t border-purple-50 pt-4">
+                    <span class="text-xs font-black text-slate-400 uppercase">Total</span>
                     <span id="total-venta" class="text-4xl font-black text-slate-900 tracking-tighter">$0.00</span>
                 </div>
                 
-                <div id="contenedor-boton-finalizar">
-                    <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100">
-                        <span class="material-symbols-outlined">rocket_launch</span> CONFIRMAR Y ENVIAR
-                    </button>
-                </div>
+                <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100">
+                    <span class="material-symbols-outlined text-xl">rocket_launch</span> CONFIRMAR PEDIDO
+                </button>
             </div>
         </section>
     </div>
@@ -163,112 +147,74 @@
 <script>
 let carrito = {}; let productosData = []; let clientesData = []; let idOrdenActual = "";
 
-// 1. CARGA DEL MENÚ Y PINTADO AUTOMÁTICO
 async function iniciarMenu() {
     try {
         const response = await fetch('menu.html');
         const text = await response.text();
         const contenedor = document.getElementById('menu-container');
         contenedor.innerHTML = text;
-
         const urlActual = window.location.href.toLowerCase();
-
         const pintar = () => {
             const botones = contenedor.querySelectorAll('.nav-link');
             botones.forEach(btn => {
                 const dataPath = btn.getAttribute('data-path').toLowerCase();
-                // Si la URL contiene el data-path (ej: "ventas"), se activa el botón
                 if (urlActual.includes(dataPath)) {
                     btn.classList.add('active-nav');
                     btn.classList.remove('text-gray-400');
                 }
             });
         };
-
         pintar();
         setTimeout(pintar, 150); 
     } catch (e) { console.error("Error menú:", e); }
 }
 
-function generarIDOrden() {
-    const d = new Date();
-    idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
-    document.getElementById('num-orden').innerText = idOrdenActual;
-}
-
-// 2. FILTRADO DE PRODUCTOS
 function filtrarProductos() {
     const termino = document.getElementById('buscarProducto').value.toLowerCase();
     const productos = document.querySelectorAll('#contenedor-productos > div');
-    
     productos.forEach(card => {
         const nombre = card.querySelector('h4').innerText.toLowerCase();
-        if (nombre.includes(termino)) {
-            card.style.display = "flex";
-            card.classList.add('fade-in-sutil');
-        } else {
-            card.style.display = "none";
-        }
+        card.style.display = nombre.includes(termino) ? "flex" : "none";
     });
 }
 
-function alternarFormularioCliente(mostrarNuevo) {
-    const vistaSel = document.getElementById('vista-seleccion-cliente');
-    const vistaNuevo = document.getElementById('vista-nuevo-cliente');
-    if(mostrarNuevo) { vistaSel.classList.add('hidden'); vistaNuevo.classList.remove('hidden'); } 
-    else { vistaSel.classList.remove('hidden'); vistaNuevo.classList.add('hidden'); }
-}
-
-async function guardarNuevoCliente() {
-    const n = document.getElementById('reg-nombre').value;
-    const c = document.getElementById('reg-ci').value;
-    const t = document.getElementById('reg-tel').value;
-    const d = document.getElementById('reg-dir').value;
-    if(!n || !t) return alert("Ingresa Nombre y Teléfono");
-    const btn = document.getElementById('btn-guardar-cli');
-    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span>`;
-    btn.disabled = true;
-    try {
-        await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", Nombre: n, CI_RUC: c, Teléfono: t, Dirección: d });
-        await iniciar(); 
-        document.getElementById('select-cliente').value = n;
-        actualizarNombreCarrito();
-        alternarFormularioCliente(false);
-    } catch(e) { alert("Error de conexión"); }
-    finally { btn.innerHTML = `<span class="material-symbols-outlined text-base">task_alt</span> GUARDAR`; btn.disabled = false; }
-}
-
 async function iniciar() {
-    generarIDOrden();
+    const d = new Date();
+    idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
+    document.getElementById('num-orden').innerText = idOrdenActual;
     iniciarMenu();
     try {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
         clientesData = cl; productosData = pr;
         const sel = document.getElementById('select-cliente');
-        sel.innerHTML = '<option value="">-- Buscar en la lista --</option>';
-        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; });
+        sel.innerHTML = '<option value="">-- Buscar cliente --</option>';
+        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
+            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
+        });
         renderizarProductos();
     } catch(e) { console.error(e); }
 }
 
-function actualizarNombreCarrito() { document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; }
-
 function renderizarProductos() {
-    const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
+    const cont = document.getElementById('contenedor-productos'); 
+    cont.innerHTML = "";
     productosData.forEach(p => {
-        const s = parseInt(p.Stock) || 0, pr = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
+        const s = parseInt(p.Stock) || 0;
+        const pr = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
+        const idCant = `cant-${p.Producto.replace(/\s+/g,'')}`;
+
         cont.innerHTML += `
-            <div class="card-sutil p-5 flex flex-col justify-between min-h-[160px] ${s <= 0 ? 'opacity-40 grayscale pointer-events-none' : ''}">
+            <div class="card-sutil p-4 flex flex-col justify-between min-h-[200px] ${s <= 0 ? 'opacity-40 grayscale pointer-events-none' : ''}">
                 <div>
-                    <h4 class="font-black text-[10px] uppercase text-slate-400 truncate tracking-tight mb-1">${p.Producto}</h4>
-                    <p class="text-[9px] font-black ${s < 5 ? 'text-red-500' : 'text-primary'} uppercase">Stock: ${s}</p>
+                    <h4 class="font-black text-[12px] uppercase text-primary leading-tight mb-2">${p.Producto}</h4>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Stock: <span class="${s < 5 ? 'text-red-500' : 'text-slate-600'}">${s}</span></p>
                 </div>
-                <div>
-                    <p class="text-2xl font-black text-slate-800 tracking-tighter">$${pr.toFixed(2)}</p>
-                    <div class="flex items-center justify-between bg-purple-50 rounded-2xl p-1 mt-2 border border-purple-100/50">
-                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-9 h-9 bg-white rounded-xl text-primary font-black active:scale-90">-</button>
-                        <span id="cant-${p.Producto.replace(/\s+/g,'')}" class="font-black text-slate-600 text-sm">0</span>
-                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-9 h-9 bg-white rounded-xl text-primary font-black active:scale-90">+</button>
+                <div class="mt-auto">
+                    <p class="text-2xl font-black text-slate-800 tracking-tighter mb-2">$${pr.toFixed(2)}</p>
+                    <div class="flex items-center justify-between bg-purple-50 rounded-2xl p-1 border border-purple-100">
+                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-xl text-primary font-black active:scale-90">-</button>
+                        <span id="${idCant}" class="font-black text-primary text-base px-1">0</span>
+                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-xl text-primary font-black active:scale-90">+</button>
                     </div>
                 </div>
             </div>`;
@@ -292,7 +238,10 @@ function actualizarCarritoUI() {
             const p = productosData.find(x => x.Producto === n);
             const sub = carrito[n] * parseFloat(p.Precio_Venta.toString().replace(',','.'));
             t += sub;
-            l.innerHTML += `<div class="flex justify-between items-center p-4 bg-purple-50/50 rounded-2xl border border-purple-100/50 fade-in-sutil"><div class="flex flex-col"><span class="text-[10px] font-black text-primary uppercase">${n}</span><span class="text-xs font-bold">Cant: ${carrito[n]}</span></div><span class="text-sm font-black">$${sub.toFixed(2)}</span></div>`;
+            l.innerHTML += `<div class="flex justify-between items-center p-3 bg-purple-50 rounded-2xl border border-purple-100 fade-in-sutil">
+                <div class="flex flex-col"><span class="text-[10px] font-black text-primary uppercase leading-tight">${n}</span><span class="text-[10px] font-bold">Cant: ${carrito[n]}</span></div>
+                <span class="text-xs font-black">$${sub.toFixed(2)}</span>
+            </div>`;
         }
     });
     document.getElementById('total-venta').innerText = `$${t.toFixed(2)}`;
@@ -301,56 +250,50 @@ function actualizarCarritoUI() {
 
 async function procesarVenta() {
     const cliNombre = document.getElementById('select-cliente').value, f = document.getElementById('fecha-entrega').value;
-    if(!cliNombre || !f) return alert("Selecciona cliente y fecha");
+    if(!cliNombre || !f) return alert("Selecciona cliente y fecha de entrega");
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(items.length === 0) return alert("Carrito vacío");
+    if(items.length === 0) return alert("El carrito está vacío");
     
-    const btnOriginal = document.getElementById('btn-finalizar');
-    btnOriginal.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> GUARDANDO...`;
-    btnOriginal.disabled = true;
+    const btn = document.getElementById('btn-finalizar');
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> GUARDANDO...`;
+    btn.disabled = true;
 
     try {
         let detalleTexto = ""; let totalVenta = 0;
-
         for(const n of items) {
             const p = productosData.find(x => x.Producto === n);
             const pvp = parseFloat(p.Precio_Venta.toString().replace(',','.'));
             const sub = carrito[n] * pvp; totalVenta += sub;
-            detalleTexto += `• ${carrito[n]} x ${n} ($${pvp.toFixed(2)} c/u) = $${sub.toFixed(2)}\n`;
-            
+            detalleTexto += `• ${carrito[n]} x ${n} = $${sub.toFixed(2)}\n`;
             await DairyAPI.enviarDatos("Ventas", { 
                 pestaña: "Ventas", ID_Venta: idOrdenActual, Cliente: cliNombre, Producto: n, Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: f, Estado: "PENDIENTE" 
             });
         }
         
-        const cliEncontrado = clientesData.find(c => c.Nombre === cliNombre);
-        let rawTel = cliEncontrado?.Teléfono?.toString() || "";
-        let limpio = rawTel.replace(/\D/g, ''); 
-        if (limpio.startsWith('0')) limpio = limpio.substring(1); 
-        if (!limpio.startsWith('593')) limpio = '593' + limpio; 
+        const cli = clientesData.find(c => c.Nombre === cliNombre);
+        let tel = cli?.Teléfono?.toString().replace(/\D/g, '') || "";
+        if (tel.startsWith('0')) tel = tel.substring(1); 
+        if (!tel.startsWith('593')) tel = '593' + tel; 
         
-        let mensajeFull = `*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cliNombre}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
-        const urlwa = `whatsapp://send?phone=${limpio}&text=${encodeURIComponent(mensajeFull)}`;
+        let msj = `*PEDIDO #${idOrdenActual}*\n*Cliente:* ${cliNombre}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
+        const urlwa = `whatsapp://send?phone=${tel}&text=${encodeURIComponent(msj)}`;
 
-        const contenedor = document.getElementById('contenedor-boton-finalizar');
-        contenedor.innerHTML = `
-            <a href="${urlwa}" onclick="setTimeout(()=>location.reload(), 3000)" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100 bg-green-600">
-                <span class="material-symbols-outlined">chat</span> ABRIR WHATSAPP
-            </a>
-            <p class="text-[10px] text-center mt-2 text-slate-400 uppercase font-black">¡Datos guardados con éxito!</p>
-        `;
-
-    } catch(e) { 
-        console.error(e);
-        alert("Error al guardar"); 
-        btnOriginal.innerHTML = `<span class="material-symbols-outlined">rocket_launch</span> REINTENTAR`;
-        btnOriginal.disabled = false;
-    }
+        document.getElementById('contenedor-boton-finalizar').innerHTML = `
+            <a href="${urlwa}" onclick="setTimeout(()=>location.reload(), 2000)" class="w-full btn-magenta py-5 text-lg bg-green-600 shadow-none">
+                <span class="material-symbols-outlined">chat</span> ENVIAR POR WHATSAPP
+            </a>`;
+    } catch(e) { alert("Error al guardar"); btn.disabled = false; }
 }
 
-// Registro de Service Worker para PWA
+function alternarFormularioCliente(m) {
+    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
+    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
+}
+
+function actualizarNombreCarrito() { document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; }
+
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW no registrado', err));
+  navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
 }
 
 window.onload = iniciar;

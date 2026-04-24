@@ -31,7 +31,7 @@
         .card-sutil { background: white; border-radius: 2.5rem; border: 1px solid #e9d5ff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02); }
         .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 2rem; padding: 1rem 1.5rem; width: 100%; transition: all 0.3s ease; font-size: 14px; color: #4a5568; }
         .input-sutil:focus { outline: none; border-color: #a21caf; background-color: white; box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05); }
-        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; letter-spacing: 0.025em; }
+        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; letter-spacing: 0.025em; display: flex; align-items: center; justify-content: center; gap: 12px; }
         .btn-magenta:active { transform: scale(0.96); }
         .hidden { display: none !important; }
         .fade-in-sutil { animation: fadeIn 0.4s ease-out; }
@@ -81,7 +81,7 @@
                     </div>
                     <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
                 </div>
-                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4 flex items-center justify-center gap-2 mt-2">
+                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4">
                     <span class="material-symbols-outlined text-base">task_alt</span> GUARDAR Y SELECCIONAR
                 </button>
             </div>
@@ -118,9 +118,12 @@
                     <span class="text-xs font-black text-slate-400 uppercase">Total Pedido</span>
                     <span id="total-venta" class="text-4xl font-black text-slate-900 tracking-tighter">$0.00</span>
                 </div>
-                <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100 flex items-center justify-center gap-3">
-                    <span class="material-symbols-outlined">rocket_launch</span> CONFIRMAR Y ENVIAR
-                </button>
+                
+                <div id="contenedor-boton-finalizar">
+                    <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100">
+                        <span class="material-symbols-outlined">rocket_launch</span> CONFIRMAR Y ENVIAR
+                    </button>
+                </div>
             </div>
         </section>
     </div>
@@ -224,15 +227,16 @@ function actualizarCarritoUI() {
     document.getElementById('carrito-vacio').classList.toggle('hidden', t > 0);
 }
 
-async function finalizarVenta() {
+// ESTA FUNCIÓN PROCESA LOS DATOS Y LUEGO HABILITA EL WHATSAPP
+async function procesarVenta() {
     const cliNombre = document.getElementById('select-cliente').value, f = document.getElementById('fecha-entrega').value;
-    if(!cliNombre || !f) return alert("Selecciona cliente y fecha de entrega");
+    if(!cliNombre || !f) return alert("Selecciona cliente y fecha");
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(items.length === 0) return alert("Agrega productos al carrito");
+    if(items.length === 0) return alert("Carrito vacío");
     
-    const btn = document.getElementById('btn-finalizar');
-    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> ENVIANDO...`;
-    btn.disabled = true;
+    const btnOriginal = document.getElementById('btn-finalizar');
+    btnOriginal.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> GUARDANDO...`;
+    btnOriginal.disabled = true;
 
     try {
         let detalleTexto = ""; 
@@ -243,44 +247,36 @@ async function finalizarVenta() {
             const pvp = parseFloat(p.Precio_Venta.toString().replace(',','.'));
             const sub = carrito[n] * pvp; 
             totalVenta += sub;
-            
             detalleTexto += `• ${carrito[n]} x ${n} ($${pvp.toFixed(2)} c/u) = $${sub.toFixed(2)}\n`;
             
             await DairyAPI.enviarDatos("Ventas", { 
-                pestaña: "Ventas", 
-                ID_Venta: idOrdenActual, 
-                Cliente: cliNombre, 
-                Producto: n, 
-                Cantidad: carrito[n], 
-                Precio_PVP: p.Precio_Venta, 
-                Fecha_Entrega: f, 
-                Estado: "PENDIENTE" 
+                pestaña: "Ventas", ID_Venta: idOrdenActual, Cliente: cliNombre, Producto: n, Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: f, Estado: "PENDIENTE" 
             });
         }
         
         const cliEncontrado = clientesData.find(c => c.Nombre === cliNombre);
         let rawTel = cliEncontrado?.Teléfono?.toString() || "";
-        
-        // LIMPIAR Y FORMATEAR EL NÚMERO
         let limpio = rawTel.replace(/\D/g, ''); 
         if (limpio.startsWith('0')) limpio = limpio.substring(1); 
         if (!limpio.startsWith('593')) limpio = '593' + limpio; 
         
         let mensajeFull = `*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cliNombre}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
-        
-        // CAMBIO CRÍTICO: Usar wa.me directo en lugar de api.whatsapp.com/send
-        const urlwa = `https://wa.me/${limpio}?text=${encodeURIComponent(mensajeFull)}`;
-        
-        // Abrir en una pestaña nueva
-        window.open(urlwa, '_blank');
-        
-        setTimeout(() => location.reload(), 2000);
+        const urlwa = `whatsapp://send?phone=${limpio}&text=${encodeURIComponent(mensajeFull)}`;
+
+        // TRANSFORMACIÓN DEL BOTÓN PARA ANDROID
+        const contenedor = document.getElementById('contenedor-boton-finalizar');
+        contenedor.innerHTML = `
+            <a href="${urlwa}" onclick="setTimeout(()=>location.reload(), 3000)" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100 bg-green-600">
+                <span class="material-symbols-outlined">chat</span> ABRIR WHATSAPP AHORA
+            </a>
+            <p class="text-[10px] text-center mt-2 text-slate-400">Datos guardados. Presiona el botón verde para enviar.</p>
+        `;
 
     } catch(e) { 
         console.error(e);
-        alert("Error al procesar la venta"); 
-        btn.innerHTML = `<span class="material-symbols-outlined">rocket_launch</span> CONFIRMAR Y ENVIAR`;
-        btn.disabled = false;
+        alert("Error al guardar"); 
+        btnOriginal.innerHTML = `<span class="material-symbols-outlined">rocket_launch</span> REINTENTAR`;
+        btnOriginal.disabled = false;
     }
 }
 window.onload = iniciar;

@@ -2,8 +2,11 @@
 <html class="light" lang="es">
 <head>
     <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#a21caf">
-<meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#a21caf">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3050/3050158.png">
+
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Ventas - Lógica Láctea</title>
@@ -11,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <script>
@@ -30,7 +33,7 @@
     </script>
 
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
         .card-sutil { background: white; border-radius: 2.5rem; border: 1px solid #e9d5ff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02); }
         .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 2rem; padding: 1rem 1.5rem; width: 100%; transition: all 0.3s ease; font-size: 14px; color: #4a5568; }
         .input-sutil:focus { outline: none; border-color: #a21caf; background-color: white; box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05); }
@@ -40,7 +43,7 @@
         .fade-in-sutil { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilos para el pintado del menú activo */
+        /* Estilos para el pintado del menú activo (Viene de menu.html) */
         .active-nav { color: #a21caf !important; }
         .active-nav .icon-box {
             background-color: #f5f3ff !important;
@@ -52,7 +55,9 @@
         }
     </style>
 </head>
-<body class="pb-40"> <header class="h-16 bg-white/80 backdrop-blur-md border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
+<body class="pb-44"> 
+
+<header class="h-16 bg-white/80 backdrop-blur-md border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
     <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLacteo.html'">
         <div class="w-10 h-10 rounded-2xl bg-purple-100 flex items-center justify-center text-primary font-bold">
             <span class="material-symbols-outlined">arrow_back</span>
@@ -98,6 +103,17 @@
                 </button>
             </div>
         </section>
+
+        <div class="px-1">
+            <div class="relative group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <span class="material-symbols-outlined text-primary opacity-40 group-focus-within:opacity-100 transition-opacity">search</span>
+                </div>
+                <input type="text" id="buscarProducto" oninput="filtrarProductos()" 
+                       placeholder="Buscar producto (Queso, Yogurt...)" 
+                       class="input-sutil pl-12 border-2 border-outline focus:border-primary font-bold">
+            </div>
+        </div>
         
         <section id="contenedor-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></section>
     </div>
@@ -147,7 +163,7 @@
 <script>
 let carrito = {}; let productosData = []; let clientesData = []; let idOrdenActual = "";
 
-// 1. CARGA DEL MENÚ (MISMA LÓGICA QUE DASHBOARD)
+// 1. CARGA DEL MENÚ Y PINTADO AUTOMÁTICO
 async function iniciarMenu() {
     try {
         const response = await fetch('menu.html');
@@ -155,15 +171,14 @@ async function iniciarMenu() {
         const contenedor = document.getElementById('menu-container');
         contenedor.innerHTML = text;
 
-        const fullPath = window.location.href.toLowerCase();
-        const fileName = window.location.pathname.split("/").pop().toLowerCase() || "registrodeventas.html";
+        const urlActual = window.location.href.toLowerCase();
 
         const pintar = () => {
             const botones = contenedor.querySelectorAll('.nav-link');
             botones.forEach(btn => {
                 const dataPath = btn.getAttribute('data-path').toLowerCase();
-                // Verificamos si la página actual es la de Ventas
-                if (fileName.includes(dataPath) || fullPath.includes(dataPath)) {
+                // Si la URL contiene el data-path (ej: "ventas"), se activa el botón
+                if (urlActual.includes(dataPath)) {
                     btn.classList.add('active-nav');
                     btn.classList.remove('text-gray-400');
                 }
@@ -179,6 +194,22 @@ function generarIDOrden() {
     const d = new Date();
     idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
     document.getElementById('num-orden').innerText = idOrdenActual;
+}
+
+// 2. FILTRADO DE PRODUCTOS
+function filtrarProductos() {
+    const termino = document.getElementById('buscarProducto').value.toLowerCase();
+    const productos = document.querySelectorAll('#contenedor-productos > div');
+    
+    productos.forEach(card => {
+        const nombre = card.querySelector('h4').innerText.toLowerCase();
+        if (nombre.includes(termino)) {
+            card.style.display = "flex";
+            card.classList.add('fade-in-sutil');
+        } else {
+            card.style.display = "none";
+        }
+    });
 }
 
 function alternarFormularioCliente(mostrarNuevo) {
@@ -209,7 +240,7 @@ async function guardarNuevoCliente() {
 
 async function iniciar() {
     generarIDOrden();
-    iniciarMenu(); // Llamamos a la función de menú
+    iniciarMenu();
     try {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
         clientesData = cl; productosData = pr;
@@ -235,9 +266,9 @@ function renderizarProductos() {
                 <div>
                     <p class="text-2xl font-black text-slate-800 tracking-tighter">$${pr.toFixed(2)}</p>
                     <div class="flex items-center justify-between bg-purple-50 rounded-2xl p-1 mt-2 border border-purple-100/50">
-                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-9 h-9 bg-white rounded-xl text-primary font-black">-</button>
+                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-9 h-9 bg-white rounded-xl text-primary font-black active:scale-90">-</button>
                         <span id="cant-${p.Producto.replace(/\s+/g,'')}" class="font-black text-slate-600 text-sm">0</span>
-                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-9 h-9 bg-white rounded-xl text-primary font-black">+</button>
+                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-9 h-9 bg-white rounded-xl text-primary font-black active:scale-90">+</button>
                     </div>
                 </div>
             </div>`;
@@ -279,14 +310,12 @@ async function procesarVenta() {
     btnOriginal.disabled = true;
 
     try {
-        let detalleTexto = ""; 
-        let totalVenta = 0;
+        let detalleTexto = ""; let totalVenta = 0;
 
         for(const n of items) {
             const p = productosData.find(x => x.Producto === n);
             const pvp = parseFloat(p.Precio_Venta.toString().replace(',','.'));
-            const sub = carrito[n] * pvp; 
-            totalVenta += sub;
+            const sub = carrito[n] * pvp; totalVenta += sub;
             detalleTexto += `• ${carrito[n]} x ${n} ($${pvp.toFixed(2)} c/u) = $${sub.toFixed(2)}\n`;
             
             await DairyAPI.enviarDatos("Ventas", { 
@@ -306,9 +335,9 @@ async function procesarVenta() {
         const contenedor = document.getElementById('contenedor-boton-finalizar');
         contenedor.innerHTML = `
             <a href="${urlwa}" onclick="setTimeout(()=>location.reload(), 3000)" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100 bg-green-600">
-                <span class="material-symbols-outlined">chat</span> ABRIR WHATSAPP AHORA
+                <span class="material-symbols-outlined">chat</span> ABRIR WHATSAPP
             </a>
-            <p class="text-[10px] text-center mt-2 text-slate-400">Datos guardados. Presiona el botón verde para enviar.</p>
+            <p class="text-[10px] text-center mt-2 text-slate-400 uppercase font-black">¡Datos guardados con éxito!</p>
         `;
 
     } catch(e) { 
@@ -318,6 +347,12 @@ async function procesarVenta() {
         btnOriginal.disabled = false;
     }
 }
+
+// Registro de Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW no registrado', err));
+}
+
 window.onload = iniciar;
 </script>
 </body>

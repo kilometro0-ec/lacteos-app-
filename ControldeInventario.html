@@ -7,7 +7,6 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
-    <link rel="stylesheet" href="estilos-lacteos.css">
     
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -20,7 +19,17 @@
       @keyframes fadeScale { 100% { opacity: 0; transform: scale(0.7); filter: blur(4px); } }
       #delete-bar { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
       
-      /* Ajuste para las cards */
+      /* Estilos para el pintado del menú activo */
+      .active-nav { color: #a21caf !important; }
+      .active-nav .icon-box {
+          background-color: #f5f3ff !important;
+          transform: translateY(-8px) !important;
+          box-shadow: 0 10px 15px -3px rgba(162, 28, 175, 0.2);
+      }
+      .active-nav span.material-symbols-outlined {
+          font-variation-settings: 'FILL' 1, 'wght' 600 !important;
+      }
+
       .card-prod { background: white; border-radius: 2.5rem; border: 2px solid #e9d5ff; transition: all 0.2s ease; }
     </style>
 </head>
@@ -28,9 +37,9 @@
 <body class="bg-[#faf5ff] text-gray-900 pb-44">
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-[#e9d5ff] flex justify-between items-center px-4 shadow-sm z-50">
-  <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
+  <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLacteo.html'">
     <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#a21caf] font-black shadow-inner">LL</div>
-    <h1 class="text-xl font-black text-[#a21caf] tracking-tight">Inventario</h1>
+    <h1 class="text-xl font-black text-[#a21caf] tracking-tight uppercase">Inventario</h1>
   </div>
   <button onclick="cargarInventario()" class="p-2 text-[#a21caf] hover:bg-purple-50 rounded-full transition-colors">
       <span id="refresh-icon" class="material-symbols-outlined scale-110">refresh</span>
@@ -106,14 +115,30 @@ let inventarioLocal = [];
 let seleccionados = new Set();
 const aNum = (v) => v ? parseFloat(v.toString().replace(',', '.')) : 0;
 
-async function iniciarApp() {
+// CARGA DE MENÚ Y PINTADO
+async function cargarMenu() {
     try {
         const resp = await fetch('menu.html');
         if (resp.ok) {
-            document.getElementById('menu-container').innerHTML = await resp.text();
+            const contenedor = document.getElementById('menu-container');
+            contenedor.innerHTML = await resp.text();
+
+            const urlActual = window.location.href.toLowerCase();
+            const pintar = () => {
+                const botones = contenedor.querySelectorAll('.nav-link');
+                botones.forEach(btn => {
+                    const dataPath = btn.getAttribute('data-path').toLowerCase();
+                    // Pintar si la URL contiene 'inventario'
+                    if (urlActual.includes(dataPath)) {
+                        btn.classList.add('active-nav');
+                        btn.classList.remove('text-gray-400');
+                    }
+                });
+            };
+            pintar();
+            setTimeout(pintar, 150);
         }
     } catch (e) { console.error("Error al cargar el menú:", e); }
-    cargarInventario();
 }
 
 async function cargarInventario() {
@@ -245,7 +270,10 @@ document.getElementById('formProducto').onsubmit = async (e) => {
 
 function cerrarModal() { document.getElementById('modalNuevo').classList.add('hidden'); }
 
-window.onload = iniciarApp;
+window.onload = () => {
+    cargarMenu();
+    cargarInventario();
+};
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Lógica Láctea | Gestión Inteligente</title>
+<title>Lógica Láctea | Inventario Pro</title>
 
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="api-config.js"></script>
@@ -41,7 +41,7 @@ body { font-family: 'Work Sans', sans-serif; }
 <header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
   <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
     <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-primary font-bold">LL</div>
-    <h1 class="text-xl font-bold text-primary">Lógica Láctea</h1>
+    <h1 class="text-xl font-bold text-primary tracking-tight">Lógica Láctea</h1>
   </div>
   <button onclick="cargarInventario()" class="p-2 text-primary hover:bg-purple-50 rounded-full transition-colors">
       <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
@@ -54,21 +54,22 @@ body { font-family: 'Work Sans', sans-serif; }
   </section>
 
   <section class="grid grid-cols-3 gap-2 mb-6">
-    <div class="bg-white p-3 rounded-xl border border-outline shadow-sm text-center">
+    <div class="bg-white p-3 rounded-2xl border border-outline shadow-sm text-center">
       <p class="text-[8px] text-gray-400 uppercase font-black">Valor Bodega</p>
       <h2 id="valor-bodega" class="text-sm font-bold text-primary">$0.00</h2>
     </div>
-    <div class="bg-red-50 p-3 rounded-xl border border-red-100 text-center">
+    <div class="bg-red-50 p-3 rounded-2xl border border-red-100 text-center">
       <p class="text-[8px] text-red-600 uppercase font-black">Críticos</p>
       <h2 id="count-critico" class="text-sm font-bold text-red-600">0</h2>
     </div>
-    <div class="bg-white p-3 rounded-xl border border-outline shadow-sm text-center">
+    <div class="bg-white p-3 rounded-2xl border border-outline shadow-sm text-center">
       <p class="text-[8px] text-success uppercase font-black">Productos</p>
       <h2 id="total-sku" class="text-sm font-bold text-success">0</h2>
     </div>
   </section>
 
-  <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8"></div>
+  <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    </div>
 
   <section class="bg-primary text-white p-6 rounded-3xl shadow-xl shadow-purple-200">
     <div class="flex flex-col gap-4">
@@ -77,44 +78,45 @@ body { font-family: 'Work Sans', sans-serif; }
           <p class="text-purple-200 text-xs">Busca un producto para sumar stock o crea uno nuevo.</p>
       </div>
       <button onclick="abrirModal()" class="w-full bg-white text-primary py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-purple-50 active:scale-95 transition-all">
-          <span class="material-symbols-outlined">add_circle</span> AGREGAR STOCK / NUEVO
+          <span class="material-symbols-outlined">add_box</span> AGREGAR STOCK / NUEVO
       </button>
     </div>
   </section>
 </main>
 
 <div id="modalNuevo" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-  <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
+  <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative animate-in fade-in zoom-in duration-300">
     <h3 class="text-2xl font-black text-primary mb-6 flex items-center gap-2">
         <span class="material-symbols-outlined">inventory_2</span> Entrada de Producto
     </h3>
+    
     <form id="formProducto" class="space-y-4">
       <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase">Producto</label>
-        <input type="text" id="nombreP" required list="lista-productos" autocomplete="off" placeholder="Escriba para buscar..." class="w-full border-outline rounded-xl p-3 focus:ring-primary focus:border-primary">
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Buscar Producto</label>
+        <input type="text" id="nombreP" required list="lista-productos" autocomplete="off" placeholder="Escriba el nombre..." class="w-full border-outline rounded-xl p-3 focus:ring-primary">
         <datalist id="lista-productos"></datalist>
-        <p id="msg-nuevo" class="text-[10px] mt-1 text-secondary hidden italic font-bold text-right">✨ Producto nuevo detectado</p>
+        <p id="msg-nuevo" class="text-[10px] mt-1 text-secondary hidden italic font-bold">✨ Nuevo producto detectado</p>
       </div>
       
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="text-[10px] font-black text-gray-400 uppercase">Cantidad a Sumar</label>
+          <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Cantidad a Sumar</label>
           <input type="number" id="stockP" required placeholder="0" class="w-full border-outline rounded-xl p-3">
         </div>
         <div>
-          <label class="text-[10px] font-black text-gray-400 uppercase">Precio Compra (Dist)</label>
-          <input type="number" step="0.01" id="costoP" required placeholder="0.00" class="w-full border-outline rounded-xl p-3 bg-gray-50">
+          <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Costo (Dist)</label>
+          <input type="number" step="0.01" id="costoP" required placeholder="0.00" class="w-full border-outline rounded-xl p-3">
         </div>
       </div>
       
       <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase">Precio Venta (Público)</label>
-        <input type="number" step="0.01" id="ventaP" required placeholder="0.00" class="w-full border-outline rounded-xl p-3 bg-gray-50">
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Precio Venta (Público)</label>
+        <input type="number" step="0.01" id="ventaP" required placeholder="0.00" class="w-full border-outline rounded-xl p-3">
       </div>
 
       <div class="flex gap-3 pt-4">
-        <button type="button" onclick="cerrarModal()" class="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl">CANCELAR</button>
-        <button type="submit" id="btnGuardar" class="flex-1 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg">PROCESAR</button>
+        <button type="button" onclick="cerrarModal()" class="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition-colors">CANCELAR</button>
+        <button type="submit" id="btnGuardar" class="flex-1 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-purple-100">PROCESAR</button>
       </div>
     </form>
   </div>
@@ -130,7 +132,7 @@ body { font-family: 'Work Sans', sans-serif; }
     <span class="text-[10px]">Ventas</span>
   </button>
   <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center gap-1 font-bold">
-    <span class="material-symbols-outlined">inventory</span>
+    <span class="material-symbols-outlined font-fill">inventory</span>
     <span class="text-[10px]">Stock</span>
   </button>
   <button onclick="window.location.href='GestióndeDespachos.html'" class="text-success flex flex-col items-center gap-1">
@@ -145,14 +147,16 @@ let inventarioLocal = [];
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
   icon.classList.add('rotate-animation');
+  
   try {
     const inventario = await DairyAPI.obtenerDatos("Inventario");
     inventarioLocal = inventario;
+    
     const container = document.getElementById('grid-productos');
     const dataList = document.getElementById('lista-productos');
     
     container.innerHTML = "";
-    dataList.innerHTML = "";
+    dataList.innerHTML = ""; 
     
     let totalCosto = 0; let criticos = 0;
 
@@ -162,14 +166,18 @@ async function cargarInventario() {
       if(esCritico) criticos++;
       totalCosto += (parseFloat(prod.Precio_Distribuidor) || 0) * stock;
 
-      dataList.innerHTML += `<option value="${prod.Producto}">`;
+      // LLENAR LISTADO PARA BÚSQUEDA
+      const option = document.createElement('option');
+      option.value = prod.Producto;
+      dataList.appendChild(option);
 
+      // LLENAR CUADRÍCULA VISUAL
       container.innerHTML += `
-        <div class="bg-white p-3 rounded-2xl border ${esCritico ? 'border-red-200' : 'border-outline'} shadow-sm relative">
-          <h3 class="font-bold text-[11px] truncate mb-1">${prod.Producto}</h3>
+        <div class="bg-white p-3 rounded-2xl border ${esCritico ? 'border-red-200' : 'border-outline'} shadow-sm">
+          <h3 class="font-bold text-[10px] truncate mb-1 uppercase text-gray-600">${prod.Producto}</h3>
           <div class="flex justify-between items-center">
               <p class="text-primary font-black text-xs">$${parseFloat(prod.Precio_Venta).toFixed(2)}</p>
-              <span class="text-[10px] px-2 py-0.5 rounded-full ${esCritico ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'} font-bold">${stock}u</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-lg ${esCritico ? 'bg-red-100 text-red-600' : 'bg-purple-50 text-primary'} font-bold">${stock}u</span>
           </div>
         </div>`;
     });
@@ -177,50 +185,52 @@ async function cargarInventario() {
     document.getElementById('valor-bodega').innerText = `$${totalCosto.toFixed(2)}`;
     document.getElementById('count-critico').innerText = criticos;
     document.getElementById('total-sku').innerText = inventario.length;
-  } catch (e) { console.error(e); }
-  finally { icon.classList.remove('rotate-animation'); }
+
+  } catch (e) {
+    console.error("Error cargando inventario:", e);
+  } finally {
+    setTimeout(() => icon.classList.remove('rotate-animation'), 500);
+  }
 }
 
-// LOGICA DE AUTOCOMPLETADO
+// LÓGICA DE AUTOCOMPLETADO AL ESCRIBIR
 document.getElementById('nombreP').addEventListener('input', function(e) {
   const nombreBuscado = e.target.value.toLowerCase();
-  const productoEncontrado = inventarioLocal.find(p => p.Producto.toLowerCase() === nombreBuscado);
-  const msgNuevo = document.getElementById('msg-nuevo');
+  const producto = inventarioLocal.find(p => p.Producto.toLowerCase() === nombreBuscado);
+  
   const costoInput = document.getElementById('costoP');
   const ventaInput = document.getElementById('ventaP');
+  const msgNuevo = document.getElementById('msg-nuevo');
 
-  if (productoEncontrado) {
-    costoInput.value = productoEncontrado.Precio_Distribuidor;
-    ventaInput.value = productoEncontrado.Precio_Venta;
-    costoInput.readOnly = true; // Bloquear si ya existe
+  if (producto) {
+    // Autocompletar y bloquear campos
+    costoInput.value = producto.Precio_Distribuidor;
+    ventaInput.value = producto.Precio_Venta;
+    costoInput.readOnly = true;
     ventaInput.readOnly = true;
     costoInput.classList.add('bg-gray-100');
     ventaInput.classList.add('bg-gray-100');
     msgNuevo.classList.add('hidden');
   } else {
-    if(e.target.value.length > 2) msgNuevo.classList.remove('hidden');
-    costoInput.value = "";
-    ventaInput.value = "";
+    // Si es nuevo, permitir edición
     costoInput.readOnly = false;
     ventaInput.readOnly = false;
     costoInput.classList.remove('bg-gray-100');
     ventaInput.classList.remove('bg-gray-100');
+    if(e.target.value.length > 2) msgNuevo.classList.remove('hidden');
   }
 });
 
+// ENVIAR DATOS
 document.getElementById('formProducto').onsubmit = async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnGuardar');
-  const nombre = document.getElementById('nombreP').value;
   btn.innerText = "PROCESANDO...";
   btn.disabled = true;
 
-  const existe = inventarioLocal.find(p => p.Producto.toLowerCase() === nombre.toLowerCase());
-  
   const payload = {
     pestaña: "Inventario",
-    accion: existe ? "SUMAR_STOCK" : "NUEVO_PRODUCTO",
-    Producto: nombre,
+    Producto: document.getElementById('nombreP').value,
     Cantidad: document.getElementById('stockP').value,
     Precio_Distribuidor: document.getElementById('costoP').value,
     Precio_Venta: document.getElementById('ventaP').value
@@ -231,18 +241,24 @@ document.getElementById('formProducto').onsubmit = async (e) => {
     cerrarModal();
     cargarInventario();
     document.getElementById('formProducto').reset();
-    alert("Operación exitosa");
-  } catch (err) { alert("Error de servidor"); }
-  finally { btn.innerText = "PROCESAR"; btn.disabled = false; }
+    alert("Inventario actualizado correctamente");
+  } catch (err) {
+    alert("Error al conectar con Google Sheets");
+  } finally {
+    btn.innerText = "PROCESAR";
+    btn.disabled = false;
+  }
 };
 
 function abrirModal() { document.getElementById('modalNuevo').classList.remove('hidden'); }
 function cerrarModal() { 
-    document.getElementById('modalNuevo').classList.add('hidden');
-    document.getElementById('formProducto').reset();
+  document.getElementById('modalNuevo').classList.add('hidden');
+  document.getElementById('formProducto').reset();
 }
 
+// Iniciar carga al abrir
 window.onload = cargarInventario;
 </script>
+
 </body>
 </html>

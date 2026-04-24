@@ -4,10 +4,8 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Lógica Láctea | Control de Inventario</title>
-
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
@@ -15,25 +13,16 @@
     tailwind.config = {
       theme: {
         extend: {
-          colors: {
-            primary: "#a21caf",
-            secondary: "#db2777",
-            success: "#16a34a",
-            background: "#faf5ff",
-            outline: "#e9d5ff"
-          }
+          colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" }
         }
       }
     }
     </script>
-
     <style>
-    body { font-family: 'Work Sans', sans-serif; }
-    .rotate-animation { animation: spin 1s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    
-    /* Animación para stock bajo */
-    .card-critica { border: 2px solid #dc2626 !important; background-color: #fef2f2; }
+      body { font-family: 'Work Sans', sans-serif; }
+      .card-critica { border: 2px solid #dc2626 !important; background-color: #fef2f2; }
+      .rotate-animation { animation: spin 1s linear infinite; }
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 
@@ -52,61 +41,47 @@
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
   
   <section class="grid grid-cols-3 gap-3">
-    <div class="bg-white p-4 rounded-[1.5rem] border border-outline shadow-sm text-center">
-      <p class="text-[9px] text-gray-400 uppercase font-black mb-1">Valor Neto</p>
+    <div class="bg-white p-4 rounded-[1.5rem] border border-outline text-center shadow-sm">
+      <p class="text-[9px] text-gray-400 uppercase font-black mb-1">Valor Bodega</p>
       <h2 id="valor-bodega" class="text-sm font-black text-primary">$0.00</h2>
     </div>
     <div class="bg-red-50 p-4 rounded-[1.5rem] border border-red-100 text-center">
-      <p class="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Críticos</p>
+      <p class="text-[9px] text-red-600 uppercase font-black mb-1">Críticos</p>
       <h2 id="count-critico" class="text-sm font-black text-red-600">0</h2>
     </div>
-    <div class="bg-white p-4 rounded-[1.5rem] border border-outline shadow-sm text-center">
-      <p class="text-[9px] text-success uppercase font-black mb-1 tracking-widest">SKU Total</p>
-      <h2 id="total-sku" class="text-sm font-black text-success">0</h2>
+    <div class="bg-white p-4 rounded-[1.5rem] border border-outline text-center shadow-sm">
+      <p class="text-[9px] text-green-600 uppercase font-black mb-1">Total SKU</p>
+      <h2 id="total-sku" class="text-sm font-black text-green-600">0</h2>
     </div>
   </section>
 
   <div class="px-1">
-    <input type="text" id="filtroProd" oninput="filtrarPantalla()" placeholder="🔍 Buscar por nombre o ID..." class="w-full bg-white border-outline rounded-2xl p-4 font-bold text-sm shadow-sm focus:ring-primary focus:border-primary">
+    <input type="text" id="filtroProd" oninput="filtrarPantalla()" placeholder="🔍 Buscar producto o ID..." class="w-full bg-white border-outline rounded-2xl p-4 font-bold text-sm shadow-sm focus:ring-primary">
   </div>
 
   <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="col-span-full text-center py-20 text-gray-400 italic font-bold">Sincronizando inventario...</div>
+      <div class="col-span-full text-center py-20 text-gray-400 italic font-bold">Cargando datos...</div>
   </div>
 
   <div class="fixed bottom-24 left-0 w-full px-4 z-40">
-    <button onclick="abrirModalNuevo()" class="w-full bg-primary text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all uppercase">
+    <button onclick="abrirModalNuevo()" class="w-full bg-primary text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase">
         <span class="material-symbols-outlined">add_circle</span> Nuevo Producto
     </button>
   </div>
 </main>
 
 <div id="modalNuevo" class="fixed inset-0 bg-black/70 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-md">
-  <div class="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border border-outline">
-    <h3 id="modal-titulo" class="text-2xl font-black text-primary mb-6 uppercase tracking-tight">Entrada de Stock</h3>
+  <div class="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl">
+    <h3 id="modal-titulo" class="text-2xl font-black text-primary mb-6 uppercase">Entrada de Stock</h3>
     <form id="formProducto" class="space-y-4">
-      <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Nombre del Producto</label>
-        <input type="text" id="nombreP" required placeholder="Ej: Yogurt Mora 1L" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
-      </div>
+      <input type="text" id="nombreP" required placeholder="Producto" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold">
       <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label id="label-cantidad" class="text-[10px] font-black text-gray-400 uppercase ml-2">Cantidad</label>
-          <input type="number" id="stockP" required placeholder="0" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
-        </div>
-        <div>
-          <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Costo Distrib.</label>
-          <input type="number" step="0.01" id="costoP" required placeholder="0.00" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
-        </div>
+        <input type="number" id="stockP" required placeholder="Cantidad" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold">
+        <input type="number" step="0.01" id="costoP" required placeholder="Costo" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold">
       </div>
-      <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Precio de Venta (PVP)</label>
-        <input type="number" step="0.01" id="ventaP" required placeholder="0.00" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
-      </div>
-      <div class="flex flex-col gap-2 pt-6">
-        <button type="submit" id="btnGuardar" class="w-full py-5 bg-primary text-white rounded-2xl font-black shadow-lg uppercase tracking-widest">Procesar</button>
-        <button type="button" onclick="cerrarModal()" class="w-full py-2 text-gray-400 font-bold uppercase text-[10px]">Cerrar</button>
-      </div>
+      <input type="number" step="0.01" id="ventaP" required placeholder="Precio Venta (PVP)" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold">
+      <button type="submit" id="btnGuardar" class="w-full py-5 bg-primary text-white rounded-2xl font-black uppercase shadow-lg">Guardar</button>
+      <button type="button" onclick="cerrarModal()" class="w-full py-2 text-gray-400 font-bold uppercase text-[10px]">Cancelar</button>
     </form>
   </div>
 </div>
@@ -117,143 +92,107 @@
 let inventarioLocal = [];
 
 async function iniciarApp() {
-    // 1. CARGA DEL MENÚ (Asegura que el archivo se llame menu.html)
     try {
         const resp = await fetch('menu.html');
         if (resp.ok) {
-            const html = await resp.text();
-            document.getElementById('menu-container').innerHTML = html;
+            document.getElementById('menu-container').innerHTML = await resp.text();
             marcarMenuActivo();
         }
-    } catch (e) { console.error("Error cargando menú:", e); }
-
+    } catch (e) { console.log("Menú no encontrado"); }
     cargarInventario();
-}
-
-function marcarMenuActivo() {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        if (item.getAttribute('onclick')?.includes('ControldeInventario.html')) {
-            item.classList.add('text-primary');
-            item.classList.remove('text-gray-400');
-            const icon = item.querySelector('.material-symbols-outlined');
-            if (icon) icon.classList.add('active-icon');
-        }
-    });
 }
 
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
-  if (icon) icon.classList.add('rotate-animation');
-  
+  icon?.classList.add('rotate-animation');
   try {
-    const inventario = await DairyAPI.obtenerDatos("Inventario");
-    inventarioLocal = inventario;
+    const data = await DairyAPI.obtenerDatos("Inventario");
+    inventarioLocal = data;
     renderizarGrid(inventarioLocal);
-  } catch (e) {
-    console.error("Error de carga:", e);
-  } finally {
-    if (icon) icon.classList.remove('rotate-animation');
-  }
+  } catch (e) { console.error(e); }
+  icon?.classList.remove('rotate-animation');
 }
 
 function renderizarGrid(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
-    
-    let totalCosto = 0;
-    let criticos = 0;
+    let totalCosto = 0; let criticos = 0;
 
     lista.forEach(prod => {
-      const stock = parseInt(prod.Stock) || 0;
-      const esCritico = stock <= 5;
-      if(esCritico) criticos++;
-      totalCosto += (parseFloat(prod.Precio_Distribuidor) || 0) * stock;
+        // CORRECCIÓN PVP: Forzamos la lectura de la propiedad correcta
+        const stock = parseInt(prod.Stock) || 0;
+        const pvp = parseFloat(prod.Precio_Venta) || 0;
+        const costo = parseFloat(prod.Precio_Distribuidor) || 0;
+        const esCritico = stock <= 5;
+        if(esCritico) criticos++;
+        totalCosto += (costo * stock);
 
-      container.innerHTML += `
+        container.innerHTML += `
         <div onclick="abrirModalSumar('${prod.Producto}')" class="bg-white p-4 rounded-[2.5rem] border ${esCritico ? 'card-critica' : 'border-outline'} shadow-sm active:scale-95 transition-all flex flex-col justify-between h-44">
           <div>
-            <p class="text-[14px] font-black text-primary mb-1 tracking-tighter">${prod.ID || 'N/A'}</p> 
-            <h3 class="font-bold text-[11px] leading-tight uppercase text-gray-800 line-clamp-2">${prod.Producto}</h3>
+            <p class="text-[16px] font-black text-primary mb-1">${prod.ID || 'S/N'}</p> 
+            <h3 class="font-bold text-[11px] leading-tight uppercase text-gray-700 line-clamp-2">${prod.Producto}</h3>
           </div>
           <div class="flex justify-between items-end">
               <div>
-                <p class="text-[8px] text-gray-400 font-black uppercase">PVP</p>
-                <p class="text-primary font-black text-base">$${parseFloat(prod.Precio_Venta || 0).toFixed(2)}</p>
+                <p class="text-[8px] text-gray-400 font-black">PVP</p>
+                <p class="text-primary font-black text-lg">$${pvp.toFixed(2)}</p>
               </div>
-              <div class="text-right">
-                 <p class="text-[8px] text-gray-400 font-black uppercase">Stock</p>
-                 <span class="text-sm px-3 py-1 rounded-xl ${esCritico ? 'bg-red-600 text-white' : 'bg-purple-100 text-primary'} font-black italic">
-                   ${stock}
-                 </span>
+              <div class="bg-purple-100 text-primary px-3 py-1 rounded-xl font-black text-sm ${esCritico ? 'bg-red-600 text-white' : ''}">
+                ${stock}
               </div>
           </div>
         </div>`;
     });
-
     document.getElementById('valor-bodega').innerText = `$${totalCosto.toFixed(2)}`;
     document.getElementById('count-critico').innerText = criticos;
     document.getElementById('total-sku').innerText = lista.length;
 }
 
 function filtrarPantalla() {
-    const busqueda = document.getElementById('filtroProd').value.toLowerCase();
-    const filtrados = inventarioLocal.filter(p => 
-        p.Producto.toLowerCase().includes(busqueda) || 
-        (p.ID && p.ID.toLowerCase().includes(busqueda))
-    );
-    renderizarGrid(filtrados);
+    const b = document.getElementById('filtroProd').value.toLowerCase();
+    renderizarGrid(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b) || p.ID?.toLowerCase().includes(b)));
 }
 
-function abrirModalSumar(nombre) {
-  const prod = inventarioLocal.find(p => p.Producto === nombre);
-  if (!prod) return;
-  document.getElementById('modal-titulo').innerText = "Abastecer Stock";
-  document.getElementById('label-cantidad').innerText = "Sumar Cantidad";
-  document.getElementById('nombreP').value = prod.Producto;
-  document.getElementById('nombreP').readOnly = true;
-  document.getElementById('costoP').value = prod.Precio_Distribuidor;
-  document.getElementById('ventaP').value = prod.Precio_Venta;
-  document.getElementById('modalNuevo').classList.remove('hidden');
+function abrirModalSumar(n) {
+    const p = inventarioLocal.find(x => x.Producto === n);
+    document.getElementById('modal-titulo').innerText = "Abastecer";
+    document.getElementById('nombreP').value = p.Producto;
+    document.getElementById('nombreP').readOnly = true;
+    document.getElementById('costoP').value = p.Precio_Distribuidor;
+    document.getElementById('ventaP').value = p.Precio_Venta;
+    document.getElementById('modalNuevo').classList.remove('hidden');
 }
 
 function abrirModalNuevo() {
-  document.getElementById('modal-titulo').innerText = "Nuevo SKU";
-  document.getElementById('label-cantidad').innerText = "Stock Inicial";
-  document.getElementById('formProducto').reset();
-  document.getElementById('nombreP').readOnly = false;
-  document.getElementById('modalNuevo').classList.remove('hidden');
+    document.getElementById('modal-titulo').innerText = "Nuevo SKU";
+    document.getElementById('formProducto').reset();
+    document.getElementById('nombreP').readOnly = false;
+    document.getElementById('modalNuevo').classList.remove('hidden');
 }
 
 document.getElementById('formProducto').onsubmit = async (e) => {
-  e.preventDefault();
-  const btn = document.getElementById('btnGuardar');
-  btn.disabled = true;
-  btn.innerText = "REGISTRANDO...";
-
-  try {
+    e.preventDefault();
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.innerText = "Guardando...";
     await DairyAPI.enviarDatos("Inventario", {
         pestaña: "Inventario",
-        Producto: document.getElementById('nombreP').value.trim(),
-        Cantidad: document.getElementById('stockP').value, 
+        Producto: document.getElementById('nombreP').value,
+        Cantidad: document.getElementById('stockP').value,
         Precio_Distribuidor: document.getElementById('costoP').value,
         Precio_Venta: document.getElementById('ventaP').value
     });
     cerrarModal();
     setTimeout(cargarInventario, 1500);
-  } catch (err) {
-    alert("Error de conexión");
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "PROCESAR";
-  }
+    btn.disabled = false; btn.innerText = "Guardar";
 };
 
-function cerrarModal() {
-  document.getElementById('modalNuevo').classList.add('hidden');
-  document.getElementById('formProducto').reset();
+function cerrarModal() { document.getElementById('modalNuevo').classList.add('hidden'); }
+function marcarMenuActivo() {
+    document.querySelectorAll('.nav-item').forEach(i => {
+        if(i.getAttribute('onclick')?.includes('ControldeInventario.html')) i.classList.add('text-primary');
+    });
 }
-
 window.onload = iniciarApp;
 </script>
 </body>

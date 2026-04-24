@@ -1,206 +1,109 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Lógica Láctea - Gestión de Despachos</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <title>Lógica Láctea - Despachos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
         tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { 
-                        primary: "#a21caf", 
-                        success: "#10b981",
-                        background: "#faf5ff", 
-                        outline: "#e9d5ff" 
-                    }
-                }
-            }
+            theme: { extend: { colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" } } }
         }
     </script>
-    <style>
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .tab-active { border-bottom: 3px solid #a21caf; color: #a21caf; }
-        .card-entrega { transition: all 0.3s ease; }
-        .card-entrega:active { transform: scale(0.98); }
-    </style>
 </head>
 <body class="bg-background text-gray-900 font-[Work_Sans] pb-32">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
-    <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
+    <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
             <span class="material-symbols-outlined text-3xl">local_shipping</span>
         </div>
         <h1 class="text-xl font-bold text-primary">Despachos</h1>
     </div>
-    <button onclick="inicializarDespachos()" class="p-2 text-primary active:rotate-180 transition-transform duration-500">
+    <button onclick="cargarDatos()" class="p-2 text-primary">
         <span class="material-symbols-outlined">refresh</span>
     </button>
 </header>
 
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-6">
-    
-    <div class="bg-white p-4 rounded-2xl border border-outline flex justify-around shadow-sm">
-        <div class="text-center">
-            <p class="text-[10px] font-black text-gray-400 uppercase">Total Pedidos</p>
-            <p id="count-total" class="text-xl font-bold text-primary">0</p>
-        </div>
-        <div class="w-[1px] bg-outline h-8 self-center"></div>
-        <div class="text-center">
-            <p class="text-[10px] font-black text-gray-400 uppercase">Por Entregar</p>
-            <p id="count-pendientes" class="text-xl font-bold text-secondary">0</p>
+    <div id="contenedor-pedidos" class="space-y-4">
+        <div class="text-center py-20 text-gray-400">
+            <p>Cargando pedidos...</p>
         </div>
     </div>
-
-    <div class="flex gap-4 border-b border-outline overflow-x-auto no-scrollbar">
-        <button id="tab-todos" onclick="filtrarPedidos('todos')" class="tab-active px-6 py-2 font-bold text-sm whitespace-nowrap">TODOS</button>
-        <button id="tab-hoy" onclick="filtrarPedidos('hoy')" class="text-gray-400 px-6 py-2 font-bold text-sm whitespace-nowrap">SOLO HOY</button>
-    </div>
-
-    <div id="contenedor-despachos" class="space-y-4">
-        <div class="flex flex-col items-center py-20 text-gray-300">
-            <span class="material-symbols-outlined animate-spin text-5xl">sync</span>
-            <p class="font-bold text-sm mt-4">Organizando rutas...</p>
-        </div>
-    </div>
-
 </main>
 
-<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
-    <button onclick="window.location.href='DashboardLacteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
-        <span class="material-symbols-outlined">home</span>
-        <span class="text-[10px] font-bold">Inicio</span>
-    </button>
-    <button onclick="window.location.href='RegistrodeVentas.html'" class="text-gray-400 flex flex-col items-center gap-1">
-        <span class="material-symbols-outlined">receipt</span>
-        <span class="text-[10px]">Ventas</span>
-    </button>
-    <button onclick="window.location.href='ControldeInventario.html'" class="text-gray-400 flex flex-col items-center gap-1">
-        <span class="material-symbols-outlined">inventory</span>
-        <span class="text-[10px]">Stock</span>
-    </button>
-    <button class="text-primary flex flex-col items-center gap-1 font-bold">
-        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">local_shipping</span>
-        <span class="text-[10px]">Entregas</span>
-    </button>
-</nav>
-
 <script>
-let ventasData = [];
-let clientesData = [];
-
-async function inicializarDespachos() {
-    const contenedor = document.getElementById('contenedor-despachos');
+async function cargarDatos() {
+    const contenedor = document.getElementById('contenedor-pedidos');
     try {
-        // Obtenemos los datos necesarios
         const [ventas, clientes] = await Promise.all([
             DairyAPI.obtenerDatos("Ventas"),
             DairyAPI.obtenerDatos("Clientes")
         ]);
 
-        ventasData = ventas;
-        clientesData = clientes;
+        if (!ventas || ventas.length === 0) {
+            contenedor.innerHTML = `<p class="text-center py-10">No hay ventas registradas.</p>`;
+            return;
+        }
 
-        document.getElementById('count-total').innerText = ventas.length;
-        // Simulamos pendientes (en un sistema real usarías una columna 'Estado' en Sheets)
-        document.getElementById('count-pendientes').innerText = ventas.length; 
+        contenedor.innerHTML = ""; // Limpiar cargando
 
-        renderizarDespachos(ventasData);
-    } catch (e) {
-        contenedor.innerHTML = `
-            <div class="text-center py-10">
-                <span class="material-symbols-outlined text-red-400 text-5xl">cloud_off</span>
-                <p class="text-red-500 font-bold mt-2">Error de conexión</p>
-                <button onclick="location.reload()" class="mt-4 text-xs font-black text-primary border border-primary px-4 py-2 rounded-lg">REINTENTAR</button>
-            </div>`;
-    }
-}
+        // Invertimos para ver lo más nuevo primero
+        ventas.reverse().forEach(venta => {
+            // Buscamos al cliente (usamos trim() para evitar errores de espacios)
+            const clienteInfo = clientes.find(c => 
+                c.Nombre.toString().trim().toLowerCase() === venta.Cliente.toString().trim().toLowerCase()
+            );
 
-function renderizarDespachos(lista) {
-    const contenedor = document.getElementById('contenedor-despachos');
-    contenedor.innerHTML = "";
+            // IMPORTANTE: Si la columna en Excel tiene espacios, se accede así: venta["Nombre Columna"]
+            const pvp = venta["Precio PVP"] || "0.00";
+            const total = venta["Precio Total"] || "0.00";
+            const direccion = clienteInfo ? clienteInfo.Dirección : "Dirección no encontrada";
+            const telf = clienteInfo ? clienteInfo.Teléfono : "";
 
-    if (lista.length === 0) {
-        contenedor.innerHTML = `<p class="text-center py-10 text-gray-400 italic">No hay pedidos registrados</p>`;
-        return;
-    }
-
-    lista.reverse().forEach((venta, index) => {
-        // Buscamos los datos del cliente para obtener la dirección y teléfono
-        const infoCliente = clientesData.find(c => 
-            c.Nombre.toString().trim().toLowerCase() === venta.Cliente.toString().trim().toLowerCase()
-        );
-
-        const direccion = infoCliente ? infoCliente.Dirección : "Dirección no especificada";
-        const telefono = infoCliente ? infoCliente.Teléfono : "";
-
-        contenedor.innerHTML += `
-            <div class="card-entrega bg-white p-5 rounded-3xl border border-outline shadow-sm space-y-4">
-                <div class="flex justify-between items-start">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-secondary animate-pulse"></div>
-                        <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendiente</span>
+            contenedor.innerHTML += `
+                <div class="bg-white p-5 rounded-3xl border border-outline shadow-sm space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-[10px] font-black text-primary uppercase">Pendiente</span>
+                        <span class="text-[10px] text-gray-400">${new Date(venta.Fecha).toLocaleDateString()}</span>
                     </div>
-                    <span class="text-[10px] font-bold text-gray-400">${new Date(venta.Fecha).toLocaleDateString()}</span>
-                </div>
+                    
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800">${venta.Cliente}</h2>
+                        <p class="text-sm font-bold text-primary">${venta.Producto} (x${venta.Cantidad})</p>
+                    </div>
 
-                <div>
-                    <h3 class="text-lg font-black text-gray-800 leading-tight">${venta.Cliente}</h3>
-                    <div class="flex items-center gap-1 text-primary mt-1">
-                        <span class="material-symbols-outlined text-sm">inventory_2</span>
-                        <p class="text-xs font-bold uppercase">${venta.Producto} (x${venta.Cantidad})</p>
+                    <div class="bg-purple-50 p-3 rounded-xl flex items-start gap-2">
+                        <span class="material-symbols-outlined text-primary text-sm">location_on</span>
+                        <p class="text-xs text-gray-600">${direccion}</p>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2">
+                        <p class="text-lg font-black text-gray-800">$${total}</p>
+                        <div class="flex gap-2">
+                            <a href="https://wa.me/${telf.replace(/[^0-9]/g, '')}" class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                                <span class="material-symbols-outlined">chat</span>
+                            </a>
+                            <button onclick="this.parentElement.parentElement.parentElement.style.opacity='0.5'" class="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold">
+                                ENTREGAR
+                            </button>
+                        </div>
                     </div>
                 </div>
+            `;
+        });
 
-                <div class="bg-purple-50 p-3 rounded-2xl flex items-start gap-3">
-                    <span class="material-symbols-outlined text-primary">location_on</span>
-                    <p class="text-xs font-medium text-gray-600 leading-relaxed">${direccion}</p>
-                </div>
-
-                <div class="flex gap-2">
-                    <a href="https://wa.me/${telefono.replace(/[^0-9]/g, '')}" class="flex-1 h-12 bg-green-50 text-success rounded-xl flex items-center justify-center gap-2 font-black text-[10px] border border-green-100">
-                        <span class="material-symbols-outlined text-lg">chat</span> WHATSAPP
-                    </a>
-                    <button onclick="finalizarEntrega('${venta.Cliente}')" class="flex-1 h-12 bg-primary text-white rounded-xl flex items-center justify-center gap-2 font-black text-[10px] shadow-lg shadow-purple-100">
-                        <span class="material-symbols-outlined text-lg">check_circle</span> ENTREGADO
-                    </button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function filtrarPedidos(modo) {
-    const btnTodos = document.getElementById('tab-todos');
-    const btnHoy = document.getElementById('tab-hoy');
-
-    if (modo === 'hoy') {
-        btnHoy.className = "tab-active px-6 py-2 font-bold text-sm whitespace-nowrap";
-        btnTodos.className = "text-gray-400 px-6 py-2 font-bold text-sm whitespace-nowrap";
-        const hoy = new Date().toLocaleDateString();
-        const filtrados = ventasData.filter(v => new Date(v.Fecha).toLocaleDateString() === hoy);
-        renderizarDespachos(filtrados);
-    } else {
-        btnTodos.className = "tab-active px-6 py-2 font-bold text-sm whitespace-nowrap";
-        btnHoy.className = "text-gray-400 px-6 py-2 font-bold text-sm whitespace-nowrap";
-        renderizarDespachos(ventasData);
+    } catch (error) {
+        contenedor.innerHTML = `<p class="text-center text-red-500">Error al cargar datos. Revisa la consola (F12).</p>`;
+        console.error(error);
     }
 }
 
-function finalizarEntrega(cliente) {
-    // Por ahora es una acción visual, podrías agregar un campo "Estado" en Sheets
-    // y usar DairyAPI.enviarDatos para marcarlo como 'ENTREGADO'.
-    alert("Pedido de " + cliente + " marcado como entregado correctamente.");
-}
-
-window.onload = inicializarDespachos;
+window.onload = cargarDatos;
 </script>
-
 </body>
 </html>

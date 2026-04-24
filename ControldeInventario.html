@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Lógica Láctea | Inventario Morado</title>
+<title>Lógica Láctea | Control de Inventario</title>
 
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script src="api-config.js"></script>
@@ -17,14 +17,15 @@ tailwind.config = {
   theme: {
     extend: {
       colors: {
-        primary: "#a21caf", // Morado principal
-        "primary-light": "#f5d0fe",
-        "primary-dark": "#701a75",
-        background: "#faf5ff", // Blanco con tinte morado
+        primary: "#a21caf",
+        "primary-container": "#f5d0fe",
+        secondary: "#db2777",
+        success: "#16a34a",
+        warning: "#eab308",
+        background: "#faf5ff",
         surface: "#ffffff",
         outline: "#e9d5ff",
-        error: "#dc2626", // Rojo (solo para alertas críticas)
-        warning: "#eab308" // Amarillo (solo para stock bajo)
+        error: "#dc2626"
       }
     }
   }
@@ -39,21 +40,20 @@ body { font-family: 'Work Sans', sans-serif; }
 .rotate-animation { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-@keyframes pulse-border-purple {
-  0% { border-color: #a21caf; box-shadow: 0 0 0 0px rgba(162, 28, 175, 0.2); }
-  50% { border-color: #f5d0fe; box-shadow: 0 0 0 6px rgba(162, 28, 175, 0.1); }
-  100% { border-color: #a21caf; box-shadow: 0 0 0 0px rgba(162, 28, 175, 0.2); }
+@keyframes pulse-border-red {
+  0% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
+  50% { border-color: #f87171; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1); }
+  100% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
 }
 
 @keyframes pulse-dot {
   0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.6); opacity: 0.4; }
+  50% { transform: scale(1.5); opacity: 0.5; }
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Clases de estado */
-.anim-critico { animation: pulse-border-purple 2s infinite; border-width: 2px; }
-.dot-anim { animation: pulse-dot 1.2s infinite; }
+.anim-critico { animation: pulse-border-red 2s infinite; border-width: 2px; }
+.dot-anim { animation: pulse-dot 1.5s infinite; }
 </style>
 </head>
 
@@ -61,96 +61,100 @@ body { font-family: 'Work Sans', sans-serif; }
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
   <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
-    <div class="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-purple-200">
+    <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-primary">
         <span class="material-symbols-outlined">opacity</span>
     </div>
-    <h1 class="text-xl font-bold text-primary tracking-tight">Lógica Láctea</h1>
+    <h1 class="text-xl font-bold text-primary">Lógica Láctea</h1>
   </div>
-  <button onclick="cargarInventario()" class="w-10 h-10 flex items-center justify-center text-primary hover:bg-primary-light rounded-full transition-all">
-      <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
-  </button>
+  <div class="flex gap-2">
+    <button onclick="cargarInventario()" class="p-2 text-primary hover:bg-primary-container rounded-full transition-colors">
+        <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
+    </button>
+  </div>
 </header>
 
-<main class="pt-20 px-4 max-w-5xl mx-auto">
+<main class="pt-20 px-4 max-w-7xl mx-auto">
 
-<section class="mb-8">
-  <h1 class="text-4xl font-black text-primary leading-none">Stock</h1>
-  <p class="text-gray-400 text-sm mt-1">Gestión centralizada de productos</p>
+<section class="mb-6">
+  <h1 class="text-3xl font-bold text-primary">Control de Stock</h1>
 </section>
 
-<section class="grid grid-cols-3 gap-3 mb-10">
-  <div class="bg-white p-4 rounded-2xl border border-outline shadow-sm flex flex-col">
-    <span class="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Valor Bodega</span>
-    <h2 id="valor-bodega" class="text-lg font-bold text-gray-800">$0.00</h2>
+<section class="grid grid-cols-3 gap-2 mb-8">
+  <div class="bg-white p-3 rounded-xl border border-outline shadow-sm flex flex-col items-center text-center">
+    <p class="text-[8px] text-gray-400 uppercase font-black mb-1">Valor Bodega</p>
+    <h2 id="valor-bodega" class="text-sm font-bold text-primary">$0.00</h2>
   </div>
-  <div class="bg-white p-4 rounded-2xl border border-outline shadow-sm flex flex-col">
-    <span class="text-[9px] font-black text-error uppercase tracking-widest mb-1">Críticos</span>
-    <h2 id="count-critico" class="text-lg font-bold text-error">0</h2>
+  <div class="bg-red-50 p-3 rounded-xl border border-red-100 shadow-sm flex flex-col items-center text-center">
+    <p class="text-[8px] text-red-600 uppercase font-black mb-1">Críticos (<5)</p>
+    <h2 id="count-critico" class="text-sm font-bold text-red-600">0</h2>
   </div>
-  <div class="bg-white p-4 rounded-2xl border border-outline shadow-sm flex flex-col">
-    <span class="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Total SKU</span>
-    <h2 id="total-sku" class="text-lg font-bold text-gray-800">0</h2>
+  <div class="bg-white p-3 rounded-xl border border-outline shadow-sm flex flex-col items-center text-center">
+    <p class="text-[8px] text-success uppercase font-black mb-1">Total SKUs</p>
+    <h2 id="total-sku" class="text-sm font-bold text-success">0</h2>
   </div>
 </section>
 
-<div id="grid-productos" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-10">
-    <div class="col-span-full text-center py-20 text-gray-300">
-        <span class="material-symbols-outlined text-4xl block mb-2">cloud_download</span>
-        <p class="italic text-sm">Sincronizando con la nube...</p>
-    </div>
+<div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="col-span-full text-center py-10 text-gray-400 italic">Cargando existencias...</div>
 </div>
 
-<section class="bg-primary p-1 rounded-3xl shadow-2xl shadow-purple-300">
-  <button onclick="abrirModal()" class="w-full bg-white text-primary py-5 rounded-[22px] font-black flex items-center justify-center gap-3 hover:bg-purple-50 transition-all active:scale-95 border-2 border-transparent">
-      <span class="material-symbols-outlined text-2xl">add_circle</span> NUEVA ENTRADA / PRODUCTO
+<section class="bg-primary text-white p-6 rounded-3xl shadow-xl shadow-purple-200">
+  <button onclick="abrirModal()" class="w-full bg-white text-primary py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-purple-50 transition-all active:scale-95">
+      <span class="material-symbols-outlined">add_box</span> AGREGAR STOCK / NUEVO
   </button>
 </section>
 
 </main>
 
-<div id="modalNuevo" class="fixed inset-0 bg-primary-dark/40 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-md">
-  <div class="bg-white rounded-[32px] w-full max-w-md p-8 shadow-2xl relative border border-outline">
-    <div class="flex justify-between items-start mb-6">
-        <h3 class="text-2xl font-black text-primary">Ingreso</h3>
-        <button onclick="cerrarModal()" class="text-gray-300 hover:text-error"><span class="material-symbols-outlined">cancel</span></button>
-    </div>
-    <form id="formProducto" class="space-y-5">
+<div id="modalNuevo" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
+    <h3 class="text-2xl font-black text-primary mb-6 flex items-center gap-2">
+        <span class="material-symbols-outlined">inventory_2</span> Entrada de Producto
+    </h3>
+    <form id="formProducto" class="space-y-4">
       <div>
-        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Nombre del Producto</label>
-        <input type="text" id="nombreP" required list="lista-productos" autocomplete="off" placeholder="Buscar o escribir..." class="w-full border-outline rounded-2xl p-4 focus:ring-primary focus:border-primary bg-background/50">
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Producto</label>
+        <input type="text" id="nombreP" required list="lista-productos" autocomplete="off" placeholder="Escriba para buscar..." class="w-full border-outline rounded-xl p-3 focus:ring-primary">
         <datalist id="lista-productos"></datalist>
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Stock Actual</label>
-          <input type="number" id="stockP" required placeholder="0" class="w-full border-outline rounded-2xl p-4 bg-background/50">
+          <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Cantidad</label>
+          <input type="number" id="stockP" required placeholder="0" class="w-full border-outline rounded-xl p-3">
         </div>
         <div>
-          <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Costo (Dist)</label>
-          <input type="number" step="0.01" id="costoP" required placeholder="0.00" class="w-full border-outline rounded-2xl p-4 bg-background/50">
+          <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Costo (Dist)</label>
+          <input type="number" step="0.01" id="costoP" required placeholder="0.00" class="w-full border-outline rounded-xl p-3">
         </div>
       </div>
       <div>
-        <label class="text-[10px] font-bold text-gray-400 uppercase ml-1">Precio Venta (PVP)</label>
-        <input type="number" step="0.01" id="ventaP" required placeholder="0.00" class="w-full border-outline rounded-2xl p-4 bg-background/50">
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Venta (Público)</label>
+        <input type="number" step="0.01" id="ventaP" required placeholder="0.00" class="w-full border-outline rounded-xl p-3">
       </div>
-      <button type="submit" id="btnGuardar" class="w-full py-5 bg-primary text-white rounded-2xl font-black shadow-lg shadow-purple-200 active:scale-95 transition-all">PROCESAR CAMBIOS</button>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="cerrarModal()" class="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl">CANCELAR</button>
+        <button type="submit" id="btnGuardar" class="flex-1 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg">PROCESAR</button>
+      </div>
     </form>
   </div>
 </div>
 
-<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-50">
-  <button onclick="window.location.href='DashboardLácteo.html'" class="text-gray-300 flex flex-col items-center gap-1">
-    <span class="material-symbols-outlined">grid_view</span>
-    <span class="text-[9px] font-bold uppercase">Inicio</span>
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
+  <button onclick="window.location.href='DashboardLácteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
+    <span class="material-symbols-outlined">home</span>
+    <span class="text-[10px]">Inicio</span>
   </button>
-  <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center gap-1">
-    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">inventory</span>
-    <span class="text-[9px] font-bold uppercase">Stock</span>
+  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-gray-400 flex flex-col items-center gap-1">
+    <span class="material-symbols-outlined">receipt</span>
+    <span class="text-[10px]">Ventas</span>
   </button>
-  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-gray-300 flex flex-col items-center gap-1">
-    <span class="material-symbols-outlined">payments</span>
-    <span class="text-[9px] font-bold uppercase">Ventas</span>
+  <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center gap-1 font-bold">
+    <span class="material-symbols-outlined">inventory</span>
+    <span class="text-[10px]">Stock</span>
+  </button>
+  <button onclick="window.location.href='GestióndeDespachos.html'" class="text-success flex flex-col items-center gap-1">
+    <span class="material-symbols-outlined">local_shipping</span>
+    <span class="text-[10px]">Entregas</span>
   </button>
 </nav>
 
@@ -177,102 +181,106 @@ async function cargarInventario() {
       const stock = parseInt(prod.Stock) || 0;
       const costoDist = parseFloat(prod.Precio_Distribuidor) || 0;
       
-      // CALCULO VALOR BODEGA (Stock * Costo Distribuidor)
+      // CALCULO VALOR BODEGA (Suma de Stock x Costo)
       sumaValorBodega += (stock * costoDist);
 
-      // LÓGICA DE ESTADOS Y COLORES
-      let estadoCard = "border-outline";
-      let colorPunto = "bg-primary"; // Por defecto morado (Optimo)
-      let animDot = "";
-      let animCard = "";
+      // LÓGICA DE ESTADOS
+      let estadoClase = "border-outline";
+      let puntoClase = "bg-success";
+      let dotAnim = "";
+      let cardAnim = "";
 
       if (stock <= 5) {
-        estadoCard = "border-error anim-critico";
-        colorPunto = "bg-error";
-        animDot = "dot-anim";
+        estadoClase = "border-error anim-critico";
+        puntoClase = "bg-error";
+        dotAnim = "dot-anim";
         totalCriticos++;
-      } else if (stock <= 10) {
-        estadoCard = "border-warning";
-        colorPunto = "bg-warning";
-        animDot = "dot-anim";
+      } else if (stock > 5 && stock <= 10) {
+        estadoClase = "border-warning";
+        puntoClase = "bg-warning";
+        dotAnim = "dot-anim";
       }
 
-      // Llenar lista autocompletado
+      // Datalist
       const option = document.createElement('option');
       option.value = prod.Producto;
       dataList.appendChild(option);
 
       container.innerHTML += `
-        <div class="bg-white p-4 rounded-2xl border ${estadoCard} shadow-sm relative transition-all">
-          <div class="flex justify-between items-center mb-3">
-            <h3 class="font-bold text-[11px] truncate uppercase text-gray-800 w-4/5">${prod.Producto}</h3>
-            <div class="w-2.5 h-2.5 rounded-full ${colorPunto} ${animDot}"></div>
+        <div class="bg-white p-3 rounded-2xl border ${estadoClase} shadow-sm relative overflow-hidden">
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="font-bold text-[10px] truncate uppercase text-gray-600 w-3/4">${prod.Producto}</h3>
+            <div class="w-2.5 h-2.5 rounded-full ${puntoClase} ${dotAnim}"></div>
           </div>
           <div class="flex justify-between items-end">
               <div>
-                <p class="text-[8px] text-gray-400 font-bold uppercase mb-0.5">Venta</p>
-                <p class="text-primary font-black text-sm">$${parseFloat(prod.Precio_Venta || 0).toFixed(2)}</p>
+                <p class="text-[8px] text-gray-400 font-bold uppercase">Precio</p>
+                <p class="text-primary font-black text-xs">$${parseFloat(prod.Precio_Venta || 0).toFixed(2)}</p>
               </div>
               <div class="text-right">
-                <span class="text-lg font-black text-gray-800">${stock}</span>
-                <span class="text-[10px] text-gray-400 font-bold ml-0.5">u</span>
+                <p class="text-[8px] text-gray-400 font-bold uppercase">Stock</p>
+                <span class="text-xs font-bold ${stock <= 5 ? 'text-error' : 'text-gray-800'}">${stock}u</span>
               </div>
           </div>
         </div>`;
     });
 
-    document.getElementById('valor-bodega').innerText = `$${sumaValorBodega.toLocaleString('es-EC', {minimumFractionDigits: 2})}`;
+    document.getElementById('valor-bodega').innerText = `$${sumaValorBodega.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
     document.getElementById('count-critico').innerText = totalCriticos;
     document.getElementById('total-sku').innerText = inventario.length;
 
   } catch (e) {
-    console.error("Error:", e);
+    console.error(e);
   } finally {
     if (icon) icon.classList.remove('rotate-animation');
   }
 }
 
-// AUTOCOMPLETADO
+// LOGICA DE AUTOCOMPLETADO
 document.getElementById('nombreP').addEventListener('input', function(e) {
-  const nombre = e.target.value.toLowerCase().trim();
-  const prod = inventarioLocal.find(p => p.Producto.toLowerCase().trim() === nombre);
-  if (prod) {
-    document.getElementById('costoP').value = prod.Precio_Distribuidor;
-    document.getElementById('ventaP').value = prod.Precio_Venta;
+  const nombreBuscado = e.target.value.toLowerCase().trim();
+  const producto = inventarioLocal.find(p => p.Producto.toLowerCase().trim() === nombreBuscado);
+  const costoInput = document.getElementById('costoP');
+  const ventaInput = document.getElementById('ventaP');
+
+  if (producto) {
+    costoInput.value = producto.Precio_Distribuidor;
+    ventaInput.value = producto.Precio_Venta;
   }
 });
 
-// ENVÍO DE DATOS
+// ENVIAR DATOS (IMPORTANTE: Se envía el campo 'Estado' calculado)
 document.getElementById('formProducto').onsubmit = async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnGuardar');
-  const stock = parseInt(document.getElementById('stockP').value);
+  const stockFinal = parseInt(document.getElementById('stockP').value);
   
-  // DETERMINAR ESTADO PARA COLUMNA G
-  let estadoG = "OPTIMO";
-  if (stock <= 5) estadoG = "CRITICO";
-  else if (stock <= 10) estadoG = "BAJO";
+  // Calcular estado para enviar a la Columna G
+  let estadoFinal = "OPTIMO";
+  if (stockFinal <= 5) estadoFinal = "CRITICO";
+  else if (stockFinal <= 10) estadoFinal = "BAJO";
 
-  btn.innerText = "Sincronizando...";
+  btn.innerText = "PROCESANDO...";
   btn.disabled = true;
 
   try {
     await DairyAPI.enviarDatos("Inventario", {
         pestaña: "Inventario",
         Producto: document.getElementById('nombreP').value,
-        Cantidad: stock,
+        Cantidad: stockFinal,
         Precio_Distribuidor: document.getElementById('costoP').value,
         Precio_Venta: document.getElementById('ventaP').value,
-        Estado: estadoG // Esto llena la columna G automáticamente
+        Estado: estadoFinal // Se envía a la columna G
     });
     
     cerrarModal();
     cargarInventario();
     document.getElementById('formProducto').reset();
+    alert("Inventario actualizado y estado calculado");
   } catch (err) {
-    alert("Error de conexión");
+    alert("Error al guardar");
   } finally {
-    btn.innerText = "PROCESAR CAMBIOS";
+    btn.innerText = "PROCESAR";
     btn.disabled = false;
   }
 };

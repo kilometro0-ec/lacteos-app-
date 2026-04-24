@@ -130,7 +130,7 @@ body { font-family: 'Work Sans', sans-serif; }
 </div>
 
 <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
-  <button onclick="window.location.href='DashboardLacteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
+  <button onclick="window.location.href='DashboardLácteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">home</span>
     <span class="text-[10px]">Inicio</span>
   </button>
@@ -153,16 +153,16 @@ let inventarioLocal = [];
 
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
-  icon.classList.add('rotate-animation');
+  if (icon) icon.classList.add('rotate-animation');
   
   try {
-    // Usamos fetch directo a la URL de tu API
-    const res = await fetch(DairyAPI.url + "?pestaña=Inventario");
-    const inventario = await res.json();
+    // CORRECCIÓN: Usar el método que sí funciona en el Dashboard
+    const inventario = await DairyAPI.obtenerDatos("Inventario");
     inventarioLocal = inventario;
 
     const container = document.getElementById('grid-productos');
     const dataList = document.getElementById('lista-productos');
+    
     container.innerHTML = "";
     dataList.innerHTML = "";
     
@@ -175,7 +175,6 @@ async function cargarInventario() {
       if(esCritico) criticos++;
       totalCosto += (parseFloat(prod.Precio_Distribuidor) || 0) * stock;
 
-      // Llenar el datalist para el buscador
       const option = document.createElement('option');
       option.value = prod.Producto;
       dataList.appendChild(option);
@@ -196,15 +195,15 @@ async function cargarInventario() {
 
   } catch (e) {
     console.error("Error cargando inventario:", e);
+    document.getElementById('grid-productos').innerHTML = `<div class="col-span-full text-center py-10 text-red-500 italic">Error de conexión con la hoja.</div>`;
   } finally {
-    icon.classList.remove('rotate-animation');
+    if (icon) icon.classList.remove('rotate-animation');
   }
 }
 
-// LOGICA DE AUTOCOMPLETADO
 document.getElementById('nombreP').addEventListener('input', function(e) {
-  const nombreBuscado = e.target.value.toLowerCase();
-  const producto = inventarioLocal.find(p => p.Producto.toLowerCase() === nombreBuscado);
+  const nombreBuscado = e.target.value.toLowerCase().trim();
+  const producto = inventarioLocal.find(p => p.Producto.toLowerCase().trim() === nombreBuscado);
   
   const costoInput = document.getElementById('costoP');
   const ventaInput = document.getElementById('ventaP');
@@ -224,7 +223,6 @@ document.getElementById('nombreP').addEventListener('input', function(e) {
   }
 });
 
-// ENVIAR DATOS
 document.getElementById('formProducto').onsubmit = async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnGuardar');
@@ -232,22 +230,21 @@ document.getElementById('formProducto').onsubmit = async (e) => {
   btn.disabled = true;
 
   try {
-    await fetch(DairyAPI.url, {
-      method: "POST",
-      body: JSON.stringify({
+    // CORRECCIÓN: Usar enviarDatos del API Config
+    await DairyAPI.enviarDatos("Inventario", {
         pestaña: "Inventario",
         Producto: document.getElementById('nombreP').value,
         Cantidad: document.getElementById('stockP').value,
         Precio_Distribuidor: document.getElementById('costoP').value,
         Precio_Venta: document.getElementById('ventaP').value
-      })
     });
+    
     cerrarModal();
     cargarInventario();
     document.getElementById('formProducto').reset();
     alert("Inventario actualizado");
   } catch (err) {
-    alert("Error al conectar");
+    alert("Error al guardar datos");
   } finally {
     btn.innerText = "PROCESAR";
     btn.disabled = false;

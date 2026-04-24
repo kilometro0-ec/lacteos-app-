@@ -35,9 +35,16 @@
     .active-icon { font-variation-settings: 'FILL' 1 !important; }
     body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
     
-    /* Animación de entrada para los elementos */
-    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    /* Prioridad para el pintado del menú */
+    .active-nav { color: #a21caf !important; }
+    .active-nav .icon-box {
+        background-color: #f5f3ff !important;
+        transform: translateY(-8px) !important;
+        box-shadow: 0 10px 15px -3px rgba(162, 28, 175, 0.2);
+    }
+    .active-nav span.material-symbols-outlined {
+        font-variation-settings: 'FILL' 1, 'wght' 600 !important;
+    }
     </style>
 </head>
 
@@ -48,13 +55,13 @@
     <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
       <span class="material-symbols-outlined text-3xl active-icon">opacity</span>
     </div>
-    <h1 class="text-xl font-extrabold text-primary tracking-tight uppercase tracking-tighter">Lógica Láctea</h1>
+    <h1 class="text-xl font-extrabold text-primary tracking-tighter uppercase">Lógica Láctea</h1>
   </div>
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-4">
 
-    <div class="grid grid-cols-2 gap-3 fade-in">
+    <div class="grid grid-cols-2 gap-3">
       <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
         <span class="text-secondary text-[10px] uppercase font-black tracking-widest block mb-1">Ventas Totales</span>
         <span id="ventas-hoy" class="text-2xl font-black tracking-tighter text-gray-900">$0.00</span>
@@ -66,7 +73,7 @@
       </div>
     </div>
 
-    <div class="bg-white p-6 rounded-[2.5rem] border-2 border-success/20 shadow-md flex justify-between items-center bg-gradient-to-br from-white to-green-50/30 fade-in" style="animation-delay: 0.1s;">
+    <div class="bg-white p-6 rounded-[2.5rem] border-2 border-success/20 shadow-md flex justify-between items-center bg-gradient-to-br from-white to-green-50/30">
       <div>
         <span class="text-success text-xs uppercase font-black tracking-widest block mb-1">Ganancia Bruta Estimada</span>
         <span id="ganancia-total" class="text-4xl font-black tracking-tighter text-success">$0.00</span>
@@ -76,7 +83,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-4 gap-2 py-2 fade-in" style="animation-delay: 0.2s;">
+    <div class="grid grid-cols-4 gap-2 py-2">
         <button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-90 shadow-md">
           <span class="material-symbols-outlined">add_shopping_cart</span>
           <span class="text-[9px] font-black uppercase">Vender</span>
@@ -95,7 +102,7 @@
         </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in" style="animation-delay: 0.3s;">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <section class="bg-white p-5 rounded-[2.5rem] border border-outline shadow-sm">
           <h3 class="text-xs font-black text-success flex items-center gap-2 mb-4 uppercase tracking-widest">
             <span class="material-symbols-outlined text-sm">route</span> Próximas Entregas
@@ -107,7 +114,7 @@
 
         <section class="space-y-4">
           <div class="flex justify-between items-center px-2">
-            <h3 class="text-lg font-black tracking-tight uppercase">Stock Crítico</h3>
+            <h3 class="text-lg font-black tracking-tight">Stock Crítico</h3>
             <button onclick="cargarDatos()" class="text-primary text-[10px] font-black flex items-center gap-1 bg-white px-3 py-2 rounded-xl border border-outline active:scale-95 transition-all">
                 <span id="icon-refresh" class="material-symbols-outlined text-sm">refresh</span> RECARGAR
             </button>
@@ -134,64 +141,50 @@
 <div id="menu-container"></div>
 
 <script>
-/**
- * 1. CARGA DEL MENÚ Y PINTADO DEL BOTÓN ACTIVO
- */
-async function iniciarMenu() {
+async function cargarMenu() {
     try {
         const response = await fetch('menu.html');
         const text = await response.text();
-        document.getElementById('menu-container').innerHTML = text;
+        const contenedor = document.getElementById('menu-container');
+        contenedor.innerHTML = text;
 
-        // Detectar página actual para pintar el botón
-        const path = window.location.pathname;
-        const paginaActual = path.split("/").pop() || "DashboardLacteo.html";
-        
-        // Pequeño retardo para asegurar que el DOM cargó los botones de menu.html
-        setTimeout(() => {
-            document.querySelectorAll('.nav-link').forEach(btn => {
-                const dataPath = btn.getAttribute('data-path');
-                // Si la URL actual contiene el data-path del botón, lo activamos
-                if (paginaActual.toLowerCase().includes(dataPath.toLowerCase())) {
+        const fullPath = window.location.href.toLowerCase();
+        const fileName = window.location.pathname.split("/").pop().toLowerCase() || "dashboardlacteo.html";
+
+        const pintar = () => {
+            const botones = contenedor.querySelectorAll('.nav-link');
+            botones.forEach(btn => {
+                const dataPath = btn.getAttribute('data-path').toLowerCase();
+                if (fileName.includes(dataPath) || fullPath.includes(dataPath)) {
                     btn.classList.add('active-nav');
                     btn.classList.remove('text-gray-400');
                 }
             });
-        }, 50);
+        };
 
-    } catch (error) {
-        console.error("No se pudo cargar menu.html:", error);
-    }
+        pintar();
+        setTimeout(pintar, 100); // Doble verificación para PC
+
+    } catch (e) { console.error("Error menú:", e); }
 }
 
-/**
- * 2. CARGA DE DATOS DESDE LA API (EXCEL)
- */
 async function cargarDatos() {
     const icon = document.getElementById('icon-refresh');
     if(icon) icon.classList.add('rotate-animation');
-
     try {
         const [inventario, ventas] = await Promise.all([
             DairyAPI.obtenerDatos("Inventario"),
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        // --- PROCESAR INVENTARIO ---
         const tabla = document.getElementById('tabla-inventario');
         tabla.innerHTML = "";
-        const invOrdenado = inventario.sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0));
-
-        invOrdenado.forEach(p => {
+        inventario.sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0)).forEach(p => {
             const stock = parseFloat(p.Stock) || 0;
-            let statusHTML = "";
-            if (stock <= 5) {
-                statusHTML = `<span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg border border-red-100 uppercase">Crítico</span>`;
-            } else if (stock > 15) {
-                statusHTML = `<span class="bg-green-50 text-green-600 text-[8px] font-black px-2 py-1 rounded-lg border border-green-100 uppercase">Óptimo</span>`;
-            } else {
-                statusHTML = `<span class="bg-amber-50 text-amber-600 text-[8px] font-black px-2 py-1 rounded-lg border border-amber-100 uppercase">Bajo</span>`;
-            }
+            let statusHTML = stock <= 5 ? 
+                `<span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg border border-red-100 uppercase">Crítico</span>` :
+                (stock > 15 ? `<span class="bg-green-50 text-green-600 text-[8px] font-black px-2 py-1 rounded-lg border border-green-100 uppercase">Óptimo</span>` : 
+                `<span class="bg-amber-50 text-amber-600 text-[8px] font-black px-2 py-1 rounded-lg border border-amber-100 uppercase">Bajo</span>`);
 
             tabla.innerHTML += `
                 <tr class="border-t border-purple-50">
@@ -201,60 +194,29 @@ async function cargarDatos() {
                 </tr>`;
         });
 
-        // --- PROCESAR FINANZAS ---
         let totalVendido = 0, totalInvertido = 0;
-        
-        inventario.forEach(p => {
-            const costo = parseFloat(p.Costo_Unitario?.toString().replace(',','.')) || 0;
-            const stock = parseFloat(p.Stock) || 0;
-            totalInvertido += (costo * stock);
-        });
-
-        ventas.forEach(v => {
-            const totalVenta = parseFloat(v["Precio Total"]?.toString().replace(',','.')) || 0;
-            totalVendido += totalVenta;
-        });
+        inventario.forEach(p => totalInvertido += (parseFloat(p.Costo_Unitario?.toString().replace(',','.')) || 0) * (parseFloat(p.Stock) || 0));
+        ventas.forEach(v => totalVendido += (parseFloat(v["Precio Total"]?.toString().replace(',','.')) || 0));
 
         document.getElementById('ventas-hoy').innerText = `$${totalVendido.toFixed(2)}`;
         document.getElementById('valor-invertido').innerText = `$${totalInvertido.toFixed(2)}`;
         document.getElementById('ganancia-total').innerText = `$${(totalVendido - totalInvertido).toFixed(2)}`;
 
-        // --- PROCESAR ENTREGAS PENDIENTES ---
         const listaEntregas = document.getElementById('lista-entregas');
-        const pendientes = ventas.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE");
-        const clientesUnicos = [...new Set(pendientes.map(v => v.Cliente))].slice(0, 3);
-
-        listaEntregas.innerHTML = "";
-        if (clientesUnicos.length === 0) {
-            listaEntregas.innerHTML = `<p class="text-center py-4 text-gray-400 font-bold italic">Sin rutas pendientes</p>`;
-        } else {
-            clientesUnicos.forEach(c => {
-                listaEntregas.innerHTML += `
-                    <div class="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
-                        <div>
-                            <p class="text-xs font-black text-green-900 uppercase tracking-tight">${c}</p>
-                            <p class="text-[9px] font-bold text-green-600 uppercase tracking-widest">Pendiente Despacho</p>
-                        </div>
-                        <span class="material-symbols-outlined text-green-500 active-icon">local_shipping</span>
-                    </div>`;
-            });
-        }
-
-    } catch (e) {
-        console.error("Error al sincronizar datos:", e);
-    } finally {
-        if(icon) setTimeout(() => icon.classList.remove('rotate-animation'), 800);
-    }
+        const pendientes = [...new Set(ventas.filter(v => v.Estado?.toUpperCase() === "PENDIENTE").map(v => v.Cliente))].slice(0, 3);
+        listaEntregas.innerHTML = pendientes.length ? "" : `<p class="text-center py-4 text-gray-400 font-bold italic">Sin rutas pendientes</p>`;
+        pendientes.forEach(c => {
+            listaEntregas.innerHTML += `
+                <div class="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
+                    <div><p class="text-xs font-black text-green-900 uppercase tracking-tight">${c}</p><p class="text-[9px] font-bold text-green-600 uppercase tracking-widest">Pendiente</p></div>
+                    <span class="material-symbols-outlined text-green-500 active-icon">local_shipping</span>
+                </div>`;
+        });
+    } catch (e) { console.error(e); } 
+    finally { if(icon) setTimeout(() => icon.classList.remove('rotate-animation'), 800); }
 }
 
-/**
- * 3. INICIO AUTOMÁTICO
- */
-window.onload = () => {
-    iniciarMenu();
-    cargarDatos();
-};
+window.onload = () => { cargarMenu(); cargarDatos(); };
 </script>
-
 </body>
 </html>

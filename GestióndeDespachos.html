@@ -6,7 +6,7 @@
     <title>Despachos - Lógica Láctea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
         tailwind.config = { 
@@ -23,7 +23,6 @@
     </script>
     <style>
         .material-symbols-outlined { font-variation-settings: 'FILL' 0; }
-        .active-icon { font-variation-settings: 'FILL' 1; }
         .anim-slide-out {
             animation: slideRight 0.6s forwards cubic-bezier(0.4, 0, 0.2, 1);
             pointer-events: none;
@@ -32,21 +31,25 @@
             0% { transform: translateX(0); opacity: 1; }
             100% { transform: translateX(150%); opacity: 0; }
         }
-        body { font-size: 16px; font-family: 'Work Sans', sans-serif; }
+        body { font-size: 16px; font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .rotate-anim { animation: rotate 1s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-background text-gray-900 pb-32">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
     <div class="flex items-center gap-2" onclick="window.location.href='DashboardLácteo.html'">
-        <span class="material-symbols-outlined text-primary text-3xl">local_shipping</span>
-        <h1 class="text-2xl font-extrabold text-primary tracking-tight">Despachos</h1>
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-black shadow-inner">
+            <span class="material-symbols-outlined">local_shipping</span>
+        </div>
+        <h1 class="text-xl font-black text-primary tracking-tight">Despachos</h1>
     </div>
     <div class="flex gap-2">
-        <button onclick="reiniciarContadoresHoy()" class="p-2 text-gray-400">
+        <button onclick="reiniciarContadoresHoy()" class="p-2 text-gray-400 active:scale-90 transition-transform">
             <span class="material-symbols-outlined">delete_history</span>
         </button>
-        <button onclick="cargarDatos()" class="p-2 text-primary active:rotate-180 transition-transform">
+        <button onclick="cargarDatos()" class="p-2 text-primary active:scale-90 transition-transform">
             <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
         </button>
     </div>
@@ -54,25 +57,21 @@
 
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-4">
     <div class="grid grid-cols-2 gap-3">
-        <div class="bg-white p-4 rounded-3xl border border-orange-100 shadow-sm text-center">
-            <p class="text-[10px] font-black text-orange-400 uppercase tracking-widest">Por Recaudar</p>
-            <div class="flex flex-col mt-1">
-                <p id="dinero-pend" class="text-2xl font-black text-orange-600">$0.00</p>
-                <p class="text-[10px] font-bold text-gray-400 uppercase"><span id="items-pend">0</span> Ítems</p>
-            </div>
+        <div class="bg-white p-5 rounded-[2.5rem] border-2 border-orange-100 shadow-sm text-center">
+            <p class="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1">Por Recaudar</p>
+            <h2 id="dinero-pend" class="text-2xl font-black text-orange-600 leading-none">$0.00</h2>
+            <p class="text-[9px] font-bold text-gray-400 mt-2 uppercase"><span id="items-pend">0</span> Pedidos Pend.</p>
         </div>
-        <div class="bg-primary p-4 rounded-3xl shadow-lg text-center">
-            <p class="text-[10px] font-black text-purple-200 uppercase tracking-widest">Recaudado Hoy</p>
-            <div class="flex flex-col mt-1">
-                <p id="dinero-ent" class="text-2xl font-black text-white">$0.00</p>
-                <p class="text-[10px] font-bold text-purple-200 uppercase"><span id="items-ent">0</span> Ítems</p>
-            </div>
+        <div class="bg-primary p-5 rounded-[2.5rem] shadow-xl text-center border-2 border-primary">
+            <p class="text-[10px] font-black text-purple-200 uppercase tracking-widest mb-1">Recaudado Hoy</p>
+            <h2 id="dinero-ent" class="text-2xl font-black text-white leading-none">$0.00</h2>
+            <p class="text-[9px] font-bold text-purple-200 mt-2 uppercase"><span id="items-ent">0</span> Entregas Hoy</p>
         </div>
     </div>
 
     <div class="px-1">
         <input type="text" id="filtroDespacho" oninput="filtrar()" placeholder="🔍 Buscar cliente o ID..." 
-               class="w-full bg-white border-2 border-outline rounded-2xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary">
+               class="w-full bg-white border-2 border-outline rounded-2xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary shadow-sm">
     </div>
 
     <div id="contenedor-pedidos" class="space-y-5 pt-2">
@@ -87,30 +86,23 @@ let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedido
 let ventasGlobal = [];
 
 async function iniciarApp() {
-    try {
-        const resp = await fetch('menu.html');
-        if (resp.ok) {
-            document.getElementById('menu-container').innerHTML = await resp.text();
-            marcarBotonActivo();
-        }
-    } catch (e) { console.log("Error menú:", e); }
+    fetch('menu.html').then(r => r.text()).then(data => {
+        document.getElementById('menu-container').innerHTML = data;
+        const botones = document.querySelectorAll('.nav-item');
+        botones.forEach(btn => {
+            if (btn.getAttribute('onclick')?.includes('Despachos')) {
+                btn.classList.remove('text-gray-400');
+                btn.classList.add('text-primary');
+            }
+        });
+    }).catch(e => console.log("Menu error"));
     cargarDatos();
-}
-
-function marcarBotonActivo() {
-    const botones = document.querySelectorAll('.nav-item');
-    botones.forEach(btn => {
-        if (btn.getAttribute('onclick')?.includes('Despachos')) {
-            btn.classList.remove('text-gray-400');
-            btn.classList.add('text-primary');
-        }
-    });
 }
 
 async function cargarDatos() {
     const contenedor = document.getElementById('contenedor-pedidos');
     const icon = document.getElementById('refresh-icon');
-    icon.classList.add('rotate-180');
+    icon?.classList.add('rotate-anim');
     
     try {
         const [ventas, clientes] = await Promise.all([
@@ -121,7 +113,6 @@ async function cargarDatos() {
         ventasGlobal = ventas;
         const agrupados = {};
         let totalDineroPendiente = 0;
-        let totalItemsPendientes = 0;
 
         // Filtrar solo PENDIENTES y agrupar por ID_Venta
         ventas.filter(v => v.Estado === "PENDIENTE").forEach(v => {
@@ -136,23 +127,33 @@ async function cargarDatos() {
                     info: clientes.find(c => String(c.Nombre).trim().toLowerCase() === String(v.Cliente).trim().toLowerCase())
                 };
             }
+            
+            // Lógica robusta para el total de la fila
             const cant = parseFloat(v.Cantidad) || 0;
-            const totalFila = parseFloat(v.Total?.toString().replace(',', '.') || 0);
+            const pvp = parseFloat(v.Precio_PVP?.toString().replace(',', '.') || v.PVP?.toString().replace(',', '.') || 0);
+            let totalFila = parseFloat(v.Total?.toString().replace(',', '.') || v["Precio Total"]?.toString().replace(',', '.') || 0);
             
-            agrupados[idV].items.push({ nombre: v.Producto, cant: cant, pvp: totalFila / cant });
+            if (totalFila === 0) totalFila = cant * pvp;
+
+            agrupados[idV].items.push({ nombre: v.Producto, cant: cant });
             agrupados[idV].totalVenta += totalFila;
-            
             totalDineroPendiente += totalFila;
-            totalItemsPendientes += cant;
         });
 
-        renderizarCards(Object.values(agrupados).reverse());
-        actualizarPantallaContadores(totalDineroPendiente, totalItemsPendientes);
+        const listaFinal = Object.values(agrupados).reverse();
+        renderizarCards(listaFinal);
+        
+        // Actualizar contadores superiores
+        document.getElementById('dinero-pend').innerText = `$${totalDineroPendiente.toFixed(2)}`;
+        document.getElementById('items-pend').innerText = listaFinal.length;
+        document.getElementById('dinero-ent').innerText = `$${statsSesion.dinero.toFixed(2)}`;
+        document.getElementById('items-ent').innerText = statsSesion.pedidos;
 
     } catch (e) {
-        contenedor.innerHTML = `<p class="text-center text-red-500 py-20 font-bold">Error de conexión</p>`;
+        console.error(e);
+        contenedor.innerHTML = `<p class="text-center text-red-500 py-20 font-bold">Error de sincronización</p>`;
     } finally {
-        icon.classList.remove('rotate-180');
+        icon?.classList.remove('rotate-anim');
     }
 }
 
@@ -161,18 +162,16 @@ function renderizarCards(lista) {
     contenedor.innerHTML = "";
 
     if (lista.length === 0) {
-        contenedor.innerHTML = `<p class="text-center py-20 text-gray-400 font-bold text-xl">Ruta limpia. ¡Buen trabajo!</p>`;
+        contenedor.innerHTML = `<div class="text-center py-20"><span class="material-symbols-outlined text-6xl text-gray-200">celebration</span><p class="text-gray-400 font-bold mt-2">¡Ruta completada!</p></div>`;
         return;
     }
 
     lista.forEach((ped, idx) => {
         const telf = ped.info ? String(ped.info.Teléfono || "").replace(/[^0-9]/g, '') : "";
-        const sumaItems = ped.items.reduce((acc, curr) => acc + curr.cant, 0);
-        
         const itemsHTML = ped.items.map(i => `
-            <div class="flex justify-between items-center border-b border-purple-50 py-2">
-                <span class="text-sm text-gray-700 font-bold">${i.nombre}</span>
-                <span class="text-sm font-black text-primary bg-purple-50 px-2 py-1 rounded-lg">x${i.cant}</span>
+            <div class="flex justify-between items-center border-b border-purple-50 py-2 last:border-0">
+                <span class="text-sm text-gray-700 font-bold uppercase">${i.nombre}</span>
+                <span class="text-sm font-black text-primary bg-purple-50 px-3 py-1 rounded-xl">x${i.cant}</span>
             </div>
         `).join('');
 
@@ -180,29 +179,31 @@ function renderizarCards(lista) {
             <div id="card-${idx}" class="bg-white p-6 rounded-[2.5rem] border-2 border-outline shadow-md space-y-4">
                 <div class="flex justify-between items-start">
                     <div>
-                        <span class="text-[10px] font-black bg-purple-100 text-primary px-2 py-1 rounded-md uppercase mb-1 inline-block">${ped.id}</span>
-                        <h2 class="text-xl font-black text-gray-800 uppercase leading-none">${ped.cliente}</h2>
+                        <span class="text-[10px] font-black bg-purple-100 text-primary px-2 py-1 rounded-lg uppercase mb-1 inline-block">${ped.id}</span>
+                        <h2 class="text-xl font-black text-gray-800 uppercase leading-tight">${ped.cliente}</h2>
                     </div>
-                    <span class="text-[10px] font-bold text-gray-400">${new Date(ped.fecha).toLocaleDateString()}</span>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">${new Date(ped.fecha).toLocaleDateString()}</p>
+                    </div>
                 </div>
 
                 <div class="py-1">${itemsHTML}</div>
 
-                <div class="bg-purple-50 p-3 rounded-2xl flex items-center gap-3">
+                <div class="bg-purple-50/50 p-4 rounded-2xl flex items-center gap-3 border border-purple-100">
                     <span class="material-symbols-outlined text-primary">location_on</span>
-                    <p class="text-xs font-bold text-gray-600">${ped.info ? ped.info.Dirección : 'Sin dirección registrada'}</p>
+                    <p class="text-xs font-bold text-gray-600 leading-snug">${ped.info ? ped.info.Dirección : 'Sin dirección'}</p>
                 </div>
 
-                <div class="flex justify-between items-center pt-2">
+                <div class="flex justify-between items-end pt-2">
                     <div>
-                        <p class="text-[10px] font-black text-gray-400 uppercase">Cobrar</p>
-                        <p class="text-3xl font-black text-gray-900">$${ped.totalVenta.toFixed(2)}</p>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-1">Total a cobrar</p>
+                        <p class="text-4xl font-black text-gray-900 leading-none">$${ped.totalVenta.toFixed(2)}</p>
                     </div>
                     <div class="flex gap-2">
-                        ${telf ? `<a href="https://wa.me/593${telf.startsWith('0') ? telf.substring(1) : telf}" target="_blank" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center"><span class="material-symbols-outlined">chat</span></a>` : ''}
-                        <button onclick="confirmarEntrega('${ped.id}', 'card-${idx}', ${ped.totalVenta}, ${sumaItems})" 
-                                class="h-12 bg-primary text-white px-6 rounded-2xl text-xs font-black shadow-lg active:scale-95 transition-transform">
-                            ENTREGADO
+                        ${telf ? `<a href="https://wa.me/593${telf.startsWith('0') ? telf.substring(1) : telf}" target="_blank" class="w-14 h-14 bg-green-500 text-white rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition-transform"><span class="material-symbols-outlined text-3xl">chat</span></a>` : ''}
+                        <button onclick="confirmarEntrega('${ped.id}', 'card-${idx}', ${ped.totalVenta})" 
+                                class="h-14 bg-primary text-white px-8 rounded-2xl font-black shadow-lg active:scale-95 transition-transform uppercase text-xs tracking-widest">
+                            Entregado
                         </button>
                     </div>
                 </div>
@@ -210,8 +211,8 @@ function renderizarCards(lista) {
     });
 }
 
-async function confirmarEntrega(idVenta, cardId, monto, cantItems) {
-    if(!confirm("¿Confirmar entrega y cobro?")) return;
+async function confirmarEntrega(idVenta, cardId, monto) {
+    if(!confirm("¿El pedido fue entregado y cobrado?")) return;
     const card = document.getElementById(cardId);
     card.classList.add('anim-slide-out');
 
@@ -226,32 +227,27 @@ async function confirmarEntrega(idVenta, cardId, monto, cantItems) {
         setTimeout(() => {
             card.remove();
             statsSesion.pedidos += 1;
-            statsSesion.items += cantItems;
             statsSesion.dinero += monto;
             localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
-            cargarDatos();
+            cargarDatos(); // Recarga para actualizar el panel superior
         }, 600);
     } catch (e) {
-        alert("Error al actualizar Excel");
+        alert("Error al conectar con la base de datos");
         card.classList.remove('anim-slide-out');
     }
 }
 
-function actualizarPantallaContadores(dPend, iPend) {
-    document.getElementById('dinero-pend').innerText = `$${dPend.toFixed(2)}`;
-    document.getElementById('items-pend').innerText = iPend;
-    document.getElementById('dinero-ent').innerText = `$${statsSesion.dinero.toFixed(2)}`;
-    document.getElementById('items-ent').innerText = statsSesion.items;
-}
-
 function filtrar() {
-    const busqueda = document.getElementById('filtroDespacho').value.toLowerCase();
-    // Re-renderizado basado en filtro (agregando lógica de filtro aquí si es necesario)
-    cargarDatos(); // Para simplificar, recargamos, pero lo ideal es filtrar el array local
+    const b = document.getElementById('filtroDespacho').value.toLowerCase();
+    const cards = document.querySelectorAll('#contenedor-pedidos > div');
+    cards.forEach(card => {
+        const txt = card.innerText.toLowerCase();
+        card.style.display = txt.includes(b) ? 'block' : 'none';
+    });
 }
 
 function reiniciarContadoresHoy() {
-    if(confirm("¿Poner en cero lo recaudado hoy?")) {
+    if(confirm("¿Reiniciar el contador de dinero recaudado hoy?")) {
         statsSesion = { pedidos: 0, items: 0, dinero: 0 };
         localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
         cargarDatos();

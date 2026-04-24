@@ -77,11 +77,11 @@
                     <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input type="text" id="reg-ci" placeholder="CI / RUC" class="input-sutil">
-                        <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
+                        <input type="tel" id="reg-tel" placeholder="Teléfono (ej: 0984...)" class="input-sutil">
                     </div>
                     <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
                 </div>
-                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4 shadow-lg shadow-pink-100 flex items-center justify-center gap-2 mt-2">
+                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4 flex items-center justify-center gap-2 mt-2">
                     <span class="material-symbols-outlined text-base">task_alt</span> GUARDAR Y SELECCIONAR
                 </button>
             </div>
@@ -151,7 +151,7 @@ async function guardarNuevoCliente() {
     const d = document.getElementById('reg-dir').value;
     if(!n || !t) return alert("Ingresa Nombre y Teléfono");
     const btn = document.getElementById('btn-guardar-cli');
-    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span>...`;
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span>`;
     btn.disabled = true;
     try {
         await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", Nombre: n, CI_RUC: c, Teléfono: t, Dirección: d });
@@ -225,37 +225,59 @@ function actualizarCarritoUI() {
 }
 
 async function finalizarVenta() {
-    const cli = document.getElementById('select-cliente').value, f = document.getElementById('fecha-entrega').value;
-    if(!cli || !f) return alert("Selecciona cliente y fecha");
+    const cliNombre = document.getElementById('select-cliente').value, f = document.getElementById('fecha-entrega').value;
+    if(!cliNombre || !f) return alert("Selecciona cliente y fecha de entrega");
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(items.length === 0) return alert("Carrito vacío");
+    if(items.length === 0) return alert("Agrega productos al carrito");
+    
     const btn = document.getElementById('btn-finalizar');
     btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> ENVIANDO...`;
     btn.disabled = true;
 
     try {
-        let detalleTexto = "", totalVenta = 0;
+        let detalleTexto = ""; 
+        let totalVenta = 0;
+
         for(const n of items) {
             const p = productosData.find(x => x.Producto === n);
             const pvp = parseFloat(p.Precio_Venta.toString().replace(',','.'));
             const sub = carrito[n] * pvp; 
             totalVenta += sub;
             
-            // FORMATO CON VALOR UNITARIO Y SUBTOTAL
             detalleTexto += `• ${carrito[n]} x ${n} ($${pvp.toFixed(2)} c/u) = $${sub.toFixed(2)}\n`;
             
-            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", ID_Venta: idOrdenActual, Cliente: cli, Producto: n, Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: f, Estado: "PENDIENTE" });
+            await DairyAPI.enviarDatos("Ventas", { 
+                pestaña: "Ventas", 
+                ID_Venta: idOrdenActual, 
+                Cliente: cliNombre, 
+                Producto: n, 
+                Cantidad: carrito[n], 
+                Precio_PVP: p.Precio_Venta, 
+                Fecha_Entrega: f, 
+                Estado: "PENDIENTE" 
+            });
         }
         
-        const cObj = clientesData.find(c => c.Nombre === cli);
-        let tel = "593" + (cObj?.Teléfono?.toString().replace(/\D/g, '').slice(-9) || "");
-        let mensajeFull = `*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cli}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
+        // RECUPERAR TELÉFONO DEL CLIENTE DESDE LA LISTA CARGADA
+        const cliEncontrado = clientesData.find(c => c.Nombre === cliNombre);
+        let rawTel = cliEncontrado?.Teléfono?.toString() || "";
         
-        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(mensajeFull)}`, '_blank');
-        setTimeout(() => location.reload(), 1000);
+        // LIMPIAR Y FORMATEAR EL NÚMERO (Si no tiene 593, agregarlo)
+        let limpio = rawTel.replace(/\D/g, ''); // Solo números
+        if (limpio.startsWith('0')) limpio = limpio.substring(1); // Quitar el 0 inicial si existe
+        if (!limpio.startsWith('593')) limpio = '593' + limpio; // Asegurar código de país
+        
+        let mensajeFull = `*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cliNombre}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
+        
+        const urlwa = `https://wa.me/${limpio}?text=${encodeURIComponent(mensajeFull)}`;
+        window.open(urlwa, '_blank');
+        
+        setTimeout(() => location.reload(), 1500);
+
     } catch(e) { 
-        alert("Error al procesar"); 
-        btn.innerHTML = `<span class="material-symbols-outlined">rocket_launch</span> CONFIRMAR`;
+        console.error(e);
+        alert("Error al procesar la venta"); 
+        btn.innerHTML = `<span class="material-symbols-outlined">rocket_launch</span> CONFIRMAR Y ENVIAR`;
         btn.disabled = false;
     }
 }

@@ -50,7 +50,7 @@
 <header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
   <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
     <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary">
-        <span class="material-symbols-outlined text-3xl active-icon">opacity</span>
+        <span class="material-symbols-outlined text-3xl active-icon">inventory_2</span>
     </div>
     <h1 class="text-xl font-extrabold text-primary tracking-tight">Inventario</h1>
   </div>
@@ -76,6 +76,10 @@
     </div>
   </section>
 
+  <div class="px-1">
+    <input type="text" id="filtroProd" oninput="filtrarPantalla()" placeholder="Buscar producto..." class="w-full bg-white border-outline rounded-2xl p-4 font-bold text-sm focus:ring-primary shadow-sm">
+  </div>
+
   <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="col-span-full text-center py-20 text-gray-400 italic font-bold">
           Sincronizando con bodega...
@@ -96,8 +100,8 @@
     </h3>
     <form id="formProducto" class="space-y-4">
       <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Nombre del Producto</label>
-        <input type="text" id="nombreP" required autocomplete="off" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:ring-primary focus:bg-white transition-all">
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Nombre Completo (Incluir Tamaño)</label>
+        <input type="text" id="nombreP" required placeholder="Ej: Yogurt Fresa 1L" autocomplete="off" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:ring-primary focus:bg-white transition-all">
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
@@ -121,29 +125,8 @@
   </div>
 </div>
 
-<div id="menu-container"></div>
-
 <script>
 let inventarioLocal = [];
-
-// 1. CARGAR MENÚ Y DATOS
-async function iniciar() {
-    fetch('menu.html').then(r => r.text()).then(data => {
-        document.getElementById('menu-container').innerHTML = data;
-        marcarBotonActivo();
-    });
-    cargarInventario();
-}
-
-function marcarBotonActivo() {
-    const botones = document.querySelectorAll('.nav-item');
-    botones.forEach(btn => {
-        if (btn.getAttribute('onclick')?.includes('ControldeInventario.html')) {
-            btn.classList.add('text-primary');
-            btn.classList.remove('text-gray-400');
-        }
-    });
-}
 
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
@@ -152,25 +135,36 @@ async function cargarInventario() {
   try {
     const inventario = await DairyAPI.obtenerDatos("Inventario");
     inventarioLocal = inventario;
+    renderizarGrid(inventarioLocal);
+  } catch (e) {
+    console.error(e);
+  } finally {
+    if (icon) icon.classList.remove('rotate-animation');
+  }
+}
 
+function renderizarGrid(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
     
     let totalCosto = 0;
     let criticos = 0;
 
-    inventario.forEach(prod => {
+    lista.forEach(prod => {
       const stock = parseInt(prod.Stock) || 0;
       const esCritico = stock <= 5;
       if(esCritico) criticos++;
       totalCosto += (parseFloat(prod.Precio_Distribuidor) || 0) * stock;
 
       container.innerHTML += `
-        <div onclick="abrirModalSumar('${prod.Producto}')" class="bg-white p-4 rounded-[2rem] border ${esCritico ? 'card-critica' : 'border-outline'} shadow-sm cursor-pointer active:scale-95 transition-all flex flex-col justify-between h-32">
-          <h3 class="font-black text-[11px] leading-tight uppercase text-gray-700 line-clamp-2">${prod.Producto}</h3>
+        <div onclick="abrirModalSumar('${prod.Producto}')" class="bg-white p-4 rounded-[2rem] border ${esCritico ? 'card-critica' : 'border-outline'} shadow-sm cursor-pointer active:scale-95 transition-all flex flex-col justify-between h-40">
+          <div>
+            <p class="text-[12px] font-bold text-primary mb-1">${prod.ID || 'S/ID'}</p>
+            <h3 class="font-black text-[11px] leading-tight uppercase text-gray-700 line-clamp-2">${prod.Producto}</h3>
+          </div>
           <div class="flex justify-between items-end">
               <div>
-                <p class="text-[9px] text-gray-400 font-black uppercase">Precio</p>
+                <p class="text-[9px] text-gray-400 font-black uppercase">PVP</p>
                 <p class="text-primary font-black text-sm">$${parseFloat(prod.Precio_Venta || 0).toFixed(2)}</p>
               </div>
               <span class="text-xs px-3 py-1 rounded-xl ${esCritico ? 'bg-red-500 text-white' : 'bg-purple-100 text-primary'} font-black">${stock} u</span>
@@ -180,16 +174,15 @@ async function cargarInventario() {
 
     document.getElementById('valor-bodega').innerText = `$${totalCosto.toFixed(2)}`;
     document.getElementById('count-critico').innerText = criticos;
-    document.getElementById('total-sku').innerText = inventario.length;
-
-  } catch (e) {
-    console.error(e);
-  } finally {
-    if (icon) icon.classList.remove('rotate-animation');
-  }
+    document.getElementById('total-sku').innerText = lista.length;
 }
 
-// MODALES
+function filtrarPantalla() {
+    const texto = document.getElementById('filtroProd').value.toLowerCase();
+    const filtrados = inventarioLocal.filter(p => p.Producto.toLowerCase().includes(texto));
+    renderizarGrid(filtrados);
+}
+
 function abrirModalSumar(nombre) {
   const prod = inventarioLocal.find(p => p.Producto === nombre);
   if (!prod) return;
@@ -210,13 +203,12 @@ function abrirModalNuevo() {
   document.getElementById('modalNuevo').classList.remove('hidden');
 }
 
-// ENVÍO DE DATOS
 document.getElementById('formProducto').onsubmit = async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnGuardar');
   if (btn.disabled) return;
 
-  btn.innerText = "ACTUALIZANDO...";
+  btn.innerText = "PROCESANDO...";
   btn.disabled = true;
 
   try {
@@ -229,9 +221,9 @@ document.getElementById('formProducto').onsubmit = async (e) => {
     });
     
     cerrarModal();
-    setTimeout(() => { cargarInventario(); }, 1200);
+    setTimeout(() => { cargarInventario(); }, 1500);
   } catch (err) {
-    alert("Error de red");
+    alert("Error al guardar");
   } finally {
     btn.innerText = "PROCESAR ENTRADA";
     btn.disabled = false;
@@ -243,7 +235,7 @@ function cerrarModal() {
   document.getElementById('formProducto').reset();
 }
 
-window.onload = iniciar;
+window.onload = cargarInventario;
 </script>
 </body>
 </html>

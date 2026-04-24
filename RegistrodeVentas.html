@@ -29,7 +29,6 @@
     <style>
         body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; }
         
-        /* Contenedores con bordes extra redondeados */
         .card-sutil { 
             background: white; 
             border-radius: 2.5rem; 
@@ -37,7 +36,6 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02); 
         }
 
-        /* Inputs ultra-redondeados */
         .input-sutil { 
             background-color: #fdfaff; 
             border: 1.5px solid #f3e8ff; 
@@ -56,7 +54,6 @@
             box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05);
         }
 
-        /* Botón Magenta Redondeado */
         .btn-magenta { 
             background-color: #db2777; 
             color: white; 
@@ -68,10 +65,8 @@
         }
         
         .btn-magenta:active { transform: scale(0.96); }
-        
         .hidden { display: none !important; }
 
-        /* Animación de entrada sutil */
         .fade-in-sutil {
             animation: fadeIn 0.4s ease-out;
         }
@@ -120,12 +115,12 @@
                 </div>
                 
                 <div class="space-y-3">
-                    <input type="text" id="reg-nombre" placeholder="Nombre y Apellido" class="input-sutil">
+                    <input type="text" id="reg-nombre" placeholder="Nombre Completo (Ej: Juan Pérez)" class="input-sutil">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input type="text" id="reg-ci" placeholder="CI_RUC" class="input-sutil">
-                        <input type="tel" id="reg-tel" placeholder="Teléfono Móvil" class="input-sutil">
+                        <input type="text" id="reg-ci" placeholder="CI / RUC (Ej: 1725550001)" class="input-sutil">
+                        <input type="tel" id="reg-tel" placeholder="Teléfono (Ej: 0998887766)" class="input-sutil">
                     </div>
-                    <input type="text" id="reg-dir" placeholder="Dirección Exacta" class="input-sutil">
+                    <input type="text" id="reg-dir" placeholder="Dirección (Ej: Av. Amazonas y Colon)" class="input-sutil">
                 </div>
 
                 <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4 shadow-lg shadow-pink-100 flex items-center justify-center gap-2 mt-2">
@@ -193,7 +188,6 @@ function generarIDOrden() {
 function alternarFormularioCliente(mostrarNuevo) {
     const vistaSel = document.getElementById('vista-seleccion-cliente');
     const vistaNuevo = document.getElementById('vista-nuevo-cliente');
-    
     if(mostrarNuevo) {
         vistaSel.classList.add('hidden');
         vistaNuevo.classList.remove('hidden');
@@ -204,7 +198,11 @@ function alternarFormularioCliente(mostrarNuevo) {
 }
 
 async function guardarNuevoCliente() {
-    const n = document.getElementById('reg-nombre').value, c = document.getElementById('reg-ci').value, t = document.getElementById('reg-tel').value, d = document.getElementById('reg-dir').value;
+    const n = document.getElementById('reg-nombre').value;
+    const c = document.getElementById('reg-ci').value;
+    const t = document.getElementById('reg-tel').value;
+    const d = document.getElementById('reg-dir').value;
+    
     if(!n || !t) return alert("Por favor ingresa al menos Nombre y Teléfono");
     
     const btn = document.getElementById('btn-guardar-cli');
@@ -212,7 +210,15 @@ async function guardarNuevoCliente() {
     btn.disabled = true;
 
     try {
-        await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", Nombre: n, CI: c, Teléfono: t, Dirección: d });
+        // CORRECCIÓN: Se envía "CI_RUC" para coincidir con el doPost del script
+        await DairyAPI.enviarDatos("Clientes", { 
+            pestaña: "Clientes", 
+            Nombre: n, 
+            CI_RUC: c, 
+            Teléfono: t, 
+            Dirección: d 
+        });
+        
         await iniciar(); 
         document.getElementById('select-cliente').value = n;
         actualizarNombreCarrito();
@@ -336,9 +342,7 @@ async function finalizarVenta() {
         
         const cObj = clientesData.find(c => c.Nombre === cli);
         let tel = "593" + (cObj?.Teléfono?.toString().replace(/\D/g, '').slice(-9) || "");
-        
         window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(`*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cli}\n*Entrega:* ${f}\n\n*DETALLE:*\n${det}\n*TOTAL: $${total.toFixed(2)}*`)}`, '_blank');
-        
         location.reload();
     } catch(e) { 
         alert("Error de red"); 

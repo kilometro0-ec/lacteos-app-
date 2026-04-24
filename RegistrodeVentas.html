@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dairy Logic - Sales Entry</title>
+<title>Dairy Logic - Ventas</title>
 
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="api-config.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -17,17 +18,11 @@ tailwind.config = {
     extend: {
       colors: {
         primary: "#a21caf",
-        "primary-container": "#c026d3",
         secondary: "#db2777",
-        "secondary-container": "#fbcfe8",
+        success: "#16a34a",
         background: "#faf5ff",
         surface: "#ffffff",
-        "on-primary": "#ffffff",
-        "on-surface": "#1f012a",
-        "on-surface-variant": "#6b21a8",
         outline: "#e9d5ff",
-        "outline-variant": "#f3e8ff",
-        error: "#dc2626",
       }
     }
   }
@@ -35,163 +30,253 @@ tailwind.config = {
 </script>
 
 <style>
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
-}
-.zebra-table tr:nth-child(even) {
-  background-color: #faf5ff;
-}
+.material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+.zebra-table tr:nth-child(even) { background-color: #faf5ff; }
 </style>
-
 </head>
 
-<body class="bg-background text-on-surface font-[Work_Sans]">
+<body class="bg-background text-gray-900 font-[Work_Sans] pb-32">
 
-<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm shadow-purple-500/10">
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
   <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
-    <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-      <span class="material-symbols-outlined text-primary">person</span>
+    <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+      <span class="material-symbols-outlined text-primary">opacity</span>
     </div>
     <h1 class="text-xl font-bold text-primary">Dairy Logic</h1>
   </div>
-
-  <button class="p-2 text-on-surface-variant hover:bg-purple-50 rounded-lg">
+  <button class="p-2 text-purple-800 hover:bg-purple-50 rounded-lg">
     <span class="material-symbols-outlined">notifications</span>
   </button>
 </header>
 
-<main class="pt-20 pb-32 px-4 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-4">
+<main class="pt-20 px-4 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6">
 
-<div class="md:col-span-8 space-y-6">
-
-<section class="bg-white p-4 rounded-xl border border-outline shadow-sm">
-  <h2 class="text-lg font-bold text-primary mb-3 flex items-center gap-2">
-      <span class="material-symbols-outlined">person_search</span> Seleccionar Cliente
-  </h2>
-  <div class="relative">
-      <input class="w-full h-12 pl-12 pr-4 bg-purple-50 border border-outline rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all"
-        placeholder="Buscar cliente por nombre o ID..." />
-      <span class="material-symbols-outlined absolute left-4 top-3 text-on-surface-variant">search</span>
-  </div>
-</section>
-
-<section>
-  <h2 class="text-lg font-bold mb-4 text-primary flex items-center gap-2">
-      <span class="material-symbols-outlined">category</span> Productos Disponibles
-  </h2>
-
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-    <div class="bg-white p-4 rounded-xl border border-outline shadow-sm hover:border-primary transition-colors group">
-      <div class="flex justify-between items-start mb-2">
-          <h4 class="font-bold text-lg">Leche 1L</h4>
-          <span class="bg-primary-container/10 text-primary text-xs px-2 py-1 rounded">Stock: 50</span>
-      </div>
-      <p class="text-xl font-bold text-secondary mb-4">$2.45</p>
-
-      <div class="flex items-center justify-between bg-surface-container rounded-lg p-1">
-        <button class="w-10 h-10 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold hover:bg-primary hover:text-white transition-colors">-</button>
-        <span class="font-bold text-lg">0</span>
-        <button class="w-10 h-10 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold hover:bg-primary hover:text-white transition-colors">+</button>
-      </div>
-    </div>
-
-    <div class="bg-white p-4 rounded-xl border border-outline shadow-sm hover:border-primary transition-colors group">
-      <div class="flex justify-between items-start mb-2">
-          <h4 class="font-bold text-lg">Queso Fresco</h4>
-          <span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Stock: 10</span>
-      </div>
-      <p class="text-xl font-bold text-secondary mb-4">$4.80</p>
-
-      <div class="flex items-center justify-between bg-surface-container rounded-lg p-1">
-        <button class="w-10 h-10 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold hover:bg-primary hover:text-white transition-colors">-</button>
-        <span class="font-bold text-lg">0</span>
-        <button class="w-10 h-10 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold hover:bg-primary hover:text-white transition-colors">+</button>
-      </div>
-    </div>
-
-  </div>
-</section>
-
-</div>
-
-<div class="md:col-span-4">
-
-<section class="bg-white rounded-xl border border-outline shadow-lg overflow-hidden sticky top-20">
-
-  <div class="bg-primary text-white p-4 flex items-center gap-2">
-    <span class="material-symbols-outlined">shopping_cart</span>
-    <h3 class="text-lg font-bold">Resumen de Venta</h3>
-  </div>
-
-  <div class="p-4">
-    <table class="w-full zebra-table text-sm">
-      <thead>
-          <tr class="text-left text-on-surface-variant border-b border-outline">
-              <th class="pb-2">Prod.</th>
-              <th class="pb-2">Cant.</th>
-              <th class="pb-2 text-right">Total</th>
-          </tr>
-      </thead>
-      <tbody>
-        <tr class="border-b border-outline/50">
-          <td class="py-3">Leche 1L</td>
-          <td class="py-3 text-center">2</td>
-          <td class="py-3 text-right font-bold">$4.90</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="mt-6 space-y-2">
-      <div class="flex justify-between text-on-surface-variant">
-        <span>Subtotal</span>
-        <span>$4.90</span>
-      </div>
-      <div class="flex justify-between text-xl font-bold text-primary pt-2 border-t border-outline">
-        <span>Total</span>
-        <span>$4.90</span>
-      </div>
-    </div>
-
-    <button class="w-full mt-6 bg-primary hover:bg-primary-container text-white py-4 rounded-xl font-bold shadow-lg shadow-purple-500/30 transition-transform active:scale-95">
-      Completar Venta
-    </button>
+  <div class="md:col-span-8 space-y-6">
     
-    <button onclick="window.location.href='DashboardLácteo.html'" class="w-full mt-2 text-on-surface-variant py-2 text-sm font-medium hover:underline">
-      Cancelar
-    </button>
+    <section class="bg-white p-4 rounded-xl border border-outline shadow-sm">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="text-lg font-bold text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined">person_search</span> Cliente
+        </h2>
+        <button onclick="abrirModalCliente()" class="text-xs font-bold text-secondary flex items-center gap-1 hover:underline">
+          <span class="material-symbols-outlined text-sm">person_add</span> NUEVO CLIENTE
+        </button>
+      </div>
+      <div class="relative">
+          <input id="search-cliente" list="lista-clientes" class="w-full h-12 pl-12 pr-4 bg-purple-50 border border-outline rounded-xl focus:ring-2 focus:ring-primary outline-none"
+            placeholder="Buscar o seleccionar cliente..." />
+          <span class="material-symbols-outlined absolute left-4 top-3 text-purple-400">search</span>
+          <datalist id="lista-clientes"></datalist>
+      </div>
+    </section>
 
+    <section>
+      <h2 class="text-lg font-bold mb-4 text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined">category</span> Productos Disponibles
+      </h2>
+      <div id="contenedor-productos" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <p class="text-gray-400 italic">Cargando catálogo...</p>
+      </div>
+    </section>
   </div>
 
-</section>
+  <div class="md:col-span-4">
+    <section class="bg-white rounded-2xl border border-outline shadow-lg overflow-hidden sticky top-20">
+      <div class="bg-primary text-white p-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined">shopping_cart</span>
+          <h3 class="font-bold">Resumen</h3>
+        </div>
+        <button onclick="limpiarCarrito()" class="text-[10px] bg-white/20 px-2 py-1 rounded">LIMPIAR</button>
+      </div>
 
-</div>
+      <div class="p-4">
+        <table class="w-full text-sm">
+          <thead>
+              <tr class="text-left text-gray-500 border-b border-outline">
+                  <th class="pb-2">Prod.</th>
+                  <th class="pb-2 text-center">Cant.</th>
+                  <th class="pb-2 text-right">Total</th>
+              </tr>
+          </thead>
+          <tbody id="tabla-carrito">
+            </tbody>
+        </table>
+
+        <div class="mt-6 pt-4 border-t-2 border-dashed border-outline">
+          <div class="flex justify-between text-2xl font-black text-primary">
+            <span>TOTAL</span>
+            <span id="total-venta">$0.00</span>
+          </div>
+        </div>
+
+        <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full mt-6 bg-secondary text-white py-4 rounded-xl font-bold shadow-lg active:scale-95 transition-all">
+          COMPLETAR VENTA
+        </button>
+      </div>
+    </section>
+  </div>
 
 </main>
 
+<div id="modalCliente" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl">
+    <h3 class="text-xl font-bold text-primary mb-4">Registrar Nuevo Cliente</h3>
+    <div class="space-y-4">
+      <input type="text" id="nuevo-nombre" placeholder="Nombre completo" class="w-full p-3 border border-outline rounded-xl">
+      <input type="text" id="nuevo-id" placeholder="Teléfono o Cédula" class="w-full p-3 border border-outline rounded-xl">
+      <div class="flex gap-2">
+        <button onclick="cerrarModalCliente()" class="flex-1 py-3 text-gray-500 font-bold">CANCELAR</button>
+        <button onclick="guardarCliente()" class="flex-1 py-3 bg-primary text-white rounded-xl font-bold">GUARDAR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
-  
-  <button onclick="window.location.href='DashboardLácteo.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
+  <button onclick="window.location.href='DashboardLacteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">home</span>
     <span class="text-[10px]">Inicio</span>
   </button>
-
-  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-primary flex flex-col items-center gap-1">
+  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-secondary flex flex-col items-center gap-1 font-bold">
     <span class="material-symbols-outlined">receipt</span>
-    <span class="text-[10px] font-bold">Ventas</span>
+    <span class="text-[10px]">Ventas</span>
   </button>
-
-  <button onclick="window.location.href='ControldeInventario.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
+  <button onclick="window.location.href='ControldeInventario.html'" class="text-gray-400 flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">inventory</span>
     <span class="text-[10px]">Stock</span>
   </button>
-
-  <button onclick="window.location.href='GestióndeDespachos.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
-    <span class="material-symbols-outlined">local_shipping</span>
-    <span class="text-[10px]">Entregas</span>
-  </button>
-
 </nav>
 
+<script>
+let carrito = {};
+let productosData = [];
+
+async function iniciar() {
+    // 1. Cargar Clientes (Datalist)
+    const clientes = await DairyAPI.obtenerDatos("Clientes");
+    const dl = document.getElementById('lista-clientes');
+    clientes.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.Nombre;
+        dl.appendChild(opt);
+    });
+
+    // 2. Cargar Productos
+    productosData = await DairyAPI.obtenerDatos("Inventario");
+    renderizarProductos();
+}
+
+function renderizarProductos() {
+    const container = document.getElementById('contenedor-productos');
+    container.innerHTML = "";
+    
+    productosData.forEach(p => {
+        const stock = parseInt(p.Stock);
+        container.innerHTML += `
+            <div class="bg-white p-4 rounded-xl border border-outline shadow-sm">
+                <div class="flex justify-between items-start mb-1">
+                    <h4 class="font-bold text-gray-700">${p.Producto}</h4>
+                    <span class="text-[10px] ${stock <= 5 ? 'text-red-600 font-bold' : 'text-gray-400'}">Stock: ${stock}</span>
+                </div>
+                <p class="text-lg font-black text-secondary mb-3">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
+                <div class="flex items-center justify-between bg-purple-50 rounded-lg p-1">
+                    <button onclick="cambiarCant('${p.Producto}', -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold">-</button>
+                    <span id="cant-${p.Producto.replace(/\s+/g, '')}" class="font-bold">0</span>
+                    <button onclick="cambiarCant('${p.Producto}', 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-md border border-outline text-primary font-bold">+</button>
+                </div>
+            </div>`;
+    });
+}
+
+function cambiarCant(nombre, delta) {
+    if (!carrito[nombre]) carrito[nombre] = 0;
+    
+    const prod = productosData.find(p => p.Producto === nombre);
+    const nuevoValor = carrito[nombre] + delta;
+
+    if (nuevoValor >= 0 && nuevoValor <= prod.Stock) {
+        carrito[nombre] = nuevoValor;
+        document.getElementById(`cant-${nombre.replace(/\s+/g, '')}`).innerText = nuevoValor;
+        actualizarCarritoUI();
+    }
+}
+
+function actualizarCarritoUI() {
+    const tabla = document.getElementById('tabla-carrito');
+    const totalLabel = document.getElementById('total-venta');
+    tabla.innerHTML = "";
+    let totalGral = 0;
+
+    Object.keys(carrito).forEach(nombre => {
+        if (carrito[nombre] > 0) {
+            const prod = productosData.find(p => p.Producto === nombre);
+            const subtotal = carrito[nombre] * parseFloat(prod.Precio_Venta);
+            totalGral += subtotal;
+
+            tabla.innerHTML += `
+                <tr class="border-b border-outline/50">
+                    <td class="py-2">${nombre}</td>
+                    <td class="py-2 text-center">${carrito[nombre]}</td>
+                    <td class="py-2 text-right font-bold">$${subtotal.toFixed(2)}</td>
+                </tr>`;
+        }
+    });
+
+    totalLabel.innerText = `$${totalGral.toFixed(2)}`;
+}
+
+async function finalizarVenta() {
+    const cliente = document.getElementById('search-cliente').value;
+    if (!cliente) return alert("Selecciona un cliente");
+    if (Object.values(carrito).every(v => v === 0)) return alert("El carrito está vacío");
+
+    const btn = document.getElementById('btn-finalizar');
+    btn.disabled = true;
+    btn.innerText = "PROCESANDO...";
+
+    try {
+        // Aquí enviarías al Apps Script un registro por cada producto
+        for (const nombre in carrito) {
+            if (carrito[nombre] > 0) {
+                const prod = productosData.find(p => p.Producto === nombre);
+                await DairyAPI.enviarDatos("Ventas", {
+                    pestaña: "Ventas",
+                    cliente: cliente,
+                    producto: nombre,
+                    cantidad: carrito[nombre],
+                    precio_usado: prod.Precio_Venta,
+                    total: carrito[nombre] * prod.Precio_Venta
+                });
+            }
+        }
+        alert("¡Venta Exitosa!");
+        location.reload();
+    } catch (e) {
+        alert("Error al guardar");
+        btn.disabled = false;
+        btn.innerText = "COMPLETAR VENTA";
+    }
+}
+
+function abrirModalCliente() { document.getElementById('modalCliente').classList.remove('hidden'); }
+function cerrarModalCliente() { document.getElementById('modalCliente').classList.add('hidden'); }
+
+async function guardarCliente() {
+    const nombre = document.getElementById('nuevo-nombre').value;
+    if (!nombre) return;
+    await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", Nombre: nombre, ID: document.getElementById('nuevo-id').value });
+    alert("Cliente registrado");
+    location.reload();
+}
+
+function limpiarCarrito() {
+    carrito = {};
+    renderizarProductos();
+    actualizarCarritoUI();
+}
+
+window.onload = iniciar;
+</script>
 </body>
 </html>

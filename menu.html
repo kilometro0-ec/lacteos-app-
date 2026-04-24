@@ -1,36 +1,36 @@
 <nav class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-purple-100 pb-6 pt-3 shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)] z-[100] px-4">
     <div class="flex justify-around items-center max-w-lg mx-auto">
         
-        <button onclick="navegar('DashboardLacteo.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="DashboardLacteo">
-            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
+        <button onclick="window.location.href='DashboardLacteo.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="DashboardLacteo">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">home</span>
             </div>
             <span class="text-[10px] font-black uppercase mt-1">Inicio</span>
         </button>
 
-        <button onclick="navegar('RegistrodeVentas.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="RegistrodeVentas">
-            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
+        <button onclick="window.location.href='RegistrodeVentas.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="RegistrodeVentas">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">receipt_long</span>
             </div>
             <span class="text-[10px] font-black uppercase mt-1">Ventas</span>
         </button>
 
-        <button onclick="navegar('GestiondeClientes.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="GestiondeClientes">
-            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
+        <button onclick="window.location.href='GestiondeClientes.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="GestiondeClientes">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">group</span>
             </div>
             <span class="text-[10px] font-black uppercase mt-1">Clientes</span>
         </button>
 
-        <button onclick="navegar('ControldeInventario.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="ControldeInventario">
-            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
+        <button onclick="window.location.href='ControldeInventario.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="ControldeInventario">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">inventory_2</span>
             </div>
             <span class="text-[10px] font-black uppercase mt-1">Stock</span>
         </button>
 
-        <button onclick="navegar('GestióndeDespachos.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="GestióndeDespachos">
-            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
+        <button onclick="window.location.href='GestióndeDespachos.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="GestióndeDespachos">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">local_shipping</span>
             </div>
             <span class="text-[10px] font-black uppercase mt-1">Despacho</span>
@@ -39,7 +39,7 @@
 </nav>
 
 <style>
-    /* Color Morado para el botón activo */
+    /* Estilos para el botón activo */
     .nav-link.active-nav { color: #a21caf !important; }
     .nav-link.active-nav .icon-box {
         background-color: #f5f3ff;
@@ -50,35 +50,3 @@
         font-variation-settings: 'FILL' 1, 'wght' 600;
     }
 </style>
-
-<script>
-    function navegar(url) {
-        // Forzamos la navegación y el refresco
-        window.location.href = url;
-    }
-
-    function pintarMenu() {
-        // Obtenemos el nombre del archivo actual de la URL
-        const path = window.location.pathname;
-        let paginaActual = path.split("/").pop();
-        
-        // Si estamos en la raíz o carpeta vacía, asumimos Dashboard
-        if (!paginaActual || paginaActual === "") paginaActual = "DashboardLacteo.html";
-
-        document.querySelectorAll('.nav-link').forEach(btn => {
-            const dataPage = btn.getAttribute('data-page');
-            
-            // Si el nombre del archivo contiene el texto de data-page, lo activamos
-            if (paginaActual.toLowerCase().includes(dataPage.toLowerCase())) {
-                btn.classList.add('active-nav');
-                btn.classList.remove('text-gray-400');
-            } else {
-                btn.classList.remove('active-nav');
-                btn.classList.add('text-gray-400');
-            }
-        });
-    }
-
-    // Ejecutar al cargar el fragmento
-    pintarMenu();
-</script>

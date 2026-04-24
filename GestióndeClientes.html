@@ -48,7 +48,6 @@
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto">
-
     <div class="mb-6">
         <input type="text" id="buscador" oninput="filtrarClientes()" 
                placeholder="Buscar por nombre o ID..." 
@@ -57,10 +56,9 @@
 
     <div id="contenedor-clientes" class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="col-span-full text-center py-20 text-gray-400 italic">
-            Conectando con la base de datos de Lógica Láctea...
+            Conectando con la base de datos...
         </div>
     </div>
-
 </main>
 
 <nav class="fixed bottom-0 left-0 w-full flex justify-around bg-white border-t border-outline py-3 shadow-lg z-50">
@@ -83,19 +81,19 @@ let clientesData = [];
 
 async function cargarClientes() {
     const refreshIcon = document.getElementById('refresh-icon');
-    refreshIcon.classList.add('animate-spin'); // Animación de carga
+    if(refreshIcon) refreshIcon.classList.add('animate-spin');
 
     try {
-        // DairyAPI.obtenerDatos debe estar definido en tu api-config.js
         const respuesta = await DairyAPI.obtenerDatos("Clientes");
+        console.log("Datos recibidos:", respuesta); // Esto ayuda a ver errores en la consola F12
         clientesData = respuesta;
         renderizarClientes(clientesData);
     } catch (error) {
         console.error("Error cargando clientes:", error);
         document.getElementById('contenedor-clientes').innerHTML = 
-            `<div class="col-span-full text-center text-red-500 font-bold">Error al conectar con la base de datos</div>`;
+            `<div class="col-span-full text-center text-red-500 font-bold">Error de conexión</div>`;
     } finally {
-        refreshIcon.classList.remove('animate-spin');
+        if(refreshIcon) refreshIcon.classList.remove('animate-spin');
     }
 }
 
@@ -103,33 +101,40 @@ function renderizarClientes(lista) {
     const contenedor = document.getElementById('contenedor-clientes');
     contenedor.innerHTML = "";
 
-    if (lista.length === 0) {
-        contenedor.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400">No hay clientes registrados</div>`;
+    if (!lista || lista.length === 0) {
+        contenedor.innerHTML = `<div class="col-span-full text-center py-10 text-gray-400 font-bold">No hay clientes en la base de datos</div>`;
         return;
     }
 
     lista.forEach(cliente => {
+        // Mapeo exacto de tus columnas de Excel
+        const nombre = cliente['Nombre'] || 'Sin Nombre';
+        const id = cliente['ID'] || 'S/N';
+        const telefono = cliente['Teléfono'] || '';
+        const direccion = cliente['Dirección'] || 'Sin dirección registrada';
+
         contenedor.innerHTML += `
             <div class="bg-white border border-outline rounded-[2rem] p-5 shadow-sm active:scale-95 transition-all">
                 <div class="flex justify-between items-start mb-4">
                     <div class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center text-primary">
                         <span class="material-symbols-outlined text-3xl">account_circle</span>
                     </div>
-                    <span class="bg-purple-100 text-primary px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                        ${cliente.ID || 'S/N'}
+                    <span class="bg-purple-100 text-primary px-3 py-1 rounded-full text-[10px] font-black tracking-wider">
+                        ID: ${id}
                     </span>
                 </div>
 
-                <h3 class="font-black text-lg text-gray-800 leading-tight mb-1">${cliente.Nombre}</h3>
-                <p class="text-sm text-gray-500 font-medium mb-3 flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">location_on</span> ${cliente.Dirección || 'Sin dirección'}
+                <h3 class="font-black text-lg text-gray-800 leading-tight mb-1 uppercase">${nombre}</h3>
+                <p class="text-sm text-gray-500 font-medium mb-3 flex items-start gap-1">
+                    <span class="material-symbols-outlined text-sm mt-0.5">location_on</span> 
+                    <span>${direccion}</span>
                 </p>
 
                 <div class="grid grid-cols-2 gap-2 mt-4">
-                    <a href="tel:${cliente.Teléfono}" class="flex items-center justify-center gap-2 bg-purple-50 text-primary py-3 rounded-xl font-bold text-xs uppercase tracking-tighter">
+                    <a href="tel:${telefono}" class="flex items-center justify-center gap-2 bg-purple-50 text-primary py-3 rounded-xl font-bold text-xs uppercase">
                         <span class="material-symbols-outlined text-sm">call</span> Llamar
                     </a>
-                    <a href="https://wa.me/${cliente.Teléfono?.replace(/\s/g, '')}" target="_blank" class="flex items-center justify-center gap-2 bg-green-50 text-green-600 py-3 rounded-xl font-bold text-xs uppercase tracking-tighter">
+                    <a href="https://wa.me/${telefono.toString().replace(/\D/g, '')}" target="_blank" class="flex items-center justify-center gap-2 bg-green-50 text-green-600 py-3 rounded-xl font-bold text-xs uppercase">
                         <span class="material-symbols-outlined text-sm">chat</span> WhatsApp
                     </a>
                 </div>
@@ -140,15 +145,13 @@ function renderizarClientes(lista) {
 function filtrarClientes() {
     const termino = document.getElementById('buscador').value.toLowerCase();
     const filtrados = clientesData.filter(c => 
-        c.Nombre.toLowerCase().includes(termino) || 
+        (c.Nombre && c.Nombre.toLowerCase().includes(termino)) || 
         (c.ID && c.ID.toString().includes(termino))
     );
     renderizarClientes(filtrados);
 }
 
-// Iniciar carga al abrir la página
 window.onload = cargarClientes;
 </script>
-
 </body>
 </html>

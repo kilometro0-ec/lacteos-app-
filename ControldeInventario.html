@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html class="light" lang="es">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dairy Logic | Inventory Management</title>
+<title>Lógica Láctea | Control de Inventario</title>
 
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="api-config.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -19,7 +20,7 @@ tailwind.config = {
         primary: "#a21caf",
         "primary-container": "#f5d0fe",
         secondary: "#db2777",
-        "secondary-container": "#fbcfe8",
+        success: "#16a34a",
         background: "#faf5ff",
         surface: "#ffffff",
         outline: "#e9d5ff",
@@ -31,109 +32,66 @@ tailwind.config = {
 </script>
 
 <style>
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
-}
+.material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
 body { font-family: 'Work Sans', sans-serif; }
+.rotate-animation { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
 </head>
 
-<body class="bg-background text-gray-900">
+<body class="bg-background text-gray-900 pb-32">
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
   <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
-    <h1 class="text-xl font-bold text-primary">Dairy Logic</h1>
+    <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-primary">
+        <span class="material-symbols-outlined">opacity</span>
+    </div>
+    <h1 class="text-xl font-bold text-primary">Lógica Láctea</h1>
   </div>
-  <button class="p-2 text-primary hover:bg-primary-container rounded-full transition-colors">
-    <span class="material-symbols-outlined">notifications</span>
-  </button>
+  <div class="flex gap-2">
+    <button onclick="location.reload()" class="p-2 text-primary hover:bg-primary-container rounded-full transition-colors">
+        <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
+    </button>
+  </div>
 </header>
 
-<main class="pt-20 pb-32 px-4 max-w-7xl mx-auto">
+<main class="pt-20 px-4 max-w-7xl mx-auto">
 
 <section class="mb-6">
   <h1 class="text-3xl font-bold text-primary">Control de Stock</h1>
-  <p class="text-on-surface-variant">Seguimiento de productos en tiempo real</p>
+  <p class="text-gray-500">Gestión de productos y existencias</p>
 </section>
 
 <section class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-  <div class="bg-white p-5 rounded-xl border border-outline shadow-sm">
-    <p class="text-xs text-gray-500 uppercase font-bold">Valor en Bodega</p>
-    <h2 class="text-3xl font-bold text-primary">$12,450.00</h2>
+  <div class="bg-white p-5 rounded-2xl border border-outline shadow-sm">
+    <p class="text-[10px] text-gray-400 uppercase font-black">Valor Total Bodega</p>
+    <h2 id="valor-bodega" class="text-3xl font-bold text-primary">$0.00</h2>
   </div>
 
-  <div class="bg-red-50 p-5 rounded-xl border border-red-100 shadow-sm">
-    <p class="text-xs text-red-600 uppercase font-bold">Productos Críticos</p>
-    <h2 class="text-3xl font-bold text-red-600">02</h2>
+  <div class="bg-red-50 p-5 rounded-2xl border border-red-100 shadow-sm">
+    <p class="text-[10px] text-red-600 uppercase font-black">Productos Críticos</p>
+    <h2 id="count-critico" class="text-3xl font-bold text-red-600">0</h2>
   </div>
 
-  <div class="bg-primary-container/30 p-5 rounded-xl border border-primary-container shadow-sm">
-    <p class="text-xs text-primary uppercase font-bold">Capacidad Almacén</p>
-    <h2 class="text-3xl font-bold text-primary">82%</h2>
+  <div class="bg-white p-5 rounded-2xl border border-outline shadow-sm">
+    <p class="text-[10px] text-success uppercase font-black">Total Productos</p>
+    <h2 id="total-sku" class="text-3xl font-bold text-success">0</h2>
   </div>
 </section>
 
-<section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="col-span-full text-center py-10 text-gray-400 italic">Cargando inventario...</div>
+</div>
 
-  <div class="bg-white p-3 rounded-xl border border-outline shadow-sm hover:border-primary transition-all">
-    <div class="aspect-square bg-purple-50 rounded-lg mb-3 flex items-center justify-center">
-        <span class="material-symbols-outlined text-4xl text-primary/40">egg_alt</span>
-    </div>
-    <h3 class="font-bold text-sm">Leche Entera 1L</h3>
-    <div class="flex justify-between items-center mt-2">
-        <p class="text-primary font-bold">$2.45</p>
-        <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">50u</span>
-    </div>
-  </div>
-
-  <div class="bg-white p-3 rounded-xl border-2 border-red-200 shadow-sm relative">
-    <span class="absolute top-2 right-2 flex h-2 w-2">
-        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-    </span>
-    <div class="aspect-square bg-red-50 rounded-lg mb-3 flex items-center justify-center">
-        <span class="material-symbols-outlined text-4xl text-red-300">cheese</span>
-    </div>
-    <h3 class="font-bold text-sm">Queso Fresco</h3>
-    <p class="text-red-600 font-bold text-xs">Stock Bajo (10u)</p>
-  </div>
-
-  <div class="bg-white p-3 rounded-xl border border-outline shadow-sm hover:border-primary transition-all">
-    <div class="aspect-square bg-purple-50 rounded-lg mb-3 flex items-center justify-center">
-        <span class="material-symbols-outlined text-4xl text-primary/40">icecream</span>
-    </div>
-    <h3 class="font-bold text-sm">Yogurt Fresa</h3>
-    <div class="flex justify-between items-center mt-2">
-        <p class="text-primary font-bold">$1.80</p>
-        <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">24u</span>
-    </div>
-  </div>
-
-  <div class="bg-white p-3 rounded-xl border border-outline shadow-sm hover:border-primary transition-all">
-    <div class="aspect-square bg-purple-50 rounded-lg mb-3 flex items-center justify-center">
-        <span class="material-symbols-outlined text-4xl text-primary/40">inventory_2</span>
-    </div>
-    <h3 class="font-bold text-sm">Mantequilla</h3>
-    <div class="flex justify-between items-center mt-2">
-        <p class="text-primary font-bold">$3.20</p>
-        <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">15u</span>
-    </div>
-  </div>
-
-</section>
-
-<section class="mt-10 bg-primary text-white p-6 rounded-2xl shadow-lg shadow-purple-500/20">
+<section class="mt-10 bg-primary text-white p-6 rounded-3xl shadow-xl shadow-purple-200">
   <div class="flex flex-col md:flex-row justify-between items-center gap-4">
     <div>
-        <h2 class="text-xl font-bold">Acciones de Inventario</h2>
-        <p class="text-primary-container text-sm">Actualiza el stock escaneando productos</p>
+        <h2 class="text-xl font-bold text-white">Acciones Rápidas</h2>
+        <p class="text-purple-200 text-xs">Agrega nuevos productos a la base de datos</p>
     </div>
     <div class="flex gap-2 w-full md:w-auto">
-        <button class="flex-1 bg-white text-primary px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-colors">
-          <span class="material-symbols-outlined">qr_code_scanner</span> Escanear
-        </button>
-        <button class="flex-1 bg-secondary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-secondary-container transition-colors">
-            <span class="material-symbols-outlined">add</span> Nuevo
+        <button onclick="abrirModal()" class="flex-1 bg-secondary text-white px-8 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-105 transition-all">
+            <span class="material-symbols-outlined">add_box</span> NUEVO
         </button>
     </div>
   </div>
@@ -141,29 +99,143 @@ body { font-family: 'Work Sans', sans-serif; }
 
 </main>
 
+<div id="modalNuevo" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl overflow-hidden relative">
+    <div class="absolute top-0 left-0 w-full h-2 bg-primary"></div>
+    <h3 class="text-2xl font-black text-primary mb-6 flex items-center gap-2">
+        <span class="material-symbols-outlined">inventory_2</span> Nuevo Producto
+    </h3>
+    <form id="formProducto" class="space-y-4">
+      <div>
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Nombre del Producto</label>
+        <input type="text" id="nombreP" required placeholder="Ej: Queso Mozzarella" class="w-full border-outline rounded-xl p-3 focus:ring-primary focus:border-primary">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Stock Inicial</label>
+          <input type="number" id="stockP" required placeholder="0" class="w-full border-outline rounded-xl p-3 focus:ring-primary">
+        </div>
+        <div>
+          <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Costo (Dist)</label>
+          <input type="number" step="0.01" id="costoP" required placeholder="0.00" class="w-full border-outline rounded-xl p-3">
+        </div>
+      </div>
+      <div>
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Precio Venta (Público)</label>
+        <input type="number" step="0.01" id="ventaP" required placeholder="0.00" class="w-full border-outline rounded-xl p-3">
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="button" onclick="cerrarModal()" class="flex-1 py-4 text-gray-500 font-bold hover:bg-gray-50 rounded-2xl transition-colors">CANCELAR</button>
+        <button type="submit" id="btnGuardar" class="flex-1 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg shadow-purple-100">GUARDAR</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
-  
-  <button onclick="window.location.href='DashboardLácteo.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
+  <button onclick="window.location.href='DashboardLácteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">home</span>
     <span class="text-[10px]">Inicio</span>
   </button>
-
-  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
+  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-gray-400 flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">receipt</span>
     <span class="text-[10px]">Ventas</span>
   </button>
-
-  <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center gap-1">
-    <span class="material-symbols-outlined font-fill">inventory</span>
-    <span class="text-[10px] font-bold">Stock</span>
+  <button onclick="window.location.href='ControldeInventario.html'" class="text-primary flex flex-col items-center gap-1 font-bold">
+    <span class="material-symbols-outlined">inventory</span>
+    <span class="text-[10px]">Stock</span>
   </button>
-
-  <button onclick="window.location.href='GestióndeDespachos.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
+  <button onclick="window.location.href='GestióndeDespachos.html'" class="text-success flex flex-col items-center gap-1">
     <span class="material-symbols-outlined">local_shipping</span>
     <span class="text-[10px]">Entregas</span>
   </button>
-
 </nav>
+
+<script>
+// FUNCIONES DE UI
+const modal = document.getElementById('modalNuevo');
+function abrirModal() { modal.classList.remove('hidden'); }
+function cerrarModal() { modal.classList.add('hidden'); }
+
+// CARGAR DATOS DESDE GOOGLE SHEETS
+async function cargarInventario() {
+  const icon = document.getElementById('refresh-icon');
+  icon.classList.add('rotate-animation');
+  
+  try {
+    const inventario = await DairyAPI.obtenerDatos("Inventario");
+    const container = document.getElementById('grid-productos');
+    container.innerHTML = "";
+    
+    let totalCosto = 0;
+    let criticos = 0;
+
+    inventario.forEach(prod => {
+      const stock = parseInt(prod.Stock) || 0;
+      const esCritico = stock < 15;
+      if(esCritico) criticos++;
+      totalCosto += (parseFloat(prod.Precio_Distribuidor) || 0) * stock;
+
+      container.innerHTML += `
+        <div class="bg-white p-4 rounded-2xl border ${esCritico ? 'border-red-200' : 'border-outline'} shadow-sm relative group">
+          ${esCritico ? '<span class="absolute top-2 right-2 flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>' : ''}
+          <div class="aspect-square ${esCritico ? 'bg-red-50' : 'bg-purple-50'} rounded-xl mb-3 flex items-center justify-center">
+              <span class="material-symbols-outlined text-4xl ${esCritico ? 'text-red-300' : 'text-primary/30'}">inventory_2</span>
+          </div>
+          <p class="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">#${prod.ID}</p>
+          <h3 class="font-bold text-sm leading-tight mb-2">${prod.Producto}</h3>
+          <div class="flex justify-between items-end">
+              <div>
+                <p class="text-[9px] text-gray-400 uppercase font-black">Precio Venta</p>
+                <p class="text-primary font-black">$${(parseFloat(prod.Precio_Venta) || 0).toFixed(2)}</p>
+              </div>
+              <span class="text-[11px] ${esCritico ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'} px-2 py-1 rounded-lg font-black">${stock}u</span>
+          </div>
+        </div>
+      `;
+    });
+
+    document.getElementById('valor-bodega').innerText = `$${totalCosto.toLocaleString()}`;
+    document.getElementById('count-critico').innerText = criticos.toString().padStart(2, '0');
+    document.getElementById('total-sku').innerText = inventario.length;
+
+  } catch (e) {
+    console.error(e);
+  } finally {
+    icon.classList.remove('rotate-animation');
+  }
+}
+
+// GUARDAR NUEVO PRODUCTO
+document.getElementById('formProducto').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('btnGuardar');
+  btn.innerText = "GUARDANDO...";
+  btn.disabled = true;
+
+  const data = {
+    pestaña: "Inventario",
+    Producto: document.getElementById('nombreP').value,
+    Stock: document.getElementById('stockP').value,
+    Precio_Distribuidor: document.getElementById('costoP').value,
+    Precio_Venta: document.getElementById('ventaP').value
+  };
+
+  try {
+    await DairyAPI.enviarDatos("Inventario", data);
+    cerrarModal();
+    cargarInventario();
+    document.getElementById('formProducto').reset();
+  } catch (err) {
+    alert("Error al conectar con el servidor");
+  } finally {
+    btn.innerText = "GUARDAR";
+    btn.disabled = false;
+  }
+};
+
+window.onload = cargarInventario;
+</script>
 
 </body>
 </html>

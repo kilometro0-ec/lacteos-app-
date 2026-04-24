@@ -7,6 +7,8 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
+    <link rel="stylesheet" href="estilos-lacteos.css">
+    
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
@@ -17,6 +19,9 @@
       .fade-out-delete { animation: fadeScale 0.5s forwards; pointer-events: none; }
       @keyframes fadeScale { 100% { opacity: 0; transform: scale(0.7); filter: blur(4px); } }
       #delete-bar { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+      
+      /* Ajuste para las cards */
+      .card-prod { background: white; border-radius: 2.5rem; border: 2px solid #e9d5ff; transition: all 0.2s ease; }
     </style>
 </head>
 
@@ -34,27 +39,27 @@
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
   
-  <section class="grid grid-cols-3 gap-4">
-    <div class="bg-white p-6 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-md">
-      <p class="text-[10px] text-gray-500 uppercase font-black mb-1 tracking-widest">Valor Neto</p>
-      <h2 id="valor-bodega" class="text-lg font-black text-[#a21caf]">$0.00</h2>
+  <section class="grid grid-cols-3 gap-3">
+    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-md">
+      <p class="text-[9px] text-gray-500 uppercase font-black mb-1 tracking-widest">Valor Neto</p>
+      <h2 id="valor-bodega" class="text-base font-black text-[#a21caf]">$0.00</h2>
     </div>
-    <div class="bg-red-50 p-6 rounded-[2rem] border-2 border-red-200 text-center shadow-sm">
-      <p class="text-[10px] text-red-600 uppercase font-black mb-1 tracking-widest">Críticos</p>
-      <h2 id="count-critico" class="text-lg font-black text-red-600">0</h2>
+    <div class="bg-red-50 p-4 rounded-[2rem] border-2 border-red-200 text-center shadow-sm">
+      <p class="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Críticos</p>
+      <h2 id="count-critico" class="text-base font-black text-red-600">0</h2>
     </div>
-    <div class="bg-white p-6 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-md">
-      <p class="text-[10px] text-green-600 uppercase font-black mb-1 tracking-widest">En Stock</p>
-      <h2 id="total-sku" class="text-lg font-black text-green-600">0</h2>
+    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-md">
+      <p class="text-[9px] text-green-600 uppercase font-black mb-1 tracking-widest">En Stock</p>
+      <h2 id="total-sku" class="text-base font-black text-green-600">0</h2>
     </div>
   </section>
 
   <div class="px-1">
-    <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar por nombre o ID..." 
+    <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar producto..." 
            class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold text-base shadow-sm focus:ring-2 focus:ring-[#a21caf] focus:border-[#a21caf] outline-none transition-all">
   </div>
 
-  <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-5">
+  <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando...</div>
   </div>
 
@@ -68,7 +73,7 @@
   <div id="delete-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-gray-900 text-white p-5 rounded-3xl shadow-2xl z-[60] flex justify-between items-center transform translate-y-32 opacity-0 pointer-events-none transition-all">
       <div class="flex items-center gap-4">
           <span id="selected-count" class="bg-[#a21caf] text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-black ring-4 ring-white/10">0</span>
-          <p class="font-black text-sm uppercase tracking-tight">Seleccionados</p>
+          <p class="font-black text-xs uppercase tracking-tight">Seleccionados</p>
       </div>
       <button onclick="confirmarBorrado()" class="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-2xl font-black text-xs uppercase flex items-center gap-2">
           <span class="material-symbols-outlined text-sm">delete</span> Borrar
@@ -101,7 +106,6 @@ let inventarioLocal = [];
 let seleccionados = new Set();
 const aNum = (v) => v ? parseFloat(v.toString().replace(',', '.')) : 0;
 
-// FUNCIÓN PARA CARGAR EL MENÚ EXTERNO
 async function iniciarApp() {
     try {
         const resp = await fetch('menu.html');
@@ -138,18 +142,24 @@ function renderizar(lista) {
 
         const cardId = `card-${index}`;
         container.innerHTML += `
-        <div id="${cardId}" class="relative bg-white p-5 rounded-[2.5rem] border-2 ${stock <= 5 ? 'border-red-400 bg-red-50' : 'border-[#e9d5ff]'} shadow-sm flex flex-col justify-between h-52 overflow-hidden active:scale-95 transition-all">
+        <div id="${cardId}" class="relative bg-white p-5 rounded-[2.5rem] border-2 ${stock <= 5 ? 'border-red-400 bg-red-50' : 'border-[#e9d5ff]'} shadow-sm flex flex-col justify-between h-56 overflow-hidden active:scale-95 transition-all">
           <div class="absolute top-4 right-4 z-10">
             <input type="checkbox" onchange="toggleSel('${cardId}', '${prod.Producto}', this)" class="w-7 h-7 rounded-full border-2 border-[#e9d5ff] text-[#a21caf] focus:ring-[#a21caf] checked:bg-[#a21caf]">
           </div>
           <div onclick="abrirModalSumar('${prod.Producto}')" class="h-full flex flex-col justify-between">
             <div>
-              <p class="text-[12px] font-black text-[#a21caf]/60 mb-1 uppercase">${prod.ID || 'S/N'}</p> 
-              <h3 class="font-black text-[14px] leading-tight uppercase text-slate-800 line-clamp-3">${prod.Producto}</h3>
+              <p class="text-[14px] font-black text-[#a21caf] mb-1 uppercase tracking-tight">${prod.ID || 'S/N'}</p> 
+              <h3 class="font-black text-[15px] leading-tight uppercase text-slate-800 line-clamp-2">${prod.Producto}</h3>
             </div>
-            <div class="flex justify-between items-end border-t border-dashed border-gray-100 pt-3">
-                <div><p class="text-[8px] text-gray-400 font-black uppercase mb-0.5 tracking-tighter">Venta</p><p class="text-[#a21caf] font-black text-xl tracking-tighter">$${pvp.toFixed(2)}</p></div>
-                <div class="text-right"><p class="text-[8px] text-gray-400 font-black uppercase mb-0.5 tracking-tighter">Stock</p><span class="inline-block text-sm px-4 py-1.5 rounded-2xl ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black italic">${stock}</span></div>
+            <div class="flex justify-between items-end border-t border-dashed border-gray-200 pt-3">
+                <div>
+                    <p class="text-[9px] text-gray-400 font-black uppercase mb-0.5 tracking-tighter">Venta</p>
+                    <p class="text-[#a21caf] font-black text-xl tracking-tighter leading-none">$${pvp.toFixed(2)}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[9px] text-gray-400 font-black uppercase mb-0.5 tracking-tighter">Stock</p>
+                    <span class="inline-block text-sm px-4 py-1.5 rounded-2xl ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black italic">${stock}</span>
+                </div>
             </div>
           </div>
         </div>`;
@@ -162,10 +172,12 @@ function renderizar(lista) {
 function toggleSel(id, nombre, el) {
     if (el.checked) {
         seleccionados.add({ cardId: id, nombreProd: nombre });
-        document.getElementById(id).classList.add('ring-2', 'ring-[#a21caf]', 'bg-purple-50/50');
+        document.getElementById(id).classList.add('ring-4', 'ring-inset', 'ring-[#a21caf]/20', 'bg-purple-50');
     } else {
-        seleccionados.forEach(it => { if(it.cardId === id) seleccionados.delete(it); });
-        document.getElementById(id).classList.remove('ring-2', 'ring-[#a21caf]', 'bg-purple-50/50');
+        let itemABorrar;
+        seleccionados.forEach(it => { if(it.cardId === id) itemABorrar = it; });
+        if(itemABorrar) seleccionados.delete(itemABorrar);
+        document.getElementById(id).classList.remove('ring-4', 'ring-inset', 'ring-[#a21caf]/20', 'bg-purple-50');
     }
     actualizarBarra();
 }
@@ -173,12 +185,15 @@ function toggleSel(id, nombre, el) {
 function actualizarBarra() {
     const bar = document.getElementById('delete-bar');
     document.getElementById('selected-count').innerText = seleccionados.size;
-    if (seleccionados.size > 0) bar.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
-    else bar.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
+    if (seleccionados.size > 0) {
+        bar.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
+    } else {
+        bar.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
+    }
 }
 
 async function confirmarBorrado() {
-    if (!confirm(`¿Eliminar ${seleccionados.size} productos?`)) return;
+    if (!confirm(`¿Eliminar ${seleccionados.size} productos permanentemente?`)) return;
     const items = Array.from(seleccionados);
     items.forEach(it => document.getElementById(it.cardId).classList.add('fade-out-delete'));
     try {
@@ -191,7 +206,7 @@ async function confirmarBorrado() {
 
 function filtrar() {
     const b = document.getElementById('filtroProd').value.toLowerCase();
-    renderizar(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b)));
+    renderizar(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b) || (p.ID && p.ID.toLowerCase().includes(b))));
 }
 
 function abrirModalSumar(n) {
@@ -230,7 +245,6 @@ document.getElementById('formProducto').onsubmit = async (e) => {
 
 function cerrarModal() { document.getElementById('modalNuevo').classList.add('hidden'); }
 
-// INICIA LA APP CARGANDO EL MENÚ
 window.onload = iniciarApp;
 </script>
 </body>

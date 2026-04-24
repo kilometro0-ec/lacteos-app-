@@ -3,70 +3,148 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dairy Logic | Gestión de Pedidos</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
 <script>
 tailwind.config = {
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        primary: "#7c3aed",        // MORADO PRINCIPAL
-        "primary-container": "#ede9fe",
-        secondary: "#a78bfa",
-        background: "#f5f3ff",
-        surface: "#ffffff"
+        primary: "#a21caf",
+        "primary-container": "#f5d0fe",
+        secondary: "#db2777",
+        "secondary-container": "#fbcfe8",
+        background: "#faf5ff",
+        surface: "#ffffff",
+        outline: "#e9d5ff",
+        "on-surface-variant": "#6b21a8",
       }
     }
   }
 }
 </script>
 
-<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
-
 <style>
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+}
 body { font-family: 'Work Sans', sans-serif; }
 </style>
-
 </head>
 
-<body class="bg-background text-gray-800">
+<body class="bg-background text-gray-900">
 
-<!-- HEADER -->
-<header class="fixed top-0 w-full bg-white border-b flex justify-between items-center h-16 px-4 z-50">
-<div class="flex items-center gap-3">
-<span>☰</span>
-<h1 class="text-primary font-extrabold text-xl">Dairy Logistics</h1>
-</div>
+<header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
+  <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
+    <h1 class="text-xl font-bold text-primary">Dairy Logistics</h1>
+  </div>
+  <button class="p-2 text-primary hover:bg-primary-container rounded-full transition-colors">
+    <span class="material-symbols-outlined">local_shipping</span>
+  </button>
 </header>
 
-<!-- MAIN -->
-<main class="pt-20 px-4">
+<main class="pt-20 pb-32 px-4 max-w-7xl mx-auto">
 
-<h2 class="text-2xl font-bold text-primary mb-4">Pedidos Pendientes</h2>
+<section class="mb-6">
+  <h1 class="text-3xl font-bold text-primary">Despachos</h1>
+  <p class="text-on-surface-variant">Gestión de entregas y logística</p>
+  
+  <div class="flex gap-2 mt-4 overflow-x-auto pb-2">
+    <button class="bg-primary text-white px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap">Todos</button>
+    <button class="bg-white border border-outline px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap hover:bg-purple-50">Pendientes</button>
+    <button class="bg-white border border-outline px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap hover:bg-purple-50">En Ruta</button>
+    <button class="bg-white border border-outline px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap hover:bg-purple-50">Entregados</button>
+  </div>
+</section>
 
-<!-- CARD -->
-<div class="bg-white rounded-xl p-4 shadow mb-4 border">
+<div class="space-y-4">
 
-<div class="flex justify-between mb-2">
-<span class="bg-purple-100 text-primary px-2 py-1 rounded text-sm">ORD-8821</span>
-<span class="text-primary font-bold">$142.50</span>
+  <div class="bg-white rounded-2xl p-5 shadow-sm border border-outline hover:border-primary transition-all">
+    <div class="flex justify-between items-start mb-3">
+      <div>
+        <span class="bg-primary-container text-primary px-3 py-1 rounded-full text-xs font-bold uppercase">ORD-8821</span>
+        <h3 class="font-bold text-lg mt-2">Distribuidora San Juan</h3>
+      </div>
+      <div class="text-right">
+        <p class="text-2xl font-black text-primary">$142.50</p>
+        <p class="text-[10px] text-gray-400">Hace 20 min</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2 text-sm text-on-surface-variant mb-4">
+      <span class="material-symbols-outlined text-sm">location_on</span>
+      <span>Av. Amazonas y Colón, Quito</span>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <button class="flex items-center justify-center gap-2 bg-purple-50 text-primary py-3 rounded-xl font-bold text-sm hover:bg-primary-container transition-colors">
+        <span class="material-symbols-outlined text-lg">visibility</span> Detalles
+      </button>
+      <button class="flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-bold text-sm shadow-md shadow-purple-200 hover:scale-[1.02] active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-lg">person_add</span> Asignar
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl p-5 shadow-sm border border-outline opacity-80">
+    <div class="flex justify-between items-start mb-3">
+      <div>
+        <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold uppercase">ORD-8822</span>
+        <h3 class="font-bold text-lg mt-2">Tienda "La Pradera"</h3>
+      </div>
+      <div class="text-right">
+        <p class="text-2xl font-black text-gray-400">$65.00</p>
+        <p class="text-[10px] text-gray-400">Programado</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2 text-sm text-gray-400 mb-4">
+      <span class="material-symbols-outlined text-sm">location_on</span>
+      <span>Sector Cumbayá</span>
+    </div>
+
+    <button class="w-full bg-surface-container text-on-surface-variant py-3 rounded-xl font-bold text-sm border border-outline italic">
+      Esperando Inventario
+    </button>
+  </div>
+
 </div>
 
-<h3 class="font-bold mb-2">Distribuidora San Juan</h3>
-
-<button class="w-full bg-primary text-white py-2 rounded-lg">
-Asignar
-</button>
-
-</div>
-
-<!-- BOTÓN -->
-<button class="fixed bottom-6 right-6 bg-primary text-white w-14 h-14 rounded-full text-2xl shadow-lg">
-+
+<button onclick="window.location.href='RegistrodeVentas.html'" class="fixed bottom-24 right-6 bg-secondary text-white w-14 h-14 rounded-2xl shadow-xl shadow-secondary/40 flex items-center justify-center hover:rotate-90 transition-transform active:scale-90 z-40">
+  <span class="material-symbols-outlined text-3xl">add</span>
 </button>
 
 </main>
+
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
+  
+  <button onclick="window.location.href='DashboardLácteo.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
+    <span class="material-symbols-outlined">home</span>
+    <span class="text-[10px]">Inicio</span>
+  </button>
+
+  <button onclick="window.location.href='RegistrodeVentas.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
+    <span class="material-symbols-outlined">receipt</span>
+    <span class="text-[10px]">Ventas</span>
+  </button>
+
+  <button onclick="window.location.href='ControldeInventario.html'" class="text-on-surface-variant hover:text-primary flex flex-col items-center gap-1 transition-colors">
+    <span class="material-symbols-outlined">inventory</span>
+    <span class="text-[10px]">Stock</span>
+  </button>
+
+  <button onclick="window.location.href='GestióndeDespachos.html'" class="text-primary flex flex-col items-center gap-1">
+    <span class="material-symbols-outlined">local_shipping</span>
+    <span class="text-[10px] font-bold">Entregas</span>
+  </button>
+
+</nav>
 
 </body>
 </html>

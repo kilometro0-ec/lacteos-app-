@@ -3,39 +3,63 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Lógica Láctea - Registro de Venta</title>
+    <title>Lógica Láctea - Ventas</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,400;0,500;0,700;1,800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
-        tailwind.config = { theme: { extend: { colors: { primary: "#a21caf", secondary: "#db2777", background: "#faf5ff", outline: "#e9d5ff" } } } }
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    colors: { 
+                        primary: "#a21caf", 
+                        secondary: "#db2777", 
+                        background: "#faf5ff", 
+                        outline: "#e9d5ff" 
+                    } 
+                } 
+            } 
+        }
     </script>
     <style>
-        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* Aplicando la fuente Work Sans a todo el documento */
+        body { 
+            font-family: 'Work Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+        }
         .out-of-stock { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
         .stock-critico { border: 2px solid #ef4444 !important; }
+        
+        /* Estilo para los títulos en cursiva del diseño anterior */
+        .brand-title {
+            font-style: italic;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+        }
     </style>
 </head>
 <body class="bg-background pb-40">
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 z-50 shadow-sm">
     <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
-        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-black">LL</div>
-        <h1 class="text-xl font-black text-primary italic uppercase tracking-tighter">Ventas</h1>
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">LL</div>
+        <h1 class="text-xl text-primary uppercase brand-title">Ventas</h1>
     </div>
-    <button onclick="iniciar()" class="p-2 text-primary active:rotate-180 transition-transform"><span class="material-symbols-outlined">sync</span></button>
+    <button onclick="iniciar()" class="p-2 text-primary active:rotate-180 transition-transform">
+        <span class="material-symbols-outlined">sync</span>
+    </button>
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
     <div class="grid grid-cols-2 gap-4">
         <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg">
-            <p class="text-[10px] font-black uppercase opacity-70">Pedidos Hoy</p>
-            <h3 id="card-cant-ventas" class="text-3xl font-black">0</h3>
+            <p class="text-[10px] font-bold uppercase opacity-70">Pedidos Hoy</p>
+            <h3 id="card-cant-ventas" class="text-3xl font-bold">0</h3>
         </div>
         <div class="bg-white p-5 rounded-[2rem] border border-outline text-center shadow-sm">
-            <p class="text-[10px] text-secondary font-black uppercase">Monto Total</p>
-            <h3 id="card-monto-ventas" class="text-2xl font-black text-primary">$0.00</h3>
+            <p class="text-[10px] text-secondary font-bold uppercase">Monto Total</p>
+            <h3 id="card-monto-ventas" class="text-2xl font-bold text-primary">$0.00</h3>
         </div>
     </div>
 
@@ -43,8 +67,8 @@
         <div class="lg:col-span-7 space-y-6">
             <section class="bg-white p-5 rounded-3xl border border-outline">
                 <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Seleccionar Cliente</h2>
-                    <button onclick="abrirModalCliente()" class="text-[10px] font-black text-secondary bg-pink-50 px-3 py-1 rounded-full">+ NUEVO</button>
+                    <h2 class="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">Seleccionar Cliente</h2>
+                    <button onclick="abrirModalCliente()" class="text-[10px] font-bold text-secondary bg-pink-50 px-3 py-1 rounded-full">+ NUEVO</button>
                 </div>
                 <select id="select-cliente" onchange="actualizarNombreCarrito()" class="w-full h-14 bg-purple-50 border-none rounded-2xl font-bold text-lg focus:ring-2 focus:ring-primary">
                     <option value="">-- Buscar Cliente --</option>
@@ -57,8 +81,8 @@
         <div class="lg:col-span-5">
             <section class="bg-white rounded-[2.5rem] border-2 border-outline shadow-xl sticky top-20 overflow-hidden">
                 <div class="bg-secondary p-5 text-white">
-                    <h3 class="font-black text-[10px] uppercase tracking-widest mb-1 opacity-70 italic">Pedido para:</h3>
-                    <h2 id="cliente-resumen" class="text-xl font-black uppercase italic leading-tight">SIN SELECCIONAR</h2>
+                    <h3 class="font-bold text-[10px] uppercase tracking-widest mb-1 opacity-70 italic">Pedido para:</h3>
+                    <h2 id="cliente-resumen" class="text-xl brand-title uppercase leading-tight">SIN SELECCIONAR</h2>
                 </div>
                 <div class="p-6">
                     <div id="lista-carrito" class="space-y-3 mb-6 max-h-60 overflow-y-auto">
@@ -66,16 +90,16 @@
                     </div>
                     
                     <div class="pt-4 border-t border-dashed border-outline">
-                        <label class="text-[10px] font-black text-gray-400 uppercase block mb-1">Fecha Programada de Entrega</label>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Fecha de Entrega</label>
                         <input type="date" id="fecha-entrega" class="w-full p-4 bg-gray-50 border-none rounded-2xl font-bold text-primary focus:ring-2 focus:ring-primary">
                     </div>
 
                     <div class="mt-6 flex justify-between items-center">
-                        <span class="text-xs font-black text-primary uppercase">Monto a Pagar</span>
-                        <span id="total-venta" class="text-4xl font-black text-slate-900">$0.00</span>
+                        <span class="text-xs font-bold text-primary uppercase">Total a Pagar</span>
+                        <span id="total-venta" class="text-4xl font-bold text-slate-900">$0.00</span>
                     </div>
 
-                    <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full mt-8 bg-primary text-white py-5 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all uppercase italic">
+                    <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full mt-8 bg-primary text-white py-5 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all uppercase italic">
                         Confirmar Pedido
                     </button>
                 </div>
@@ -114,7 +138,7 @@ async function iniciar() {
         document.getElementById('card-monto-ventas').innerText = `$${totalSumado.toFixed(2)}`;
 
         renderizarProductos();
-    } catch(e) { console.error("Error al cargar datos:", e); }
+    } catch(e) { console.error(e); }
 }
 
 function actualizarNombreCarrito() {
@@ -131,15 +155,15 @@ function renderizarProductos() {
         cont.innerHTML += `
             <div class="bg-white p-4 rounded-[2rem] border-2 border-outline shadow-sm flex flex-col justify-between h-48 ${stock <= 0 ? 'out-of-stock' : ''} ${stock <= 5 && stock > 0 ? 'stock-critico' : ''}">
                 <div>
-                    <h4 class="font-black text-[11px] uppercase text-slate-700 leading-tight">${p.Producto}</h4>
-                    <p class="text-[10px] font-black text-primary">STOCK: ${stock}</p>
+                    <h4 class="font-bold text-[11px] uppercase text-slate-700 leading-tight">${p.Producto}</h4>
+                    <p class="text-[10px] font-bold text-primary">STOCK: ${stock}</p>
                 </div>
                 <div>
-                    <p class="text-xl font-black mb-2">$${precio.toFixed(2)}</p>
+                    <p class="text-xl font-bold mb-2">$${precio.toFixed(2)}</p>
                     <div class="flex items-center justify-between bg-purple-50 rounded-xl p-1">
-                        <button onclick="cambiarCant('${p.Producto}', -1)" class="w-8 h-8 bg-white rounded-lg font-black text-primary active:scale-90">-</button>
-                        <span id="cant-${p.Producto.replace(/\s+/g,'')}" class="font-black text-primary">0</span>
-                        <button onclick="cambiarCant('${p.Producto}', 1)" class="w-8 h-8 bg-white rounded-lg font-black text-primary active:scale-90">+</button>
+                        <button onclick="cambiarCant('${p.Producto}', -1)" class="w-8 h-8 bg-white rounded-lg font-bold text-primary">-</button>
+                        <span id="cant-${p.Producto.replace(/\s+/g,'')}" class="font-bold text-primary">0</span>
+                        <button onclick="cambiarCant('${p.Producto}', 1)" class="w-8 h-8 bg-white rounded-lg font-bold text-primary">+</button>
                     </div>
                 </div>
             </div>`;
@@ -180,10 +204,10 @@ function actualizarCarritoUI() {
 async function finalizarVenta() {
     const cliNombre = document.getElementById('select-cliente').value;
     const fecha = document.getElementById('fecha-entrega').value;
-    if(!cliNombre || !fecha) return alert("Selecciona cliente y fecha de entrega");
+    if(!cliNombre || !fecha) return alert("Falta cliente o fecha de entrega");
     
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(items.length === 0) return alert("El carrito está vacío");
+    if(items.length === 0) return alert("Carrito vacío");
 
     const btn = document.getElementById('btn-finalizar');
     btn.disabled = true; btn.innerText = "REGISTRANDO...";
@@ -192,17 +216,15 @@ async function finalizarVenta() {
         let txtWA = `*LÓGICA LÁCTEA - PEDIDO CONFIRMADO*\n\n`;
         txtWA += `*Cliente:* ${cliNombre}\n`;
         txtWA += `*Entrega:* ${fecha}\n\n`;
-        txtWA += `*DETALLE DEL PEDIDO:*\n`;
+        txtWA += `*DETALLE:*\n`;
 
         let totalGral = 0;
-
         for(const n of items) {
             const p = productosData.find(x => x.Producto === n);
             const pvp = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
             const sub = carrito[n] * pvp;
             totalGral += sub;
-            
-            txtWA += `🧀 ${carrito[n]} x ${n} ($${sub.toFixed(2)})\n`;
+            txtWA += `• ${carrito[n]} x ${n} ($${sub.toFixed(2)})\n`;
 
             await DairyAPI.enviarDatos("Ventas", {
                 pestaña: "Ventas", Cliente: cliNombre, Producto: n,
@@ -210,15 +232,14 @@ async function finalizarVenta() {
             });
         }
 
-        txtWA += `\n*VALOR TOTAL A PAGAR: $${totalGral.toFixed(2)}*`;
-        
+        txtWA += `\n*TOTAL A PAGAR: $${totalGral.toFixed(2)}*`;
         const cliObj = clientesData.find(c => c.Nombre === cliNombre);
         const tel = cliObj ? cliObj.Teléfono.replace(/\D/g, '') : "593";
 
-        alert("¡Venta Exitosa! Abriendo detalle para cliente...");
+        alert("Venta registrada. Abriendo WhatsApp...");
         window.open(`https://wa.me/${tel}?text=${encodeURIComponent(txtWA)}`, '_blank');
         location.reload();
-    } catch(e) { alert("Error al conectar"); btn.disabled = false; btn.innerText = "Confirmar Pedido"; }
+    } catch(e) { alert("Error de red"); btn.disabled = false; }
 }
 
 window.onload = iniciar;

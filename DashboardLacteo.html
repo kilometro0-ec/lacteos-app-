@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <script>
@@ -33,13 +33,11 @@
     .rotate-animation { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .active-icon { font-variation-settings: 'FILL' 1 !important; }
-    
-    /* Efecto de cristal sutil para las tarjetas */
-    .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+    body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
     </style>
 </head>
 
-<body class="bg-background text-on-surface font-[Work_Sans] antialiased pb-40">
+<body class="bg-background text-on-surface antialiased pb-40">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
   <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
@@ -55,19 +53,19 @@
     <div class="grid grid-cols-2 gap-3">
       <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
         <span class="text-secondary text-[10px] uppercase font-black tracking-widest block mb-1">Ventas Totales</span>
-        <span id="ventas-hoy" class="text-2xl md:text-4xl font-black tracking-tighter text-gray-900">$0.00</span>
+        <span id="ventas-hoy" class="text-2xl font-black tracking-tighter text-gray-900">$0.00</span>
       </div>
 
       <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
         <span class="text-primary text-[10px] uppercase font-black tracking-widest block mb-1">Valor Invertido</span>
-        <span id="valor-invertido" class="text-2xl md:text-4xl font-black tracking-tighter text-gray-900">$0.00</span>
+        <span id="valor-invertido" class="text-2xl font-black tracking-tighter text-gray-900">$0.00</span>
       </div>
     </div>
 
     <div class="bg-white p-6 rounded-[2.5rem] border-2 border-success/20 shadow-md flex justify-between items-center bg-gradient-to-br from-white to-green-50/30">
       <div>
         <span class="text-success text-xs uppercase font-black tracking-widest block mb-1">Ganancia Bruta Estimada</span>
-        <span id="ganancia-total" class="text-4xl md:text-5xl font-black tracking-tighter text-success">$0.00</span>
+        <span id="ganancia-total" class="text-4xl font-black tracking-tighter text-success">$0.00</span>
       </div>
       <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-success">
         <span class="material-symbols-outlined text-3xl active-icon">payments</span>
@@ -75,19 +73,19 @@
     </div>
 
     <div class="grid grid-cols-4 gap-2 py-2">
-        <button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
+        <button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-90 shadow-md">
           <span class="material-symbols-outlined">add_shopping_cart</span>
           <span class="text-[9px] font-black uppercase">Vender</span>
         </button>
-        <button onclick="window.location.href='ControldeInventario.html'" class="bg-secondary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
+        <button onclick="window.location.href='ControldeInventario.html'" class="bg-secondary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-90 shadow-md">
           <span class="material-symbols-outlined">inventory</span>
           <span class="text-[9px] font-black uppercase">Stock</span>
         </button>
-        <button onclick="window.location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95">
+        <button onclick="window.location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-90">
           <span class="material-symbols-outlined text-primary">group</span>
           <span class="text-[9px] font-black uppercase text-primary">Clientes</span>
         </button>
-        <button onclick="window.location.href='GestióndeDespachos.html'" class="bg-success text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-green-100">
+        <button onclick="window.location.href='GestióndeDespachos.html'" class="bg-success text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-90 shadow-lg shadow-green-100">
           <span class="material-symbols-outlined">local_shipping</span>
           <span class="text-[9px] font-black uppercase">Ruta</span>
         </button>
@@ -106,7 +104,7 @@
         <section class="space-y-4">
           <div class="flex justify-between items-center px-2">
             <h3 class="text-lg font-black tracking-tight">Stock Crítico</h3>
-            <button onclick="cargarDatos()" class="text-primary text-[10px] font-black flex items-center gap-1 bg-white px-3 py-2 rounded-xl border border-outline active:bg-purple-50 transition-all">
+            <button onclick="cargarDatos()" class="text-primary text-[10px] font-black flex items-center gap-1 bg-white px-3 py-2 rounded-xl border border-outline active:scale-95 transition-all">
                 <span id="icon-refresh" class="material-symbols-outlined text-sm">refresh</span> RECARGAR
             </button>
           </div>
@@ -121,7 +119,7 @@
                 </tr>
               </thead>
               <tbody id="tabla-inventario" class="text-sm">
-                <tr><td colspan="3" class="p-10 text-center text-gray-400">Sincronizando...</td></tr>
+                <tr><td colspan="3" class="p-10 text-center text-gray-400 font-bold">Sincronizando...</td></tr>
               </tbody>
             </table>
           </div>
@@ -132,13 +130,28 @@
 <div id="menu-container"></div>
 
 <script>
-fetch('menu.html').then(r => r.text()).then(d => {
-    document.getElementById('menu-container').innerHTML = d;
-});
+// FUNCIÓN PARA CARGAR EL MENÚ Y PINTARLO
+async function cargarMenu() {
+    try {
+        const response = await fetch('menu.html');
+        const text = await response.text();
+        document.getElementById('menu-container').innerHTML = text;
+
+        // Esperar un instante para que el menú se renderice y luego pintarlo
+        setTimeout(() => {
+            if (typeof pintarMenu === "function") {
+                pintarMenu();
+            }
+        }, 50);
+        
+    } catch (error) {
+        console.error("Error cargando el menú:", error);
+    }
+}
 
 async function cargarDatos() {
     const icon = document.getElementById('icon-refresh');
-    icon.classList.add('rotate-animation');
+    if(icon) icon.classList.add('rotate-animation');
 
     try {
         const [inventario, ventas] = await Promise.all([
@@ -146,7 +159,7 @@ async function cargarDatos() {
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        // 1. INVENTARIO ORDENADO (MENOR A MAYOR STOCK)
+        // 1. INVENTARIO
         const tabla = document.getElementById('tabla-inventario');
         tabla.innerHTML = "";
         const invOrdenado = inventario.sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0));
@@ -154,66 +167,74 @@ async function cargarDatos() {
         invOrdenado.forEach(p => {
             const stock = parseFloat(p.Stock) || 0;
             let statusHTML = "";
-            
-            // LÓGICA DE ESTADOS
             if (stock <= 5) {
                 statusHTML = `<span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg border border-red-100 uppercase">Crítico</span>`;
-            } else if (stock > 10) {
+            } else if (stock > 15) {
                 statusHTML = `<span class="bg-green-50 text-green-600 text-[8px] font-black px-2 py-1 rounded-lg border border-green-100 uppercase">Óptimo</span>`;
             } else {
-                statusHTML = `<span class="bg-amber-50 text-amber-600 text-[8px] font-black px-2 py-1 rounded-lg border border-amber-100 uppercase">Regular</span>`;
+                statusHTML = `<span class="bg-amber-50 text-amber-600 text-[8px] font-black px-2 py-1 rounded-lg border border-amber-100 uppercase">Bajo</span>`;
             }
 
             tabla.innerHTML += `
                 <tr class="border-t border-purple-50">
-                    <td class="p-4 font-bold text-gray-700">${p.Producto}</td>
+                    <td class="p-4 font-bold text-gray-700 uppercase text-xs">${p.Producto}</td>
                     <td class="p-4 text-center font-black text-base ${stock <= 5 ? 'text-red-500' : ''}">${stock}</td>
                     <td class="p-4 text-center">${statusHTML}</td>
                 </tr>`;
         });
 
         // 2. FINANZAS
-        let vendido = 0, invertido = 0;
+        let totalVendido = 0, totalInvertido = 0;
+        
         inventario.forEach(p => {
             const costo = parseFloat(p.Costo_Unitario?.toString().replace(',','.')) || 0;
-            invertido += (costo * (parseFloat(p.Stock) || 0));
+            const stock = parseFloat(p.Stock) || 0;
+            totalInvertido += (costo * stock);
         });
+
         ventas.forEach(v => {
-            vendido += (parseFloat(v["Precio Total"]?.toString().replace(',','.')) || 0);
+            const totalVenta = parseFloat(v["Precio Total"]?.toString().replace(',','.')) || 0;
+            totalVendido += totalVenta;
         });
 
-        document.getElementById('ventas-hoy').innerText = `$${vendido.toFixed(2)}`;
-        document.getElementById('valor-invertido').innerText = `$${invertido.toFixed(2)}`;
-        document.getElementById('ganancia-total').innerText = `$${(vendido - invertido).toFixed(2)}`;
+        document.getElementById('ventas-hoy').innerText = `$${totalVendido.toFixed(2)}`;
+        document.getElementById('valor-invertido').innerText = `$${totalInvertido.toFixed(2)}`;
+        document.getElementById('ganancia-total').innerText = `$${(totalVendido - totalInvertido).toFixed(2)}`;
 
-        // 3. ENTREGAS
+        // 3. PRÓXIMAS ENTREGAS
         const listaEntregas = document.getElementById('lista-entregas');
-        const pendientes = ventas.filter(v => v.Estado === "PENDIENTE");
+        const pendientes = ventas.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE");
         const clientesUnicos = [...new Set(pendientes.map(v => v.Cliente))].slice(0, 3);
 
         listaEntregas.innerHTML = "";
         if (clientesUnicos.length === 0) {
-            listaEntregas.innerHTML = `<p class="text-center py-4 text-gray-400 font-bold">Sin rutas pendientes</p>`;
+            listaEntregas.innerHTML = `<p class="text-center py-4 text-gray-400 font-bold italic">Sin rutas pendientes</p>`;
         } else {
             clientesUnicos.forEach(c => {
                 listaEntregas.innerHTML += `
                     <div class="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
                         <div>
                             <p class="text-xs font-black text-green-900 uppercase tracking-tight">${c}</p>
-                            <p class="text-[9px] font-bold text-green-600 uppercase">Pendiente de despacho</p>
+                            <p class="text-[9px] font-bold text-green-600 uppercase tracking-widest">Pendiente Despacho</p>
                         </div>
-                        <span class="material-symbols-outlined text-green-500">local_shipping</span>
+                        <span class="material-symbols-outlined text-green-500 active-icon">local_shipping</span>
                     </div>`;
             });
         }
 
     } catch (e) {
-        console.error(e);
+        console.error("Error de sincronización:", e);
     } finally {
-        setTimeout(() => icon.classList.remove('rotate-animation'), 800);
+        if(icon) setTimeout(() => icon.classList.remove('rotate-animation'), 800);
     }
 }
-window.onload = cargarDatos;
+
+// INICIO DE LA APP
+window.onload = () => {
+    cargarMenu(); // Carga el menú primero
+    cargarDatos(); // Carga las tablas después
+};
 </script>
+
 </body>
 </html>

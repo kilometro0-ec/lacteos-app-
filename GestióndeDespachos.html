@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Lógica Láctea - Despachos</title>
+    <title>Lógica Láctea - Gestión de Despachos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
@@ -23,7 +23,7 @@
         </div>
         <h1 class="text-xl font-bold text-primary">Despachos</h1>
     </div>
-    <button onclick="cargarDatos()" class="p-2 text-primary">
+    <button onclick="cargarDatos()" class="p-2 text-primary active:rotate-180 transition-transform">
         <span class="material-symbols-outlined">refresh</span>
     </button>
 </header>
@@ -31,65 +31,96 @@
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-6">
     <div id="contenedor-pedidos" class="space-y-4">
         <div class="text-center py-20 text-gray-400">
-            <p>Cargando pedidos...</p>
+            <span class="material-symbols-outlined animate-spin text-4xl">sync</span>
+            <p class="mt-2 font-bold">Cargando pedidos de hoy...</p>
         </div>
     </div>
 </main>
+
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
+    <button onclick="window.location.href='DashboardLácteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
+        <span class="material-symbols-outlined">home</span>
+        <span class="text-[10px] font-bold">Inicio</span>
+    </button>
+    <button class="text-primary flex flex-col items-center gap-1 font-bold">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">local_shipping</span>
+        <span class="text-[10px]">Entregas</span>
+    </button>
+</nav>
 
 <script>
 async function cargarDatos() {
     const contenedor = document.getElementById('contenedor-pedidos');
     try {
+        // 1. Obtener datos de la API
         const [ventas, clientes] = await Promise.all([
             DairyAPI.obtenerDatos("Ventas"),
             DairyAPI.obtenerDatos("Clientes")
         ]);
 
         if (!ventas || ventas.length === 0) {
-            contenedor.innerHTML = `<p class="text-center py-10">No hay ventas registradas.</p>`;
+            contenedor.innerHTML = `
+                <div class="text-center py-20 text-gray-400">
+                    <span class="material-symbols-outlined text-5xl">list_alt</span>
+                    <p class="mt-2 font-bold">No hay pedidos registrados en Ventas.</p>
+                </div>`;
             return;
         }
 
-        contenedor.innerHTML = ""; // Limpiar cargando
+        contenedor.innerHTML = ""; // Limpiar el loader
 
-        // Invertimos para ver lo más nuevo primero
+        // 2. Procesar y mostrar (Más recientes primero)
         ventas.reverse().forEach(venta => {
-            // Buscamos al cliente (usamos trim() para evitar errores de espacios)
+            // Buscamos al cliente para extraer dirección y teléfono
             const clienteInfo = clientes.find(c => 
-                c.Nombre.toString().trim().toLowerCase() === venta.Cliente.toString().trim().toLowerCase()
+                String(c.Nombre).trim().toLowerCase() === String(venta.Cliente).trim().toLowerCase()
             );
 
-            // IMPORTANTE: Si la columna en Excel tiene espacios, se accede así: venta["Nombre Columna"]
-            const pvp = venta["Precio PVP"] || "0.00";
+            // Manejo seguro de datos de columnas con espacios
             const total = venta["Precio Total"] || "0.00";
-            const direccion = clienteInfo ? clienteInfo.Dirección : "Dirección no encontrada";
-            const telf = clienteInfo ? clienteInfo.Teléfono : "";
+            const direccion = clienteInfo ? (clienteInfo.Dirección || "Sin dirección") : "Dirección no encontrada";
+            
+            // CORRECCIÓN CRÍTICA: Convertir teléfono a String antes de usar replace
+            const telfRaw = clienteInfo ? (clienteInfo.Teléfono || "") : "";
+            const telfString = String(telfRaw); 
+            const linkWhatsApp = telfString.replace(/[^0-9]/g, '');
 
             contenedor.innerHTML += `
-                <div class="bg-white p-5 rounded-3xl border border-outline shadow-sm space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-[10px] font-black text-primary uppercase">Pendiente</span>
-                        <span class="text-[10px] text-gray-400">${new Date(venta.Fecha).toLocaleDateString()}</span>
+                <div class="bg-white p-5 rounded-3xl border border-outline shadow-sm space-y-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
+                            <span class="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Por Despachar</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-gray-400">${new Date(venta.Fecha).toLocaleDateString()}</span>
                     </div>
-                    
+
                     <div>
-                        <h2 class="text-lg font-bold text-gray-800">${venta.Cliente}</h2>
-                        <p class="text-sm font-bold text-primary">${venta.Producto} (x${venta.Cantidad})</p>
+                        <h2 class="text-lg font-black text-gray-800 leading-tight">${venta.Cliente}</h2>
+                        <div class="flex items-center gap-1 text-primary mt-1">
+                            <span class="material-symbols-outlined text-sm">shopping_basket</span>
+                            <p class="text-xs font-bold uppercase">${venta.Producto} (x${venta.Cantidad})</p>
+                        </div>
                     </div>
 
-                    <div class="bg-purple-50 p-3 rounded-xl flex items-start gap-2">
-                        <span class="material-symbols-outlined text-primary text-sm">location_on</span>
-                        <p class="text-xs text-gray-600">${direccion}</p>
+                    <div class="bg-purple-50 p-3 rounded-2xl flex items-start gap-3">
+                        <span class="material-symbols-outlined text-primary">location_on</span>
+                        <p class="text-xs font-medium text-gray-600 leading-relaxed">${direccion}</p>
                     </div>
 
-                    <div class="flex justify-between items-center pt-2">
-                        <p class="text-lg font-black text-gray-800">$${total}</p>
+                    <div class="flex justify-between items-center pt-2 border-t border-dashed border-outline">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">Total a Cobrar</p>
+                            <p class="text-xl font-black text-gray-900">$${total}</p>
+                        </div>
                         <div class="flex gap-2">
-                            <a href="https://wa.me/${telf.replace(/[^0-9]/g, '')}" class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                                <span class="material-symbols-outlined">chat</span>
-                            </a>
-                            <button onclick="this.parentElement.parentElement.parentElement.style.opacity='0.5'" class="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold">
-                                ENTREGAR
+                            ${linkWhatsApp ? `
+                                <a href="https://wa.me/${linkWhatsApp}" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center shadow-sm active:scale-90 transition-transform">
+                                    <span class="material-symbols-outlined">chat</span>
+                                </a>
+                            ` : ''}
+                            <button onclick="marcarEntregado(this)" class="h-12 bg-primary text-white px-6 rounded-2xl text-[10px] font-black shadow-lg shadow-purple-100 active:scale-95 transition-transform">
+                                ENTREGADO
                             </button>
                         </div>
                     </div>
@@ -98,12 +129,25 @@ async function cargarDatos() {
         });
 
     } catch (error) {
-        contenedor.innerHTML = `<p class="text-center text-red-500">Error al cargar datos. Revisa la consola (F12).</p>`;
-        console.error(error);
+        console.error("Error en Despachos:", error);
+        contenedor.innerHTML = `
+            <div class="text-center py-20 text-red-400">
+                <span class="material-symbols-outlined text-5xl">warning</span>
+                <p class="mt-2 font-bold">Error al cargar datos de la nube.</p>
+                <p class="text-[10px]">${error.message}</p>
+            </div>`;
     }
+}
+
+function marcarEntregado(btn) {
+    const card = btn.closest('.bg-white');
+    card.style.opacity = "0.4";
+    card.style.pointerEvents = "none";
+    alert("Pedido marcado como entregado (Solo visual).");
 }
 
 window.onload = cargarDatos;
 </script>
+
 </body>
 </html>

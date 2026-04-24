@@ -20,8 +20,7 @@
             secondary: "#db2777",
             success: "#16a34a",
             background: "#faf5ff",
-            outline: "#e9d5ff",
-            error: "#dc2626"
+            outline: "#e9d5ff"
           }
         }
       }
@@ -29,19 +28,12 @@
     </script>
 
     <style>
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-    .active-icon { font-variation-settings: 'FILL' 1 !important; }
     body { font-family: 'Work Sans', sans-serif; }
     .rotate-animation { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-    /* Resalte Crítico (Stock <= 5) */
-    @keyframes blink-red {
-      0% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
-      50% { border-color: #fca5a5; box-shadow: 0 0 0 8px rgba(220, 38, 38, 0.05); }
-      100% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
-    }
-    .card-critica { animation: blink-red 2s infinite; border-width: 2px !important; }
+    
+    /* Animación para stock bajo */
+    .card-critica { border: 2px solid #dc2626 !important; background-color: #fef2f2; }
     </style>
 </head>
 
@@ -49,12 +41,10 @@
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
   <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
-    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary">
-        <span class="material-symbols-outlined text-3xl active-icon">inventory_2</span>
-    </div>
+    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-black">LL</div>
     <h1 class="text-xl font-extrabold text-primary tracking-tight">Inventario</h1>
   </div>
-  <button onclick="cargarInventario()" class="p-2 text-primary hover:bg-purple-50 rounded-full transition-colors">
+  <button onclick="cargarInventario()" class="p-2 text-primary hover:bg-purple-50 rounded-full">
       <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
   </button>
 </header>
@@ -62,71 +52,95 @@
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
   
   <section class="grid grid-cols-3 gap-3">
-    <div class="bg-white p-4 rounded-[1.5rem] border border-outline shadow-sm flex flex-col items-center text-center">
-      <p class="text-[9px] text-gray-400 uppercase font-black mb-1 tracking-widest">Valor Neto</p>
+    <div class="bg-white p-4 rounded-[1.5rem] border border-outline shadow-sm text-center">
+      <p class="text-[9px] text-gray-400 uppercase font-black mb-1">Valor Neto</p>
       <h2 id="valor-bodega" class="text-sm font-black text-primary">$0.00</h2>
     </div>
-    <div class="bg-red-50 p-4 rounded-[1.5rem] border border-red-100 shadow-sm flex flex-col items-center text-center">
-      <p class="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Agotándose</p>
+    <div class="bg-red-50 p-4 rounded-[1.5rem] border border-red-100 text-center">
+      <p class="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Críticos</p>
       <h2 id="count-critico" class="text-sm font-black text-red-600">0</h2>
     </div>
-    <div class="bg-white p-4 rounded-[1.5rem] border border-outline shadow-sm flex flex-col items-center text-center">
-      <p class="text-[9px] text-success uppercase font-black mb-1 tracking-widest">Productos</p>
+    <div class="bg-white p-4 rounded-[1.5rem] border border-outline shadow-sm text-center">
+      <p class="text-[9px] text-success uppercase font-black mb-1 tracking-widest">SKU Total</p>
       <h2 id="total-sku" class="text-sm font-black text-success">0</h2>
     </div>
   </section>
 
   <div class="px-1">
-    <input type="text" id="filtroProd" oninput="filtrarPantalla()" placeholder="Buscar producto..." class="w-full bg-white border-outline rounded-2xl p-4 font-bold text-sm focus:ring-primary shadow-sm">
+    <input type="text" id="filtroProd" oninput="filtrarPantalla()" placeholder="🔍 Buscar por nombre o ID..." class="w-full bg-white border-outline rounded-2xl p-4 font-bold text-sm shadow-sm focus:ring-primary focus:border-primary">
   </div>
 
   <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="col-span-full text-center py-20 text-gray-400 italic font-bold">
-          Sincronizando con bodega...
-      </div>
+      <div class="col-span-full text-center py-20 text-gray-400 italic font-bold">Sincronizando inventario...</div>
   </div>
 
   <div class="fixed bottom-24 left-0 w-full px-4 z-40">
-    <button onclick="abrirModalNuevo()" class="w-full bg-primary text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all uppercase tracking-tight">
-        <span class="material-symbols-outlined">add_box</span> Registrar Nuevo Producto
+    <button onclick="abrirModalNuevo()" class="w-full bg-primary text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all uppercase">
+        <span class="material-symbols-outlined">add_circle</span> Nuevo Producto
     </button>
   </div>
 </main>
 
 <div id="modalNuevo" class="fixed inset-0 bg-black/70 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-md">
-  <div class="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl relative border border-outline">
-    <h3 id="modal-titulo" class="text-2xl font-black text-primary mb-6 flex items-center gap-2 uppercase text-lg tracking-tight">
-        <span class="material-symbols-outlined active-icon">inventory_2</span> Entrada de Producto
-    </h3>
+  <div class="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border border-outline">
+    <h3 id="modal-titulo" class="text-2xl font-black text-primary mb-6 uppercase tracking-tight">Entrada de Stock</h3>
     <form id="formProducto" class="space-y-4">
       <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Nombre Completo (Incluir Tamaño)</label>
-        <input type="text" id="nombreP" required placeholder="Ej: Yogurt Fresa 1L" autocomplete="off" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:ring-primary focus:bg-white transition-all">
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Nombre del Producto</label>
+        <input type="text" id="nombreP" required placeholder="Ej: Yogurt Mora 1L" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label id="label-cantidad" class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Cantidad</label>
+          <label id="label-cantidad" class="text-[10px] font-black text-gray-400 uppercase ml-2">Cantidad</label>
           <input type="number" id="stockP" required placeholder="0" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
         </div>
         <div>
-          <label class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Costo Unit.</label>
+          <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Costo Distrib.</label>
           <input type="number" step="0.01" id="costoP" required placeholder="0.00" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
         </div>
       </div>
       <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase ml-2 tracking-widest">Precio de Venta (PVP)</label>
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-2">Precio de Venta (PVP)</label>
         <input type="number" step="0.01" id="ventaP" required placeholder="0.00" class="w-full bg-gray-50 border-outline rounded-2xl p-4 font-bold focus:bg-white">
       </div>
       <div class="flex flex-col gap-2 pt-6">
-        <button type="submit" id="btnGuardar" class="w-full py-5 bg-primary text-white rounded-2xl font-black shadow-lg uppercase tracking-widest">Procesar Entrada</button>
-        <button type="button" onclick="cerrarModal()" class="w-full py-4 text-gray-400 font-black uppercase text-xs tracking-widest">Cancelar</button>
+        <button type="submit" id="btnGuardar" class="w-full py-5 bg-primary text-white rounded-2xl font-black shadow-lg uppercase tracking-widest">Procesar</button>
+        <button type="button" onclick="cerrarModal()" class="w-full py-2 text-gray-400 font-bold uppercase text-[10px]">Cerrar</button>
       </div>
     </form>
   </div>
 </div>
 
+<div id="menu-container"></div>
+
 <script>
 let inventarioLocal = [];
+
+async function iniciarApp() {
+    // 1. CARGA DEL MENÚ (Asegura que el archivo se llame menu.html)
+    try {
+        const resp = await fetch('menu.html');
+        if (resp.ok) {
+            const html = await resp.text();
+            document.getElementById('menu-container').innerHTML = html;
+            marcarMenuActivo();
+        }
+    } catch (e) { console.error("Error cargando menú:", e); }
+
+    cargarInventario();
+}
+
+function marcarMenuActivo() {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        if (item.getAttribute('onclick')?.includes('ControldeInventario.html')) {
+            item.classList.add('text-primary');
+            item.classList.remove('text-gray-400');
+            const icon = item.querySelector('.material-symbols-outlined');
+            if (icon) icon.classList.add('active-icon');
+        }
+    });
+}
 
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
@@ -137,7 +151,7 @@ async function cargarInventario() {
     inventarioLocal = inventario;
     renderizarGrid(inventarioLocal);
   } catch (e) {
-    console.error(e);
+    console.error("Error de carga:", e);
   } finally {
     if (icon) icon.classList.remove('rotate-animation');
   }
@@ -157,17 +171,22 @@ function renderizarGrid(lista) {
       totalCosto += (parseFloat(prod.Precio_Distribuidor) || 0) * stock;
 
       container.innerHTML += `
-        <div onclick="abrirModalSumar('${prod.Producto}')" class="bg-white p-4 rounded-[2rem] border ${esCritico ? 'card-critica' : 'border-outline'} shadow-sm cursor-pointer active:scale-95 transition-all flex flex-col justify-between h-40">
+        <div onclick="abrirModalSumar('${prod.Producto}')" class="bg-white p-4 rounded-[2.5rem] border ${esCritico ? 'card-critica' : 'border-outline'} shadow-sm active:scale-95 transition-all flex flex-col justify-between h-44">
           <div>
-            <p class="text-[12px] font-bold text-primary mb-1">${prod.ID || 'S/ID'}</p>
-            <h3 class="font-black text-[11px] leading-tight uppercase text-gray-700 line-clamp-2">${prod.Producto}</h3>
+            <p class="text-[14px] font-black text-primary mb-1 tracking-tighter">${prod.ID || 'N/A'}</p> 
+            <h3 class="font-bold text-[11px] leading-tight uppercase text-gray-800 line-clamp-2">${prod.Producto}</h3>
           </div>
           <div class="flex justify-between items-end">
               <div>
-                <p class="text-[9px] text-gray-400 font-black uppercase">PVP</p>
-                <p class="text-primary font-black text-sm">$${parseFloat(prod.Precio_Venta || 0).toFixed(2)}</p>
+                <p class="text-[8px] text-gray-400 font-black uppercase">PVP</p>
+                <p class="text-primary font-black text-base">$${parseFloat(prod.Precio_Venta || 0).toFixed(2)}</p>
               </div>
-              <span class="text-xs px-3 py-1 rounded-xl ${esCritico ? 'bg-red-500 text-white' : 'bg-purple-100 text-primary'} font-black">${stock} u</span>
+              <div class="text-right">
+                 <p class="text-[8px] text-gray-400 font-black uppercase">Stock</p>
+                 <span class="text-sm px-3 py-1 rounded-xl ${esCritico ? 'bg-red-600 text-white' : 'bg-purple-100 text-primary'} font-black italic">
+                   ${stock}
+                 </span>
+              </div>
           </div>
         </div>`;
     });
@@ -178,8 +197,11 @@ function renderizarGrid(lista) {
 }
 
 function filtrarPantalla() {
-    const texto = document.getElementById('filtroProd').value.toLowerCase();
-    const filtrados = inventarioLocal.filter(p => p.Producto.toLowerCase().includes(texto));
+    const busqueda = document.getElementById('filtroProd').value.toLowerCase();
+    const filtrados = inventarioLocal.filter(p => 
+        p.Producto.toLowerCase().includes(busqueda) || 
+        (p.ID && p.ID.toLowerCase().includes(busqueda))
+    );
     renderizarGrid(filtrados);
 }
 
@@ -187,7 +209,7 @@ function abrirModalSumar(nombre) {
   const prod = inventarioLocal.find(p => p.Producto === nombre);
   if (!prod) return;
   document.getElementById('modal-titulo').innerText = "Abastecer Stock";
-  document.getElementById('label-cantidad').innerText = "Cantidad a SUMAR";
+  document.getElementById('label-cantidad').innerText = "Sumar Cantidad";
   document.getElementById('nombreP').value = prod.Producto;
   document.getElementById('nombreP').readOnly = true;
   document.getElementById('costoP').value = prod.Precio_Distribuidor;
@@ -196,7 +218,7 @@ function abrirModalSumar(nombre) {
 }
 
 function abrirModalNuevo() {
-  document.getElementById('modal-titulo').innerText = "Nuevo Producto SKU";
+  document.getElementById('modal-titulo').innerText = "Nuevo SKU";
   document.getElementById('label-cantidad').innerText = "Stock Inicial";
   document.getElementById('formProducto').reset();
   document.getElementById('nombreP').readOnly = false;
@@ -206,10 +228,8 @@ function abrirModalNuevo() {
 document.getElementById('formProducto').onsubmit = async (e) => {
   e.preventDefault();
   const btn = document.getElementById('btnGuardar');
-  if (btn.disabled) return;
-
-  btn.innerText = "PROCESANDO...";
   btn.disabled = true;
+  btn.innerText = "REGISTRANDO...";
 
   try {
     await DairyAPI.enviarDatos("Inventario", {
@@ -219,14 +239,13 @@ document.getElementById('formProducto').onsubmit = async (e) => {
         Precio_Distribuidor: document.getElementById('costoP').value,
         Precio_Venta: document.getElementById('ventaP').value
     });
-    
     cerrarModal();
-    setTimeout(() => { cargarInventario(); }, 1500);
+    setTimeout(cargarInventario, 1500);
   } catch (err) {
-    alert("Error al guardar");
+    alert("Error de conexión");
   } finally {
-    btn.innerText = "PROCESAR ENTRADA";
     btn.disabled = false;
+    btn.innerText = "PROCESAR";
   }
 };
 
@@ -235,7 +254,7 @@ function cerrarModal() {
   document.getElementById('formProducto').reset();
 }
 
-window.onload = cargarInventario;
+window.onload = iniciarApp;
 </script>
 </body>
 </html>

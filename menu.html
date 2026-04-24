@@ -5,40 +5,41 @@
             <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">home</span>
             </div>
-            <span class="text-[10px] font-black uppercase tracking-tighter mt-1">Inicio</span>
+            <span class="text-[10px] font-black uppercase mt-1">Inicio</span>
         </button>
 
         <button onclick="navegar('RegistrodeVentas.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="RegistrodeVentas">
             <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">receipt_long</span>
             </div>
-            <span class="text-[10px] font-black uppercase tracking-tighter mt-1">Ventas</span>
+            <span class="text-[10px] font-black uppercase mt-1">Ventas</span>
         </button>
 
         <button onclick="navegar('GestiondeClientes.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="GestiondeClientes">
             <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">group</span>
             </div>
-            <span class="text-[10px] font-black uppercase tracking-tighter mt-1">Clientes</span>
+            <span class="text-[10px] font-black uppercase mt-1">Clientes</span>
         </button>
 
         <button onclick="navegar('ControldeInventario.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="ControldeInventario">
             <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">inventory_2</span>
             </div>
-            <span class="text-[10px] font-black uppercase tracking-tighter mt-1">Stock</span>
+            <span class="text-[10px] font-black uppercase mt-1">Stock</span>
         </button>
 
         <button onclick="navegar('GestióndeDespachos.html')" class="nav-link text-gray-400 flex flex-col items-center group" data-page="GestióndeDespachos">
             <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out group-active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">local_shipping</span>
             </div>
-            <span class="text-[10px] font-black uppercase tracking-tighter mt-1">Despacho</span>
+            <span class="text-[10px] font-black uppercase mt-1">Despacho</span>
         </button>
     </div>
 </nav>
 
 <style>
+    /* Color Morado para el botón activo */
     .nav-link.active-nav { color: #a21caf !important; }
     .nav-link.active-nav .icon-box {
         background-color: #f5f3ff;
@@ -46,27 +47,38 @@
         box-shadow: 0 10px 15px -3px rgba(162, 28, 175, 0.2);
     }
     .nav-link.active-nav span.material-symbols-outlined {
-        font-variation-settings: 'FILL' 1, 'wght' 500;
+        font-variation-settings: 'FILL' 1, 'wght' 600;
     }
 </style>
 
 <script>
     function navegar(url) {
-        window.location.replace(url); // replace es más directo para móviles
+        // Forzamos la navegación y el refresco
+        window.location.href = url;
     }
 
-    // Esta función la llamaremos desde la página principal para asegurar que el DOM esté listo
     function pintarMenu() {
-        const paginaActual = window.location.pathname.split("/").pop().replace('.html', '') || 'DashboardLacteo';
+        // Obtenemos el nombre del archivo actual de la URL
+        const path = window.location.pathname;
+        let paginaActual = path.split("/").pop();
         
+        // Si estamos en la raíz o carpeta vacía, asumimos Dashboard
+        if (!paginaActual || paginaActual === "") paginaActual = "DashboardLacteo.html";
+
         document.querySelectorAll('.nav-link').forEach(btn => {
-            btn.classList.remove('active-nav');
-            // Si el atributo data-page coincide con el nombre del archivo
-            if(btn.getAttribute('data-page') === paginaActual) {
+            const dataPage = btn.getAttribute('data-page');
+            
+            // Si el nombre del archivo contiene el texto de data-page, lo activamos
+            if (paginaActual.toLowerCase().includes(dataPage.toLowerCase())) {
                 btn.classList.add('active-nav');
+                btn.classList.remove('text-gray-400');
+            } else {
+                btn.classList.remove('active-nav');
+                btn.classList.add('text-gray-400');
             }
         });
     }
-    // Ejecución inmediata por si acaso
+
+    // Ejecutar al cargar el fragmento
     pintarMenu();
 </script>

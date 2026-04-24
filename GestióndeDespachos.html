@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
         tailwind.config = {
-            theme: { extend: { colors: { primary: "#a21caf", secondary: "#7e22ce", background: "#faf5ff", outline: "#e9d5ff" } } }
+            theme: { extend: { colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" } } }
         }
     </script>
 </head>
@@ -23,17 +23,26 @@
         </div>
         <h1 class="text-xl font-bold text-primary">Despachos</h1>
     </div>
-    <button onclick="cargarDatos()" class="p-2 text-primary active:rotate-180 transition-transform">
+    <button onclick="cargarDatos()" class="p-2 text-primary">
         <span class="material-symbols-outlined">refresh</span>
     </button>
 </header>
 
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-6">
-    <div id="contenedor-pedidos" class="space-y-4">
-        <div class="text-center py-20 text-gray-400">
-            <span class="material-symbols-outlined animate-spin text-4xl">sync</span>
-            <p class="mt-2 font-bold">Consolidando pedidos...</p>
+    
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white p-4 rounded-3xl border border-outline shadow-sm text-center">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Por Entregar</p>
+            <p id="cant-pendientes" class="text-3xl font-black text-orange-500">0</p>
         </div>
+        <div class="bg-white p-4 rounded-3xl border border-outline shadow-sm text-center">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Entregados</p>
+            <p id="cant-entregados" class="text-3xl font-black text-green-500">0</p>
+        </div>
+    </div>
+
+    <div id="contenedor-pedidos" class="space-y-4">
+        <div class="text-center py-20 text-gray-400 italic">Consolidando despachos...</div>
     </div>
 </main>
 
@@ -61,6 +70,9 @@
 </nav>
 
 <script>
+let listaGlobalPedidos = [];
+let entregadosHoy = 0;
+
 async function cargarDatos() {
     const contenedor = document.getElementById('contenedor-pedidos');
     try {
@@ -69,94 +81,91 @@ async function cargarDatos() {
             DairyAPI.obtenerDatos("Clientes")
         ]);
 
-        if (!ventas || ventas.length === 0) {
-            contenedor.innerHTML = `<p class="text-center py-20 text-gray-400 font-bold text-sm">No hay pedidos pendientes.</p>`;
-            return;
-        }
-
-        // --- LÓGICA DE AGRUPACIÓN POR CLIENTE ---
-        const pedidosAgrupados = {};
-
+        const agrupados = {};
         ventas.forEach(v => {
-            const nombreCliente = String(v.Cliente).trim();
-            if (!pedidosAgrupados[nombreCliente]) {
-                pedidosAgrupados[nombreCliente] = {
-                    cliente: nombreCliente,
+            const nom = String(v.Cliente).trim();
+            if (!agrupados[nom]) {
+                agrupados[nom] = {
+                    cliente: nom,
                     productos: [],
-                    totalVenta: 0,
-                    fecha: v.Fecha
+                    total: 0,
+                    fecha: v.Fecha,
+                    info: clientes.find(c => String(c.Nombre).trim().toLowerCase() === nom.toLowerCase())
                 };
             }
-            pedidosAgrupados[nombreCliente].productos.push({
-                nombre: v.Producto,
-                cant: v.Cantidad
-            });
-            pedidosAgrupados[nombreCliente].totalVenta += parseFloat(v["Precio Total"] || 0);
+            agrupados[nom].productos.push(`${v.Producto} (x${v.Cantidad})`);
+            agrupados[nom].total += parseFloat(v["Precio Total"] || 0);
         });
 
-        contenedor.innerHTML = "";
+        listaGlobalPedidos = Object.values(agrupados).reverse();
+        renderizar();
+    } catch (e) {
+        contenedor.innerHTML = `<p class="text-center text-red-500 font-bold p-10">Error de conexión.</p>`;
+    }
+}
 
-        Object.values(pedidosAgrupados).reverse().forEach(pedido => {
-            const clienteInfo = clientes.find(c => 
-                String(c.Nombre).trim().toLowerCase() === pedido.cliente.toLowerCase()
-            );
+function renderizar() {
+    const contenedor = document.getElementById('contenedor-pedidos');
+    contenedor.innerHTML = "";
+    
+    document.getElementById('cant-pendientes').innerText = listaGlobalPedidos.length;
+    document.getElementById('cant-entregados').innerText = entregadosHoy;
 
-            const direccion = clienteInfo ? (clienteInfo.Dirección || "Sin dirección") : "Dirección no registrada";
-            const telfRaw = clienteInfo ? (clienteInfo.Teléfono || "") : "";
-            const telfString = String(telfRaw);
-            const linkWA = telfString.replace(/[^0-9]/g, '');
+    if (listaGlobalPedidos.length === 0) {
+        contenedor.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold">No hay pedidos pendientes por entregar.</div>`;
+        return;
+    }
 
-            // Generar lista de productos para la tarjeta
-            const listaHTML = pedido.productos.map(p => 
-                `<div class="flex justify-between text-[11px] border-b border-purple-50 py-1">
-                    <span class="font-medium text-gray-600">${p.nombre}</span>
-                    <span class="font-black text-primary">x${p.cant}</span>
-                </div>`
-            ).join('');
+    listaGlobalPedidos.forEach((p, index) => {
+        const telf = p.info ? String(p.info.Teléfono || "").replace(/[^0-9]/g, '') : "";
+        const direccion = p.info ? (p.info.Dirección || "Sin dirección") : "Dirección no registrada";
 
-            contenedor.innerHTML += `
-                <div class="bg-white p-5 rounded-3xl border border-outline shadow-sm space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="bg-orange-100 text-orange-600 text-[9px] font-black px-2 py-1 rounded-lg uppercase">Pendiente</span>
-                        <span class="text-[10px] font-bold text-gray-400">${new Date(pedido.fecha).toLocaleDateString()}</span>
-                    </div>
+        contenedor.innerHTML += `
+            <div id="card-${index}" class="bg-white p-5 rounded-3xl border border-outline shadow-sm space-y-4 transition-all duration-500">
+                <div class="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase">
+                    <span>Pendiente</span>
+                    <span>${new Date(p.fecha).toLocaleDateString()}</span>
+                </div>
 
-                    <div>
-                        <h2 class="text-lg font-black text-gray-800 leading-tight">${pedido.cliente}</h2>
-                        <div class="mt-3 space-y-1">
-                            ${listaHTML}
-                        </div>
-                    </div>
-
-                    <div class="bg-purple-50 p-3 rounded-2xl flex items-start gap-3">
-                        <span class="material-symbols-outlined text-primary text-sm">location_on</span>
-                        <p class="text-[11px] font-medium text-gray-600 leading-relaxed">${direccion}</p>
-                    </div>
-
-                    <div class="flex justify-between items-center pt-2">
-                        <div>
-                            <p class="text-[9px] font-bold text-gray-400 uppercase leading-none">Total Pedido</p>
-                            <p class="text-xl font-black text-gray-900">$${pedido.totalVenta.toFixed(2)}</p>
-                        </div>
-                        <div class="flex gap-2">
-                            ${linkWA ? `
-                                <a href="https://wa.me/${linkWA}" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center">
-                                    <span class="material-symbols-outlined">chat</span>
-                                </a>
-                            ` : ''}
-                            <button onclick="this.closest('.bg-white').style.opacity='0.5'" class="h-12 bg-primary text-white px-5 rounded-2xl text-[10px] font-black shadow-lg shadow-purple-100">
-                                ENTREGADO
-                            </button>
-                        </div>
+                <div>
+                    <h2 class="text-lg font-black text-gray-800 leading-tight">${p.cliente}</h2>
+                    <div class="text-[11px] text-primary font-bold mt-1 uppercase">
+                        ${p.productos.join(' / ')}
                     </div>
                 </div>
-            `;
-        });
 
-    } catch (error) {
-        console.error(error);
-        contenedor.innerHTML = `<p class="text-center text-red-500 py-10 font-bold">Error de sincronización.</p>`;
-    }
+                <div class="bg-purple-50 p-3 rounded-2xl flex items-start gap-2">
+                    <span class="material-symbols-outlined text-primary text-sm">location_on</span>
+                    <p class="text-[11px] font-medium text-gray-600">${direccion}</p>
+                </div>
+
+                <div class="flex justify-between items-center pt-2">
+                    <p class="text-xl font-black text-gray-900">$${p.total.toFixed(2)}</p>
+                    <div class="flex gap-2">
+                        ${telf ? `<a href="https://wa.me/${telf}" class="w-12 h-12 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center"><span class="material-symbols-outlined">chat</span></a>` : ''}
+                        <button onclick="marcarComoEntregado(${index})" class="h-12 bg-primary text-white px-5 rounded-2xl text-[10px] font-black shadow-lg">ENTREGADO</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function marcarComoEntregado(index) {
+    const card = document.getElementById(`card-${index}`);
+    
+    // Efecto visual de desaparición
+    card.style.transform = "translateX(100px)";
+    card.style.opacity = "0";
+
+    setTimeout(() => {
+        // Actualizar contadores
+        entregadosHoy++;
+        // Eliminar de la lista de pendientes
+        listaGlobalPedidos.splice(index, 1);
+        // Volver a dibujar la lista
+        renderizar();
+    }, 500);
 }
 
 window.onload = cargarDatos;

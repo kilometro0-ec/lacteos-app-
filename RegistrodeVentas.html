@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Dairy Logic - Ventas PRO</title>
+    <title>Dairy Logic - Ventas</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -12,7 +12,12 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { primary: "#a21caf", secondary: "#db2777", background: "#fdfaff", outline: "#f0e7ff" }
+                    colors: { 
+                        primary: "#0055ff", // Azul Eléctrico
+                        secondary: "#db2777", 
+                        background: "#f0f4f8", 
+                        outline: "#d1d9e6" 
+                    }
                 }
             }
         }
@@ -20,123 +25,111 @@
     <style>
         .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
         .out-of-stock { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #e9d5ff; border-radius: 10px; }
+        .id-card { transition: all 0.3s ease; }
+        .id-card:active { transform: scale(0.98); }
     </style>
 </head>
 <body class="bg-background text-gray-900 font-[Work_Sans] pb-32">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-white border-b border-outline shadow-sm">
     <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
-        <span class="material-symbols-outlined text-primary text-3xl">storefront</span>
+        <span class="material-symbols-outlined text-primary text-3xl">payments</span>
         <h1 class="text-xl font-black text-primary tracking-tight">Dairy Logic</h1>
     </div>
-    <div class="flex items-center gap-4">
-        <div class="text-right hidden sm:block">
-            <p id="card-cant-ventas" class="text-xs font-bold text-secondary">0 Ventas Hoy</p>
-            <p id="card-monto-ventas" class="text-sm font-black text-primary">$0.00</p>
-        </div>
-        <button onclick="iniciar()" class="w-10 h-10 rounded-full bg-purple-50 text-primary flex items-center justify-center">
-            <span class="material-symbols-outlined">sync</span>
-        </button>
-    </div>
+    <button onclick="iniciar()" class="w-10 h-10 rounded-full bg-blue-50 text-primary flex items-center justify-center">
+        <span class="material-symbols-outlined">sync</span>
+    </button>
 </header>
 
-<main class="pt-20 px-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+<main class="pt-20 px-4 max-w-6xl mx-auto space-y-6">
     
-    <div class="lg:col-span-7 space-y-6">
-        
-        <section class="bg-white p-5 rounded-3xl border border-outline shadow-sm">
-            <div class="flex justify-between items-center mb-4">
-                <label class="text-xs font-black text-gray-400 uppercase tracking-widest">Seleccionar Cliente</label>
-                <button onclick="abrirModalCliente()" class="text-xs font-bold text-secondary flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">add_circle</span> NUEVO
-                </button>
-            </div>
-            <select id="select-cliente" class="w-full h-14 px-4 bg-purple-50 border-none rounded-2xl text-gray-700 font-bold focus:ring-2 focus:ring-primary appearance-none">
-                <option value="">-- Elija un cliente de la lista --</option>
-            </select>
-        </section>
-
-        <section>
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-sm font-black text-gray-400 uppercase tracking-widest">Catálogo de Productos</h2>
-                <span class="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-full font-bold">DISPONIBLE</span>
-            </div>
-            <div id="contenedor-productos" class="grid grid-cols-2 md:grid-cols-2 gap-4">
-                </div>
-        </section>
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-gradient-to-br from-primary to-blue-700 p-5 rounded-3xl text-white shadow-lg shadow-blue-200">
+            <p class="text-[10px] font-bold opacity-80 uppercase tracking-widest">Ventas Hoy</p>
+            <h3 id="card-cant-ventas" class="text-3xl font-black">0</h3>
+        </div>
+        <div class="bg-white p-5 rounded-3xl border border-outline shadow-sm">
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">A Recaudar</p>
+            <h3 id="card-monto-ventas" class="text-3xl font-black text-primary">$0.00</h3>
+        </div>
     </div>
 
-    <div class="lg:col-span-5">
-        <section class="bg-white rounded-[2rem] border border-outline shadow-2xl overflow-hidden sticky top-24">
-            <div class="bg-gradient-to-r from-primary to-purple-600 p-6 text-white">
-                <h3 class="text-lg font-bold flex items-center gap-2">
-                    <span class="material-symbols-outlined">shopping_cart_checkout</span> Resumen de Venta
-                </h3>
-            </div>
-            
-            <div class="p-6">
-                <div id="lista-carrito" class="space-y-4 max-h-[300px] overflow-y-auto mb-6">
-                    <p id="carrito-vacio" class="text-center text-gray-400 py-10 italic">Carrito vacío</p>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <div class="lg:col-span-7 space-y-6">
+            <section class="bg-white p-5 rounded-3xl border border-outline shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xs font-black text-gray-500 uppercase">Cliente</h2>
+                    <button onclick="abrirModalCliente()" class="text-xs font-bold text-primary">+ NUEVO</button>
                 </div>
+                <select id="select-cliente" class="w-full h-14 px-4 bg-gray-50 border border-outline rounded-2xl font-bold text-gray-700 outline-none focus:border-primary appearance-none">
+                    <option value="">Seleccione un cliente...</option>
+                </select>
+            </section>
 
-                <div class="space-y-2 border-t border-outline pt-4">
-                    <div class="flex justify-between text-gray-500 font-bold">
-                        <span>Subtotal</span>
-                        <span id="subtotal-venta">$0.00</span>
+            <section>
+                <h2 class="text-xs font-black text-gray-500 uppercase mb-4 ml-2">Catálogo de Productos</h2>
+                <div id="contenedor-productos" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     </div>
-                    <div class="flex justify-between text-2xl font-black text-primary pt-2">
-                        <span>TOTAL</span>
-                        <span id="total-venta">$0.00</span>
-                    </div>
+            </section>
+        </div>
+
+        <div class="lg:col-span-5">
+            <section class="bg-white rounded-[2.5rem] border border-outline shadow-xl overflow-hidden sticky top-20">
+                <div class="bg-primary p-6 text-white">
+                    <h3 class="font-bold flex items-center gap-2">
+                        <span class="material-symbols-outlined">receipt_long</span> Confirmar Venta
+                    </h3>
                 </div>
-
-                <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full mt-8 bg-secondary text-white py-5 rounded-2xl font-black shadow-lg shadow-secondary/30 hover:scale-[1.02] active:scale-95 transition-all">
-                    PROCESAR VENTA
-                </button>
-            </div>
-        </section>
+                <div class="p-6">
+                    <div id="lista-carrito" class="space-y-3 mb-6 max-h-60 overflow-y-auto">
+                        <p id="carrito-vacio" class="text-center text-gray-400 py-6 italic">Seleccione productos para vender</p>
+                    </div>
+                    <div class="border-t border-outline pt-4 space-y-1">
+                        <div class="flex justify-between text-2xl font-black text-primary">
+                            <span>TOTAL</span>
+                            <span id="total-venta">$0.00</span>
+                        </div>
+                    </div>
+                    <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full mt-6 bg-primary text-white py-4 rounded-2xl font-black shadow-lg hover:brightness-110 active:scale-95 transition-all">
+                        FINALIZAR VENTA
+                    </button>
+                </div>
+            </section>
+        </div>
     </div>
 </main>
 
-<div id="modalCliente" class="fixed inset-0 bg-black/60 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-md">
-    <div class="bg-white rounded-[2.5rem] w-full max-w-sm p-8 shadow-2xl">
-        <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-purple-100 text-primary rounded-full flex items-center justify-center mx-auto mb-2">
-                <span class="material-symbols-outlined text-3xl">person_add</span>
-            </div>
-            <h3 class="text-xl font-black text-primary">Nuevo Cliente</h3>
-        </div>
+<div id="modalCliente" class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-[2rem] w-full max-w-sm p-8">
+        <h3 class="text-xl font-bold text-primary mb-6">Nuevo Cliente</h3>
         <div class="space-y-4">
-            <input type="text" id="nuevo-nombre" placeholder="Nombre y Apellido" class="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary">
-            <input type="text" id="nuevo-id" placeholder="ID / Cédula" class="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary">
-            <input type="text" id="nuevo-tel" placeholder="WhatsApp / Teléfono" class="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary">
-            <input type="text" id="nuevo-dir" placeholder="Dirección de entrega" class="w-full p-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-primary">
-            <div class="flex gap-3 pt-4">
-                <button onclick="cerrarModalCliente()" class="flex-1 py-4 text-gray-400 font-bold">Cerrar</button>
-                <button onclick="guardarCliente()" id="btn-save" class="flex-1 py-4 bg-primary text-white rounded-2xl font-bold shadow-lg">GUARDAR</button>
+            <input type="text" id="nuevo-nombre" placeholder="Nombre completo" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl outline-none">
+            <input type="text" id="nuevo-id" placeholder="Cédula / ID" class="w-full p-4 bg-gray-50 border border-outline rounded-2xl outline-none">
+            <div class="flex gap-2">
+                <button onclick="cerrarModalCliente()" class="flex-1 py-4 text-gray-400 font-bold uppercase text-xs">Cerrar</button>
+                <button onclick="guardarCliente()" id="btn-save" class="flex-1 py-4 bg-primary text-white rounded-2xl font-bold">GUARDAR</button>
             </div>
         </div>
     </div>
 </div>
 
-<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-4 px-2 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-50">
-    <button onclick="window.location.href='DashboardLacteo.html'" class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">home</span>
-        <span class="text-[10px] font-bold uppercase">Inicio</span>
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-4 z-50 shadow-2xl">
+    <button onclick="window.location.href='DashboardLácteo.html'" class="flex flex-col items-center gap-1 text-gray-400">
+        <span class="material-symbols-outlined">home</span>
+        <span class="text-[10px] font-bold">INICIO</span>
     </button>
     <button class="flex flex-col items-center gap-1 text-primary">
-        <span class="material-symbols-outlined text-2xl">payments</span>
-        <span class="text-[10px] font-bold uppercase">Ventas</span>
+        <span class="material-symbols-outlined">shopping_cart</span>
+        <span class="text-[10px] font-bold">VENTAS</span>
     </button>
-    <button onclick="window.location.href='ControldeInventario.html'" class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">inventory_2</span>
-        <span class="text-[10px] font-bold uppercase">Stock</span>
+    <button onclick="window.location.href='ControldeInventario.html'" class="flex flex-col items-center gap-1 text-gray-400">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span class="text-[10px] font-bold">STOCK</span>
     </button>
-    <button onclick="window.location.href='Entregas.html'" class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">local_shipping</span>
-        <span class="text-[10px] font-bold uppercase">Entregas</span>
+    <button onclick="window.location.href='Entregas.html'" class="flex flex-col items-center gap-1 text-gray-400">
+        <span class="material-symbols-outlined">local_shipping</span>
+        <span class="text-[10px] font-bold">ENTREGAS</span>
     </button>
 </nav>
 
@@ -152,9 +145,16 @@ async function iniciar() {
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        // Poblar Selector de Clientes
+        // Cargar Estadísticas (Mantenido)
+        const hoy = new Date().toLocaleDateString();
+        const vHoy = ventas.filter(v => new Date(v.Fecha).toLocaleDateString() === hoy);
+        document.getElementById('card-cant-ventas').innerText = vHoy.length;
+        const sumaTotal = vHoy.reduce((acc, v) => acc + parseFloat(v.total || 0), 0);
+        document.getElementById('card-monto-ventas').innerText = `$${sumaTotal.toFixed(2)}`;
+
+        // Cargar Clientes
         const select = document.getElementById('select-cliente');
-        select.innerHTML = '<option value="">-- Elija un cliente de la lista --</option>';
+        select.innerHTML = '<option value="">Seleccione un cliente...</option>';
         clientes.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.Nombre;
@@ -162,16 +162,9 @@ async function iniciar() {
             select.appendChild(opt);
         });
 
-        // Dashboard Stats
-        const hoy = new Date().toLocaleDateString();
-        const vHoy = ventas.filter(v => new Date(v.Fecha).toLocaleDateString() === hoy);
-        document.getElementById('card-cant-ventas').innerText = `${vHoy.length} Ventas Hoy`;
-        const total = vHoy.reduce((acc, v) => acc + parseFloat(v.total || 0), 0);
-        document.getElementById('card-monto-ventas').innerText = `$${total.toFixed(2)}`;
-
         productosData = productos;
         renderizarProductos();
-    } catch (e) { console.error(e); }
+    } catch (e) { alert("Error al conectar con la base de datos"); }
 }
 
 function renderizarProductos() {
@@ -181,17 +174,17 @@ function renderizarProductos() {
         const stock = parseInt(p.Stock) || 0;
         const idClean = p.Producto.replace(/\s+/g, '');
         container.innerHTML += `
-            <div class="bg-white p-4 rounded-3xl border border-outline shadow-sm flex flex-col justify-between ${stock <= 0 ? 'out-of-stock' : ''}">
+            <div class="bg-white p-5 rounded-3xl border border-outline shadow-sm flex flex-col justify-between ${stock <= 0 ? 'out-of-stock' : 'id-card'}">
                 <div>
-                    <h4 class="font-bold text-gray-800 text-sm mb-1">${p.Producto}</h4>
-                    <span class="text-[10px] font-black ${stock <= 3 ? 'text-red-500' : 'text-primary'} uppercase">Stock: ${stock}</span>
+                    <h4 class="font-bold text-gray-700 text-sm">${p.Producto}</h4>
+                    <span class="text-[10px] font-black ${stock <= 3 ? 'text-red-500' : 'text-primary'}">STOCK: ${stock}</span>
                 </div>
-                <div class="mt-4">
-                    <p class="text-xl font-black text-secondary mb-3">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
-                    <div class="flex items-center justify-between bg-purple-50 rounded-xl p-1">
-                        <button onclick="cambiarCant('${p.Producto}', -1)" class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary font-bold hover:bg-primary hover:text-white transition-all">-</button>
-                        <span id="cant-${idClean}" class="text-sm font-black">0</span>
-                        <button onclick="cambiarCant('${p.Producto}', 1)" class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-primary font-bold hover:bg-primary hover:text-white transition-all">+</button>
+                <div class="mt-4 flex items-center justify-between">
+                    <span class="text-lg font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
+                    <div class="flex items-center gap-2 bg-gray-100 p-1 rounded-xl">
+                        <button onclick="cambiarCant('${p.Producto}', -1)" class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center font-bold text-primary">-</button>
+                        <span id="cant-${idClean}" class="text-xs font-bold w-4 text-center">0</span>
+                        <button onclick="cambiarCant('${p.Producto}', 1)" class="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center font-bold text-primary">+</button>
                     </div>
                 </div>
             </div>`;
@@ -208,52 +201,44 @@ function cambiarCant(nombre, delta) {
         document.getElementById(`cant-${nombre.replace(/\s+/g, '')}`).innerText = nuevaCant;
         actualizarCarritoUI();
     } else if (nuevaCant > p.Stock) {
-        alert("Stock máximo alcanzado");
+        alert("Stock insuficiente");
     }
 }
 
 function actualizarCarritoUI() {
     const lista = document.getElementById('lista-carrito');
-    const totalVenta = document.getElementById('total-venta');
-    const subtotalVenta = document.getElementById('subtotal-venta');
+    const totalLabel = document.getElementById('total-venta');
     const vacio = document.getElementById('carrito-vacio');
-    
     lista.innerHTML = "";
     let total = 0;
-    let hayItems = false;
+    let items = 0;
 
     Object.keys(carrito).forEach(nombre => {
         if (carrito[nombre] > 0) {
-            hayItems = true;
+            items++;
             const p = productosData.find(prod => prod.Producto === nombre);
             const sub = carrito[nombre] * p.Precio_Venta;
             total += sub;
             lista.innerHTML += `
-                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-2xl border border-outline">
-                    <div>
-                        <p class="text-xs font-bold text-gray-800">${nombre}</p>
-                        <p class="text-[10px] text-gray-400">${carrito[nombre]} x $${p.Precio_Venta}</p>
-                    </div>
-                    <p class="font-black text-primary">$${sub.toFixed(2)}</p>
+                <div class="flex justify-between items-center bg-blue-50/50 p-3 rounded-2xl">
+                    <span class="text-xs font-bold">${nombre} (${carrito[nombre]})</span>
+                    <span class="font-black text-primary">$${sub.toFixed(2)}</span>
                 </div>`;
         }
     });
 
-    totalVenta.innerText = `$${total.toFixed(2)}`;
-    subtotalVenta.innerText = `$${total.toFixed(2)}`;
-    vacio.style.display = hayItems ? 'none' : 'block';
+    totalLabel.innerText = `$${total.toFixed(2)}`;
+    vacio.style.display = items > 0 ? 'none' : 'block';
 }
 
 async function finalizarVenta() {
     const cliente = document.getElementById('select-cliente').value;
     if (!cliente) return alert("Seleccione un cliente");
-    
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
     if (items.length === 0) return alert("Carrito vacío");
 
     const btn = document.getElementById('btn-finalizar');
-    btn.disabled = true;
-    btn.innerText = "PROCESANDO...";
+    btn.disabled = true; btn.innerText = "PROCESANDO...";
 
     try {
         for (const item of items) {
@@ -267,19 +252,9 @@ async function finalizarVenta() {
                 total: carrito[item] * p.Precio_Venta
             });
         }
-        alert("¡Venta completada! El stock se ha descontado.");
+        alert("¡Venta completada!");
         location.reload();
-    } catch (e) { 
-        alert("Error de red"); 
-        btn.disabled = false;
-        btn.innerText = "PROCESAR VENTA";
-    }
-}
-
-function limpiarCarrito() {
-    carrito = {};
-    renderizarProductos();
-    actualizarCarritoUI();
+    } catch (e) { alert("Error al registrar venta"); btn.disabled = false; btn.innerText = "FINALIZAR VENTA"; }
 }
 
 function abrirModalCliente() { document.getElementById('modalCliente').classList.remove('hidden'); }
@@ -288,23 +263,10 @@ function cerrarModalCliente() { document.getElementById('modalCliente').classLis
 async function guardarCliente() {
     const nombre = document.getElementById('nuevo-nombre').value;
     const id = document.getElementById('nuevo-id').value;
-    if(!nombre || !id) return alert("Nombre e ID obligatorios");
-    
-    const btn = document.getElementById('btn-save');
-    btn.innerText = "Cargando...";
-    btn.disabled = true;
-
-    await DairyAPI.enviarDatos("Clientes", {
-        pestaña: "Clientes",
-        ID: id,
-        Nombre: nombre,
-        Teléfono: document.getElementById('nuevo-tel').value,
-        Dirección: document.getElementById('nuevo-dir').value,
-        Fecha: new Date().toLocaleDateString()
-    });
-    
-    cerrarModalCliente();
-    iniciar();
+    if(!nombre || !id) return alert("Faltan datos");
+    document.getElementById('btn-save').innerText = "...";
+    await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", ID: id, Nombre: nombre, Fecha: new Date().toLocaleDateString() });
+    cerrarModalCliente(); iniciar();
 }
 
 window.onload = iniciar;

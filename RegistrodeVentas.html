@@ -28,52 +28,14 @@
 
     <style>
         body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; }
-        
-        .card-sutil { 
-            background: white; 
-            border-radius: 2.5rem; 
-            border: 1px solid #e9d5ff; 
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02); 
-        }
-
-        .input-sutil { 
-            background-color: #fdfaff; 
-            border: 1.5px solid #f3e8ff; 
-            border-radius: 2rem; 
-            padding: 1rem 1.5rem; 
-            width: 100%; 
-            transition: all 0.3s ease; 
-            font-size: 14px;
-            color: #4a5568;
-        }
-        
-        .input-sutil:focus { 
-            outline: none; 
-            border-color: #a21caf; 
-            background-color: white;
-            box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05);
-        }
-
-        .btn-magenta { 
-            background-color: #db2777; 
-            color: white; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            border-radius: 2rem; 
-            transition: all 0.2s ease;
-            letter-spacing: 0.025em;
-        }
-        
+        .card-sutil { background: white; border-radius: 2.5rem; border: 1px solid #e9d5ff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02); }
+        .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 2rem; padding: 1rem 1.5rem; width: 100%; transition: all 0.3s ease; font-size: 14px; color: #4a5568; }
+        .input-sutil:focus { outline: none; border-color: #a21caf; background-color: white; box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05); }
+        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; letter-spacing: 0.025em; }
         .btn-magenta:active { transform: scale(0.96); }
         .hidden { display: none !important; }
-
-        .fade-in-sutil {
-            animation: fadeIn 0.4s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .fade-in-sutil { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="pb-24">
@@ -89,9 +51,7 @@
 </header>
 
 <main class="mt-6 px-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
-    
     <div class="lg:col-span-7 space-y-6">
-        
         <section class="card-sutil p-6">
             <div id="vista-seleccion-cliente" class="fade-in-sutil">
                 <div class="flex justify-between items-center mb-4 px-2">
@@ -113,7 +73,6 @@
                         <span class="material-symbols-outlined text-sm">close</span>
                     </button>
                 </div>
-                
                 <div class="space-y-3">
                     <input type="text" id="reg-nombre" placeholder="Nombre Completo (Ej: Juan Pérez)" class="input-sutil">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -122,14 +81,11 @@
                     </div>
                     <input type="text" id="reg-dir" placeholder="Dirección (Ej: Av. Amazonas y Colon)" class="input-sutil">
                 </div>
-
                 <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4 shadow-lg shadow-pink-100 flex items-center justify-center gap-2 mt-2">
-                    <span class="material-symbols-outlined text-base">task_alt</span>
-                    GUARDAR Y SELECCIONAR
+                    <span class="material-symbols-outlined text-base">task_alt</span> GUARDAR Y SELECCIONAR
                 </button>
             </div>
         </section>
-
         <section id="contenedor-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></section>
     </div>
 
@@ -154,20 +110,16 @@
                         <p class="text-slate-300 text-xs font-bold italic">Selecciona productos para comenzar</p>
                     </div>
                 </div>
-
                 <div class="pt-5 border-t border-purple-50">
                     <label class="text-[10px] font-black text-slate-400 uppercase block mb-2 px-1">Fecha Programada</label>
                     <input type="date" id="fecha-entrega" class="input-sutil font-bold text-primary">
                 </div>
-
                 <div class="flex justify-between items-end px-1">
                     <span class="text-xs font-black text-slate-400 uppercase">Total Pedido</span>
                     <span id="total-venta" class="text-4xl font-black text-slate-900 tracking-tighter">$0.00</span>
                 </div>
-
                 <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100 flex items-center justify-center gap-3">
-                    <span class="material-symbols-outlined">rocket_launch</span>
-                    CONFIRMAR Y ENVIAR
+                    <span class="material-symbols-outlined">rocket_launch</span> CONFIRMAR Y ENVIAR
                 </button>
             </div>
         </section>
@@ -188,13 +140,8 @@ function generarIDOrden() {
 function alternarFormularioCliente(mostrarNuevo) {
     const vistaSel = document.getElementById('vista-seleccion-cliente');
     const vistaNuevo = document.getElementById('vista-nuevo-cliente');
-    if(mostrarNuevo) {
-        vistaSel.classList.add('hidden');
-        vistaNuevo.classList.remove('hidden');
-    } else {
-        vistaSel.classList.remove('hidden');
-        vistaNuevo.classList.add('hidden');
-    }
+    if(mostrarNuevo) { vistaSel.classList.add('hidden'); vistaNuevo.classList.remove('hidden'); } 
+    else { vistaSel.classList.remove('hidden'); vistaNuevo.classList.add('hidden'); }
 }
 
 async function guardarNuevoCliente() {
@@ -202,39 +149,18 @@ async function guardarNuevoCliente() {
     const c = document.getElementById('reg-ci').value;
     const t = document.getElementById('reg-tel').value;
     const d = document.getElementById('reg-dir').value;
-    
     if(!n || !t) return alert("Por favor ingresa al menos Nombre y Teléfono");
-    
     const btn = document.getElementById('btn-guardar-cli');
     btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> REGISTRANDO...`;
     btn.disabled = true;
-
     try {
-        // CORRECCIÓN: Se envía "CI_RUC" para coincidir con el doPost del script
-        await DairyAPI.enviarDatos("Clientes", { 
-            pestaña: "Clientes", 
-            Nombre: n, 
-            CI_RUC: c, 
-            Teléfono: t, 
-            Dirección: d 
-        });
-        
+        await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", Nombre: n, CI_RUC: c, Teléfono: t, Dirección: d });
         await iniciar(); 
         document.getElementById('select-cliente').value = n;
         actualizarNombreCarrito();
         alternarFormularioCliente(false);
-        
-        // Limpiar
-        document.getElementById('reg-nombre').value = "";
-        document.getElementById('reg-ci').value = "";
-        document.getElementById('reg-tel').value = "";
-        document.getElementById('reg-dir').value = "";
-
     } catch(e) { alert("Error de conexión"); }
-    finally {
-        btn.innerHTML = `<span class="material-symbols-outlined text-base">task_alt</span> GUARDAR Y SELECCIONAR`;
-        btn.disabled = false;
-    }
+    finally { btn.innerHTML = `<span class="material-symbols-outlined text-base">task_alt</span> GUARDAR Y SELECCIONAR`; btn.disabled = false; }
 }
 
 async function iniciar() {
@@ -243,19 +169,14 @@ async function iniciar() {
     try {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
         clientesData = cl; productosData = pr;
-        
         const sel = document.getElementById('select-cliente');
         sel.innerHTML = '<option value="">-- Buscar en la lista --</option>';
-        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => {
-            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
-        });
+        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; });
         renderizarProductos();
     } catch(e) { console.error(e); }
 }
 
-function actualizarNombreCarrito() { 
-    document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; 
-}
+function actualizarNombreCarrito() { document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; }
 
 function renderizarProductos() {
     const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
@@ -296,14 +217,7 @@ function actualizarCarritoUI() {
             const p = productosData.find(x => x.Producto === n);
             const sub = carrito[n] * parseFloat(p.Precio_Venta.toString().replace(',','.'));
             t += sub;
-            l.innerHTML += `
-                <div class="flex justify-between items-center p-4 bg-purple-50/50 rounded-2xl border border-purple-100/50 fade-in-sutil">
-                    <div class="flex flex-col">
-                        <span class="text-[10px] font-black text-primary uppercase">${n}</span>
-                        <span class="text-xs font-bold text-slate-700">Cant: ${carrito[n]}</span>
-                    </div>
-                    <span class="text-sm font-black text-slate-900">$${sub.toFixed(2)}</span>
-                </div>`;
+            l.innerHTML += `<div class="flex justify-between items-center p-4 bg-purple-50/50 rounded-2xl border border-purple-100/50 fade-in-sutil"><div class="flex flex-col"><span class="text-[10px] font-black text-primary uppercase">${n}</span><span class="text-xs font-bold text-slate-700">Cant: ${carrito[n]}</span></div><span class="text-sm font-black text-slate-900">$${sub.toFixed(2)}</span></div>`;
         }
     });
     document.getElementById('total-venta').innerText = `$${t.toFixed(2)}`;
@@ -313,40 +227,30 @@ function actualizarCarritoUI() {
 async function finalizarVenta() {
     const cli = document.getElementById('select-cliente').value, f = document.getElementById('fecha-entrega').value;
     if(!cli || !f) return alert("Selecciona cliente y fecha de entrega");
-    
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
     if(items.length === 0) return alert("Agrega productos al carrito");
-    
     const btn = document.getElementById('btn-finalizar');
-    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> PROCESANDO...`;
+    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> ENVIANDO...`;
     btn.disabled = true;
 
     try {
-        let det = "", total = 0;
+        let detalleTexto = "", totalVenta = 0;
         for(const n of items) {
             const p = productosData.find(x => x.Producto === n), pvp = parseFloat(p.Precio_Venta.toString().replace(',','.'));
-            const sub = carrito[n] * pvp; total += sub;
-            det += `• ${carrito[n]} x ${n} ($${sub.toFixed(2)})\n`;
-            
-            await DairyAPI.enviarDatos("Ventas", { 
-                pestaña: "Ventas", 
-                ID_Venta: idOrdenActual, 
-                Cliente: cli, 
-                Producto: n, 
-                Cantidad: carrito[n], 
-                Precio_PVP: p.Precio_Venta, 
-                Fecha_Entrega: f,
-                Estado: "PENDIENTE"
-            });
+            const sub = carrito[n] * pvp; totalVenta += sub;
+            detalleTexto += `• ${carrito[n]} x ${n} ($${sub.toFixed(2)})\n`;
+            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", ID_Venta: idOrdenActual, Cliente: cli, Producto: n, Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: f, Estado: "PENDIENTE" });
         }
         
         const cObj = clientesData.find(c => c.Nombre === cli);
         let tel = "593" + (cObj?.Teléfono?.toString().replace(/\D/g, '').slice(-9) || "");
-      // Cambia la línea de window.open por esta para probar:
-window.open(`https://wa.me/${tel}?text=${encodeURIComponent(mensaje)}`, '_blank');
-        location.reload();
+        let mensajeFull = `*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cli}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
+        
+        window.open(`https://wa.me/${tel}?text=${encodeURIComponent(mensajeFull)}`, '_blank');
+        setTimeout(() => location.reload(), 1000);
     } catch(e) { 
-        alert("Error de red"); 
+        console.error(e);
+        alert("Error al procesar la venta"); 
         btn.innerHTML = `<span class="material-symbols-outlined">rocket_launch</span> CONFIRMAR Y ENVIAR`;
         btn.disabled = false;
     }

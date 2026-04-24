@@ -37,13 +37,13 @@ body { font-family: 'Work Sans', sans-serif; }
 .rotate-animation { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* Resalte Crítico (<= 5) */
+/* Resalte Crítico: Solo para stock <= 5 */
 @keyframes blink-red {
-  0% { border-color: #dc2626; }
-  50% { border-color: #fca5a5; }
-  100% { border-color: #dc2626; }
+  0% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
+  50% { border-color: #fca5a5; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1); }
+  100% { border-color: #dc2626; box-shadow: 0 0 0 0px rgba(220, 38, 38, 0.2); }
 }
-.card-critica { animation: blink-red 2s infinite; border-width: 2px !important; }
+.card-critica { animation: blink-red 2s infinite; border-width: 2px !important; border-color: #dc2626 !important; }
 </style>
 </head>
 
@@ -82,7 +82,7 @@ body { font-family: 'Work Sans', sans-serif; }
   </section>
 
   <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <div class="col-span-full text-center py-10 text-gray-400 italic">Cargando...</div>
+      <div class="col-span-full text-center py-10 text-gray-400 italic">Cargando datos...</div>
   </div>
 
   <button onclick="abrirModalNuevo()" class="w-full bg-primary text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all">
@@ -97,12 +97,12 @@ body { font-family: 'Work Sans', sans-serif; }
     </h3>
     <form id="formProducto" class="space-y-4">
       <div>
-        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Producto</label>
+        <label class="text-[10px] font-black text-gray-400 uppercase ml-1">Nombre del Producto</label>
         <input type="text" id="nombreP" required autocomplete="off" class="w-full border-outline rounded-xl p-3 focus:ring-primary">
       </div>
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label id="label-cantidad" class="text-[10px] font-black text-gray-400 uppercase ml-1">Cantidad a Sumar</label>
+          <label id="label-cantidad" class="text-[10px] font-black text-gray-400 uppercase ml-1">Cantidad</label>
           <input type="number" id="stockP" required placeholder="0" class="w-full border-outline rounded-xl p-3">
         </div>
         <div>
@@ -135,7 +135,6 @@ body { font-family: 'Work Sans', sans-serif; }
 
 <script>
 let inventarioLocal = [];
-let esSumaDirecta = false;
 
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
@@ -157,7 +156,6 @@ async function cargarInventario() {
       if(esCritico) criticos++;
       totalCosto += (parseFloat(prod.Precio_Distribuidor) || 0) * stock;
 
-      // Card con evento onclick para sumar
       container.innerHTML += `
         <div onclick="abrirModalSumar('${prod.Producto}')" class="bg-white p-3 rounded-2xl border ${esCritico ? 'card-critica' : 'border-outline'} shadow-sm cursor-pointer active:scale-95 transition-all">
           <h3 class="font-bold text-[10px] truncate mb-1 uppercase text-gray-600">${prod.Producto}</h3>
@@ -173,42 +171,36 @@ async function cargarInventario() {
     document.getElementById('total-sku').innerText = inventario.length;
 
   } catch (e) {
-    console.error(e);
+    console.error("Error:", e);
+    document.getElementById('grid-productos').innerHTML = `<div class="col-span-full text-center py-10 text-red-500 font-bold italic">Error de conexión.</div>`;
   } finally {
     if (icon) icon.classList.remove('rotate-animation');
   }
 }
 
-// Para agregar stock a producto existente
+// Para sumar stock a producto que ya existe
 function abrirModalSumar(nombre) {
   const prod = inventarioLocal.find(p => p.Producto === nombre);
   if (!prod) return;
 
-  esSumaDirecta = true;
   document.getElementById('modal-titulo').innerText = "Sumar Stock";
-  document.getElementById('label-cantidad').innerText = "Cantidad a AÑADIR";
+  document.getElementById('label-cantidad').innerText = "Cantidad a SUMAR";
   
   document.getElementById('nombreP').value = prod.Producto;
   document.getElementById('nombreP').readOnly = true;
   document.getElementById('costoP').value = prod.Precio_Distribuidor;
-  document.getElementById('costoP').readOnly = true;
   document.getElementById('ventaP').value = prod.Precio_Venta;
-  document.getElementById('ventaP').readOnly = true;
   
   document.getElementById('modalNuevo').classList.remove('hidden');
 }
 
-// Para crear un producto totalmente nuevo
+// Para producto nuevo
 function abrirModalNuevo() {
-  esSumaDirecta = false;
   document.getElementById('modal-titulo').innerText = "Nuevo Producto";
   document.getElementById('label-cantidad').innerText = "Stock Inicial";
   
   document.getElementById('formProducto').reset();
   document.getElementById('nombreP').readOnly = false;
-  document.getElementById('costoP').readOnly = false;
-  document.getElementById('ventaP').readOnly = false;
-  
   document.getElementById('modalNuevo').classList.remove('hidden');
 }
 
@@ -218,32 +210,28 @@ document.getElementById('formProducto').onsubmit = async (e) => {
   if (btn.disabled) return;
 
   const nombre = document.getElementById('nombreP').value.trim();
-  const cantidadInput = parseInt(document.getElementById('stockP').value) || 0;
+  const cantidad = document.getElementById('stockP').value;
 
-  let stockFinal = cantidadInput;
-
-  if (esSumaDirecta) {
-    const item = inventarioLocal.find(p => p.Producto === nombre);
-    const stockActual = item ? parseInt(item.Stock) : 0;
-    stockFinal = stockActual + cantidadInput;
-  }
-
-  btn.innerText = "PROCESANDO...";
+  btn.innerText = "ENVIANDO...";
   btn.disabled = true;
 
   try {
+    // IMPORTANTE: Solo enviamos la cantidad que el usuario escribió.
+    // Tu Apps Script recibirá esto y lo sumará al stock que ya existe en Sheets.
     await DairyAPI.enviarDatos("Inventario", {
         pestaña: "Inventario",
         Producto: nombre,
-        Cantidad: stockFinal,
+        Cantidad: cantidad, 
         Precio_Distribuidor: document.getElementById('costoP').value,
         Precio_Venta: document.getElementById('ventaP').value
     });
     
     cerrarModal();
-    await cargarInventario();
+    // Recarga después de 1 segundo para dar tiempo a Sheets
+    setTimeout(() => { cargarInventario(); }, 1200);
+
   } catch (err) {
-    alert("Error al guardar");
+    alert("Error al procesar el stock.");
   } finally {
     btn.innerText = "PROCESAR";
     btn.disabled = false;

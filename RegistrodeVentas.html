@@ -34,7 +34,7 @@
         .stock-critico { animation: pulse-red 1.5s infinite; border-width: 2px; }
     </style>
 </head>
-<body class="bg-background text-gray-900 font-[Work_Sans] pb-32">
+<body class="bg-background text-on-surface font-[Work_Sans] pb-32">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
     <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
@@ -52,11 +52,11 @@
     
     <div class="grid grid-cols-2 gap-4">
         <div class="bg-primary p-5 rounded-2xl text-white shadow-lg shadow-purple-100">
-            <span class="text-[10px] uppercase font-bold tracking-widest opacity-80">Ventas Realizadas</span>
+            <span class="text-[10px] uppercase font-bold tracking-widest opacity-80">Ventas Hoy</span>
             <h3 id="card-cant-ventas" class="text-3xl font-black">0</h3>
         </div>
         <div class="bg-white p-5 rounded-2xl border border-outline shadow-sm">
-            <span class="text-[10px] text-secondary uppercase font-bold tracking-widest">Total Recaudar</span>
+            <span class="text-[10px] text-secondary uppercase font-bold tracking-widest">A Recaudar</span>
             <h3 id="card-monto-ventas" class="text-3xl font-black text-primary">$0.00</h3>
         </div>
     </div>
@@ -110,16 +110,30 @@
     <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-bold text-primary uppercase">Nuevo Cliente</h3>
-            <span class="text-[10px] bg-purple-100 text-primary px-2 py-1 rounded-lg font-bold">AUTO-ID</span>
+            <span class="text-[10px] bg-purple-100 text-primary px-2 py-1 rounded-lg font-bold">Registro</span>
         </div>
         <div class="grid grid-cols-1 gap-4">
-            <input type="text" id="nuevo-nombre" placeholder="Nombre completo" class="w-full p-3 bg-gray-50 border border-outline rounded-xl">
+            <input type="text" id="nuevo-nombre" placeholder="Nombre completo" class="w-full p-3 bg-gray-50 border border-outline rounded-xl focus:border-primary outline-none">
+            
+            <div class="space-y-1">
+                <input type="text" id="nuevo-identificacion" 
+                       placeholder="Cédula (10 dig) o RUC (13 dig)" 
+                       inputmode="numeric"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '').substring(0, 13)"
+                       class="w-full p-3 bg-gray-50 border border-outline rounded-xl focus:border-primary outline-none">
+                <p id="id-error" class="text-[10px] text-red-500 font-bold hidden px-1">Debe tener entre 10 y 13 números</p>
+            </div>
+
             <div class="flex gap-2">
                 <div class="w-20 bg-gray-100 flex items-center justify-center rounded-xl font-bold text-gray-500 text-sm border border-outline">+593</div>
-                <input type="tel" id="nuevo-tel" placeholder="999888777" class="flex-1 p-3 bg-gray-50 border border-outline rounded-xl">
+                <input type="tel" id="nuevo-tel" 
+                       placeholder="999888777" 
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                       class="flex-1 p-3 bg-gray-50 border border-outline rounded-xl focus:border-primary outline-none">
             </div>
-            <input type="email" id="nuevo-correo" placeholder="correo@ejemplo.com" class="w-full p-3 bg-gray-50 border border-outline rounded-xl">
-            <input type="text" id="nuevo-dir" placeholder="Dirección exacta" class="w-full p-3 bg-gray-50 border border-outline rounded-xl">
+            
+            <input type="email" id="nuevo-correo" placeholder="correo@ejemplo.com" class="w-full p-3 bg-gray-50 border border-outline rounded-xl focus:border-primary outline-none">
+            <input type="text" id="nuevo-dir" placeholder="Dirección exacta" class="w-full p-3 bg-gray-50 border border-outline rounded-xl focus:border-primary outline-none">
             
             <div class="flex gap-2 mt-4">
                 <button onclick="cerrarModalCliente()" class="flex-1 py-3 text-gray-400 font-bold uppercase text-xs">Cancelar</button>
@@ -130,7 +144,7 @@
 </div>
 
 <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center bg-white border-t border-outline py-3 shadow-lg z-50">
-    <button onclick="window.location.href='DashboardLacteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
+    <button onclick="window.location.href='DashboardLácteo.html'" class="text-gray-400 flex flex-col items-center gap-1">
         <span class="material-symbols-outlined">home</span>
         <span class="text-[10px] font-bold">Inicio</span>
     </button>
@@ -264,22 +278,34 @@ async function finalizarVenta() {
 }
 
 function abrirModalCliente() { document.getElementById('modalCliente').classList.remove('hidden'); }
-function cerrarModalCliente() { document.getElementById('modalCliente').classList.add('hidden'); }
+function cerrarModalCliente() { 
+    document.getElementById('modalCliente').classList.add('hidden'); 
+    document.getElementById('id-error').classList.add('hidden');
+}
 
 async function guardarCliente() {
     const nombre = document.getElementById('nuevo-nombre').value;
+    const identificacion = document.getElementById('nuevo-identificacion').value;
     const tel = document.getElementById('nuevo-tel').value;
+    const errorMsg = document.getElementById('id-error');
+
+    // VALIDACIÓN DE IDENTIFICACIÓN (Min 10, Max 13)
+    if(identificacion.length < 10 || identificacion.length > 13) {
+        errorMsg.classList.remove('hidden');
+        return;
+    } else {
+        errorMsg.classList.add('hidden');
+    }
+
     if(!nombre || !tel) return alert("Nombre y Teléfono requeridos");
     
     const btn = document.getElementById('btn-save');
-    btn.innerText = "...";
-    
-    // Generar ID automático: Prefijo + Segundos/Milisegundos (Ej: DL-4512)
-    const autoID = "DL-" + Math.floor(Math.random() * 9000 + 1000);
+    btn.innerText = "REGISTRANDO...";
+    btn.disabled = true;
 
     await DairyAPI.enviarDatos("Clientes", {
         pestaña: "Clientes",
-        ID: autoID,
+        ID: identificacion,
         Nombre: nombre,
         Teléfono: "+593" + tel,
         Correo: document.getElementById('nuevo-correo').value,

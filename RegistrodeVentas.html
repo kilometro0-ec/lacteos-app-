@@ -1,95 +1,124 @@
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Ventas - Lógica Láctea</title>
+    
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#a21caf",
+            secondary: "#db2777",
+            background: "#faf5ff",
+            outline: "#e9d5ff",
+          }
+        }
+      }
+    }
+    </script>
+
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; color: #4a5568; }
-        .brand-logo { font-weight: 800; font-style: italic; letter-spacing: -0.05em; text-transform: uppercase; color: #a21caf; }
-        .card-sutil { background: white; border-radius: 2rem; border: 1px solid #f3e8ff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-        .input-sutil { background-color: #fdfaff; border: none; border-radius: 1rem; font-weight: 400; }
-        .input-sutil:focus { ring: 2px; ring-color: #a21caf; }
-        .btn-magenta { background-color: #db2777; color: white; font-weight: 600; font-style: italic; text-transform: uppercase; border-radius: 1rem; transition: all 0.2s; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; }
+        .card-sutil { background: white; border-radius: 2rem; border: 1px solid #e9d5ff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .input-sutil { background-color: #fdfaff; border: 1px solid #e9d5ff; border-radius: 1rem; padding: 1rem; width: 100%; transition: all 0.2s; }
+        .input-sutil:focus { outline: none; border-color: #a21caf; ring: 2px; ring-color: #a21caf; }
+        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 1.5rem; transition: all 0.2s; }
         .btn-magenta:active { transform: scale(0.95); }
-        #modal-cliente.hidden { display: none; }
-        #modal-cliente.flex { display: flex; }
+        
+        /* Corrección Modal */
+        #modal-cliente { transition: opacity 0.3s ease; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body class="pb-24">
 
-<div id="modal-cliente" class="fixed inset-0 bg-slate-900/20 backdrop-blur-md z-[100] hidden items-center justify-center p-4">
-    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
-        <h2 class="brand-logo text-xl mb-6">Nuevo Registro</h2>
+<div id="modal-cliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl border border-outline">
+        <div class="flex items-center gap-2 mb-6">
+            <span class="material-symbols-outlined text-primary">person_add</span>
+            <h2 class="text-xl font-black text-primary tracking-tighter uppercase">Nuevo Cliente</h2>
+        </div>
         <div class="space-y-3">
-            <input type="text" id="reg-nombre" placeholder="Nombre" class="w-full p-4 input-sutil">
-            <input type="text" id="reg-ci" placeholder="CI" class="w-full p-4 input-sutil">
-            <input type="tel" id="reg-tel" placeholder="Teléfono" class="w-full p-4 input-sutil">
-            <input type="text" id="reg-dir" placeholder="Dirección" class="w-full p-4 input-sutil">
-            <div class="flex gap-2 pt-4">
-                <button onclick="cerrarModalCliente()" class="flex-1 text-xs font-bold text-slate-400 uppercase">Cerrar</button>
+            <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
+            <input type="text" id="reg-ci" placeholder="Cédula / RUC" class="input-sutil">
+            <input type="tel" id="reg-tel" placeholder="Teléfono (Ej: 098...)" class="input-sutil">
+            <input type="text" id="reg-dir" placeholder="Dirección de entrega" class="input-sutil">
+            
+            <div class="flex gap-3 pt-4">
+                <button onclick="cerrarModalCliente()" class="flex-1 text-[10px] font-black text-slate-400 uppercase tracking-widest">Cancelar</button>
                 <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="flex-[2] btn-magenta py-4 shadow-lg shadow-pink-100">Guardar</button>
             </div>
         </div>
     </div>
 </div>
 
-<header class="h-20 bg-white/80 backdrop-blur-md border-b border-purple-50 flex justify-between items-center px-8 sticky top-0 z-50">
+<header class="h-16 bg-white border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
     <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLácteo.html'">
-        <div class="w-10 h-10 rounded-2xl bg-purple-100 flex items-center justify-center text-[#a21caf] font-bold italic">LL</div>
-        <h1 class="text-xl brand-logo">Ventas</h1>
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </div>
+        <h1 class="text-xl font-black text-primary tracking-tighter uppercase">Ventas</h1>
     </div>
-    <button onclick="iniciar()" class="material-symbols-outlined text-purple-300 hover:text-purple-600 transition-colors">refresh</button>
+    <button onclick="iniciar()" class="material-symbols-outlined text-primary/40 hover:text-primary transition-all">sync</button>
 </header>
 
-<main class="mt-8 px-6 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+<main class="mt-6 px-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
     
-    <div class="lg:col-span-7 space-y-6">
-        <section class="card-sutil p-6">
-            <div class="flex justify-between items-center mb-4">
-                <span class="text-[10px] font-bold text-purple-300 uppercase tracking-widest">Selección de Cliente</span>
-                <button onclick="abrirModalCliente()" class="text-[10px] font-bold text-pink-500 hover:text-pink-700">+ NUEVO CLIENTE</button>
+    <div class="lg:col-span-7 space-y-4">
+        <section class="card-sutil p-5">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-[10px] font-black text-primary uppercase tracking-widest">Cliente</span>
+                <button onclick="abrirModalCliente()" class="text-[10px] font-black text-secondary hover:underline">+ NUEVO</button>
             </div>
-            <select id="select-cliente" onchange="actualizarNombreCarrito()" class="w-full p-4 input-sutil text-lg font-medium text-slate-600">
+            <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold text-slate-700">
                 <option value="">-- Buscar Cliente --</option>
             </select>
         </section>
 
-        <section id="contenedor-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></section>
+        <section id="contenedor-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></section>
     </div>
 
     <div class="lg:col-span-5">
-        <section class="card-sutil overflow-hidden sticky top-28 border-2 border-purple-50 shadow-xl">
-            <div class="bg-gradient-to-r from-purple-600 to-purple-500 p-6 text-white">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[10px] font-bold opacity-70 uppercase mb-1">Orden de Pedido</p>
-                        <h2 id="cliente-resumen" class="text-xl font-bold uppercase truncate">SIN SELECCIONAR</h2>
-                    </div>
-                    <span id="num-orden" class="text-[10px] bg-white/20 px-2 py-1 rounded-md font-mono">---</span>
+        <section class="card-sutil overflow-hidden sticky top-24 border-2 border-primary/10 shadow-xl">
+            <div class="bg-primary p-6 text-white">
+                <p class="text-[10px] font-black opacity-70 uppercase tracking-widest mb-1">Orden de Pedido</p>
+                <h2 id="cliente-resumen" class="text-xl font-black uppercase truncate tracking-tighter">SIN SELECCIONAR</h2>
+                <div class="mt-2 flex justify-between items-center">
+                    <span id="num-orden" class="text-[10px] bg-white/20 px-2 py-1 rounded-lg font-mono">---</span>
                 </div>
             </div>
             
             <div class="p-6 space-y-6">
-                <div id="lista-carrito" class="space-y-2 max-h-60 overflow-y-auto pr-2 text-sm">
-                    <p id="carrito-vacio" class="text-center text-slate-300 py-10 italic">Carrito vacío</p>
+                <div id="lista-carrito" class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                    <div id="carrito-vacio" class="text-center py-10">
+                        <span class="material-symbols-outlined text-slate-200 text-5xl">shopping_basket</span>
+                        <p class="text-slate-300 text-xs font-bold italic mt-2">Carrito vacío</p>
+                    </div>
                 </div>
 
-                <div class="pt-4 border-t border-purple-50">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase block mb-2 italic">Fecha de entrega</label>
-                    <input type="date" id="fecha-entrega" class="w-full p-4 input-sutil font-bold text-purple-600">
+                <div class="pt-4 border-t border-outline">
+                    <label class="text-[10px] font-black text-slate-400 uppercase block mb-2">Fecha de Entrega</label>
+                    <input type="date" id="fecha-entrega" class="input-sutil font-bold text-primary">
                 </div>
 
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-slate-400 uppercase">Total</span>
-                    <span id="total-venta" class="text-4xl font-bold text-slate-800 tracking-tighter">$0.00</span>
+                <div class="flex justify-between items-end">
+                    <span class="text-xs font-black text-slate-400 uppercase mb-1">Total a Cobrar</span>
+                    <span id="total-venta" class="text-4xl font-black text-slate-900 tracking-tighter">$0.00</span>
                 </div>
 
-                <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100">Confirmar Pedido</button>
+                <button id="btn-finalizar" onclick="finalizarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    CONFIRMAR PEDIDO
+                </button>
             </div>
         </section>
     </div>
@@ -102,22 +131,42 @@ let carrito = {}; let productosData = []; let clientesData = []; let idOrdenActu
 
 function generarIDOrden() {
     const d = new Date();
-    idOrdenActual = `ORD-${d.getFullYear().toString().substr(-2)}${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getHours().toString().padStart(2,'0')}${d.getMinutes().toString().padStart(2,'0')}`;
+    idOrdenActual = `ORD-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
     document.getElementById('num-orden').innerText = idOrdenActual;
 }
 
-function abrirModalCliente() { document.getElementById('modal-cliente').classList.replace('hidden', 'flex'); }
-function cerrarModalCliente() { document.getElementById('modal-cliente').classList.replace('flex', 'hidden'); }
+// FUNCIONES DE MODAL CORREGIDAS
+function abrirModalCliente() {
+    const modal = document.getElementById('modal-cliente');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarModalCliente() {
+    const modal = document.getElementById('modal-cliente');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
 
 async function guardarNuevoCliente() {
     const n = document.getElementById('reg-nombre').value, c = document.getElementById('reg-ci').value, t = document.getElementById('reg-tel').value, d = document.getElementById('reg-dir').value;
-    if(!n || !t) return alert("Completa los datos");
-    document.getElementById('btn-guardar-cli').innerText = "...";
+    if(!n || !t) return alert("Nombre y Teléfono son obligatorios");
+    
+    const btn = document.getElementById('btn-guardar-cli');
+    btn.innerText = "GUARDANDO...";
+    btn.disabled = true;
+
     try {
         await DairyAPI.enviarDatos("Clientes", { pestaña: "Clientes", Nombre: n, CI: c, Teléfono: t, Dirección: d });
-        alert("¡Listo!"); cerrarModalCliente(); iniciar();
-    } catch(e) { alert("Error"); }
-    document.getElementById('btn-guardar-cli').innerText = "Guardar";
+        cerrarModalCliente();
+        await iniciar(); // Recargar lista de clientes
+        alert("Cliente registrado con éxito");
+    } catch(e) { 
+        alert("Error al guardar cliente"); 
+    } finally {
+        btn.innerText = "GUARDAR";
+        btn.disabled = false;
+    }
 }
 
 async function iniciar() {
@@ -126,28 +175,36 @@ async function iniciar() {
     try {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
         clientesData = cl; productosData = pr;
+        
         const sel = document.getElementById('select-cliente');
         sel.innerHTML = '<option value="">-- Buscar Cliente --</option>';
-        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`);
+        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => {
+            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
+        });
         renderizarProductos();
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("Error al cargar datos:", e); }
 }
 
-function actualizarNombreCarrito() { document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; }
+function actualizarNombreCarrito() { 
+    document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; 
+}
 
 function renderizarProductos() {
     const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
     productosData.forEach(p => {
         const s = parseInt(p.Stock) || 0, pr = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
         cont.innerHTML += `
-            <div class="card-sutil p-4 flex flex-col justify-between h-40 ${s <= 0 ? 'opacity-30 pointer-events-none' : ''}">
-                <h4 class="font-semibold text-[11px] uppercase text-slate-400 truncate">${p.Producto}</h4>
+            <div class="card-sutil p-4 flex flex-col justify-between min-h-[140px] ${s <= 0 ? 'opacity-40 grayscale pointer-events-none' : ''}">
                 <div>
-                    <p class="text-xl font-bold text-slate-700">$${pr.toFixed(2)}</p>
-                    <div class="flex items-center justify-between bg-purple-50/50 rounded-xl p-1 mt-2">
-                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-8 h-8 bg-white rounded-lg text-purple-600 shadow-sm font-bold border border-purple-100">-</button>
-                        <span id="cant-${p.Producto.replace(/\s+/g,'')}" class="font-bold text-slate-500">0</span>
-                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-8 h-8 bg-white rounded-lg text-purple-600 shadow-sm font-bold border border-purple-100">+</button>
+                    <h4 class="font-black text-[10px] uppercase text-slate-400 truncate leading-tight">${p.Producto}</h4>
+                    <p class="text-xs text-primary font-bold">Stock: ${s}</p>
+                </div>
+                <div>
+                    <p class="text-xl font-black text-slate-800">$${pr.toFixed(2)}</p>
+                    <div class="flex items-center justify-between bg-purple-50 rounded-xl p-1 mt-2 border border-outline">
+                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-8 h-8 bg-white rounded-lg text-primary shadow-sm font-black border border-outline">-</button>
+                        <span id="cant-${p.Producto.replace(/\s+/g,'')}" class="font-black text-slate-600 text-sm">0</span>
+                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-8 h-8 bg-white rounded-lg text-primary shadow-sm font-black border border-outline">+</button>
                     </div>
                 </div>
             </div>`;
@@ -171,33 +228,58 @@ function actualizarCarritoUI() {
             const p = productosData.find(x => x.Producto === n);
             const sub = carrito[n] * parseFloat(p.Precio_Venta.toString().replace(',','.'));
             t += sub;
-            l.innerHTML += `<div class="flex justify-between font-medium p-2 bg-purple-50/30 rounded-lg"><span>${carrito[n]}x ${n}</span><span>$${sub.toFixed(2)}</span></div>`;
+            l.innerHTML += `
+                <div class="flex justify-between items-center p-3 bg-purple-50 rounded-xl border border-outline">
+                    <span class="text-xs font-bold text-slate-700">${carrito[n]}x ${n}</span>
+                    <span class="text-xs font-black text-primary">$${sub.toFixed(2)}</span>
+                </div>`;
         }
     });
     document.getElementById('total-venta').innerText = `$${t.toFixed(2)}`;
-    document.getElementById('carrito-vacio').style.display = t > 0 ? 'none' : 'block';
+    document.getElementById('carrito-vacio').classList.toggle('hidden', t > 0);
 }
 
 async function finalizarVenta() {
     const cli = document.getElementById('select-cliente').value, f = document.getElementById('fecha-entrega').value;
-    if(!cli || !f) return alert("Faltan datos");
+    if(!cli || !f) return alert("Selecciona cliente y fecha de entrega");
+    
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(items.length === 0) return alert("Carrito vacío");
-    document.getElementById('btn-finalizar').innerText = "GUARDANDO...";
+    if(items.length === 0) return alert("Agrega al menos un producto");
+    
+    const btn = document.getElementById('btn-finalizar');
+    btn.innerText = "PROCESANDO...";
+    btn.disabled = true;
+
     try {
         let det = "", total = 0;
         for(const n of items) {
             const p = productosData.find(x => x.Producto === n), pvp = parseFloat(p.Precio_Venta.toString().replace(',','.'));
             const sub = carrito[n] * pvp; total += sub;
             det += `• ${carrito[n]} x ${n} ($${sub.toFixed(2)})\n`;
-            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", ID_Venta: idOrdenActual, Cliente: cli, Producto: n, Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: f });
+            
+            await DairyAPI.enviarDatos("Ventas", { 
+                pestaña: "Ventas", 
+                ID_Venta: idOrdenActual, 
+                Cliente: cli, 
+                Producto: n, 
+                Cantidad: carrito[n], 
+                Precio_PVP: p.Precio_Venta, 
+                Fecha_Entrega: f,
+                Estado: "PENDIENTE"
+            });
         }
+        
         const cObj = clientesData.find(c => c.Nombre === cli);
         let tel = "593" + (cObj?.Teléfono?.toString().replace(/\D/g, '').slice(-9) || "");
-        alert("Venta Registrada");
-        window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(`*PEDIDO #${idOrdenActual}*\n*Cliente:* ${cli}\n*Entrega:* ${f}\n\n*DETALLE:*\n${det}\n*TOTAL: $${total.toFixed(2)}*`)}`, '_blank');
+        
+        window.open(`https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(`*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cli}\n*Entrega:* ${f}\n\n*DETALLE:*\n${det}\n*TOTAL: $${total.toFixed(2)}*`)}`, '_blank');
+        
         location.reload();
-    } catch(e) { alert("Error"); location.reload(); }
+    } catch(e) { 
+        alert("Error al registrar venta"); 
+        btn.innerText = "CONFIRMAR PEDIDO";
+        btn.disabled = false;
+    }
 }
 window.onload = iniciar;
 </script>

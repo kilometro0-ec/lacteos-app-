@@ -33,19 +33,26 @@
     </script>
 
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; color: #1f012a; }
         .card-sutil { background: white; border-radius: 2.5rem; border: 1px solid #e9d5ff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02); }
         .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 2rem; padding: 1rem 1.5rem; width: 100%; transition: all 0.3s ease; font-size: 14px; color: #4a5568; }
-        .input-sutil:focus { outline: none; border-color: #a21caf; background-color: white; box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05); }
-        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; letter-spacing: 0.025em; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 12px; }
         .btn-magenta:active { transform: scale(0.96); }
         .hidden { display: none !important; }
         .fade-in-sutil { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* Forzado de visibilidad para el input de fecha en móviles */
+        input[type="date"] {
+            -webkit-appearance: listbox !important; 
+            appearance: none !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            text-transform: uppercase;
+        }
+
         .active-nav { color: #a21caf !important; }
-        .active-nav .icon-box { background-color: #f5f3ff !important; transform: translateY(-8px) !important; box-shadow: 0 10px 15px -3px rgba(162, 28, 175, 0.2); }
-        .active-nav span.material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 600 !important; }
+        .active-nav .icon-box { background-color: #f5f3ff !important; transform: translateY(-8px) !important; }
     </style>
 </head>
 <body class="pb-44"> 
@@ -108,15 +115,19 @@
         <section class="card-sutil overflow-hidden sticky top-24 border-2 border-primary/5 shadow-xl">
             <div class="bg-gradient-to-br from-primary to-purple-700 p-6 text-white">
                 <p class="text-[10px] font-black opacity-60 uppercase mb-1">Resumen de Venta</p>
-                <h2 id="cliente-resumen" class="text-2xl font-black uppercase truncate tracking-tighter leading-none mb-4" style="color: #ffffff !important;">SIN SELECCIONAR</h2>
+                <h2 id="cliente-resumen" class="text-2xl font-black uppercase truncate tracking-tighter mb-4" style="color: #ffffff !important;">SIN SELECCIONAR</h2>
                 
-                <div class="flex justify-between items-center gap-2">
-                    <span id="num-orden" class="text-[10px] bg-white/20 px-3 py-2 rounded-full font-mono font-bold" style="color: #ffffff !important;">---</span>
+                <div class="flex justify-between items-end gap-2">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-[9px] font-black opacity-80 uppercase">Pedido #</span>
+                        <span id="num-orden" class="text-[10px] bg-white/20 px-3 py-2 rounded-lg font-mono font-bold" style="color: #ffffff !important;">---</span>
+                    </div>
                     
                     <div class="relative flex-1 max-w-[160px]">
+                        <label for="fecha-entrega" class="text-[9px] font-black opacity-90 uppercase mb-1 block">FECHA ENTREGA:</label>
                         <input type="date" id="fecha-entrega" 
-                               style="background-color: #ffffff !important; color: #a21caf !important; display: block !important;"
-                               class="w-full font-bold text-[12px] py-2 px-3 rounded-xl border-none appearance-none outline-none">
+                               style="background-color: #ffffff !important; color: #000000 !important; border: 2px solid #db2777 !important;" 
+                               class="w-full font-bold text-[14px] py-2 px-3 rounded-xl outline-none shadow-inner">
                     </div>
                 </div>
             </div>
@@ -183,6 +194,11 @@ async function iniciar() {
     const d = new Date();
     idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
     document.getElementById('num-orden').innerText = idOrdenActual;
+    
+    // Establecer fecha de hoy por defecto en el input
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fecha-entrega').value = hoy;
+
     iniciarMenu();
     try {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
@@ -197,8 +213,7 @@ async function iniciar() {
 }
 
 function renderizarProductos() {
-    const cont = document.getElementById('contenedor-productos'); 
-    cont.innerHTML = "";
+    const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
     productosData.forEach(p => {
         const s = parseInt(p.Stock) || 0;
         const pr = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
@@ -259,6 +274,7 @@ async function procesarVenta() {
     btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> GUARDANDO...`;
     btn.disabled = true;
 
+    // --- CORRECCIÓN HORA LOCAL QUITO ---
     const ahora = new Date();
     const horaQuito = ahora.toLocaleTimeString('es-EC', { hour12: false, timeZone: 'America/Guayaquil' });
 
@@ -290,8 +306,7 @@ async function procesarVenta() {
             
     } catch(e) { 
         alert("Error al guardar"); 
-        btn.disabled = false; 
-        btn.innerHTML = "REINTENTAR";
+        btn.disabled = false; btn.innerHTML = "REINTENTAR";
     }
 }
 

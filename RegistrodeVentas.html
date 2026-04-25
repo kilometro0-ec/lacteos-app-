@@ -43,7 +43,6 @@
         .fade-in-sutil { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilos para el menú activo (se carga de menu.html) */
         .active-nav { color: #a21caf !important; }
         .active-nav .icon-box {
             background-color: #f5f3ff !important;
@@ -134,9 +133,11 @@
                     <span id="total-venta" class="text-4xl font-black text-slate-900 tracking-tighter">$0.00</span>
                 </div>
                 
-                <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100">
-                    <span class="material-symbols-outlined text-xl">rocket_launch</span> CONFIRMAR PEDIDO
-                </button>
+                <div id="contenedor-boton-finalizar">
+                    <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100">
+                        <span class="material-symbols-outlined text-xl">rocket_launch</span> CONFIRMAR PEDIDO
+                    </button>
+                </div>
             </div>
         </section>
     </div>
@@ -180,6 +181,7 @@ function filtrarProductos() {
 
 async function iniciar() {
     const d = new Date();
+    // Generar ID con hora actual para evitar duplicados
     idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
     document.getElementById('num-orden').innerText = idOrdenActual;
     iniciarMenu();
@@ -240,7 +242,7 @@ function actualizarCarritoUI() {
             t += sub;
             l.innerHTML += `<div class="flex justify-between items-center p-3 bg-purple-50 rounded-2xl border border-purple-100 fade-in-sutil">
                 <div class="flex flex-col"><span class="text-[10px] font-black text-primary uppercase leading-tight">${n}</span><span class="text-[10px] font-bold">Cant: ${carrito[n]}</span></div>
-                <span class="text-xs font-black">$${sub.toFixed(2)}</span>
+                <span class="text-sm font-black">$${sub.toFixed(2)}</span>
             </div>`;
         }
     });
@@ -254,9 +256,9 @@ async function procesarVenta() {
     const items = Object.keys(carrito).filter(n => carrito[n] > 0);
     if(items.length === 0) return alert("El carrito está vacío");
     
-    const btn = document.getElementById('btn-finalizar');
-    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> GUARDANDO...`;
-    btn.disabled = true;
+    const btnConfirmar = document.getElementById('btn-finalizar');
+    btnConfirmar.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> GUARDANDO...`;
+    btnConfirmar.disabled = true;
 
     try {
         let detalleTexto = ""; let totalVenta = 0;
@@ -265,24 +267,40 @@ async function procesarVenta() {
             const pvp = parseFloat(p.Precio_Venta.toString().replace(',','.'));
             const sub = carrito[n] * pvp; totalVenta += sub;
             detalleTexto += `• ${carrito[n]} x ${n} = $${sub.toFixed(2)}\n`;
+            
+            // Envío a Google Sheets
             await DairyAPI.enviarDatos("Ventas", { 
                 pestaña: "Ventas", ID_Venta: idOrdenActual, Cliente: cliNombre, Producto: n, Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: f, Estado: "PENDIENTE" 
             });
         }
         
+        // Lógica de Teléfono para WhatsApp
         const cli = clientesData.find(c => c.Nombre === cliNombre);
         let tel = cli?.Teléfono?.toString().replace(/\D/g, '') || "";
         if (tel.startsWith('0')) tel = tel.substring(1); 
         if (!tel.startsWith('593')) tel = '593' + tel; 
         
-        let msj = `*PEDIDO #${idOrdenActual}*\n*Cliente:* ${cliNombre}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
+        let msj = `*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cliNombre}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
         const urlwa = `whatsapp://send?phone=${tel}&text=${encodeURIComponent(msj)}`;
 
-        document.getElementById('contenedor-boton-finalizar').innerHTML = `
-            <a href="${urlwa}" onclick="setTimeout(()=>location.reload(), 2000)" class="w-full btn-magenta py-5 text-lg bg-green-600 shadow-none">
-                <span class="material-symbols-outlined">chat</span> ENVIAR POR WHATSAPP
-            </a>`;
-    } catch(e) { alert("Error al guardar"); btn.disabled = false; }
+        // Mostramos el botón de WhatsApp
+        const contenedor = document.getElementById('contenedor-boton-finalizar');
+        if(contenedor) {
+            contenedor.innerHTML = `
+                <a href="${urlwa}" onclick="setTimeout(()=>location.reload(), 2000)" class="w-full btn-magenta py-5 text-lg bg-green-600 shadow-none border-none">
+                    <span class="material-symbols-outlined">chat</span> ENVIAR POR WHATSAPP
+                </a>`;
+        } else {
+            // Si por alguna razón el ID no existe, abrimos WA directamente
+            window.location.href = urlwa;
+        }
+
+    } catch(e) { 
+        console.error("Error al guardar:", e);
+        alert("Error al conectar con la base de datos, pero el pedido se guardó localmente. Intenta enviar por WhatsApp."); 
+        btnConfirmar.disabled = false;
+        btnConfirmar.innerHTML = "REINTENTAR GUARDAR";
+    }
 }
 
 function alternarFormularioCliente(m) {
@@ -291,10 +309,6 @@ function alternarFormularioCliente(m) {
 }
 
 function actualizarNombreCarrito() { document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; }
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error', err));
-}
 
 window.onload = iniciar;
 </script>

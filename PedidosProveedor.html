@@ -1,0 +1,17 @@
+async function registrarPedido() {
+    const nuevoPedido = {
+        Fecha: new Date().toISOString().split('T')[0],
+        Producto: document.getElementById('select-producto').value,
+        Proveedor: document.getElementById('input-proveedor').value,
+        Cantidad: parseFloat(document.getElementById('input-cantidad').value),
+        "Costo Unitario": parseFloat(document.getElementById('input-costo').value),
+        Total: Cantidad * CostoUnitario,
+        Estado: "Pendiente"
+    };
+
+    // Llamada a tu API actual
+    await DairyAPI.guardarDatos("Compras", nuevoPedido);
+    
+    // IMPORTANTE: Aquí deberías también actualizar el stock en la hoja "Inventario"
+    // sumando la cantidad comprada al stock actual.
+}

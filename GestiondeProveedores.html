@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Lógica Láctea - Gestión de Proveedores</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script src="api-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff", success: "#16a34a" } } }
+        }
+    </script>
+    <style>
+        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .collapse-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .expanded .collapse-content { max-height: 500px; }
+        .expanded .arrow-icon { transform: rotate(180deg); }
+    </style>
+</head>
+<body class="bg-background text-slate-900 antialiased pb-32">
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
+    <div class="flex items-center gap-3" onclick="window.location.href='DashboardLacteo.html'">
+        <span class="material-symbols-outlined text-primary font-bold">arrow_back_ios</span>
+        <h1 class="text-lg font-extrabold text-primary uppercase tracking-tighter">Proveedores e Historial</h1>
+    </div>
+</header>
+
+<main class="pt-20 px-4 max-w-lg mx-auto space-y-6">
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-md">
+        <button onclick="document.getElementById('form-prov').classList.toggle('hidden')" class="w-full flex justify-between items-center text-primary font-black uppercase text-[10px] tracking-widest">
+            <span>+ Registrar Nuevo Proveedor</span>
+            <span class="material-symbols-outlined">expand_more</span>
+        </button>
+        
+        <div id="form-prov" class="hidden mt-4 space-y-4">
+            <input type="text" id="nombre" placeholder="Nombre de la Empresa" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
+            <div class="grid grid-cols-2 gap-4">
+                <input type="tel" id="telefono" placeholder="Teléfono" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
+                <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
+                    <option value="Lácteos">Lácteos</option>
+                    <option value="Insumos">Insumos</option>
+                    <option value="Empaques">Empaques</option>
+                </select>
+            </div>
+            <button onclick="guardarProveedor()" id="btn-guardar" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
+                GUARDAR
+            </button>
+        </div>
+    </section>
+
+    <h2 class="text-xs font-black uppercase tracking-widest text-slate-400 ml-2">Resumen por Proveedor</h2>
+
+    <div class="space-y-4" id="contenedor-maestro">
+        <p class="text-center py-10 text-slate-400 italic">Cargando base de datos...</p>
+    </div>
+</main>
+
+<div class="fixed bottom-28 right-6 z-50">
+    <button onclick="window.location.href='PedidosProveedor.html'" class="bg-amber-500 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all border-4 border-white">
+        <span class="material-symbols-outlined text-3xl font-bold">add_shopping_cart</span>
+    </button>
+</div>
+
+<div id="menu-container"></div>
+
+<script>
+    async function cargarData() {
+        // Cargar menú
+        const resMenu = await fetch('menu.html');
+        document.getElementById('menu-container').innerHTML = await resMenu.text();
+
+        try {
+            // Obtener Proveedores y Compras en paralelo
+            const [proveedores, compras] = await Promise.all([
+                DairyAPI.obtenerDatos("Proveedores"),
+                DairyAPI.obtenerDatos("Compras")
+            ]);
+
+            const contenedor = document.getElementById('contenedor-maestro');
+            contenedor.innerHTML = "";
+
+            proveedores.forEach(p => {
+                const nombreP = p["Nombre del Proveedor"];
+                // Filtrar compras de este proveedor específico
+                const historial = compras.filter(c => c.Proveedor === nombreP);
+                
+                // Calcular totales
+                const totalInvertido = historial.reduce((acc, curr) => acc + (parseFloat(curr.Total) || 0), 0);
+                const totalItems = historial.reduce((acc, curr) => acc + (parseFloat(curr.Cantidad) || 0), 0);
+
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-[2rem] border border-outline shadow-sm overflow-hidden transition-all";
+                card.innerHTML = `
+                    <div class="p-5 flex justify-between items-center cursor-pointer" onclick="this.parentElement.classList.toggle('expanded')">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-2xl">storefront</span>
+                            </div>
+                            <div>
+                                <p class="font-black text-slate-800 uppercase text-sm leading-tight">${nombreP}</p>
+                                <p class="text-[10px] font-bold text-success">$${totalInvertido.toFixed(2)} acumulados</p>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-slate-300 arrow-icon transition-transform">expand_more</span>
+                    </div>
+                    
+                    <div class="collapse-content bg-slate-50/50 border-t border-dashed border-outline">
+                        <div class="p-5 space-y-3">
+                            <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Últimos Pedidos</p>
+                            ${historial.length > 0 ? historial.reverse().map(h => `
+                                <div class="flex justify-between items-center py-2 border-b border-outline/50 last:border-0">
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-700">${h.Fecha}</p>
+                                        <p class="text-[10px] text-slate-500">${h.Producto}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-xs font-black text-slate-900">${h.Cantidad} Items</p>
+                                        <p class="text-[10px] font-bold text-primary">$${parseFloat(h.Total).toFixed(2)}</p>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="text-[10px] italic text-slate-400">Sin compras registradas aún.</p>'}
+                        </div>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async function guardarProveedor() {
+        const btn = document.getElementById('btn-guardar');
+        const nuevo = {
+            "Nombre del Proveedor": document.getElementById('nombre').value,
+            "Contacto / Teléfono": document.getElementById('telefono').value,
+            "Categoría": document.getElementById('categoria').value
+        };
+        if(!nuevo["Nombre del Proveedor"]) return alert("Ingresa el nombre");
+        btn.disabled = true;
+        await DairyAPI.guardarDatos("Proveedores", nuevo);
+        location.reload();
+    }
+
+    window.onload = cargarData;
+</script>
+</body>
+</html>

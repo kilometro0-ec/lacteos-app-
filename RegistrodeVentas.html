@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Ventas - Lógica Láctea</title>
+    <title>Lógica Láctea - Ventas</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
@@ -14,53 +14,52 @@
     </script>
     <style>
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .input-field { @apply w-full bg-white border border-outline rounded-2xl p-4 mb-4 outline-none focus:border-primary transition-all; }
+        .input-field { width: 100%; background-color: white; border: 1px solid #e9d5ff; border-radius: 1.25rem; padding: 1rem; margin-bottom: 1rem; outline: none; }
+        .input-field:focus { border-color: #a21caf; }
     </style>
 </head>
-<body class="bg-background text-slate-900 min-h-screen px-5 py-8 pb-24">
+<body class="bg-background text-slate-900 min-h-screen flex flex-col px-5 py-8 pb-24">
 
     <header class="mb-8 flex justify-between items-center">
         <div>
-            <h1 class="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none italic">Ventas</h1>
-            <p class="text-primary font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Registro de salida</p>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none">Ventas</h1>
+            <p class="text-primary font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Lógica Láctea</p>
         </div>
         <button onclick="location.replace('index.html')" class="w-12 h-12 bg-white rounded-2xl border border-outline flex items-center justify-center text-primary shadow-sm active:scale-90 transition-transform">
             <span class="material-symbols-outlined font-bold text-2xl">home</span>
         </button>
     </header>
 
-    <main class="max-w-md mx-auto">
-        <div id="form-container">
-            <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Cliente</label>
-            <select id="cliente" class="input-field appearance-none">
-                <option value="">Seleccionar Cliente...</option>
-            </select>
+    <main class="flex-grow">
+        <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Seleccionar Cliente</label>
+        <select id="cliente" class="input-field appearance-none">
+            <option value="">Cargando clientes...</option>
+        </select>
 
-            <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Producto</label>
-            <select id="producto" class="input-field appearance-none" onchange="actualizarPrecio()">
-                <option value="">Seleccionar Producto...</option>
-            </select>
+        <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Producto</label>
+        <select id="producto" class="input-field appearance-none" onchange="actualizarPrecio()">
+            <option value="">Cargando inventario...</option>
+        </select>
 
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Cantidad</label>
-                    <input type="number" id="cantidad" class="input-field" placeholder="0" oninput="calcularTotal()">
-                </div>
-                <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Precio Unit.</label>
-                    <input type="text" id="precio" class="input-field bg-slate-50" readonly>
-                </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">Cantidad</label>
+                <input type="number" id="cantidad" class="input-field" placeholder="0" oninput="calcularTotal()">
             </div>
-
-            <div class="bg-primary/10 p-4 rounded-3xl mb-6 flex justify-between items-center">
-                <span class="text-primary font-black uppercase text-xs italic">Total Cobrar:</span>
-                <span id="total-final" class="text-2xl font-black text-primary">$0.00</span>
+            <div>
+                <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block tracking-widest">PVP Unitario</label>
+                <input type="text" id="precio" class="input-field bg-slate-50" readonly>
             </div>
-
-            <button onclick="registrarVenta()" id="btn-enviar" class="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-lg active:scale-95 transition-all uppercase tracking-widest italic">
-                Confirmar Venta
-            </button>
         </div>
+
+        <div class="bg-white border border-outline p-6 rounded-[2rem] mb-8 flex justify-between items-center shadow-sm">
+            <span class="text-sm font-black uppercase text-slate-400 italic">Total</span>
+            <span id="total-final" class="text-3xl font-black text-primary">$0.00</span>
+        </div>
+
+        <button id="btn-enviar" onclick="registrarVenta()" class="w-full bg-primary text-white font-black py-5 rounded-[2.5rem] shadow-lg active:scale-95 transition-all uppercase tracking-widest italic">
+            Registrar Venta
+        </button>
     </main>
 
     <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-50">
@@ -86,7 +85,7 @@
 
     <script>
         const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycby68_4A0MEp7EDNa89HGePvhWC56j3GyKx8RRIX3BGd-E_J6DG3sT-8DEXEYMXr_qMTrA/exec";
-        let inventarioData = [];
+        let inventario = [];
 
         async function cargarDatos() {
             try {
@@ -95,26 +94,20 @@
                     fetch(`${DAIRY_API_URL}?pestaña=Inventario`).then(r => r.json())
                 ]);
 
-                // Llenar Clientes
                 const selectC = document.getElementById('cliente');
-                cResp.forEach(c => {
-                    let opt = new Option(c.Nombre, c.Nombre);
-                    selectC.add(opt);
-                });
+                selectC.innerHTML = '<option value="">Seleccionar Cliente</option>';
+                cResp.forEach(c => selectC.add(new Option(c.Nombre, c.Nombre)));
 
-                // Llenar Productos
-                inventarioData = iResp;
+                inventario = iResp;
                 const selectP = document.getElementById('producto');
-                iResp.forEach(p => {
-                    let opt = new Option(p.Producto, p.Producto);
-                    selectP.add(opt);
-                });
-            } catch (e) { alert("Error al cargar datos"); }
+                selectP.innerHTML = '<option value="">Seleccionar Producto</option>';
+                iResp.forEach(p => selectP.add(new Option(p.Producto, p.Producto)));
+            } catch (e) { console.error("Error cargando datos"); }
         }
 
         function actualizarPrecio() {
             const prod = document.getElementById('producto').value;
-            const item = inventarioData.find(i => i.Producto === prod);
+            const item = inventario.find(i => i.Producto === prod);
             if (item) {
                 document.getElementById('precio').value = item.PVP || "0,00";
                 calcularTotal();
@@ -122,40 +115,35 @@
         }
 
         function calcularTotal() {
-            const cant = parseFloat(document.getElementById('cantidad').value) || 0;
-            const pvp = parseFloat(document.getElementById('precio').value.replace(',', '.')) || 0;
-            document.getElementById('total-final').innerText = `$${(cant * pvp).toFixed(2)}`;
+            const c = parseFloat(document.getElementById('cantidad').value) || 0;
+            const p = parseFloat(document.getElementById('precio').value.replace(',', '.')) || 0;
+            document.getElementById('total-final').innerText = `$${(c * p).toFixed(2)}`;
         }
 
         async function registrarVenta() {
             const btn = document.getElementById('btn-enviar');
             const data = {
                 pestaña: "Ventas",
-                ID_Venta: "V-" + Date.now().toString().slice(-6),
+                ID_Venta: "V-" + Math.floor(Math.random() * 900000 + 100000),
                 Cliente: document.getElementById('cliente').value,
                 Producto: document.getElementById('producto').value,
                 Cantidad: document.getElementById('cantidad').value,
-                Precio_PVP: document.getElementById('precio').value,
-                Fecha_Entrega: new Date().toLocaleDateString()
+                Precio_PVP: document.getElementById('precio').value
             };
 
-            if (!data.Cliente || !data.Producto || !data.Cantidad) return alert("Completa los datos");
+            if (!data.Cliente || !data.Producto || !data.Cantidad) return alert("Faltan datos");
 
             btn.disabled = true;
-            btn.innerText = "REGISTRANDO...";
+            btn.innerText = "PROCESANDO...";
 
             try {
-                await fetch(DAIRY_API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(data)
-                });
-                alert("Venta registrada con éxito");
-                location.replace('index.html'); // Vuelve al inicio y refresca badges
+                await fetch(DAIRY_API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+                alert("Venta registrada");
+                location.replace('index.html');
             } catch (e) {
-                alert("Error al guardar");
+                alert("Error");
                 btn.disabled = false;
-                btn.innerText = "Confirmar Venta";
+                btn.innerText = "Registrar Venta";
             }
         }
 

@@ -42,15 +42,16 @@
         .fade-in-sutil { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* ESTADO DE CARGA: Deshabilita clics y baja opacidad */
-        .loading-state { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
+        .loading-state { opacity: 0.4; pointer-events: none; filter: grayscale(1); transition: all 0.5s ease; }
+        
+        .active-nav { color: #a21caf !important; }
+        .active-nav .icon-box { background-color: #f5f3ff !important; transform: translateY(-4px) !important; }
 
         input[type="date"] {
             -webkit-appearance: listbox !important; 
             appearance: none !important;
             background-color: #ffffff !important;
             color: #000000 !important;
-            text-transform: uppercase;
         }
     </style>
 </head>
@@ -59,120 +60,158 @@
 <header class="h-16 bg-white/80 backdrop-blur-md border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
     <div>
         <h1 class="text-xl font-black text-primary tracking-tighter uppercase">Ventas</h1>
-        <p id="estado-carga" class="text-[8px] font-bold text-secondary animate-pulse uppercase">Cargando datos...</p>
+        <p id="estado-carga" class="text-[8px] font-black text-secondary animate-pulse uppercase">Sincronizando...</p>
     </div>
     
     <div class="flex items-center gap-2">
-        <button onclick="location.reload()" class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-primary/40 hover:text-primary transition-all">
+        <button onclick="location.reload()" class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-primary/40">
             <span class="material-symbols-outlined">sync</span>
         </button>
-        <button onclick="location.replace('index.html')" class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform">
+        <button onclick="window.location.href='./DashboardLacteo.html'" class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg active:scale-90">
             <span class="material-symbols-outlined">home</span>
         </button>
     </div>
 </header>
 
-<main id="main-content" class="mt-6 px-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 loading-state">
-    <div class="lg:col-span-7 space-y-6">
-        <section class="card-sutil p-6">
-            <div id="vista-seleccion-cliente" class="fade-in-sutil">
-                <div class="flex justify-between items-center mb-4 px-2">
-                    <span class="text-[10px] font-black text-primary uppercase tracking-widest">Seleccionar Cliente</span>
-                    <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-black text-white bg-secondary px-4 py-2 rounded-full shadow-sm">+ NUEVO</button>
-                </div>
-                <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold">
-                    <option value="">-- Buscando... --</option>
-                </select>
-            </div>
-
-            <div id="vista-nuevo-cliente" class="hidden space-y-4 fade-in-sutil">
-                <div class="flex justify-between items-center px-2">
-                    <h2 class="text-sm font-black text-secondary uppercase">Nuevo Registro</h2>
-                    <button onclick="alternarFormularioCliente(false)" class="text-slate-400"><span class="material-symbols-outlined">close</span></button>
-                </div>
-                <div class="space-y-3">
-                    <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="reg-ci" placeholder="CI / RUC" class="input-sutil">
-                        <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
-                    </div>
-                    <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
-                </div>
-                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4">GUARDAR</button>
-            </div>
-        </section>
-
-        <div class="px-1">
-            <div class="relative group">
-                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <span class="material-symbols-outlined text-primary opacity-40 group-focus-within:opacity-100 transition-opacity">search</span>
-                </div>
-                <input type="text" id="buscarProducto" oninput="filtrarProductos()" 
-                       placeholder="Buscar sabor o producto..." 
-                       class="input-sutil pl-12 border-2 border-outline focus:border-primary font-bold text-lg">
+<main id="main-content" class="mt-6 px-4 max-w-6xl mx-auto loading-state">
+    
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="card-sutil p-5 flex flex-col items-center justify-center text-center border-b-4 border-b-primary">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Pedidos Pendientes</span>
+            <div class="flex items-baseline gap-1">
+                <span id="card-pedidos-pendientes" class="text-3xl font-black text-primary tracking-tighter">0</span>
+                <span class="text-[10px] font-bold text-primary/40 uppercase">Ventas</span>
             </div>
         </div>
-        
-        <section id="contenedor-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></section>
+        <div class="card-sutil p-5 flex flex-col items-center justify-center text-center border-b-4 border-b-secondary">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Productos por Entregar</span>
+            <div class="flex items-baseline gap-1">
+                <span id="card-productos-total" class="text-3xl font-black text-secondary tracking-tighter">0</span>
+                <span class="text-[10px] font-bold text-secondary/40 uppercase">Items</span>
+            </div>
+        </div>
     </div>
 
-    <div class="lg:col-span-5">
-        <section class="card-sutil overflow-hidden sticky top-24 border-2 border-primary/5 shadow-xl">
-            <div class="bg-gradient-to-br from-primary to-purple-700 p-6 text-white">
-                <p class="text-[10px] font-black opacity-60 uppercase mb-1">Resumen de Venta</p>
-                <h2 id="cliente-resumen" class="text-2xl font-black uppercase truncate tracking-tighter mb-4">SIN SELECCIONAR</h2>
-                
-                <div class="flex justify-between items-end gap-2">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-[9px] font-black opacity-80 uppercase">Pedido #</span>
-                        <span id="num-orden" class="text-[10px] bg-white/20 px-3 py-2 rounded-lg font-mono font-bold">---</span>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 space-y-6">
+            <section class="card-sutil p-6">
+                <div id="vista-seleccion-cliente" class="fade-in-sutil">
+                    <div class="flex justify-between items-center mb-4 px-2">
+                        <span class="text-[10px] font-black text-primary uppercase tracking-widest">Seleccionar Cliente</span>
+                        <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-black text-white bg-secondary px-4 py-2 rounded-full shadow-sm">+ NUEVO</button>
                     </div>
-                    <div class="relative flex-1 max-w-[160px]">
-                        <label for="fecha-entrega" class="text-[9px] font-black opacity-90 uppercase mb-1 block">FECHA ENTREGA:</label>
-                        <input type="date" id="fecha-entrega" class="w-full font-bold text-[14px] py-2 px-3 rounded-xl outline-none text-black">
+                    <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold">
+                        <option value="">-- Cargando... --</option>
+                    </select>
+                </div>
+
+                <div id="vista-nuevo-cliente" class="hidden space-y-4 fade-in-sutil">
+                    <div class="flex justify-between items-center px-2">
+                        <h2 class="text-sm font-black text-secondary uppercase">Nuevo Registro</h2>
+                        <button onclick="alternarFormularioCliente(false)" class="text-slate-400"><span class="material-symbols-outlined">close</span></button>
                     </div>
+                    <div class="space-y-3">
+                        <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="text" id="reg-ci" placeholder="CI / RUC" class="input-sutil">
+                            <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
+                        </div>
+                        <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
+                    </div>
+                    <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4">GUARDAR</button>
+                </div>
+            </section>
+
+            <div class="px-1">
+                <div class="relative group">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <span class="material-symbols-outlined text-primary opacity-40">search</span>
+                    </div>
+                    <input type="text" id="buscarProducto" oninput="filtrarProductos()" 
+                           placeholder="Buscar sabor o producto..." 
+                           class="input-sutil pl-12 border-2 border-outline focus:border-primary font-bold text-lg">
                 </div>
             </div>
             
-            <div class="p-6 space-y-6">
-                <div id="lista-carrito" class="space-y-3 max-h-60 overflow-y-auto pr-1">
-                    <div id="carrito-vacio" class="text-center py-8">
-                        <p class="text-slate-300 text-xs font-bold italic">No hay productos seleccionados</p>
+            <section id="contenedor-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></section>
+        </div>
+
+        <div class="lg:col-span-5">
+            <section class="card-sutil overflow-hidden sticky top-24 border-2 border-primary/5 shadow-xl">
+                <div class="bg-gradient-to-br from-primary to-purple-700 p-6 text-white">
+                    <p class="text-[10px] font-black opacity-60 uppercase mb-1">Resumen de Venta</p>
+                    <h2 id="cliente-resumen" class="text-2xl font-black uppercase truncate tracking-tighter mb-4">SIN SELECCIONAR</h2>
+                    
+                    <div class="flex justify-between items-end gap-2">
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[9px] font-black opacity-80 uppercase">Pedido #</span>
+                            <span id="num-orden" class="text-[10px] bg-white/20 px-3 py-2 rounded-lg font-mono font-bold">---</span>
+                        </div>
+                        <div class="relative flex-1 max-w-[160px]">
+                            <label for="fecha-entrega" class="text-[9px] font-black opacity-90 uppercase mb-1 block">FECHA ENTREGA:</label>
+                            <input type="date" id="fecha-entrega" class="w-full font-bold text-[14px] py-2 px-3 rounded-xl outline-none text-black">
+                        </div>
                     </div>
                 </div>
                 
-                <div class="flex justify-between items-end border-t border-purple-50 pt-4">
-                    <span class="text-xs font-black text-slate-400 uppercase">Total</span>
-                    <span id="total-venta" class="text-4xl font-black text-slate-900 tracking-tighter">$0.00</span>
+                <div class="p-6 space-y-6">
+                    <div id="lista-carrito" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                        <div id="carrito-vacio" class="text-center py-8">
+                            <p class="text-slate-300 text-xs font-bold italic">No hay productos seleccionados</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-end border-t border-purple-50 pt-4">
+                        <span class="text-xs font-black text-slate-400 uppercase">Total</span>
+                        <span id="total-venta" class="text-4xl font-black text-slate-900 tracking-tighter">$0.00</span>
+                    </div>
+                    <div id="contenedor-boton-finalizar">
+                        <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100">
+                            <span class="material-symbols-outlined text-xl">rocket_launch</span> CONFIRMAR PEDIDO
+                        </button>
+                    </div>
                 </div>
-                
-                <div id="contenedor-boton-finalizar">
-                    <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta py-5 text-lg shadow-xl shadow-pink-100">
-                        <span class="material-symbols-outlined text-xl">rocket_launch</span> CONFIRMAR PEDIDO
-                    </button>
-                </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </div>
 </main>
 
-<nav class="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 pb-safe shadow-[0_-4px_10px,rgba(0,0,0,0.05)] z-50">
-    <div class="flex justify-around items-center h-16 w-full px-2">
-        <button onclick="location.replace('index.html')" class="flex flex-col items-center text-slate-400 w-full">
-            <span class="material-symbols-outlined">dashboard</span>
-            <span class="text-[10px] font-medium uppercase">Inicio</span>
+<nav class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-purple-100 pb-6 pt-3 shadow-[0_-10px_25px_-5px_rgba(0,0,0,0.1)] z-[100] px-2">
+    <div class="flex justify-around items-center max-w-lg mx-auto">
+        <button onclick="window.location.href='./DashboardLacteo.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="dashboard">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
+                <span class="material-symbols-outlined text-[26px]">home</span>
+            </div>
+            <span class="text-[9px] font-black uppercase mt-1">Inicio</span>
         </button>
-        <button onclick="location.replace('RegistrodeVentas.html')" class="flex flex-col items-center text-primary w-full">
-            <span class="material-symbols-outlined font-variation-fill">shopping_cart</span>
-            <span class="text-[10px] font-black uppercase">Ventas</span>
+        <button onclick="window.location.href='./RegistrodeVentas.html'" class="nav-link text-gray-400 flex flex-col items-center group active-nav" data-path="ventas">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
+                <span class="material-symbols-outlined text-[26px]">receipt_long</span>
+            </div>
+            <span class="text-[9px] font-black uppercase mt-1">Ventas</span>
         </button>
-        <button onclick="location.replace('GestióndeDespachos.html')" class="flex flex-col items-center text-slate-400 w-full">
-            <span class="material-symbols-outlined">local_shipping</span>
-            <span class="text-[10px] font-medium uppercase">Ruta</span>
+        <button onclick="window.location.href='./PedidosProveedor.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="pedidos">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
+                <span class="material-symbols-outlined text-[26px]">shopping_cart_checkout</span>
+            </div>
+            <span class="text-[9px] font-black uppercase mt-1">Pedidos</span>
         </button>
-        <button onclick="location.replace('ControldeInventario.html')" class="flex flex-col items-center text-slate-400 w-full">
-            <span class="material-symbols-outlined">package_2</span>
-            <span class="text-[10px] font-medium uppercase">Stock</span>
+        <button onclick="window.location.href='./GestiondeClientes.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="clientes">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
+                <span class="material-symbols-outlined text-[26px]">group</span>
+            </div>
+            <span class="text-[9px] font-black uppercase mt-1">Clientes</span>
+        </button>
+        <button onclick="window.location.href='./ControldeInventario.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="inventario">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
+                <span class="material-symbols-outlined text-[26px]">inventory_2</span>
+            </div>
+            <span class="text-[9px] font-black uppercase mt-1">Stock</span>
+        </button>
+        <button onclick="window.location.href='./GestióndeDespachos.html'" class="nav-link text-gray-400 flex flex-col items-center group" data-path="despachos">
+            <div class="icon-box p-2 rounded-2xl transition-all duration-300 ease-out active:scale-75">
+                <span class="material-symbols-outlined text-[26px]">local_shipping</span>
+            </div>
+            <span class="text-[9px] font-black uppercase mt-1">Ruta</span>
         </button>
     </div>
 </nav>
@@ -187,9 +226,22 @@ async function iniciar() {
     document.getElementById('fecha-entrega').value = new Date().toISOString().split('T')[0];
 
     try {
-        const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
+        const [cl, pr, vnt] = await Promise.all([
+            DairyAPI.obtenerDatos("Clientes"), 
+            DairyAPI.obtenerDatos("Inventario"),
+            DairyAPI.obtenerDatos("Ventas")
+        ]);
+        
         clientesData = cl; productosData = pr;
         
+        // CÁLCULO DE INDICADORES (VENTAS PENDIENTES)
+        const pendientes = vnt.filter(v => v.Estado === "PENDIENTE");
+        const idsUnicos = [...new Set(pendientes.map(v => v.ID_Venta))].length;
+        const totalProductos = pendientes.reduce((acc, v) => acc + (parseInt(v.Cantidad) || 0), 0);
+
+        document.getElementById('card-pedidos-pendientes').innerText = idsUnicos;
+        document.getElementById('card-productos-total').innerText = totalProductos;
+
         const sel = document.getElementById('select-cliente');
         sel.innerHTML = '<option value="">-- Buscar cliente --</option>';
         cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
@@ -198,7 +250,7 @@ async function iniciar() {
         
         renderizarProductos();
 
-        // ACTIVAR PANEL Y QUITAR MENSAJE DE CARGA
+        // HABILITAR INTERFAZ
         document.getElementById('main-content').classList.remove('loading-state');
         document.getElementById('estado-carga').innerText = "Sincronizado";
         document.getElementById('estado-carga').classList.remove('animate-pulse');

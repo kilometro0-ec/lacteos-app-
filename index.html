@@ -14,38 +14,64 @@
     </script>
     <style>
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .grid-button { position: relative; transition: all 0.2s ease; cursor: pointer; }
-        .grid-button:active { transform: scale(0.95); filter: brightness(0.9); }
+        
+        /* --- ANIMACIÓN DE PRESIÓN --- */
+        .grid-button { 
+            position: relative; 
+            transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), filter 0.15s ease;
+            cursor: pointer;
+            overflow: hidden; /* Para el efecto de brillo interno */
+        }
+
+        .grid-button:active { 
+            transform: scale(0.92); /* Se encoge al presionar */
+            filter: brightness(0.9);
+        }
+
+        /* Efecto de Brillo Sutil al tocar */
+        .grid-button::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0);
+            transition: background 0.2s ease;
+        }
+        .grid-button:active::after {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
         .badge {
             position: absolute; top: -5px; right: -5px;
             background-color: #ef4444; color: white;
-            font-size: 9px; font-weight: 800;
-            min-width: 22px; height: 22px; padding: 0 4px;
-            border-radius: 11px; display: none;
+            font-size: 10px; font-weight: 800;
+            min-width: 24px; height: 24px; padding: 0 6px;
+            border-radius: 12px; display: none;
             align-items: center; justify-content: center;
             border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             z-index: 10;
         }
+        
+        .loading-overlay { opacity: 0.4; pointer-events: none; filter: blur(2px); }
     </style>
 </head>
 <body class="bg-background text-slate-900 min-h-screen flex flex-col px-5 py-8">
 
     <header class="mb-8 flex justify-between items-start">
-        <div>
+        <div class="animate-[fadeIn_0.5s_ease-out]">
             <h1 class="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none">Lógica Láctea</h1>
-            <p id="saludo" class="text-primary font-bold text-[10px] uppercase tracking-[0.2em] mt-1 italic">Cargando...</p>
+            <p id="saludo" class="text-primary font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Sincronizando...</p>
         </div>
         <button onclick="window.location.href='DashboardLacteo.html'" class="w-12 h-12 bg-white rounded-2xl border border-outline flex items-center justify-center text-primary shadow-sm active:scale-90 transition-transform">
             <span class="material-symbols-outlined font-bold text-2xl">analytics</span>
         </button>
     </header>
 
-    <main id="main-panel" class="grid grid-cols-2 gap-4 flex-grow content-start">
+    <main id="main-panel" class="grid grid-cols-2 gap-4 flex-grow content-start transition-all duration-700 loading-overlay">
         
         <button onclick="window.location.href='RegistrodeVentas.html'" class="grid-button col-span-2 bg-primary p-6 rounded-[2.5rem] flex items-center justify-between shadow-lg text-white">
             <div class="flex items-center gap-4">
                 <div class="bg-white/20 p-3 rounded-2xl"><span class="material-symbols-outlined text-3xl font-bold">add_shopping_cart</span></div>
-                <span class="text-xl font-black uppercase tracking-tight italic">Registrar Ventas</span>
+                <span class="text-xl font-black uppercase italic">Registrar Ventas</span>
             </div>
             <div id="badge-ventas" class="badge">0</div>
         </button>
@@ -53,7 +79,7 @@
         <button onclick="window.location.href='PedidosProveedor.html'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-2 shadow-sm">
             <div id="badge-pedidos" class="badge">0</div>
             <span class="material-symbols-outlined text-3xl text-amber-500">inventory</span>
-            <span class="text-[9px] font-black uppercase text-slate-500 tracking-tighter">Pedidos Prov.</span>
+            <span class="text-[9px] font-black uppercase text-slate-500 tracking-tighter text-center">Pedidos Prov.</span>
         </button>
 
         <button onclick="window.location.href='GestiondeProveedores.html'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-2 shadow-sm">
@@ -62,8 +88,8 @@
         </button>
 
         <button onclick="window.location.href='GestiondeClientes.html'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-2 shadow-sm">
-            <span class="material-symbols-outlined text-3xl text-blue-500">person_search</span>
-            <span class="text-[9px] font-black uppercase text-slate-500 tracking-tighter">Clientes</span>
+            <span class="material-symbols-outlined text-3xl text-blue-500 font-variation-fill">person_search</span>
+            <span class="text-[9px] font-black uppercase text-slate-500 tracking-tighter text-center">Clientes</span>
         </button>
 
         <button onclick="window.location.href='ControldeInventario.html'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-2 shadow-sm">
@@ -75,7 +101,7 @@
         <button onclick="window.location.href='DashboardLacteo.html#finanzas'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-2 shadow-sm">
             <div id="badge-finanzas" class="badge">0</div>
             <span class="material-symbols-outlined text-3xl text-rose-500 font-variation-fill">payments</span>
-            <span class="text-[9px] font-black uppercase text-slate-500 tracking-tighter">Finanzas</span>
+            <span class="text-[9px] font-black uppercase text-slate-500 tracking-tighter italic">Finanzas</span>
         </button>
 
         <button onclick="window.location.href='DashboardLacteo.html#perfil'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-2 shadow-sm">
@@ -85,62 +111,67 @@
 
         <button onclick="window.location.href='GestióndeDespachos.html'" class="grid-button col-span-2 bg-slate-900 text-white p-5 rounded-[2.5rem] flex items-center justify-center gap-4 shadow-xl mt-4 border-b-4 border-success">
             <div id="badge-ruta" class="badge">0</div>
-            <span class="material-symbols-outlined text-success">local_shipping</span>
+            <span class="material-symbols-outlined text-success font-variation-fill">local_shipping</span>
             <span class="text-xs font-black uppercase tracking-[0.2em]">Ruta de Entrega</span>
         </button>
 
     </main>
 
     <footer class="mt-8 text-center">
-        <p class="text-[8px] font-bold text-slate-300 uppercase tracking-[0.4em]">Quito • Versión Operativa 2026</p>
+        <p class="text-[8px] font-bold text-slate-300 uppercase tracking-[0.4em]">Quito • 2026</p>
     </footer>
 
     <script>
-        // --- CLIENTE API INTEGRADO ---
         const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycby68_4A0MEp7EDNa89HGePvhWC56j3GyKx8RRIX3BGd-E_J6DG3sT-8DEXEYMXr_qMTrA/exec";
 
         async function obtenerDatos(pestaña) {
             try {
                 const response = await fetch(`${DAIRY_API_URL}?pestaña=${pestaña}`);
-                if (!response.ok) return [];
                 return await response.json();
             } catch (e) { return []; }
         }
 
-        // --- LÓGICA DE NOTIFICACIONES ---
-        async function actualizarNotificaciones() {
+        async function sincronizarApp() {
             try {
                 const [ventas, inventario] = await Promise.all([
                     obtenerDatos("Ventas"),
                     obtenerDatos("Inventario")
                 ]);
 
-                // 1. RUTA: Pedidos con estado PENDIENTE
-                const pendientes = ventas.filter(v => v.Estado === "PENDIENTE");
-                mostrarBadge("badge-ruta", pendientes.length);
+                // 1. RUTA: Número de pedidos PENDIENTES (Filas)
+                const pedidosPendientes = ventas.filter(v => v.Estado === "PENDIENTE");
+                mostrarBadge("badge-ruta", pedidosPendientes.length);
 
-                // 2. FINANZAS: Suma total de valores PENDIENTES
-                const totalARecaudar = pendientes.reduce((acc, v) => {
-                    let val = parseFloat(String(v.Total).replace(',', '.')) || 0;
+                // 2. FINANZAS: Suma de Totales PENDIENTES con decimales exactos
+                const totalFinanzas = pedidosPendientes.reduce((acc, v) => {
+                    let val = parseFloat(String(v.Total || "0").replace(',', '.')) || 0;
                     return acc + val;
                 }, 0);
-                mostrarBadge("badge-finanzas", totalARecaudar > 0 ? `$${Math.round(totalARecaudar)}` : 0);
+                
+                // Formato $X.XX sin redondear el valor real
+                if (totalFinanzas > 0) {
+                    mostrarBadge("badge-finanzas", `$${totalFinanzas.toFixed(2)}`);
+                }
 
-                // 3. STOCK: Alerta productos < 5 unidades
-                const stockCritico = inventario.filter(i => {
-                    let stock = parseFloat(String(i["Stock Inicial"]).replace(',', '.')) || 0;
-                    return stock < 5;
+                // 3. STOCK: Alerta productos bajos
+                const stockBajo = inventario.filter(i => {
+                    let s = parseFloat(String(i["Stock Inicial"]).replace(',', '.')) || 0;
+                    return s < 5;
                 }).length;
-                mostrarBadge("badge-stock", stockCritico > 0 ? "!" : 0);
+                mostrarBadge("badge-stock", stockBajo > 0 ? "!" : 0);
+
+                // Desbloqueo de interfaz
+                document.getElementById('main-panel').classList.remove('loading-overlay');
+                actualizarSaludo();
 
             } catch (error) {
-                console.warn("Error en la sincronización de badges.");
+                document.getElementById('main-panel').classList.remove('loading-overlay');
             }
         }
 
         function mostrarBadge(id, valor) {
             const el = document.getElementById(id);
-            if (el && (valor > 0 || valor === "!")) {
+            if (el && (valor > 0 || valor !== 0)) {
                 el.innerText = valor;
                 el.style.display = "flex";
             } else if (el) {
@@ -148,16 +179,15 @@
             }
         }
 
-        // Saludo Dinámico y Ejecución
-        (function() {
+        function actualizarSaludo() {
             const hr = new Date().getHours();
-            const saludoEl = document.getElementById('saludo');
-            if (hr < 12) saludoEl.innerText = "¡Buenos días, Darwin!";
-            else if (hr < 18) saludoEl.innerText = "¡Buenas tardes!";
-            else saludoEl.innerText = "¡Buenas noches!";
-            
-            actualizarNotificaciones();
-        })();
+            const s = document.getElementById('saludo');
+            if (hr < 12) s.innerText = "¡Buenos días, Darwin!";
+            else if (hr < 18) s.innerText = "¡Buenas tardes!";
+            else s.innerText = "¡Buenas noches!";
+        }
+
+        sincronizarApp();
     </script>
 </body>
 </html>

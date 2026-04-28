@@ -42,6 +42,9 @@
         .fade-in-sutil { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* ESTADO DE CARGA: Deshabilita clics y baja opacidad */
+        .loading-state { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
+
         input[type="date"] {
             -webkit-appearance: listbox !important; 
             appearance: none !important;
@@ -49,23 +52,27 @@
             color: #000000 !important;
             text-transform: uppercase;
         }
-
-        .active-nav { color: #a21caf !important; }
     </style>
 </head>
 <body class="pb-44"> 
 
 <header class="h-16 bg-white/80 backdrop-blur-md border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
-    <div class="flex items-center gap-3 cursor-pointer" onclick="location.replace('index.html')">
-        <div class="w-10 h-10 rounded-2xl bg-purple-100 flex items-center justify-center text-primary font-bold">
-            <span class="material-symbols-outlined">home</span>
-        </div>
+    <div>
         <h1 class="text-xl font-black text-primary tracking-tighter uppercase">Ventas</h1>
+        <p id="estado-carga" class="text-[8px] font-bold text-secondary animate-pulse uppercase">Cargando datos...</p>
     </div>
-    <button onclick="location.reload()" class="material-symbols-outlined text-primary/30 hover:text-primary transition-all">sync</button>
+    
+    <div class="flex items-center gap-2">
+        <button onclick="location.reload()" class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-primary/40 hover:text-primary transition-all">
+            <span class="material-symbols-outlined">sync</span>
+        </button>
+        <button onclick="location.replace('index.html')" class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg active:scale-90 transition-transform">
+            <span class="material-symbols-outlined">home</span>
+        </button>
+    </div>
 </header>
 
-<main class="mt-6 px-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+<main id="main-content" class="mt-6 px-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 loading-state">
     <div class="lg:col-span-7 space-y-6">
         <section class="card-sutil p-6">
             <div id="vista-seleccion-cliente" class="fade-in-sutil">
@@ -74,7 +81,7 @@
                     <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-black text-white bg-secondary px-4 py-2 rounded-full shadow-sm">+ NUEVO</button>
                 </div>
                 <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold">
-                    <option value="">-- Buscar cliente --</option>
+                    <option value="">-- Buscando... --</option>
                 </select>
             </div>
 
@@ -120,7 +127,6 @@
                         <span class="text-[9px] font-black opacity-80 uppercase">Pedido #</span>
                         <span id="num-orden" class="text-[10px] bg-white/20 px-3 py-2 rounded-lg font-mono font-bold">---</span>
                     </div>
-                    
                     <div class="relative flex-1 max-w-[160px]">
                         <label for="fecha-entrega" class="text-[9px] font-black opacity-90 uppercase mb-1 block">FECHA ENTREGA:</label>
                         <input type="date" id="fecha-entrega" class="w-full font-bold text-[14px] py-2 px-3 rounded-xl outline-none text-black">
@@ -174,14 +180,6 @@
 <script>
 let carrito = {}; let productosData = []; let clientesData = []; let idOrdenActual = "";
 
-function filtrarProductos() {
-    const termino = document.getElementById('buscarProducto').value.toLowerCase();
-    document.querySelectorAll('#contenedor-productos > div').forEach(card => {
-        const nombre = card.querySelector('h4').innerText.toLowerCase();
-        card.style.display = nombre.includes(termino) ? "flex" : "none";
-    });
-}
-
 async function iniciar() {
     const d = new Date();
     idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
@@ -191,13 +189,24 @@ async function iniciar() {
     try {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
         clientesData = cl; productosData = pr;
+        
         const sel = document.getElementById('select-cliente');
         sel.innerHTML = '<option value="">-- Buscar cliente --</option>';
         cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
         });
+        
         renderizarProductos();
-    } catch(e) { console.error(e); }
+
+        // ACTIVAR PANEL Y QUITAR MENSAJE DE CARGA
+        document.getElementById('main-content').classList.remove('loading-state');
+        document.getElementById('estado-carga').innerText = "Sincronizado";
+        document.getElementById('estado-carga').classList.remove('animate-pulse');
+        
+    } catch(e) { 
+        console.error(e);
+        document.getElementById('estado-carga').innerText = "Error de conexión";
+    }
 }
 
 function renderizarProductos() {
@@ -303,6 +312,14 @@ function alternarFormularioCliente(m) {
 
 function actualizarNombreCarrito() { 
     document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; 
+}
+
+function filtrarProductos() {
+    const termino = document.getElementById('buscarProducto').value.toLowerCase();
+    document.querySelectorAll('#contenedor-productos > div').forEach(card => {
+        const nombre = card.querySelector('h4').innerText.toLowerCase();
+        card.style.display = nombre.includes(termino) ? "flex" : "none";
+    });
 }
 
 window.onload = iniciar;

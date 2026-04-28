@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Lógica Láctea - Pedidos a Proveedor</title>
+    <title>Lógica Láctea - Gestión de Proveedores</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
@@ -16,6 +16,7 @@
                     colors: {
                         primary: "#a21caf",
                         secondary: "#db2777",
+                        success: "#16a34a",
                         background: "#faf5ff",
                         outline: "#e9d5ff",
                     }
@@ -26,8 +27,8 @@
 
     <style>
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .active-nav { color: #a21caf !important; }
-        .active-nav .icon-box { background-color: #f5f3ff !important; transform: translateY(-8px); shadow: 0 10px 15px -3px rgba(162, 28, 175, 0.2); }
+        .rotate-animation { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     </style>
 </head>
 
@@ -36,128 +37,152 @@
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
     <div class="flex items-center gap-3" onclick="window.location.href='DashboardLacteo.html'">
         <span class="material-symbols-outlined text-primary">arrow_back_ios</span>
-        <h1 class="text-lg font-extrabold text-primary uppercase tracking-tighter">Nuevo Pedido</h1>
+        <h1 class="text-lg font-extrabold text-primary uppercase tracking-tighter">Proveedores</h1>
     </div>
+    <button onclick="location.reload()" class="text-primary">
+        <span class="material-symbols-outlined">refresh</span>
+    </button>
 </header>
 
 <main class="pt-20 px-4 max-w-lg mx-auto space-y-6">
     
-    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm space-y-4">
-        <div class="space-y-2">
-            <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Proveedor</label>
-            <input type="text" id="proveedor" placeholder="Nombre del distribuidor" 
-                class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
-        </div>
-
-        <div class="space-y-2">
-            <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Producto</label>
-            <select id="producto" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
-                <option value="">Seleccionar producto...</option>
-                </select>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Cantidad</label>
-                <input type="number" id="cantidad" placeholder="0" 
-                    class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-md space-y-4">
+        <h2 class="text-xs font-black uppercase tracking-[0.2em] text-primary mb-2 flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">person_add</span> Registrar Nuevo
+        </h2>
+        
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Nombre del Proveedor / Empresa</label>
+                <input type="text" id="nombre" placeholder="Ej: Distribuidora del Valle" 
+                    class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
             </div>
-            <div class="space-y-2">
-                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Costo Unit.</label>
-                <input type="number" id="costo" placeholder="0.00" step="0.01"
-                    class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
-            </div>
-        </div>
 
-        <button onclick="registrarPedido()" id="btn-registrar"
-            class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg shadow-purple-200 active:scale-95 transition-all flex justify-center items-center gap-2">
-            <span class="material-symbols-outlined">local_mall</span> GUARDAR PEDIDO
-        </button>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Teléfono</label>
+                    <input type="tel" id="telefono" placeholder="099..." 
+                        class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Categoría</label>
+                    <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
+                        <option value="Lácteos">Lácteos</option>
+                        <option value="Insumos">Insumos</option>
+                        <option value="Empaques">Empaques</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                </div>
+            </div>
+
+            <button onclick="guardarProveedor()" id="btn-guardar"
+                class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg shadow-purple-200 active:scale-95 transition-all flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined">save</span> GUARDAR PROVEEDOR
+            </button>
+        </div>
     </section>
 
-    <section class="space-y-3">
-        <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 ml-2">Últimos Pedidos</h3>
-        <div id="lista-pedidos" class="space-y-3">
-            </div>
+    <section class="space-y-4">
+        <div class="relative">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+            <input type="text" id="buscador" onkeyup="filtrarProveedores()" placeholder="Buscar proveedor..." 
+                class="w-full border-none bg-white rounded-2xl py-4 pl-12 pr-4 shadow-sm border border-outline focus:ring-2 focus:ring-primary">
+        </div>
+
+        <div id="lista-proveedores" class="grid grid-cols-1 gap-3">
+            <div class="text-center py-10 text-slate-400 font-bold italic">Sincronizando con Google Sheets...</div>
+        </div>
     </section>
 </main>
 
 <div id="menu-container"></div>
 
 <script>
-async function cargarConfiguracion() {
+let dataProveedores = [];
+
+async function cargarPagina() {
     try {
-        // Cargar menú lateral/inferior
+        // Cargar Menú
         const resMenu = await fetch('menu.html');
         document.getElementById('menu-container').innerHTML = await resMenu.text();
 
-        // Cargar productos para el select
-        const inventario = await DairyAPI.obtenerDatos("Inventario");
-        const select = document.getElementById('producto');
-        inventario.forEach(p => {
-            select.innerHTML += `<option value="${p.Producto}">${p.Producto}</option>`;
-        });
-
-        actualizarLista();
-    } catch (e) { console.error(e); }
-}
-
-async function registrarPedido() {
-    const btn = document.getElementById('btn-registrar');
-    const prov = document.getElementById('proveedor').value;
-    const prod = document.getElementById('producto').value;
-    const cant = parseFloat(document.getElementById('cantidad').value);
-    const cost = parseFloat(document.getElementById('costo').value);
-
-    if(!prov || !prod || !cant) return alert("Completa los datos");
-
-    btn.disabled = true;
-    btn.innerHTML = "Procesando...";
-
-    const pedido = {
-        Fecha: new Date().toLocaleDateString(),
-        Proveedor: prov,
-        Producto: prod,
-        Cantidad: cant,
-        Costo_Unitario: cost,
-        Total: (cant * cost).toFixed(2),
-        Estado: "Recibido"
-    };
-
-    try {
-        await DairyAPI.guardarDatos("Compras", pedido);
-        alert("Pedido registrado y stock actualizado");
-        location.reload();
-    } catch (e) {
-        alert("Error al guardar");
-        btn.disabled = false;
-        btn.innerHTML = "GUARDAR PEDIDO";
+        // Obtener Proveedores
+        dataProveedores = await DairyAPI.obtenerDatos("Proveedores");
+        renderizarProveedores(dataProveedores);
+    } catch (e) { 
+        console.error(e);
+        document.getElementById('lista-proveedores').innerHTML = "Error al cargar datos.";
     }
 }
 
-async function actualizarLista() {
-    const contenedor = document.getElementById('lista-pedidos');
-    try {
-        const compras = await DairyAPI.obtenerDatos("Compras");
-        contenedor.innerHTML = "";
-        compras.reverse().slice(0, 5).forEach(c => {
-            contenedor.innerHTML += `
-                <div class="bg-white p-4 rounded-3xl border border-outline flex justify-between items-center">
+function renderizarProveedores(lista) {
+    const contenedor = document.getElementById('lista-proveedores');
+    contenedor.innerHTML = "";
+    
+    if(lista.length === 0) {
+        contenedor.innerHTML = `<p class="text-center py-4 text-slate-400">No hay proveedores registrados.</p>`;
+        return;
+    }
+
+    lista.forEach(p => {
+        contenedor.innerHTML += `
+            <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex justify-between items-center group active:bg-slate-50 transition-colors">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-2xl">storefront</span>
+                    </div>
                     <div>
-                        <p class="text-[10px] font-black text-primary uppercase">${c.Proveedor}</p>
-                        <p class="font-bold text-slate-700">${c.Producto}</p>
-                        <p class="text-[10px] text-slate-400">${c.Fecha}</p>
+                        <p class="font-black text-slate-800 uppercase text-sm leading-tight">${p.Nombre || p["Nombre del Proveedor"]}</p>
+                        <p class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[10px]">call</span> ${p.Telefono || p["Contacto / Teléfono"] || 'Sin teléfono'}
+                        </p>
                     </div>
-                    <div class="text-right">
-                        <p class="font-black text-lg text-slate-900">${c.Cantidad}</p>
-                        <p class="text-[10px] font-bold text-success">$${c.Total}</p>
-                    </div>
-                </div>`;
-        });
-    } catch (e) { contenedor.innerHTML = "No hay pedidos recientes"; }
+                </div>
+                <span class="bg-purple-50 text-primary text-[8px] font-black px-3 py-1 rounded-full border border-purple-100 uppercase tracking-widest">
+                    ${p.Categoria || 'Lácteos'}
+                </span>
+            </div>`;
+    });
 }
 
-window.onload = cargarConfiguracion;
+async function guardarProveedor() {
+    const btn = document.getElementById('btn-guardar');
+    const nombre = document.getElementById('nombre').value;
+    const telf = document.getElementById('telefono').value;
+    const cat = document.getElementById('categoria').value;
+
+    if(!nombre) return alert("Por favor ingresa el nombre");
+
+    btn.disabled = true;
+    btn.innerHTML = "Guardando...";
+
+    const nuevo = {
+        "Nombre del Proveedor": nombre,
+        "Contacto / Teléfono": telf,
+        "Categoría": cat,
+        "Fecha Registro": new Date().toLocaleDateString()
+    };
+
+    try {
+        await DairyAPI.guardarDatos("Proveedores", nuevo);
+        alert("Proveedor guardado correctamente");
+        location.reload();
+    } catch (e) {
+        alert("Error al guardar en la hoja");
+        btn.disabled = false;
+        btn.innerHTML = "GUARDAR PROVEEDOR";
+    }
+}
+
+function filtrarProveedores() {
+    const termino = document.getElementById('buscador').value.toLowerCase();
+    const filtrados = dataProveedores.filter(p => 
+        (p.Nombre || p["Nombre del Proveedor"] || "").toLowerCase().includes(termino)
+    );
+    renderizarProveedores(filtrados);
+}
+
+window.onload = cargarPagina;
 </script>
 </body>
 </html>

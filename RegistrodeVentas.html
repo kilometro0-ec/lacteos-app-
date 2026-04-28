@@ -36,13 +36,13 @@
         body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; color: #1f012a; }
         .card-sutil { background: white; border-radius: 2.5rem; border: 1px solid #e9d5ff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02); }
         .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 2rem; padding: 1rem 1.5rem; width: 100%; transition: all 0.3s ease; font-size: 14px; color: #4a5568; }
-        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 12px; border: none; cursor: pointer; }
         .btn-magenta:active { transform: scale(0.96); }
+        .btn-magenta:disabled { opacity: 0.5; cursor: not-allowed; }
         .hidden { display: none !important; }
         .fade-in-sutil { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Forzado de visibilidad para el input de fecha en móviles */
         input[type="date"] {
             -webkit-appearance: listbox !important; 
             appearance: none !important;
@@ -52,7 +52,6 @@
         }
 
         .active-nav { color: #a21caf !important; }
-        .active-nav .icon-box { background-color: #f5f3ff !important; transform: translateY(-8px) !important; }
     </style>
 </head>
 <body class="pb-44"> 
@@ -64,7 +63,7 @@
         </div>
         <h1 class="text-xl font-black text-primary tracking-tighter uppercase">Ventas</h1>
     </div>
-    <button onclick="iniciar()" class="material-symbols-outlined text-primary/30 hover:text-primary transition-all">sync</button>
+    <button onclick="cargarDatosIniciales()" class="material-symbols-outlined text-primary/30 hover:text-primary transition-all">sync</button>
 </header>
 
 <main class="mt-6 px-4 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -76,7 +75,7 @@
                     <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-black text-white bg-secondary px-4 py-2 rounded-full shadow-sm">+ NUEVO</button>
                 </div>
                 <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold">
-                    <option value="">-- Buscar cliente --</option>
+                    <option value="">-- Cargando clientes... --</option>
                 </select>
             </div>
 
@@ -93,7 +92,7 @@
                     </div>
                     <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
                 </div>
-                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4">GUARDAR</button>
+                <button onclick="guardarNuevoCliente()" id="btn-guardar-cli" class="w-full btn-magenta py-4">GUARDAR CLIENTE</button>
             </div>
         </section>
 
@@ -157,63 +156,98 @@
 <div id="menu-container"></div>
 
 <script>
-let carrito = {}; let productosData = []; let clientesData = []; let idOrdenActual = "";
+let carrito = {}; 
+let productosData = []; 
+let clientesData = []; 
+let idOrdenActual = "";
 
-async function iniciarMenu() {
-    try {
-        const response = await fetch('menu.html');
-        const text = await response.text();
-        const contenedor = document.getElementById('menu-container');
-        contenedor.innerHTML = text;
-        const urlActual = window.location.href.toLowerCase();
-        const pintar = () => {
-            const botones = contenedor.querySelectorAll('.nav-link');
-            botones.forEach(btn => {
-                const dataPath = btn.getAttribute('data-path').toLowerCase();
-                if (urlActual.includes(dataPath)) {
-                    btn.classList.add('active-nav');
-                    btn.classList.remove('text-gray-400');
-                }
-            });
-        };
-        pintar();
-        setTimeout(pintar, 150); 
-    } catch (e) { console.error("Error menú:", e); }
-}
-
-function filtrarProductos() {
-    const termino = document.getElementById('buscarProducto').value.toLowerCase();
-    const productos = document.querySelectorAll('#contenedor-productos > div');
-    productos.forEach(card => {
-        const nombre = card.querySelector('h4').innerText.toLowerCase();
-        card.style.display = nombre.includes(termino) ? "flex" : "none";
-    });
-}
-
+// --- INICIO ---
 async function iniciar() {
     const d = new Date();
     idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
     document.getElementById('num-orden').innerText = idOrdenActual;
     
-    // Establecer fecha de hoy por defecto en el input
     const hoy = new Date().toISOString().split('T')[0];
     document.getElementById('fecha-entrega').value = hoy;
 
     iniciarMenu();
-    try {
-        const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
-        clientesData = cl; productosData = pr;
-        const sel = document.getElementById('select-cliente');
-        sel.innerHTML = '<option value="">-- Buscar cliente --</option>';
-        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
-            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
-        });
-        renderizarProductos();
-    } catch(e) { console.error(e); }
+    await cargarDatosIniciales();
 }
 
+async function cargarDatosIniciales() {
+    try {
+        const [cl, pr] = await Promise.all([
+            DairyAPI.obtenerDatos("Clientes"), 
+            DairyAPI.obtenerDatos("Inventario")
+        ]);
+        clientesData = cl; 
+        productosData = pr;
+        
+        const sel = document.getElementById('select-cliente');
+        sel.innerHTML = '<option value="">-- Buscar cliente --</option>';
+        
+        cl.sort((a,b) => a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
+            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
+        });
+        
+        renderizarProductos();
+    } catch(e) { 
+        console.error("Error al cargar datos:", e); 
+    }
+}
+
+// --- LÓGICA DE CLIENTES ---
+async function guardarNuevoCliente() {
+    const nombre = document.getElementById('reg-nombre').value.trim();
+    const ci = document.getElementById('reg-ci').value.trim();
+    const tel = document.getElementById('reg-tel').value.trim();
+    const dir = document.getElementById('reg-dir').value.trim();
+
+    if (!nombre || !ci) return alert("Nombre e Identificación son obligatorios.");
+
+    const btn = document.getElementById('btn-guardar-cli');
+    btn.innerHTML = "GUARDANDO...";
+    btn.disabled = true;
+
+    try {
+        // CI_RUC coincide con la clave en tu App Script
+        await DairyAPI.enviarDatos("Clientes", { 
+            pestaña: "Clientes", 
+            Nombre: nombre, 
+            CI_RUC: ci, 
+            Teléfono: tel, 
+            Dirección: dir 
+        });
+
+        alert("✅ Cliente guardado correctamente.");
+        document.getElementById('reg-nombre').value = "";
+        document.getElementById('reg-ci').value = "";
+        document.getElementById('reg-tel').value = "";
+        document.getElementById('reg-dir').value = "";
+        
+        alternarFormularioCliente(false);
+        await cargarDatosIniciales(); 
+    } catch (e) {
+        alert("❌ Error al guardar.");
+    } finally {
+        btn.innerHTML = "GUARDAR CLIENTE";
+        btn.disabled = false;
+    }
+}
+
+function alternarFormularioCliente(m) {
+    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
+    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
+}
+
+function actualizarNombreCarrito() { 
+    document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; 
+}
+
+// --- LÓGICA DE PRODUCTOS ---
 function renderizarProductos() {
-    const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
+    const cont = document.getElementById('contenedor-productos'); 
+    cont.innerHTML = "";
     productosData.forEach(p => {
         const s = parseInt(p.Stock) || 0;
         const pr = parseFloat(p.Precio_Venta?.toString().replace(',','.')) || 0;
@@ -227,12 +261,21 @@ function renderizarProductos() {
                 <div class="mt-auto">
                     <p class="text-2xl font-black text-slate-800 tracking-tighter mb-2">$${pr.toFixed(2)}</p>
                     <div class="flex items-center justify-between bg-purple-50 rounded-2xl p-1 border border-purple-100">
-                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-xl text-primary font-black active:scale-90">-</button>
+                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-xl text-primary font-black">-</button>
                         <span id="${idCant}" class="font-black text-primary text-base px-1">0</span>
-                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-xl text-primary font-black active:scale-90">+</button>
+                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-xl text-primary font-black">+</button>
                     </div>
                 </div>
             </div>`;
+    });
+}
+
+function filtrarProductos() {
+    const termino = document.getElementById('buscarProducto').value.toLowerCase();
+    const productos = document.querySelectorAll('#contenedor-productos > div');
+    productos.forEach(card => {
+        const nombre = card.querySelector('h4').innerText.toLowerCase();
+        card.style.display = nombre.includes(termino) ? "flex" : "none";
     });
 }
 
@@ -247,7 +290,8 @@ function cambiarCant(n, d) {
 }
 
 function actualizarCarritoUI() {
-    const l = document.getElementById('lista-carrito'); l.innerHTML = ""; let t = 0;
+    const l = document.getElementById('lista-carrito'); 
+    l.innerHTML = ""; let t = 0;
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
@@ -263,6 +307,7 @@ function actualizarCarritoUI() {
     document.getElementById('carrito-vacio').classList.toggle('hidden', t > 0);
 }
 
+// --- PROCESAR VENTA ---
 async function procesarVenta() {
     const cliNombre = document.getElementById('select-cliente').value;
     const f = document.getElementById('fecha-entrega').value;
@@ -271,12 +316,10 @@ async function procesarVenta() {
     if(items.length === 0) return alert("El carrito está vacío");
     
     const btn = document.getElementById('btn-finalizar');
-    btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> GUARDANDO...`;
+    btn.innerHTML = "GUARDANDO...";
     btn.disabled = true;
 
-    // --- CORRECCIÓN HORA LOCAL QUITO ---
-    const ahora = new Date();
-    const horaQuito = ahora.toLocaleTimeString('es-EC', { hour12: false, timeZone: 'America/Guayaquil' });
+    const horaQuito = new Date().toLocaleTimeString('es-EC', { hour12: false, timeZone: 'America/Guayaquil' });
 
     try {
         let detalleTexto = ""; let totalVenta = 0;
@@ -294,28 +337,40 @@ async function procesarVenta() {
         const cli = clientesData.find(c => c.Nombre === cliNombre);
         let tel = cli?.Teléfono?.toString().replace(/\D/g, '') || "";
         if (tel.startsWith('0')) tel = tel.substring(1); 
-        if (!tel.startsWith('593')) tel = '593' + tel; 
+        if (tel && !tel.startsWith('593')) tel = '593' + tel; 
         
         let msj = `*LÓGICA LÁCTEA - PEDIDO #${idOrdenActual}*\n*Cliente:* ${cliNombre}\n*Entrega:* ${f}\n\n*DETALLE:*\n${detalleTexto}\n*TOTAL: $${totalVenta.toFixed(2)}*`;
         const urlwa = `whatsapp://send?phone=${tel}&text=${encodeURIComponent(msj)}`;
 
         document.getElementById('contenedor-boton-finalizar').innerHTML = `
-            <a href="${urlwa}" onclick="setTimeout(()=>location.reload(), 2000)" class="w-full btn-magenta py-5 text-lg bg-green-600 shadow-none border-none">
-                <span class="material-symbols-outlined">chat</span> ENVIAR POR WHATSAPP
+            <a href="${urlwa}" onclick="setTimeout(()=>location.reload(), 2000)" class="w-full btn-magenta py-5 text-lg bg-green-600 border-none">
+                <span class="material-symbols-outlined">chat</span> ENVIAR WHATSAPP
             </a>`;
-            
     } catch(e) { 
-        alert("Error al guardar"); 
+        alert("Error al guardar venta"); 
         btn.disabled = false; btn.innerHTML = "REINTENTAR";
     }
 }
 
-function alternarFormularioCliente(m) {
-    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
-    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
+async function iniciarMenu() {
+    try {
+        const response = await fetch('menu.html');
+        const text = await response.text();
+        const contenedor = document.getElementById('menu-container');
+        contenedor.innerHTML = text;
+        const urlActual = window.location.href.toLowerCase();
+        const pintar = () => {
+            const botones = contenedor.querySelectorAll('.nav-link');
+            botones.forEach(btn => {
+                const dataPath = btn.getAttribute('data-path')?.toLowerCase();
+                if (dataPath && urlActual.includes(dataPath)) {
+                    btn.classList.add('active-nav');
+                }
+            });
+        };
+        pintar();
+    } catch (e) { console.error("Error menú:", e); }
 }
-
-function actualizarNombreCarrito() { document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; }
 
 window.onload = iniciar;
 </script>

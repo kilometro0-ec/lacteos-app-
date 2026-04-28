@@ -14,98 +14,107 @@
     </script>
     <style>
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
         .grid-button { 
             position: relative; transition: transform 0.1s ease;
-            cursor: pointer; overflow: visible;
+            cursor: pointer;
         }
-        .grid-button:active { transform: scale(0.94); filter: brightness(0.9); }
+        .grid-button:active { transform: scale(0.95); filter: brightness(0.9); }
 
+        /* NOTIFICACIONES DENTRO DEL CUADRO */
         .badge {
             position: absolute; 
-            top: 8px; right: 12px;
+            top: 12px; right: 12px;
             background-color: #ef4444; color: white;
             font-size: 10px; font-weight: 800;
-            min-width: 24px; height: 24px; padding: 0 4px;
-            border-radius: 12px; display: none;
+            min-width: 22px; height: 22px; padding: 0 4px;
+            border-radius: 11px; display: none;
             align-items: center; justify-content: center;
-            border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 30;
+            border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
         }
-        .loading-overlay { opacity: 0.4; pointer-events: none; filter: blur(2px); }
+
+        /* ESTADO DE CARGA SIN DESENFOQUE (LETRA NÍTIDA) */
+        .loading-state { opacity: 0.5; pointer-events: none; }
     </style>
 </head>
 <body class="bg-background text-slate-900 min-h-screen flex flex-col px-5 py-8">
 
-    <header class="mb-6">
-        <h1 class="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none text-center">Lógica Láctea</h1>
-        <p id="saludo" class="text-primary font-bold text-[10px] uppercase tracking-[0.2em] mt-1 text-center">Sincronizando...</p>
+    <header class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-black text-slate-800 tracking-tighter uppercase leading-none">Lógica Láctea</h1>
+            <p id="saludo" class="text-primary font-bold text-[10px] uppercase tracking-[0.2em] mt-1">Sincronizando...</p>
+        </div>
+        <button onclick="window.location.href='DashboardLacteo.html'" class="w-12 h-12 bg-white rounded-2xl border border-outline flex items-center justify-center text-primary shadow-sm active:scale-90 transition-transform">
+            <span class="material-symbols-outlined font-bold text-2xl">analytics</span>
+        </button>
     </header>
 
-    <main id="main-panel" class="grid grid-cols-2 gap-3 flex-grow content-start transition-all duration-500 loading-overlay">
+    <main id="main-panel" class="grid grid-cols-2 gap-4 flex-grow content-start transition-opacity duration-300 loading-state">
         
-        <button onclick="window.location.href='RegistrodeVentas.html'" class="grid-button col-span-2 bg-primary p-5 rounded-[2rem] flex items-center justify-between shadow-lg text-white">
-            <div class="flex items-center gap-3 text-left">
-                <div class="bg-white/20 p-2 rounded-xl"><span class="material-symbols-outlined text-3xl font-bold">add_shopping_cart</span></div>
+        <button onclick="window.location.href='RegistrodeVentas.html'" class="grid-button col-span-2 bg-primary p-6 rounded-[2.5rem] flex items-center justify-between shadow-lg text-white">
+            <div class="flex items-center gap-4 text-left">
+                <div class="bg-white/20 p-3 rounded-2xl"><span class="material-symbols-outlined text-3xl font-bold">add_shopping_cart</span></div>
                 <div>
-                    <span class="text-lg font-black uppercase italic block">Ventas</span>
-                    <span class="text-[8px] opacity-80 font-medium uppercase tracking-wider">Nueva salida de productos</span>
+                    <span class="text-xl font-black uppercase italic block">Ventas</span>
+                    <span class="text-[9px] opacity-80 font-medium">Registrar salida de productos</span>
                 </div>
             </div>
             <div id="badge-ventas" class="badge">0</div>
         </button>
 
-        <button onclick="window.location.href='PedidosProveedor.html'" class="grid-button bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center gap-1 shadow-sm">
+        <button onclick="window.location.href='PedidosProveedor.html'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-1 shadow-sm">
             <div id="badge-pedidos" class="badge">0</div>
             <span class="material-symbols-outlined text-3xl text-amber-500">inventory</span>
-            <span class="text-[9px] font-black uppercase text-slate-700">Pedidos</span>
-            <span class="text-[7px] text-slate-400 text-center leading-tight uppercase">A Proveedor</span>
+            <span class="text-[10px] font-black uppercase text-slate-700">Pedidos</span>
+            <span class="text-[8px] text-slate-400 text-center uppercase">Solicitud</span>
         </button>
 
-        <button onclick="window.location.href='ControldeInventario.html'" class="grid-button bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center gap-1 shadow-sm">
+        <button onclick="window.location.href='ControldeInventario.html'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-1 shadow-sm">
             <div id="badge-stock" class="badge">!</div>
             <span class="material-symbols-outlined text-3xl text-emerald-500 font-variation-fill">package_2</span>
-            <span class="text-[9px] font-black uppercase text-slate-700">Inventario</span>
-            <span class="text-[7px] text-slate-400 text-center leading-tight uppercase">Stock Actual</span>
+            <span class="text-[10px] font-black uppercase text-slate-700">Inventario</span>
+            <span class="text-[8px] text-slate-400 text-center uppercase">Existencias</span>
         </button>
 
-        <button onclick="window.location.href='GestiondeClientes.html'" class="grid-button bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center gap-1 shadow-sm">
-            <span class="material-symbols-outlined text-3xl text-blue-500 font-variation-fill">person_search</span>
-            <span class="text-[9px] font-black uppercase text-slate-700">Clientes</span>
-            <span class="text-[7px] text-slate-400 text-center leading-tight uppercase">Base de Datos</span>
-        </button>
-
-        <button onclick="window.location.href='GestiondeProveedores.html'" class="grid-button bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center gap-1 shadow-sm">
+        <button onclick="window.location.href='GestiondeProveedores.html'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-1 shadow-sm">
             <span class="material-symbols-outlined text-3xl text-indigo-500">group</span>
-            <span class="text-[9px] font-black uppercase text-slate-700">Proveedores</span>
-            <span class="text-[7px] text-slate-400 text-center leading-tight uppercase">Contactos</span>
+            <span class="text-[10px] font-black uppercase text-slate-700">Prov.</span>
+            <span class="text-[8px] text-slate-400 text-center uppercase">Contactos</span>
         </button>
 
-        <button onclick="window.location.href='DashboardLacteo.html#finanzas'" class="grid-button bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center gap-1 shadow-sm">
+        <button onclick="window.location.href='GestiondeClientes.html'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-1 shadow-sm">
+            <span class="material-symbols-outlined text-3xl text-blue-500 font-variation-fill">person_search</span>
+            <span class="text-[10px] font-black uppercase text-slate-700">Clientes</span>
+            <span class="text-[8px] text-slate-400 text-center uppercase">Directorio</span>
+        </button>
+
+        <button onclick="window.location.href='DashboardLacteo.html#finanzas'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-1 shadow-sm">
             <div id="badge-finanzas" class="badge">0</div>
             <span class="material-symbols-outlined text-3xl text-rose-500 font-variation-fill">payments</span>
-            <span class="text-[9px] font-black uppercase text-slate-700 italic">Finanzas</span>
-            <span class="text-[7px] text-slate-400 text-center leading-tight uppercase">Por Cobrar</span>
+            <span class="text-[10px] font-black uppercase text-slate-700 italic">Finanzas</span>
+            <span class="text-[8px] text-slate-400 text-center uppercase">Cobros</span>
         </button>
 
-        <button onclick="window.location.href='DashboardLacteo.html#perfil'" class="grid-button bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center gap-1 shadow-sm">
+        <button onclick="window.location.href='DashboardLacteo.html#perfil'" class="grid-button bg-white border border-outline p-5 rounded-[2.5rem] flex flex-col items-center gap-1 shadow-sm">
             <span class="material-symbols-outlined text-3xl text-slate-400">settings</span>
-            <span class="text-[9px] font-black uppercase text-slate-700">Mi Tienda</span>
-            <span class="text-[7px] text-slate-400 text-center leading-tight uppercase">Configuración</span>
+            <span class="text-[10px] font-black uppercase text-slate-700">Ajustes</span>
+            <span class="text-[8px] text-slate-400 text-center uppercase">Tienda</span>
         </button>
 
-        <button onclick="window.location.href='GestióndeDespachos.html'" class="grid-button col-span-2 bg-slate-900 text-white p-5 rounded-[2rem] flex items-center justify-center gap-4 shadow-xl mt-2 border-b-4 border-success">
+        <button onclick="window.location.href='GestióndeDespachos.html'" class="grid-button col-span-2 bg-slate-900 text-white p-6 rounded-[2.5rem] flex items-center justify-center gap-4 shadow-xl mt-2">
             <div id="badge-ruta" class="badge">0</div>
-            <span class="material-symbols-outlined text-success font-variation-fill">local_shipping</span>
+            <span class="material-symbols-outlined text-success font-variation-fill text-3xl">local_shipping</span>
             <div class="text-left">
-                <span class="text-xs font-black uppercase tracking-[0.2em] block leading-none">Ruta de Hoy</span>
-                <span class="text-[8px] opacity-60 font-medium uppercase">Despachos Pendientes</span>
+                <span class="text-sm font-black uppercase tracking-widest block leading-none">Ruta de Hoy</span>
+                <span class="text-[9px] opacity-60 font-medium uppercase">Despachos Quito</span>
             </div>
         </button>
 
     </main>
 
-    <footer class="mt-6 text-center">
-        <p class="text-[8px] font-bold text-slate-300 uppercase tracking-[0.4em]">Quito • 2026</p>
+    <footer class="mt-8 text-center">
+        <p class="text-[9px] font-black text-slate-300 uppercase tracking-[0.4em]">Quito • 2026</p>
     </footer>
 
     <script>
@@ -114,34 +123,30 @@
         async function sincronizarApp() {
             try {
                 const [vResp, iResp] = await Promise.all([
-                    fetch(`${DAIRY_API_URL}?pestaña=Ventas`),
-                    fetch(`${DAIRY_API_URL}?pestaña=Inventario`)
+                    fetch(`${DAIRY_API_URL}?pestaña=Ventas`).then(r => r.json()),
+                    fetch(`${DAIRY_API_URL}?pestaña=Inventario`).then(r => r.json())
                 ]);
-                const ventas = await vResp.json();
-                const inventario = await iResp.json();
 
-                // RUTA (Filas Pendientes)
-                const pendientes = ventas.filter(v => String(v.Estado || "").trim().toUpperCase() === "PENDIENTE");
+                const pendientes = vResp.filter(v => String(v.Estado || "").trim().toUpperCase() === "PENDIENTE");
                 mostrarBadge("badge-ruta", pendientes.length);
 
-                // FINANZAS (Suma Total Pendiente)
                 const suma = pendientes.reduce((acc, v) => {
                     let t = String(v.Total || "0").replace(',', '.').replace(/[^\d.-]/g, '');
                     return acc + (parseFloat(t) || 0);
                 }, 0);
                 if (suma > 0) mostrarBadge("badge-finanzas", `$${suma.toFixed(2)}`);
 
-                // STOCK (Critico < 5)
-                const critico = inventario.filter(i => {
+                const critico = iResp.filter(i => {
                     let s = String(i["Stock Inicial"] || "0").replace(',', '.').replace(/[^\d.-]/g, '');
                     return (parseFloat(s) || 0) < 5;
                 }).length;
                 mostrarBadge("badge-stock", critico > 0 ? "!" : 0);
 
-                document.getElementById('main-panel').classList.remove('loading-overlay');
+                // ACTIVAR PANEL
+                document.getElementById('main-panel').classList.remove('loading-state');
                 actualizarSaludo();
             } catch (e) {
-                document.getElementById('main-panel').classList.remove('loading-overlay');
+                document.getElementById('main-panel').classList.remove('loading-state');
             }
         }
 

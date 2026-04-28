@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Lógica Láctea - Proveedores Pro</title>
+    <title>Lógica Láctea - Registro de Proveedores</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
@@ -15,9 +15,10 @@
     </script>
     <style>
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .collapse-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-        .expanded .collapse-content { max-height: 800px; }
-        .expanded .arrow-icon { transform: rotate(180deg); }
+        /* Animación para el historial desplegable */
+        .collapse-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; }
+        .expanded .collapse-content { max-height: 1000px; }
+        .expanded .arrow-icon { transform: rotate(180deg); color: #a21caf; }
     </style>
 </head>
 <body class="bg-background text-slate-900 antialiased pb-32">
@@ -25,25 +26,26 @@
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
     <div class="flex items-center gap-3" onclick="window.location.href='DashboardLacteo.html'">
         <span class="material-symbols-outlined text-primary font-bold">arrow_back_ios</span>
-        <h1 class="text-lg font-extrabold text-primary uppercase tracking-tighter text-left">Ficha Proveedores</h1>
+        <h1 class="text-lg font-extrabold text-primary uppercase tracking-tighter">Nuevo Proveedor</h1>
     </div>
 </header>
 
 <main class="pt-20 px-4 max-w-lg mx-auto space-y-6">
-    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-md">
-        <button onclick="document.getElementById('form-prov').classList.toggle('hidden')" class="w-full flex justify-between items-center text-primary font-black uppercase text-[10px] tracking-widest">
-            <span>+ Registrar Nuevo Proveedor</span>
-            <span class="material-symbols-outlined">expand_more</span>
-        </button>
-        
-        <div id="form-prov" class="hidden mt-4 space-y-4">
-            <div class="grid grid-cols-1 gap-4">
-                <input type="text" id="nombre" placeholder="Razón Social / Nombre" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
-                <input type="number" id="ruc" placeholder="RUC (13 dígitos)" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
-            </div>
+    
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-md space-y-4">
+        <h2 class="text-[10px] font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2 mb-2">
+            <span class="material-symbols-outlined text-sm">person_add</span> Datos del Proveedor
+        </h2>
+
+        <div class="space-y-4">
+            <input type="text" id="nombre" placeholder="Razón Social / Nombre" 
+                class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
+            
+            <input type="number" id="ruc" placeholder="RUC (13 dígitos)" 
+                class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
 
             <div class="grid grid-cols-2 gap-4">
-                <select id="provincia" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm">
+                <select id="provincia" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm italic">
                     <option value="">Provincia...</option>
                     <option value="Azuay">Azuay</option><option value="Bolívar">Bolívar</option><option value="Cañar">Cañar</option>
                     <option value="Carchi">Carchi</option><option value="Chimborazo">Chimborazo</option><option value="Cotopaxi">Cotopaxi</option>
@@ -54,28 +56,33 @@
                     <option value="Pichincha">Pichincha</option><option value="Santa Elena">Santa Elena</option><option value="Santo Domingo">Santo Domingo</option>
                     <option value="Sucumbíos">Sucumbíos</option><option value="Tungurahua">Tungurahua</option><option value="Zamora Chinchipe">Zamora Chinchipe</option>
                 </select>
-                <input type="text" id="ciudad" placeholder="Ciudad" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
+                <input type="text" id="ciudad" placeholder="Ciudad" 
+                    class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
             </div>
 
-            <input type="text" id="direccion" placeholder="Dirección Exacta" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm">
+            <input type="text" id="direccion" placeholder="Dirección Exacta" 
+                class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm">
 
             <div class="grid grid-cols-2 gap-4">
-                <input type="tel" id="telefono" placeholder="WhatsApp/Telf" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
+                <input type="tel" id="telefono" placeholder="WhatsApp" 
+                    class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
                 <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner">
                     <option value="Lácteos">Lácteos</option>
-                    <option value="Logística">Logística</option>
+                    <option value="Insumos">Insumos</option>
                     <option value="Empaques">Empaques</option>
                 </select>
             </div>
 
-            <button onclick="guardarProveedor()" id="btn-guardar" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
-                REGISTRAR PROVEEDOR
+            <button onclick="guardarProveedor()" id="btn-guardar" 
+                class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined">save</span> GUARDAR PROVEEDOR
             </button>
         </div>
     </section>
 
-    <div class="space-y-4" id="contenedor-maestro">
-        <div class="text-center py-10 text-slate-400 animate-pulse">Sincronizando proveedores...</div>
+    <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 ml-2">Historial y Detalles</h3>
+    <div id="contenedor-maestro" class="space-y-4">
+        <div class="text-center py-10 text-slate-400 italic">Cargando base de datos...</div>
     </div>
 </main>
 
@@ -83,10 +90,12 @@
 
 <script>
     async function cargarData() {
-        const resMenu = await fetch('menu.html');
-        document.getElementById('menu-container').innerHTML = await resMenu.text();
-
         try {
+            // Cargar menú
+            const resMenu = await fetch('menu.html');
+            if(resMenu.ok) document.getElementById('menu-container').innerHTML = await resMenu.text();
+
+            // Obtener Datos
             const [proveedores, compras] = await Promise.all([
                 DairyAPI.obtenerDatos("Proveedores"),
                 DairyAPI.obtenerDatos("Compras")
@@ -95,58 +104,55 @@
             const contenedor = document.getElementById('contenedor-maestro');
             contenedor.innerHTML = "";
 
+            if (!proveedores || proveedores.length === 0) {
+                contenedor.innerHTML = `<p class="text-center py-6 text-slate-400">No hay proveedores registrados.</p>`;
+                return;
+            }
+
             proveedores.forEach(p => {
                 const nombreP = p["Nombre del Proveedor"];
                 const historial = compras.filter(c => c.Proveedor === nombreP);
                 const totalInvertido = historial.reduce((acc, curr) => acc + (parseFloat(curr.Total) || 0), 0);
 
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-[2rem] border border-outline shadow-sm overflow-hidden transition-all";
+                card.className = "bg-white rounded-[2rem] border border-outline shadow-sm overflow-hidden";
                 card.innerHTML = `
                     <div class="p-5 flex justify-between items-center cursor-pointer" onclick="this.parentElement.classList.toggle('expanded')">
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                                <span class="material-symbols-outlined text-2xl">storefront</span>
+                                <span class="material-symbols-outlined text-2xl font-bold">storefront</span>
                             </div>
                             <div>
-                                <p class="font-black text-slate-800 uppercase text-xs leading-tight">${nombreP}</p>
-                                <p class="text-[9px] font-bold text-slate-400">${p.Ciudad || 'Ecuador'} | RUC: ${p.RUC || 'N/A'}</p>
-                                <p class="text-[10px] font-black text-success mt-1">$${totalInvertido.toFixed(2)} comprados</p>
+                                <p class="font-black text-slate-800 uppercase text-xs">${nombreP}</p>
+                                <p class="text-[9px] font-bold text-slate-400">${p.Ciudad || 'Ecuador'} | $${totalInvertido.toFixed(2)}</p>
                             </div>
                         </div>
                         <span class="material-symbols-outlined text-slate-300 arrow-icon transition-transform">expand_more</span>
                     </div>
                     
-                    <div class="collapse-content bg-slate-50/50 border-t border-dashed border-outline">
+                    <div class="collapse-content bg-slate-50/50 border-t border-dashed border-outline text-[10px]">
                         <div class="p-5 space-y-4">
-                            <div class="grid grid-cols-2 gap-2 text-[10px] bg-white p-3 rounded-xl border border-outline">
-                                <div class="text-slate-400 font-bold uppercase">Dirección:</div>
-                                <div class="text-slate-700">${p.Direccion || 'No registrada'}</div>
-                                <div class="text-slate-400 font-bold uppercase">Teléfono:</div>
-                                <div class="text-slate-700">${p["Contacto / Teléfono"] || 'N/A'}</div>
+                            <div class="bg-white p-3 rounded-xl border border-outline shadow-inner">
+                                <p><span class="font-black text-slate-400">RUC:</span> ${p.RUC || 'N/A'}</p>
+                                <p><span class="font-black text-slate-400">DIRECCIÓN:</span> ${p.Direccion || 'N/A'}</p>
+                                <p><span class="font-black text-slate-400">TELÉFONO:</span> ${p["Contacto / Teléfono"] || 'N/A'}</p>
                             </div>
-
-                            <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Historial de Pedidos</p>
+                            
+                            <p class="font-black uppercase text-slate-400 tracking-widest px-1">Últimas Compras</p>
                             <div class="space-y-2">
-                                ${historial.length > 0 ? historial.reverse().map(h => `
-                                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-outline/50 shadow-sm">
-                                        <div>
-                                            <p class="text-[10px] font-black text-slate-700">${h.Fecha}</p>
-                                            <p class="text-[9px] text-slate-400 font-medium">${h.Producto}</p>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-[10px] font-black text-slate-900">${h.Cantidad} Items</p>
-                                            <p class="text-[10px] font-bold text-primary">$${parseFloat(h.Total).toFixed(2)}</p>
-                                        </div>
+                                ${historial.length > 0 ? historial.reverse().slice(0, 5).map(h => `
+                                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-outline/50">
+                                        <div><p class="font-black text-slate-700">${h.Fecha}</p><p class="text-[9px] text-slate-400 uppercase">${h.Producto}</p></div>
+                                        <div class="text-right"><p class="font-black text-slate-900">${h.Cantidad} Items</p><p class="font-bold text-primary">$${parseFloat(h.Total).toFixed(2)}</p></div>
                                     </div>
-                                `).join('') : '<p class="text-[10px] italic text-slate-400">Sin historial.</p>'}
+                                `).join('') : '<p class="italic text-slate-400 py-2">Sin registros.</p>'}
                             </div>
                         </div>
                     </div>
                 `;
                 contenedor.appendChild(card);
             });
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("Error al cargar:", e); }
     }
 
     async function guardarProveedor() {
@@ -162,12 +168,19 @@
             "Fecha Registro": new Date().toLocaleDateString()
         };
 
-        if(!nuevo["Nombre del Proveedor"] || !nuevo.Provincia) return alert("Nombre y Provincia son obligatorios");
+        if(!nuevo["Nombre del Proveedor"]) return alert("El nombre es obligatorio");
 
         btn.disabled = true;
         btn.innerHTML = "Guardando...";
-        await DairyAPI.guardarDatos("Proveedores", nuevo);
-        location.reload();
+        
+        try {
+            await DairyAPI.guardarDatos("Proveedores", nuevo);
+            location.reload();
+        } catch(e) {
+            alert("Error al conectar con la base de datos");
+            btn.disabled = false;
+            btn.innerHTML = "GUARDAR PROVEEDOR";
+        }
     }
 
     window.onload = cargarData;

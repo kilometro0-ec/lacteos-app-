@@ -89,3 +89,18 @@ body {
 /* ANIMACIONES */
 .rotate-animation { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+/* Animación para el botón de sincronización */
+.spin-animation {
+    animation: spin 0.8s ease-in-out;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Efecto visual al pulsar botones del header */
+.header-btn:active {
+    transform: scale(0.9);
+    background-color: #f3e8ff;
+}

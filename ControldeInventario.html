@@ -15,19 +15,7 @@
       body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
       .rotate-animation { animation: spin 1s linear infinite; }
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      .fade-out-delete { animation: fadeScale 0.5s forwards; pointer-events: none; }
-      @keyframes fadeScale { 100% { opacity: 0; transform: scale(0.7); filter: blur(4px); } }
-      #delete-bar { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-      
       .active-nav { color: #a21caf !important; }
-      .active-nav .icon-box {
-          background-color: #f5f3ff !important;
-          transform: translateY(-8px) !important;
-          box-shadow: 0 10px 15px -3px rgba(162, 28, 175, 0.2);
-      }
-      .active-nav span.material-symbols-outlined {
-          font-variation-settings: 'FILL' 1, 'wght' 600 !important;
-      }
       .card-prod { background: white; border-radius: 2.5rem; border: 2px solid #e9d5ff; transition: all 0.2s ease; }
     </style>
 </head>
@@ -45,104 +33,64 @@
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
-  
   <section class="grid grid-cols-3 gap-3">
-    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-md">
-      <p class="text-[9px] text-gray-500 uppercase font-black mb-1 tracking-widest">Valor Neto</p>
+    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center">
+      <p class="text-[9px] text-gray-500 uppercase font-black mb-1">Valor Neto</p>
       <h2 id="valor-bodega" class="text-base font-black text-[#a21caf]">$0.00</h2>
     </div>
-    <div class="bg-red-50 p-4 rounded-[2rem] border-2 border-red-200 text-center shadow-sm">
-      <p class="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Críticos</p>
+    <div class="bg-red-50 p-4 rounded-[2rem] border-2 border-red-200 text-center">
+      <p class="text-[9px] text-red-600 uppercase font-black mb-1">Críticos</p>
       <h2 id="count-critico" class="text-base font-black text-red-600">0</h2>
     </div>
-    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-md">
-      <p class="text-[9px] text-green-600 uppercase font-black mb-1 tracking-widest">En Stock</p>
+    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center">
+      <p class="text-[9px] text-green-600 uppercase font-black mb-1">Stock</p>
       <h2 id="total-sku" class="text-base font-black text-green-600">0</h2>
     </div>
   </section>
 
   <div class="px-1">
     <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar producto..." 
-           class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold text-base shadow-sm focus:ring-2 focus:ring-[#a21caf] focus:border-[#a21caf] outline-none transition-all">
+           class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold outline-none">
   </div>
 
   <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando...</div>
+      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando con Google Sheets...</div>
   </div>
 
   <div class="fixed bottom-24 left-0 w-full px-4 z-40">
-    <button onclick="abrirModalNuevo()" class="w-full bg-[#a21caf] text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase active:scale-95 transition-all">
-        <span class="material-symbols-outlined scale-125">add_circle</span> 
+    <button onclick="abrirModalNuevo()" class="w-full bg-[#a21caf] text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase">
+        <span class="material-symbols-outlined">add_circle</span> 
         <span>Nuevo Producto</span>
     </button>
   </div>
-
-  <div id="delete-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-gray-900 text-white p-5 rounded-3xl shadow-2xl z-[60] flex justify-between items-center transform translate-y-32 opacity-0 pointer-events-none transition-all">
-      <div class="flex items-center gap-4">
-          <span id="selected-count" class="bg-[#a21caf] text-white w-8 h-8 flex items-center justify-center rounded-full text-sm font-black ring-4 ring-white/10">0</span>
-          <p class="font-black text-xs uppercase tracking-tight">Seleccionados</p>
-      </div>
-      <button onclick="confirmarBorrado()" class="bg-red-500 hover:bg-red-600 px-6 py-3 rounded-2xl font-black text-xs uppercase flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm">delete</span> Borrar
-      </button>
-  </div>
 </main>
-
-<div id="modalNuevo" class="fixed inset-0 bg-black/70 z-[70] hidden flex items-center justify-center p-4 backdrop-blur-md">
-  <div class="bg-white rounded-[2.5rem] w-full max-w-md p-8 shadow-2xl border-2 border-[#e9d5ff]">
-    <h3 id="modal-titulo" class="text-2xl font-black text-[#a21caf] mb-6 uppercase tracking-tight">Stock</h3>
-    <form id="formProducto" class="space-y-4">
-      <input type="text" id="nombreP" required placeholder="Nombre" class="w-full bg-gray-50 border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold focus:bg-white outline-none">
-      <div class="grid grid-cols-2 gap-4">
-        <input type="number" id="stockP" required placeholder="Cantidad" class="w-full bg-gray-50 border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold focus:bg-white outline-none">
-        <input type="number" step="0.01" id="costoP" required placeholder="Costo" class="w-full bg-gray-50 border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold focus:bg-white outline-none">
-      </div>
-      <input type="number" step="0.01" id="ventaP" required placeholder="PVP" class="w-full bg-gray-50 border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold focus:bg-white outline-none">
-      <div class="flex flex-col gap-2 pt-4">
-        <button type="submit" id="btnGuardar" class="w-full py-5 bg-[#a21caf] text-white rounded-2xl font-black uppercase shadow-lg">Procesar</button>
-        <button type="button" onclick="cerrarModal()" class="w-full py-2 text-gray-400 font-bold uppercase text-[10px]">Cerrar</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div id="menu-container"></div>
 
 <script>
 let inventarioLocal = [];
-let seleccionados = new Set();
 const aNum = (v) => v ? parseFloat(v.toString().replace(',', '.')) : 0;
-
-async function cargarMenu() {
-    try {
-        const resp = await fetch('menu.html');
-        if (resp.ok) {
-            document.getElementById('menu-container').innerHTML = await resp.text();
-            // Lógica de pintado de menú activo si fuera necesario
-        }
-    } catch (e) { console.error("Error al cargar el menú:", e); }
-}
 
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
   if (icon) icon.classList.add('rotate-animation');
   
   try {
-    const rawData = await DairyAPI.obtenerDatos("Inventario");
-    // SOLUCIÓN AL ERROR: Validar si los datos son un Array
-    inventarioLocal = Array.isArray(rawData) ? rawData : [];
+    const respuesta = await DairyAPI.obtenerDatos("Inventario");
     
-    if (inventarioLocal.length === 0) {
-        document.getElementById('grid-productos').innerHTML = '<div class="col-span-full text-center py-20 text-gray-400 font-bold">No se encontraron productos.</div>';
-    } else {
+    // VALIDACIÓN CRÍTICA: ¿Es una lista real?
+    if (Array.isArray(respuesta)) {
+        inventarioLocal = respuesta;
         renderizar(inventarioLocal);
+    } else {
+        console.error("La API no devolvió un Array:", respuesta);
+        document.getElementById('grid-productos').innerHTML = `
+            <div class="col-span-full text-center py-10 bg-orange-50 border-2 border-orange-200 rounded-3xl p-6">
+                <p class="text-orange-600 font-black uppercase text-xs">Error de Formato</p>
+                <p class="text-[10px] text-orange-400">La respuesta de la base de datos no es una lista válida.</p>
+            </div>`;
     }
-    
-    seleccionados.clear();
-    actualizarBarra();
   } catch (e) { 
-      console.error(e);
-      document.getElementById('grid-productos').innerHTML = '<div class="col-span-full text-center py-20 text-red-500 font-bold">Error al conectar con la base de datos.</div>';
+      console.error("Error de conexión:", e);
+      document.getElementById('grid-productos').innerHTML = '<div class="col-span-full text-center py-20 text-red-500 font-bold tracking-tighter">ERROR DE CONEXIÓN A GOOGLE SHEETS</div>';
   } finally {
       if (icon) icon.classList.remove('rotate-animation');
   }
@@ -152,9 +100,6 @@ function renderizar(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
     
-    // Doble validación por seguridad
-    if (!Array.isArray(lista)) return;
-
     let totalCosto = 0, criticos = 0;
 
     lista.forEach((prod, index) => {
@@ -165,27 +110,21 @@ function renderizar(lista) {
         if(stock <= 5) criticos++;
         totalCosto += (costo * stock);
 
-        const cardId = `card-${index}`;
         container.innerHTML += `
-        <div id="${cardId}" class="relative bg-white p-5 rounded-[2.5rem] border-2 ${stock <= 5 ? 'border-red-400 bg-red-50' : 'border-[#e9d5ff]'} shadow-sm flex flex-col justify-between h-56 overflow-hidden transition-all">
-          <div class="absolute top-4 right-4 z-10">
-            <input type="checkbox" onchange="toggleSel('${cardId}', '${prod.Producto}', this)" class="w-7 h-7 rounded-full border-2 border-[#e9d5ff] text-[#a21caf] focus:ring-[#a21caf] checked:bg-[#a21caf]">
+        <div class="bg-white p-5 rounded-[2.5rem] border-2 ${stock <= 5 ? 'border-red-400 bg-red-50' : 'border-[#e9d5ff]'} shadow-sm flex flex-col justify-between h-52">
+          <div>
+            <p class="text-[10px] font-black text-[#a21caf] mb-1 uppercase opacity-50">${prod.ID || 'SIN ID'}</p> 
+            <h3 class="font-black text-[14px] leading-tight uppercase text-slate-800 line-clamp-2">${prod.Producto}</h3>
           </div>
-          <div onclick="abrirModalSumar('${prod.Producto}')" class="h-full flex flex-col justify-between cursor-pointer">
-            <div>
-              <p class="text-[14px] font-black text-[#a21caf] mb-1 uppercase tracking-tight">${prod.ID || 'S/N'}</p> 
-              <h3 class="font-black text-[15px] leading-tight uppercase text-slate-800 line-clamp-2">${prod.Producto}</h3>
-            </div>
-            <div class="flex justify-between items-end border-t border-dashed border-gray-200 pt-3">
-                <div>
-                    <p class="text-[9px] text-gray-400 font-black uppercase mb-0.5 tracking-tighter">Venta</p>
-                    <p class="text-[#a21caf] font-black text-xl tracking-tighter leading-none">$${pvp.toFixed(2)}</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-[9px] text-gray-400 font-black uppercase mb-0.5 tracking-tighter">Stock</p>
-                    <span class="inline-block text-sm px-4 py-1.5 rounded-2xl ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black italic">${stock}</span>
-                </div>
-            </div>
+          <div class="flex justify-between items-end border-t border-dashed pt-3">
+              <div>
+                  <p class="text-[8px] text-gray-400 font-black uppercase">PVP</p>
+                  <p class="text-[#a21caf] font-black text-lg">$${pvp.toFixed(2)}</p>
+              </div>
+              <div class="text-right">
+                  <p class="text-[8px] text-gray-400 font-black uppercase">Stock</p>
+                  <span class="inline-block text-xs px-3 py-1 rounded-full ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black">${stock}</span>
+              </div>
           </div>
         </div>`;
     });
@@ -193,44 +132,6 @@ function renderizar(lista) {
     document.getElementById('valor-bodega').innerText = `$${totalCosto.toFixed(2)}`;
     document.getElementById('count-critico').innerText = criticos;
     document.getElementById('total-sku').innerText = lista.length;
-}
-
-function toggleSel(id, nombre, el) {
-    if (el.checked) {
-        seleccionados.add({ cardId: id, nombreProd: nombre });
-        document.getElementById(id).classList.add('ring-4', 'ring-inset', 'ring-[#a21caf]/20', 'bg-purple-50');
-    } else {
-        let itemABorrar;
-        seleccionados.forEach(it => { if(it.cardId === id) itemABorrar = it; });
-        if(itemABorrar) seleccionados.delete(itemABorrar);
-        document.getElementById(id).classList.remove('ring-4', 'ring-inset', 'ring-[#a21caf]/20', 'bg-purple-50');
-    }
-    actualizarBarra();
-}
-
-function actualizarBarra() {
-    const bar = document.getElementById('delete-bar');
-    document.getElementById('selected-count').innerText = seleccionados.size;
-    if (seleccionados.size > 0) {
-        bar.classList.remove('translate-y-32', 'opacity-0', 'pointer-events-none');
-    } else {
-        bar.classList.add('translate-y-32', 'opacity-0', 'pointer-events-none');
-    }
-}
-
-async function confirmarBorrado() {
-    if (!confirm(`¿Eliminar ${seleccionados.size} productos permanentemente?`)) return;
-    const items = Array.from(seleccionados);
-    items.forEach(it => {
-        const el = document.getElementById(it.cardId);
-        if(el) el.classList.add('fade-out-delete');
-    });
-    try {
-        for (const it of items) {
-            await DairyAPI.enviarDatos("Inventario", { pestaña: "Inventario", accion: "eliminar", Producto: it.nombreProd });
-        }
-        setTimeout(cargarInventario, 600);
-    } catch (e) { alert("Error de conexión al eliminar"); }
 }
 
 function filtrar() {
@@ -242,53 +143,7 @@ function filtrar() {
     renderizar(filtrados);
 }
 
-function abrirModalSumar(n) {
-    const p = inventarioLocal.find(x => x.Producto === n);
-    if(!p) return;
-    document.getElementById('modal-titulo').innerText = "Abastecer";
-    document.getElementById('nombreP').value = p.Producto;
-    document.getElementById('nombreP').readOnly = true;
-    document.getElementById('costoP').value = aNum(p.Precio_Distribuidor || p.Costo_Unitario);
-    document.getElementById('ventaP').value = aNum(p.Precio_Venta);
-    document.getElementById('modalNuevo').classList.remove('hidden');
-}
-
-function abrirModalNuevo() {
-    document.getElementById('modal-titulo').innerText = "Nuevo SKU";
-    document.getElementById('formProducto').reset();
-    document.getElementById('nombreP').readOnly = false;
-    document.getElementById('modalNuevo').classList.remove('hidden');
-}
-
-document.getElementById('formProducto').onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btnGuardar');
-    btn.disabled = true; btn.innerText = "Enviando...";
-    
-    try {
-        await DairyAPI.enviarDatos("Inventario", {
-            pestaña: "Inventario",
-            Producto: document.getElementById('nombreP').value,
-            Cantidad: document.getElementById('stockP').value,
-            Precio_Distribuidor: document.getElementById('costoP').value,
-            Precio_Venta: document.getElementById('ventaP').value
-        });
-        cerrarModal();
-        setTimeout(cargarInventario, 1000);
-    } catch (error) {
-        alert("Error al guardar producto");
-    } finally {
-        btn.disabled = false; 
-        btn.innerText = "Procesar";
-    }
-};
-
-function cerrarModal() { document.getElementById('modalNuevo').classList.add('hidden'); }
-
-window.onload = () => {
-    cargarMenu();
-    cargarInventario();
-};
+window.onload = cargarInventario;
 </script>
 </body>
 </html>

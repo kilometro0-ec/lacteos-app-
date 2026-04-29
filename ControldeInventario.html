@@ -12,15 +12,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <style>
-      body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+      body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #faf5ff; }
+      
+      /* Animaciones */
       .rotate-animation { animation: spin 1s linear infinite; }
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      
+      /* Estilo de la Barra de Navegación Activa */
       .active-nav { color: #a21caf !important; }
-      .card-prod { background: white; border-radius: 2.5rem; border: 2px solid #e9d5ff; transition: all 0.2s ease; }
+      .active-nav span.material-symbols-outlined {
+          font-variation-settings: 'FILL' 1, 'wght' 600 !important;
+      }
+
+      /* Card de producto */
+      .card-prod { 
+        background: white; 
+        border-radius: 2.5rem; 
+        border: 2px solid #e9d5ff; 
+        transition: all 0.2s ease; 
+      }
+      .card-prod:active { transform: scale(0.96); }
+
+      /* Ocultar barra de scroll */
+      ::-webkit-scrollbar { display: none; }
     </style>
 </head>
 
-<body class="bg-[#faf5ff] text-gray-900 pb-44">
+<body class="text-gray-900 pb-44">
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-[#e9d5ff] flex justify-between items-center px-4 shadow-sm z-50">
   <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLacteo.html'">
@@ -33,24 +51,25 @@
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
+  
   <section class="grid grid-cols-3 gap-3">
-    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center">
-      <p class="text-[9px] text-gray-500 uppercase font-black mb-1">Valor Neto</p>
+    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-sm">
+      <p class="text-[9px] text-gray-500 uppercase font-black mb-1 tracking-widest">Valor Neto</p>
       <h2 id="valor-bodega" class="text-base font-black text-[#a21caf]">$0.00</h2>
     </div>
-    <div class="bg-red-50 p-4 rounded-[2rem] border-2 border-red-200 text-center">
-      <p class="text-[9px] text-red-600 uppercase font-black mb-1">Críticos</p>
+    <div class="bg-red-50 p-4 rounded-[2rem] border-2 border-red-200 text-center shadow-sm">
+      <p class="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest">Críticos</p>
       <h2 id="count-critico" class="text-base font-black text-red-600">0</h2>
     </div>
-    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center">
-      <p class="text-[9px] text-green-600 uppercase font-black mb-1">Stock</p>
+    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-sm">
+      <p class="text-[9px] text-green-600 uppercase font-black mb-1 tracking-widest">En Stock</p>
       <h2 id="total-sku" class="text-base font-black text-green-600">0</h2>
     </div>
   </section>
 
   <div class="px-1">
     <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar producto..." 
-           class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold outline-none">
+           class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold text-base shadow-sm focus:ring-2 focus:ring-[#a21caf] focus:border-[#a21caf] outline-none transition-all">
   </div>
 
   <div id="grid-productos" class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -58,17 +77,43 @@
   </div>
 
   <div class="fixed bottom-24 left-0 w-full px-4 z-40">
-    <button onclick="abrirModalNuevo()" class="w-full bg-[#a21caf] text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase">
-        <span class="material-symbols-outlined">add_circle</span> 
+    <button onclick="abrirModalNuevo()" class="w-full bg-[#a21caf] text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase active:scale-95 transition-all">
+        <span class="material-symbols-outlined scale-125">add_circle</span> 
         <span>Nuevo Producto</span>
     </button>
   </div>
+
 </main>
+
+<div id="menu-container"></div>
 
 <script>
 let inventarioLocal = [];
 const aNum = (v) => v ? parseFloat(v.toString().replace(',', '.')) : 0;
 
+// 1. CARGAR BARRA DE NAVEGACIÓN DESDE menu.html
+async function cargarMenu() {
+    try {
+        const resp = await fetch('menu.html');
+        if (resp.ok) {
+            document.getElementById('menu-container').innerHTML = await resp.text();
+            
+            // Pintar el botón activo
+            const urlActual = window.location.href.toLowerCase();
+            setTimeout(() => {
+                const botones = document.querySelectorAll('.nav-link');
+                botones.forEach(btn => {
+                    const path = btn.getAttribute('data-path')?.toLowerCase();
+                    if (path && urlActual.includes(path)) {
+                        btn.classList.add('active-nav');
+                    }
+                });
+            }, 100);
+        }
+    } catch (e) { console.error("Error al cargar menú:", e); }
+}
+
+// 2. OBTENER DATOS DE LA API
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
   if (icon) icon.classList.add('rotate-animation');
@@ -76,26 +121,26 @@ async function cargarInventario() {
   try {
     const respuesta = await DairyAPI.obtenerDatos("Inventario");
     
-    // VALIDACIÓN CRÍTICA: ¿Es una lista real?
+    // Si la respuesta es un Array, procesamos. Si no, mostramos el error.
     if (Array.isArray(respuesta)) {
         inventarioLocal = respuesta;
         renderizar(inventarioLocal);
     } else {
-        console.error("La API no devolvió un Array:", respuesta);
+        console.error("Respuesta no válida:", respuesta);
         document.getElementById('grid-productos').innerHTML = `
-            <div class="col-span-full text-center py-10 bg-orange-50 border-2 border-orange-200 rounded-3xl p-6">
-                <p class="text-orange-600 font-black uppercase text-xs">Error de Formato</p>
-                <p class="text-[10px] text-orange-400">La respuesta de la base de datos no es una lista válida.</p>
+            <div class="col-span-full text-center py-10 bg-orange-50 border-2 border-orange-200 rounded-[2rem] p-6 mx-2">
+                <p class="text-orange-600 font-black uppercase text-xs">Pestaña no encontrada</p>
+                <p class="text-[10px] text-orange-400 mt-1">Verifica que en Google Sheets la hoja se llame exactamente "Inventario".</p>
             </div>`;
     }
   } catch (e) { 
-      console.error("Error de conexión:", e);
-      document.getElementById('grid-productos').innerHTML = '<div class="col-span-full text-center py-20 text-red-500 font-bold tracking-tighter">ERROR DE CONEXIÓN A GOOGLE SHEETS</div>';
+      document.getElementById('grid-productos').innerHTML = '<div class="col-span-full text-center py-20 text-red-500 font-bold">Error de Conexión</div>';
   } finally {
       if (icon) icon.classList.remove('rotate-animation');
   }
 }
 
+// 3. DIBUJAR LOS PRODUCTOS EN PANTALLA
 function renderizar(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
@@ -111,19 +156,22 @@ function renderizar(lista) {
         totalCosto += (costo * stock);
 
         container.innerHTML += `
-        <div class="bg-white p-5 rounded-[2.5rem] border-2 ${stock <= 5 ? 'border-red-400 bg-red-50' : 'border-[#e9d5ff]'} shadow-sm flex flex-col justify-between h-52">
+        <div class="card-prod p-5 flex flex-col justify-between h-56 shadow-sm ${stock <= 5 ? 'border-red-300 bg-red-50' : 'border-[#e9d5ff] bg-white'}">
           <div>
-            <p class="text-[10px] font-black text-[#a21caf] mb-1 uppercase opacity-50">${prod.ID || 'SIN ID'}</p> 
-            <h3 class="font-black text-[14px] leading-tight uppercase text-slate-800 line-clamp-2">${prod.Producto}</h3>
+            <p class="text-[10px] font-black text-[#a21caf] mb-1 uppercase opacity-50">${prod.ID || 'S/N'}</p> 
+            <h3 class="font-black text-[15px] leading-tight uppercase text-slate-800 line-clamp-2">${prod.Producto}</h3>
           </div>
-          <div class="flex justify-between items-end border-t border-dashed pt-3">
+          
+          <div class="flex justify-between items-end border-t border-dashed border-purple-100 pt-3">
               <div>
-                  <p class="text-[8px] text-gray-400 font-black uppercase">PVP</p>
-                  <p class="text-[#a21caf] font-black text-lg">$${pvp.toFixed(2)}</p>
+                  <p class="text-[9px] text-gray-400 font-black uppercase mb-0.5">Venta</p>
+                  <p class="text-[#a21caf] font-black text-xl leading-none">$${pvp.toFixed(2)}</p>
               </div>
               <div class="text-right">
-                  <p class="text-[8px] text-gray-400 font-black uppercase">Stock</p>
-                  <span class="inline-block text-xs px-3 py-1 rounded-full ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black">${stock}</span>
+                  <p class="text-[9px] text-gray-400 font-black uppercase mb-0.5">Stock</p>
+                  <span class="inline-block text-xs px-3 py-1.5 rounded-2xl ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black italic">
+                    ${stock}
+                  </span>
               </div>
           </div>
         </div>`;
@@ -134,6 +182,7 @@ function renderizar(lista) {
     document.getElementById('total-sku').innerText = lista.length;
 }
 
+// 4. FILTRAR BUSQUEDA
 function filtrar() {
     const b = document.getElementById('filtroProd').value.toLowerCase();
     const filtrados = inventarioLocal.filter(p => 
@@ -143,7 +192,12 @@ function filtrar() {
     renderizar(filtrados);
 }
 
-window.onload = cargarInventario;
+// 5. INICIALIZACIÓN
+window.onload = () => {
+    cargarMenu();
+    cargarInventario();
+};
 </script>
+
 </body>
 </html>

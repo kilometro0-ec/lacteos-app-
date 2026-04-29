@@ -7,6 +7,7 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -18,12 +19,6 @@
       .rotate-animation { animation: spin 1s linear infinite; }
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       
-      /* Estilo de la Barra de Navegación Activa */
-      .active-nav { color: #a21caf !important; }
-      .active-nav span.material-symbols-outlined {
-          font-variation-settings: 'FILL' 1, 'wght' 600 !important;
-      }
-
       /* Card de producto */
       .card-prod { 
         background: white; 
@@ -91,29 +86,7 @@
 let inventarioLocal = [];
 const aNum = (v) => v ? parseFloat(v.toString().replace(',', '.')) : 0;
 
-// 1. CARGAR BARRA DE NAVEGACIÓN DESDE menu.html
-async function cargarMenu() {
-    try {
-        const resp = await fetch('menu.html');
-        if (resp.ok) {
-            document.getElementById('menu-container').innerHTML = await resp.text();
-            
-            // Pintar el botón activo
-            const urlActual = window.location.href.toLowerCase();
-            setTimeout(() => {
-                const botones = document.querySelectorAll('.nav-link');
-                botones.forEach(btn => {
-                    const path = btn.getAttribute('data-path')?.toLowerCase();
-                    if (path && urlActual.includes(path)) {
-                        btn.classList.add('active-nav');
-                    }
-                });
-            }, 100);
-        }
-    } catch (e) { console.error("Error al cargar menú:", e); }
-}
-
-// 2. OBTENER DATOS DE LA API
+// 1. OBTENER DATOS DE LA API
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
   if (icon) icon.classList.add('rotate-animation');
@@ -121,7 +94,6 @@ async function cargarInventario() {
   try {
     const respuesta = await DairyAPI.obtenerDatos("Inventario");
     
-    // Si la respuesta es un Array, procesamos. Si no, mostramos el error.
     if (Array.isArray(respuesta)) {
         inventarioLocal = respuesta;
         renderizar(inventarioLocal);
@@ -140,7 +112,7 @@ async function cargarInventario() {
   }
 }
 
-// 3. DIBUJAR LOS PRODUCTOS EN PANTALLA
+// 2. DIBUJAR LOS PRODUCTOS EN PANTALLA
 function renderizar(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
@@ -182,7 +154,7 @@ function renderizar(lista) {
     document.getElementById('total-sku').innerText = lista.length;
 }
 
-// 4. FILTRAR BUSQUEDA
+// 3. FILTRAR BUSQUEDA
 function filtrar() {
     const b = document.getElementById('filtroProd').value.toLowerCase();
     const filtrados = inventarioLocal.filter(p => 
@@ -192,9 +164,9 @@ function filtrar() {
     renderizar(filtrados);
 }
 
-// 5. INICIALIZACIÓN
+// 4. INICIALIZACIÓN
 window.onload = () => {
-    cargarMenu();
+    // Ya no llamamos a cargarMenu(), menu-logic.js lo hace solo al detectar el DOM cargado
     cargarInventario();
 };
 </script>

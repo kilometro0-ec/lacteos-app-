@@ -1,77 +1,77 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Despachos - Lógica Láctea</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Despachos - Lógica Láctea</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    
-    <script>
-        tailwind.config = { 
-            theme: { 
-                extend: { 
-                    colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" } 
-                } 
-            } 
-        }
-    </script>
-    <style>
-        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .anim-slide-out { animation: slideRight 0.6s forwards cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
-        @keyframes slideRight { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(150%); opacity: 0; } }
-        .rotate-anim { animation: rotate 1s linear infinite; }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        ::-webkit-scrollbar { display: none; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    
+    <script>
+        tailwind.config = { 
+            theme: { 
+                extend: { 
+                    colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" } 
+                } 
+            } 
+        }
+    </script>
+    <style>
+        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .anim-slide-out { animation: slideRight 0.6s forwards cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none; }
+        @keyframes slideRight { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(150%); opacity: 0; } }
+        .rotate-anim { animation: rotate 1s linear infinite; }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        ::-webkit-scrollbar { display: none; }
+    </style>
 </head>
 <body class="bg-background text-gray-900 pb-44">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
-    <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='DashboardLacteo.html'">
-        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-black">
-            <span class="material-symbols-outlined">local_shipping</span>
-        </div>
-        <h1 class="text-xl font-black text-primary tracking-tight uppercase">Despachos</h1>
-    </div>
-    <div class="flex gap-2">
-        <button onclick="reiniciarContadoresHoy()" class="p-2 text-gray-400 active:scale-90 transition-transform">
-            <span class="material-symbols-outlined">delete_history</span>
-        </button>
-        <button onclick="cargarDatos()" class="p-2 text-primary active:scale-90 transition-transform">
-            <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
-        </button>
-    </div>
+    <div class="flex items-center gap-2 cursor-pointer" onclick="window.location.href='DashboardLacteo.html'">
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-black">
+            <span class="material-symbols-outlined">local_shipping</span>
+        </div>
+        <h1 class="text-xl font-black text-primary tracking-tight uppercase">Despachos</h1>
+    </div>
+    <div class="flex gap-2">
+        <button onclick="reiniciarContadoresHoy()" class="p-2 text-gray-400 active:scale-90 transition-transform">
+            <span class="material-symbols-outlined">delete_history</span>
+        </button>
+        <button onclick="cargarDatos()" class="p-2 text-primary active:scale-90 transition-transform">
+            <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
+        </button>
+    </div>
 </header>
 
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-4">
-    <div class="grid grid-cols-2 gap-3">
-        <div class="bg-white p-5 rounded-[2.5rem] border-2 border-orange-100 shadow-sm text-center">
-            <p class="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1">Por Recaudar</p>
-            <h2 id="dinero-pend" class="text-2xl font-black text-orange-600 leading-none">$0.00</h2>
-            <p class="text-[9px] font-bold text-gray-400 mt-2 uppercase"><span id="items-pend">0</span> Pedidos</p>
-        </div>
-        <div class="bg-primary p-5 rounded-[2.5rem] shadow-xl text-center border-2 border-primary">
-            <p class="text-[10px] font-black text-purple-200 uppercase tracking-widest mb-1">Recaudado Hoy</p>
-            <h2 id="dinero-ent" class="text-2xl font-black text-white leading-none">$0.00</h2>
-            <p class="text-[9px] font-bold text-purple-200 mt-2 uppercase"><span id="items-ent">0</span> Entregas</p>
-        </div>
-    </div>
+    <div class="grid grid-cols-2 gap-3">
+        <div class="bg-white p-5 rounded-[2.5rem] border-2 border-orange-100 shadow-sm text-center">
+            <p class="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1">Por Recaudar</p>
+            <h2 id="dinero-pend" class="text-2xl font-black text-orange-600 leading-none">$0.00</h2>
+            <p class="text-[9px] font-bold text-gray-400 mt-2 uppercase"><span id="items-pend">0</span> Pedidos</p>
+        </div>
+        <div class="bg-primary p-5 rounded-[2.5rem] shadow-xl text-center border-2 border-primary">
+            <p class="text-[10px] font-black text-purple-200 uppercase tracking-widest mb-1">Recaudado Hoy</p>
+            <h2 id="dinero-ent" class="text-2xl font-black text-white leading-none">$0.00</h2>
+            <p class="text-[9px] font-bold text-purple-200 mt-2 uppercase"><span id="items-ent">0</span> Entregas</p>
+        </div>
+    </div>
 
-    <div class="px-1">
-        <input type="text" id="filtroDespacho" oninput="filtrar()" placeholder="🔍 Buscar cliente..." 
-               class="w-full bg-white border-2 border-outline rounded-2xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary shadow-sm">
-    </div>
+    <div class="px-1">
+        <input type="text" id="filtroDespacho" oninput="filtrar()" placeholder="🔍 Buscar cliente..." 
+               class="w-full bg-white border-2 border-outline rounded-2xl p-4 font-bold outline-none focus:ring-2 focus:ring-primary shadow-sm">
+    </div>
 
-    <div id="contenedor-pedidos" class="space-y-5 pt-2">
-        <div class="text-center py-20 text-gray-400 font-bold italic">Sincronizando con Ventas...</div>
-    </div>
+    <div id="contenedor-pedidos" class="space-y-5 pt-2">
+        <div class="text-center py-20 text-gray-400 font-bold italic">Sincronizando con Ventas...</div>
+    </div>
 </main>
 
 <div id="menu-container"></div>
@@ -80,150 +80,150 @@
 let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, dinero: 0 };
 
 async function cargarDatos() {
-    const contenedor = document.getElementById('contenedor-pedidos');
-    const icon = document.getElementById('refresh-icon');
-    icon?.classList.add('rotate-anim');
-    
-    try {
-        const [ventas, clientes] = await Promise.all([
-            DairyAPI.obtenerDatos("Ventas"),
-            DairyAPI.obtenerDatos("Clientes")
-        ]);
+    const contenedor = document.getElementById('contenedor-pedidos');
+    const icon = document.getElementById('refresh-icon');
+    icon?.classList.add('rotate-anim');
+    
+    try {
+        const [ventas, clientes] = await Promise.all([
+            DairyAPI.obtenerDatos("Ventas"),
+            DairyAPI.obtenerDatos("Clientes")
+        ]);
 
-        const agrupados = {};
-        let totalDineroPendiente = 0;
+        const agrupados = {};
+        let totalDineroPendiente = 0;
 
-        ventas.forEach(v => {
-            const estadoVenta = String(v.Estado || "").trim().toUpperCase();
-            
-            if (estadoVenta === "PENDIENTE") {
-                const idV = v.ID_Venta || "S/N";
-                if (!agrupados[idV]) {
-                    agrupados[idV] = {
-                        id: idV,
-                        cliente: v.Cliente,
-                        fecha: v.Fecha,
-                        items: [],
-                        totalVenta: 0,
-                        info: clientes.find(c => String(c.Nombre).trim().toLowerCase() === String(v.Cliente).trim().toLowerCase())
-                    };
-                }
-                
-                const cant = parseFloat(v.Cantidad) || 0;
-                const totalFila = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
+        ventas.forEach(v => {
+            const estadoVenta = String(v.Estado || "").trim().toUpperCase();
+            
+            if (estadoVenta === "PENDIENTE") {
+                const idV = v.ID_Venta || "S/N";
+                if (!agrupados[idV]) {
+                    agrupados[idV] = {
+                        id: idV,
+                        cliente: v.Cliente,
+                        fecha: v.Fecha,
+                        items: [],
+                        totalVenta: 0,
+                        info: clientes.find(c => String(c.Nombre).trim().toLowerCase() === String(v.Cliente).trim().toLowerCase())
+                    };
+                }
+                
+                const cant = parseFloat(v.Cantidad) || 0;
+                const totalFila = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
 
-                agrupados[idV].items.push({ nombre: v.Producto, cant: cant });
-                agrupados[idV].totalVenta += totalFila;
-                totalDineroPendiente += totalFila;
-            }
-        });
+                agrupados[idV].items.push({ nombre: v.Producto, cant: cant });
+                agrupados[idV].totalVenta += totalFila;
+                totalDineroPendiente += totalFila;
+            }
+        });
 
-        const listaFinal = Object.values(agrupados).reverse();
-        renderizarCards(listaFinal);
-        
-        document.getElementById('dinero-pend').innerText = `$${totalDineroPendiente.toFixed(2)}`;
-        document.getElementById('items-pend').innerText = listaFinal.length;
-        document.getElementById('dinero-ent').innerText = `$${statsSesion.dinero.toFixed(2)}`;
-        document.getElementById('items-ent').innerText = statsSesion.pedidos;
+        const listaFinal = Object.values(agrupados).reverse();
+        renderizarCards(listaFinal);
+        
+        document.getElementById('dinero-pend').innerText = `$${totalDineroPendiente.toFixed(2)}`;
+        document.getElementById('items-pend').innerText = listaFinal.length;
+        document.getElementById('dinero-ent').innerText = `$${statsSesion.dinero.toFixed(2)}`;
+        document.getElementById('items-ent').innerText = statsSesion.pedidos;
 
-    } catch (e) {
-        console.error("Error al cargar despachos:", e);
-        contenedor.innerHTML = `<p class="text-center text-red-500 py-20 font-bold">Error de sincronización</p>`;
-    } finally {
-        if(icon) setTimeout(() => icon.classList.remove('rotate-anim'), 800);
-    }
+    } catch (e) {
+        console.error("Error al cargar despachos:", e);
+        contenedor.innerHTML = `<p class="text-center text-red-500 py-20 font-bold">Error de sincronización</p>`;
+    } finally {
+        if(icon) setTimeout(() => icon.classList.remove('rotate-anim'), 800);
+    }
 }
 
 function renderizarCards(lista) {
-    const contenedor = document.getElementById('contenedor-pedidos');
-    contenedor.innerHTML = "";
+    const contenedor = document.getElementById('contenedor-pedidos');
+    contenedor.innerHTML = "";
 
-    if (lista.length === 0) {
-        contenedor.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold italic uppercase">Sin pedidos pendientes</div>`;
-        return;
-    }
+    if (lista.length === 0) {
+        contenedor.innerHTML = `<div class="text-center py-20 text-gray-400 font-bold italic uppercase">Sin pedidos pendientes</div>`;
+        return;
+    }
 
-    lista.forEach((ped, idx) => {
-        const rawTel = ped.info ? String(ped.info.Teléfono || "").replace(/\D/g, '') : "";
-        let telfLimpio = rawTel;
-        if (telfLimpio.startsWith('0')) telfLimpio = telfLimpio.substring(1);
-        
-        const itemsHTML = ped.items.map(i => `
-            <div class="flex justify-between items-center py-2 border-b border-purple-50 last:border-0">
-                <span class="text-sm text-gray-700 font-bold uppercase">${i.nombre}</span>
-                <span class="text-sm font-black text-primary">x${i.cant}</span>
-            </div>
-        `).join('');
+    lista.forEach((ped, idx) => {
+        const rawTel = ped.info ? String(ped.info.Teléfono || "").replace(/\D/g, '') : "";
+        let telfLimpio = rawTel;
+        if (telfLimpio.startsWith('0')) telfLimpio = telfLimpio.substring(1);
+        
+        const itemsHTML = ped.items.map(i => `
+            <div class="flex justify-between items-center py-2 border-b border-purple-50 last:border-0">
+                <span class="text-sm text-gray-700 font-bold uppercase">${i.nombre}</span>
+                <span class="text-sm font-black text-primary">x${i.cant}</span>
+            </div>
+        `).join('');
 
-        contenedor.innerHTML += `
-            <div id="card-${idx}" class="bg-white p-6 rounded-[2.5rem] border-2 border-outline shadow-md space-y-4 transition-all">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <span class="text-[10px] font-black bg-purple-100 text-primary px-2 py-0.5 rounded uppercase">${ped.id}</span>
-                        <h2 class="text-xl font-black text-gray-800 uppercase leading-tight">${ped.cliente}</h2>
-                    </div>
-                </div>
-                <div class="py-1">${itemsHTML}</div>
-                <div class="flex justify-between items-end pt-2">
-                    <div>
-                        <p class="text-[10px] font-black text-gray-400 uppercase">Cobrar</p>
-                        <p class="text-3xl font-black text-gray-900 leading-none">$${ped.totalVenta.toFixed(2)}</p>
-                    </div>
-                    <div class="flex gap-2">
-                        ${telfLimpio ? `<a href="https://wa.me/593${telfLimpio}" target="_blank" class="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition-transform"><span class="material-symbols-outlined">chat</span></a>` : ''}
-                        <button onclick="confirmarEntrega('${ped.id}', 'card-${idx}', ${ped.totalVenta})" 
-                                class="h-12 bg-primary text-white px-6 rounded-2xl font-black shadow-lg uppercase text-xs active:scale-95 transition-transform">
-                            Entregado
-                        </button>
-                    </div>
-                </div>
-            </div>`;
-    });
+        contenedor.innerHTML += `
+            <div id="card-${idx}" class="bg-white p-6 rounded-[2.5rem] border-2 border-outline shadow-md space-y-4 transition-all">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span class="text-[10px] font-black bg-purple-100 text-primary px-2 py-0.5 rounded uppercase">${ped.id}</span>
+                        <h2 class="text-xl font-black text-gray-800 uppercase leading-tight">${ped.cliente}</h2>
+                    </div>
+                </div>
+                <div class="py-1">${itemsHTML}</div>
+                <div class="flex justify-between items-end pt-2">
+                    <div>
+                        <p class="text-[10px] font-black text-gray-400 uppercase">Cobrar</p>
+                        <p class="text-3xl font-black text-gray-900 leading-none">$${ped.totalVenta.toFixed(2)}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        ${telfLimpio ? `<a href="https://wa.me/593${telfLimpio}" target="_blank" class="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center shadow-lg active:scale-90 transition-transform"><span class="material-symbols-outlined">chat</span></a>` : ''}
+                        <button onclick="confirmarEntrega('${ped.id}', 'card-${idx}', ${ped.totalVenta})" 
+                                class="h-12 bg-primary text-white px-6 rounded-2xl font-black shadow-lg uppercase text-xs active:scale-95 transition-transform">
+                            Entregado
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+    });
 }
 
 async function confirmarEntrega(idVenta, cardId, monto) {
-    if(!confirm("¿Confirmar entrega?")) return;
-    const card = document.getElementById(cardId);
-    card.classList.add('anim-slide-out');
+    if(!confirm("¿Confirmar entrega?")) return;
+    const card = document.getElementById(cardId);
+    card.classList.add('anim-slide-out');
 
-    try {
-        await DairyAPI.enviarDatos("Ventas", { 
-            pestaña: "Ventas", 
-            accion: "editar_estado", 
-            ID_Venta: idVenta, 
-            Estado: "ENTREGADO" 
-        });
+    try {
+        await DairyAPI.enviarDatos("Ventas", { 
+            pestaña: "Ventas", 
+            accion: "editar_estado", 
+            ID_Venta: idVenta, 
+            Estado: "ENTREGADO" 
+        });
 
-        setTimeout(() => {
-            card.remove();
-            statsSesion.pedidos += 1;
-            statsSesion.dinero += monto;
-            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
-            cargarDatos();
-        }, 600);
-    } catch (e) {
-        alert("Error al actualizar");
-        card.classList.remove('anim-slide-out');
-    }
+        setTimeout(() => {
+            card.remove();
+            statsSesion.pedidos += 1;
+            statsSesion.dinero += monto;
+            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
+            cargarDatos();
+        }, 600);
+    } catch (e) {
+        alert("Error al actualizar");
+        card.classList.remove('anim-slide-out');
+    }
 }
 
 function filtrar() {
-    const b = document.getElementById('filtroDespacho').value.toLowerCase();
-    const cards = document.querySelectorAll('#contenedor-pedidos > div');
-    cards.forEach(c => {
-        c.style.display = c.innerText.toLowerCase().includes(b) ? 'block' : 'none';
-    });
+    const b = document.getElementById('filtroDespacho').value.toLowerCase();
+    const cards = document.querySelectorAll('#contenedor-pedidos > div');
+    cards.forEach(c => {
+        c.style.display = c.innerText.toLowerCase().includes(b) ? 'block' : 'none';
+    });
 }
 
 function reiniciarContadoresHoy() {
-    if(confirm("¿Reiniciar recaudación de hoy?")) {
-        statsSesion = { pedidos: 0, dinero: 0 };
-        localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
-        cargarDatos();
-    }
+    if(confirm("¿Reiniciar recaudación de hoy?")) {
+        statsSesion = { pedidos: 0, dinero: 0 };
+        localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
+        cargarDatos();
+    }
 }
 
 window.onload = cargarDatos;
 </script>
 </body>
-</html>
+</html>GestióndeDespachos.html

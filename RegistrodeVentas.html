@@ -1,169 +1,316 @@
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#a21caf">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3050/3050158.png">
+
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ventas - Lógica Láctea</title>
     
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-    <script src="https://cdn.tailwindcss.com"></script>
-    
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <script>
       tailwind.config = {
         theme: {
           extend: {
-            colors: { primary: "#a21caf", secondary: "#db2777", background: "#faf5ff" }
+            colors: { primary: "#a21caf", secondary: "#db2777", background: "#faf5ff", outline: "#e9d5ff" }
           }
         }
       }
     </script>
 
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
-        .card-sutil { background: white; border-radius: 1.5rem; border: 1px solid #e9d5ff; }
-        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; border-radius: 1rem; transition: all 0.2s; }
-        .btn-magenta:active { transform: scale(0.95); }
-        #loading-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; color: #1f012a; }
+        .card-sutil { background: white; border-radius: 2.5rem; border: 1px solid #e9d5ff; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.02); }
+        .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 2rem; padding: 1rem 1.5rem; width: 100%; transition: all 0.3s ease; font-size: 14px; color: #4a5568; }
+        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .btn-magenta:active { transform: scale(0.96); }
+        .hidden { display: none !important; }
+        
+        /* OVERLAY DE CARGA CON VACA */
+        #loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(250, 245, 255, 0.9);
+            backdrop-blur: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        
+        .vaca-animada {
+            width: 120px;
+            height: 120px;
+            filter: drop-shadow(0 10px 15px rgba(162, 28, 175, 0.2));
+            animation: vaca-bounce 1.5s infinite ease-in-out;
+        }
+
+        @keyframes vaca-bounce {
+            0%, 100% { transform: scale(1) translateY(0); }
+            50% { transform: scale(1.1) translateY(-10px); }
+        }
+
+        /* ANIMACIONES */
+        .spin-animation { animation: spin 0.8s ease-in-out; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .header-btn:active { transform: scale(0.9); }
+        .active-nav { color: #a21caf !important; }
+        .active-nav .icon-box { background-color: #f5f3ff !important; transform: translateY(-4px); }
     </style>
 </head>
-<body class="pb-32">
+<body class="pb-44"> 
 
 <div id="loading-overlay">
-    <div class="text-center">
-        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p class="mt-4 text-[10px] font-black text-primary uppercase">Sincronizando...</p>
-    </div>
+    <img src="https://cdn-icons-png.flaticon.com/512/2395/2395796.png" alt="Cargando..." class="vaca-animada">
+    <p class="mt-4 text-primary font-black uppercase tracking-[0.2em] text-[10px] animate-pulse">Lógica Láctea Sincronizando...</p>
 </div>
 
-<header class="h-16 bg-white border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
-    <h1 class="text-xl font-black text-primary uppercase">Ventas</h1>
-    <button onclick="location.reload()" class="text-primary"><span class="material-symbols-outlined">sync</span></button>
+<header class="h-16 bg-white/80 backdrop-blur-md border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
+    <div>
+        <h1 class="text-xl font-black text-primary tracking-tighter uppercase">Ventas</h1>
+        <p id="estado-carga" class="text-[8px] font-black text-secondary uppercase">Conectado</p>
+    </div>
+    
+    <div class="flex items-center gap-2">
+        <button onclick="recargarPagina()" id="btn-sync" class="header-btn w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-primary/40 transition-all">
+            <span class="material-symbols-outlined" id="icon-sync">sync</span>
+        </button>
+        <button onclick="window.location.href='index.html'" class="header-btn w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg transition-all">
+            <span class="material-symbols-outlined">home</span>
+        </button>
+    </div>
 </header>
 
-<main class="p-4 max-w-lg mx-auto space-y-6">
-    <section class="card-sutil p-4">
-        <select id="select-cliente" onchange="renderCarrito()" class="w-full p-3 rounded-xl border-none font-bold text-sm bg-purple-50">
-            <option value="">Cargando clientes...</option>
-        </select>
-    </section>
-
-    <div id="contenedor-productos" class="grid grid-cols-2 gap-3"></div>
-
-    <section class="card-sutil p-5 border-2 border-primary">
-        <h2 id="cliente-resumen" class="text-[10px] font-black text-gray-400 uppercase mb-2">Sin Cliente</h2>
-        <div id="lista-carrito" class="text-[10px] font-bold uppercase space-y-2 mb-4">
-            <p class="text-gray-300 italic">Carrito vacío</p>
+<main id="main-content" class="mt-6 px-4 max-w-6xl mx-auto">
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="card-sutil p-5 flex flex-col items-center border-b-4 border-b-primary">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ventas Pendientes</span>
+            <span id="card-pedidos-pendientes" class="text-3xl font-black text-primary tracking-tighter">0</span>
         </div>
-        <div class="flex justify-between items-center border-t pt-3">
-            <span class="text-xs font-black text-gray-400">TOTAL</span>
-            <span id="total-txt" class="text-2xl font-black text-gray-900">$0.00</span>
+        <div class="card-sutil p-5 flex flex-col items-center border-b-4 border-b-secondary">
+            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Productos</span>
+            <span id="card-productos-total" class="text-3xl font-black text-secondary tracking-tighter">0</span>
         </div>
-        <button onclick="procesarVenta()" class="btn-magenta w-full mt-4 py-4 uppercase">Confirmar Pedido</button>
-    </section>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-7 space-y-6">
+            <section class="card-sutil p-6">
+                <div id="vista-seleccion-cliente">
+                    <div class="flex justify-between items-center mb-4 px-2">
+                        <span class="text-[10px] font-black text-primary uppercase tracking-widest">Seleccionar Cliente</span>
+                        <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-black text-white bg-secondary px-4 py-2 rounded-full">+ NUEVO</button>
+                    </div>
+                    <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil text-base font-bold">
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </div>
+
+                <div id="vista-nuevo-cliente" class="hidden space-y-4">
+                    <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
+                    <input type="text" id="reg-ci" placeholder="CI / RUC" class="input-sutil">
+                    <button onclick="guardarNuevoCliente()" class="w-full btn-magenta py-4">GUARDAR</button>
+                </div>
+            </section>
+
+            <div class="px-1 relative">
+                <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary opacity-40">search</span>
+                <input type="text" id="buscarProducto" oninput="filtrarProductos()" placeholder="Buscar producto..." class="input-sutil pl-12">
+            </div>
+            
+            <section id="contenedor-productos" class="grid grid-cols-2 sm:grid-cols-3 gap-4"></section>
+        </div>
+
+        <div class="lg:col-span-5">
+            <section class="card-sutil overflow-hidden sticky top-24">
+                <div class="bg-gradient-to-br from-primary to-purple-700 p-6 text-white text-center">
+                    <h2 id="num-orden" class="text-xs font-mono opacity-60 mb-2">---</h2>
+                    <h2 id="cliente-resumen" class="text-xl font-black uppercase truncate tracking-tighter">SIN SELECCIONAR</h2>
+                    <input type="date" id="fecha-entrega" class="w-full mt-4 font-bold text-black py-2 px-3 rounded-xl">
+                </div>
+                <div class="p-6 space-y-6">
+                    <div id="lista-carrito" class="space-y-2 max-h-60 overflow-y-auto">
+                        <div id="carrito-vacio" class="text-center py-4 text-slate-300 italic text-xs">Carrito vacío</div>
+                    </div>
+                    <div class="flex justify-between items-end border-t pt-4">
+                        <span class="text-xs font-black text-slate-400">TOTAL</span>
+                        <span id="total-venta" class="text-4xl font-black text-slate-900">$0.00</span>
+                    </div>
+                    <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta py-5 text-lg">CONFIRMAR PEDIDO</button>
+                </div>
+            </section>
+        </div>
+    </div>
 </main>
 
-<div id="menu-container"></div>
+<nav class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-purple-100 pb-6 pt-3 z-[100]">
+    <div class="flex justify-around items-center max-w-lg mx-auto">
+        <button onclick="window.location.href='./DashboardLacteo.html'" class="nav-link text-gray-400 flex flex-col items-center">
+            <span class="material-symbols-outlined">home</span><span class="text-[9px] font-black uppercase">Inicio</span>
+        </button>
+        <button class="nav-link active-nav flex flex-col items-center">
+            <span class="material-symbols-outlined">receipt_long</span><span class="text-[9px] font-black uppercase">Ventas</span>
+        </button>
+        <button onclick="window.location.href='./PedidosProveedor.html'" class="nav-link text-gray-400 flex flex-col items-center">
+            <span class="material-symbols-outlined">shopping_cart</span><span class="text-[9px] font-black uppercase">Pedidos</span>
+        </button>
+        <button onclick="window.location.href='./GestiondeClientes.html'" class="nav-link text-gray-400 flex flex-col items-center">
+            <span class="material-symbols-outlined">group</span><span class="text-[9px] font-black uppercase">Clientes</span>
+        </button>
+        <button onclick="window.location.href='./ControldeInventario.html'" class="nav-link text-gray-400 flex flex-col items-center">
+            <span class="material-symbols-outlined">inventory_2</span><span class="text-[9px] font-black uppercase">Stock</span>
+        </button>
+    </div>
+</nav>
 
 <script>
-let db = { productos: [], carrito: {} };
+let carrito = {}; let productosData = []; let idOrdenActual = "";
+
+// FUNCIÓN DE RECARGA CON ANIMACIÓN
+function recargarPagina() {
+    const icon = document.getElementById('icon-sync');
+    icon.classList.add('spin-animation');
+    // Mostrar overlay de vaca antes de recargar
+    document.getElementById('loading-overlay').classList.remove('hidden');
+    setTimeout(() => {
+        location.reload();
+    }, 500);
+}
 
 async function iniciar() {
+    const d = new Date();
+    idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
+    document.getElementById('num-orden').innerText = idOrdenActual;
+    document.getElementById('fecha-entrega').value = new Date().toISOString().split('T')[0];
+
     try {
-        // AQUÍ USAMOS DairyAPI QUE YA TIENE TU URL REAL
-        const [cl, pr] = await Promise.all([
-            DairyAPI.obtenerDatos("Clientes"),
-            DairyAPI.obtenerDatos("Inventario")
+        const [cl, pr, vnt] = await Promise.all([
+            DairyAPI.obtenerDatos("Clientes"), 
+            DairyAPI.obtenerDatos("Inventario"),
+            DairyAPI.obtenerDatos("Ventas")
         ]);
+        
+        productosData = pr;
+        
+        // Indicadores
+        const pendientes = vnt.filter(v => v.Estado === "PENDIENTE");
+        document.getElementById('card-pedidos-pendientes').innerText = [...new Set(pendientes.map(v => v.ID_Venta))].length;
+        document.getElementById('card-productos-total').innerText = pendientes.reduce((acc, v) => acc + (parseInt(v.Cantidad) || 0), 0);
 
-        db.productos = pr || [];
-
+        // Clientes
         const sel = document.getElementById('select-cliente');
-        sel.innerHTML = '<option value="">-- SELECCIONAR CLIENTE --</option>';
-        (cl || []).forEach(c => {
-            if(c.Nombre) sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
+        sel.innerHTML = '<option value="">-- Seleccionar --</option>';
+        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
+            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
         });
+        
+        renderizarProductos();
+        
+        // OCULTAR OVERLAY DE VACA AL TERMINAR
+        setTimeout(() => {
+            document.getElementById('loading-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('loading-overlay').classList.add('hidden'), 500);
+        }, 800);
 
-        const cont = document.getElementById('contenedor-productos');
-        cont.innerHTML = "";
-        db.productos.forEach(p => {
-            const idLimpio = p.Producto.replace(/\s+/g, '');
-            cont.innerHTML += `
-                <div class="card-sutil p-3 flex flex-col justify-between">
-                    <h4 class="text-[10px] font-black uppercase truncate">${p.Producto}</h4>
-                    <p class="text-lg font-black text-primary">$${parseFloat(p.Precio_Venta || 0).toFixed(2)}</p>
-                    <div class="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-2">
-                        <button onclick="update('${p.Producto}', -1)" class="w-8 h-8 bg-white rounded shadow text-primary font-bold">-</button>
-                        <span id="cant-${idLimpio}" class="text-xs font-black text-primary">0</span>
-                        <button onclick="update('${p.Producto}', 1)" class="w-8 h-8 bg-white rounded shadow text-primary font-bold">+</button>
-                    </div>
-                </div>`;
-        });
-
-        document.getElementById('loading-overlay').classList.add('hidden');
-    } catch(e) {
+    } catch(e) { 
         console.error(e);
-        alert("Error al cargar datos. Revisa la consola.");
+        document.getElementById('estado-carga').innerText = "Error de red";
     }
 }
 
-function update(nom, cant) {
-    const actual = db.carrito[nom] || 0;
-    const nuevo = actual + cant;
-    if(nuevo >= 0) {
-        db.carrito[nom] = nuevo;
-        document.getElementById(`cant-${nom.replace(/\s+/g, '')}`).innerText = nuevo;
-        renderCarrito();
+function renderizarProductos() {
+    const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
+    productosData.forEach(p => {
+        const s = parseInt(p.Stock) || 0;
+        const idCant = `cant-${p.Producto.replace(/\s+/g,'')}`;
+        cont.innerHTML += `
+            <div class="card-sutil p-4 flex flex-col justify-between min-h-[180px] ${s <= 0 ? 'opacity-40 grayscale' : ''}">
+                <h4 class="font-black text-[11px] uppercase text-primary mb-2">${p.Producto}</h4>
+                <div>
+                    <p class="text-xl font-black text-slate-800">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
+                    <div class="flex items-center justify-between bg-purple-50 rounded-2xl p-1 mt-2">
+                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-7 h-7 bg-white rounded-lg text-primary font-black">-</button>
+                        <span id="${idCant}" class="font-black text-primary text-xs">0</span>
+                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-7 h-7 bg-white rounded-lg text-primary font-black">+</button>
+                    </div>
+                </div>
+            </div>`;
+    });
+}
+
+function cambiarCant(n, d) {
+    if(!carrito[n]) carrito[n] = 0;
+    const p = productosData.find(x => x.Producto === n);
+    if(carrito[n]+d >= 0 && (carrito[n]+d <= p.Stock)) {
+        carrito[n] += d;
+        document.getElementById(`cant-${n.replace(/\s+/g,'')}`).innerText = carrito[n];
+        actualizarCarritoUI();
     }
 }
 
-function renderCarrito() {
-    const list = document.getElementById('lista-carrito');
-    const cli = document.getElementById('select-cliente').value;
-    document.getElementById('cliente-resumen').innerText = cli || "Sin Cliente";
-    
-    list.innerHTML = "";
-    let total = 0;
-    Object.entries(db.carrito).forEach(([n, c]) => {
-        if(c > 0) {
-            const p = db.productos.find(x => x.Producto === n);
-            const sub = c * parseFloat(p.Precio_Venta);
-            total += sub;
-            list.innerHTML += `<div class="flex justify-between"><span>${n} x${c}</span><span>$${sub.toFixed(2)}</span></div>`;
+function actualizarCarritoUI() {
+    const l = document.getElementById('lista-carrito'); l.innerHTML = ""; let t = 0;
+    Object.keys(carrito).forEach(n => {
+        if(carrito[n] > 0) {
+            const p = productosData.find(x => x.Producto === n);
+            const sub = carrito[n] * parseFloat(p.Precio_Venta);
+            t += sub;
+            l.innerHTML += `<div class="flex justify-between items-center p-2 bg-purple-50 rounded-xl text-[10px] font-black uppercase">
+                <span>${n} (x${carrito[n]})</span>
+                <span>$${sub.toFixed(2)}</span>
+            </div>`;
         }
     });
-    if(total === 0) list.innerHTML = "Carrito vacío";
-    document.getElementById('total-txt').innerText = `$${total.toFixed(2)}`;
+    document.getElementById('total-venta').innerText = `$${t.toFixed(2)}`;
+    document.getElementById('carrito-vacio').classList.toggle('hidden', t > 0);
 }
 
 async function procesarVenta() {
     const cli = document.getElementById('select-cliente').value;
-    if(!cli) return alert("Selecciona un cliente");
+    const fec = document.getElementById('fecha-entrega').value;
+    if(!cli || !fec) return alert("Faltan datos");
+    const items = Object.keys(carrito).filter(n => carrito[n] > 0);
+    if(items.length === 0) return alert("Sin productos");
     
-    const items = Object.entries(db.carrito).filter(i => i[1] > 0);
-    if(items.length === 0) return alert("Carrito vacío");
-
+    document.getElementById('btn-finalizar').innerText = "GUARDANDO...";
     try {
-        for(const [nom, cant] of items) {
-            const p = db.productos.find(x => x.Producto === n);
-            await DairyAPI.enviarDatos("Ventas", {
-                ID_Venta: "V-" + Date.now().toString().slice(-5),
-                Cliente: cli,
-                Producto: nom,
-                Cantidad: cant,
-                Precio_PVP: p.Precio_Venta,
-                Estado: "PENDIENTE",
-                Fecha_Entrega: new Date().toISOString().split('T')[0]
+        for(const n of items) {
+            const p = productosData.find(x => x.Producto === n);
+            await DairyAPI.enviarDatos("Ventas", { 
+                ID_Venta: idOrdenActual, Cliente: cli, Producto: n, 
+                Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: fec, 
+                Estado: "PENDIENTE" 
             });
         }
-        alert("¡Venta enviada!");
         location.reload();
-    } catch(e) { alert("Error al enviar"); }
+    } catch(e) { alert("Error al guardar"); }
+}
+
+function alternarFormularioCliente(m) {
+    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
+    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
+}
+
+function actualizarNombreCarrito() { 
+    document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; 
+}
+
+function filtrarProductos() {
+    const q = document.getElementById('buscarProducto').value.toLowerCase();
+    document.querySelectorAll('#contenedor-productos > div').forEach(c => {
+        c.style.display = c.innerText.toLowerCase().includes(q) ? "flex" : "none";
+    });
 }
 
 window.onload = iniciar;

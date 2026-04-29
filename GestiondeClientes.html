@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html class="light" lang="es">
 <head>
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#a21caf">
-<meta name="apple-mobile-web-app-capable" content="yes">
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Lógica Láctea | Ranking de Clientes</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
@@ -33,16 +32,8 @@
         .active-icon { font-variation-settings: 'FILL' 1 !important; }
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         
-        /* Estilos para el pintado del menú activo */
-        .active-nav { color: #a21caf !important; }
-        .active-nav .icon-box {
-            background-color: #f5f3ff !important;
-            transform: translateY(-8px) !important;
-            box-shadow: 0 10px 15px -3px rgba(162, 28, 175, 0.2);
-        }
-        .active-nav span.material-symbols-outlined {
-            font-variation-settings: 'FILL' 1, 'wght' 600 !important;
-        }
+        /* Ocultar scrollbars */
+        ::-webkit-scrollbar { display: none; }
         
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -88,34 +79,6 @@
 let clientesData = [];
 let ventasEntregadas = [];
 
-// 1. CARGA DEL MENÚ (LÓGICA UNIFICADA)
-async function cargarMenu() {
-    try {
-        const response = await fetch('menu.html');
-        const text = await response.text();
-        const contenedor = document.getElementById('menu-container');
-        contenedor.innerHTML = text;
-
-        const fullPath = window.location.href.toLowerCase();
-        const fileName = window.location.pathname.split("/").pop().toLowerCase() || "gestiondeclientes.html";
-
-        const pintar = () => {
-            const botones = contenedor.querySelectorAll('.nav-link');
-            botones.forEach(btn => {
-                const dataPath = btn.getAttribute('data-path').toLowerCase();
-                // Verificamos si coincide con GestiondeClientes
-                if (fileName.includes(dataPath) || fullPath.includes(dataPath)) {
-                    btn.classList.add('active-nav');
-                    btn.classList.remove('text-gray-400');
-                }
-            });
-        };
-
-        pintar();
-        setTimeout(pintar, 150);
-    } catch (e) { console.error("Error menú:", e); }
-}
-
 async function cargarDatos() {
     try {
         const [clientes, ventas] = await Promise.all([
@@ -123,24 +86,26 @@ async function cargarDatos() {
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        ventasEntregadas = ventas.filter(v => String(v.Estado).trim().toUpperCase() === "ENTREGADO");
+        ventasEntregadas = Array.isArray(ventas) ? ventas.filter(v => String(v.Estado).trim().toUpperCase() === "ENTREGADO") : [];
+        const rawClientes = Array.isArray(clientes) ? clientes : [];
         
-        clientesData = clientes.map(c => {
+        clientesData = rawClientes.map(c => {
             const conteo = ventasEntregadas.filter(v => 
                 String(v.Cliente).trim().toLowerCase() === String(c.Nombre).trim().toLowerCase()
             ).length;
             return { ...c, totalEntregas: conteo };
         });
 
+        // Ordenar por más entregas realizadas
         clientesData.sort((a, b) => b.totalEntregas - a.totalEntregas);
 
         renderizarClientes(clientesData);
 
-        document.getElementById('total-clientes').innerText = clientes.length;
+        document.getElementById('total-clientes').innerText = rawClientes.length;
         document.getElementById('total-entregas').innerText = ventasEntregadas.length;
 
     } catch (e) {
-        console.error("Error:", e);
+        console.error("Error al cargar datos:", e);
         document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-400">Error de conexión</p>`;
     }
 }
@@ -178,7 +143,7 @@ function renderizarClientes(lista) {
                             <span class="material-symbols-outlined text-xs">chat</span> WhatsApp
                         </a>
                         <div class="flex items-center gap-1 text-[9px] font-black text-secondary bg-pink-50 px-3 py-1.5 rounded-xl uppercase">
-                            <span class="material-symbols-outlined text-xs">task_alt</span> Entregados
+                            <span class="material-symbols-outlined text-xs">task_alt</span> Entregas
                         </div>
                     </div>
                 </div>
@@ -202,12 +167,10 @@ function filtrarClientes() {
 
 function verMapa(dir) {
     if(!dir || dir === "undefined" || dir.trim() === "") return alert("Dirección no registrada");
-    // URL Corregida
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
 }
 
 window.onload = () => {
-    cargarMenu();
     cargarDatos();
 };
 </script>

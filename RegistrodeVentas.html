@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Lógica Láctea v17.0</title>
+    <title>Lógica Láctea v18.0</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
@@ -16,7 +16,6 @@
         body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
         .card-item { background: white; border-radius: 2rem; border: 2px solid #e9d5ff; transition: all 0.2s; }
         
-        /* Animación mejorada para refrescar */
         @keyframes custom-spin {
             0% { transform: rotate(0deg) scale(1); }
             50% { transform: rotate(180deg) scale(1.2); }
@@ -24,21 +23,27 @@
         }
         .sync-active { animation: custom-spin 0.8s ease-in-out; }
         
+        @keyframes pulse-shimmer {
+            0% { box-shadow: 0 0 0 0 rgba(162, 28, 175, 0.4); transform: scale(1); }
+            70% { box-shadow: 0 0 0 15px rgba(162, 28, 175, 0); transform: scale(1.02); }
+            100% { box-shadow: 0 0 0 0 rgba(162, 28, 175, 0); transform: scale(1); }
+        }
+        .btn-animado { animation: pulse-shimmer 2s infinite; }
+
         ::-webkit-scrollbar { display: none; }
         
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(4px); }
         .modal-content { position: absolute; bottom: 0; width: 100%; background: white; border-radius: 3rem 3rem 0 0; padding: 2rem; max-height: 90vh; }
         
-        .carrito-container { background: #fdf4ff; border-top: 4px solid #a21caf; border-radius: 2.5rem 2.5rem 0 0; }
+        .carrito-container { background: #fdf4ff; border-top: 4px solid #a21caf; border-radius: 2.5rem 2.5rem 0 0; transition: all 0.3s; }
         .stat-card { background: white; border: 2px solid #f3e8ff; border-radius: 1.5rem; padding: 0.75rem; display: flex; flex-direction: column; align-items: center; }
         
-        /* Colapso suave */
         #seccion-cliente { transition: max-height 0.3s ease-out; overflow: hidden; }
-        .cliente-minimizado { max-height: 50px !important; opacity: 0.8; }
+        .cliente-minimizado { max-height: 60px !important; opacity: 0.9; }
     </style>
 </head>
 
-<body class="pb-[380px]">
+<body class="pb-[420px]">
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-purple-100 flex justify-between items-center px-4 z-50 shadow-sm">
     <div class="flex items-center gap-2">
@@ -66,27 +71,21 @@
         </div>
     </div>
 
-    <section id="seccion-cliente" class="bg-white p-6 rounded-[2.5rem] border-2 border-[#e9d5ff] shadow-sm space-y-4 max-h-[500px]">
+    <section id="seccion-cliente" class="bg-white p-5 rounded-[2.5rem] border-2 border-[#e9d5ff] shadow-sm space-y-4 max-h-[200px]">
         <div class="flex justify-between items-center" onclick="toggleCliente()">
-            <label class="text-[10px] font-black uppercase text-[#a21caf] tracking-widest">Datos del Cliente</label>
+            <label class="text-[10px] font-black uppercase text-[#a21caf] tracking-widest">Cliente Seleccionado</label>
             <span id="icon-toggle" class="material-symbols-outlined text-gray-300">expand_less</span>
         </div>
         
-        <div id="cliente-form-content" class="space-y-4">
-            <div class="flex justify-between items-end gap-2">
-                <div class="flex-1">
-                    <select id="cliente-select" onchange="seleccionarCliente(this.value)" class="w-full border-none bg-purple-50 rounded-2xl p-4 font-bold text-gray-700 mt-1">
-                        <option value="">Cargando clientes...</option>
-                    </select>
-                </div>
-                <button onclick="abrirModalCliente()" class="bg-[#a21caf] text-white p-4 rounded-2xl shadow-lg">
-                    <span class="material-symbols-outlined">person_add</span>
-                </button>
+        <div class="flex justify-between items-end gap-2">
+            <div class="flex-1">
+                <select id="cliente-select" onchange="seleccionarCliente(this.value)" class="w-full border-none bg-purple-50 rounded-2xl p-4 font-bold text-gray-700 mt-1">
+                    <option value="">Cargando clientes...</option>
+                </select>
             </div>
-            <div>
-                <label class="text-[10px] font-black uppercase text-gray-400 ml-2">Fecha Entrega</label>
-                <input type="date" id="fecha-entrega" class="w-full border-none bg-purple-50 rounded-2xl p-4 font-bold text-gray-700 mt-1">
-            </div>
+            <button onclick="abrirModalCliente()" class="bg-[#a21caf] text-white p-4 rounded-2xl shadow-lg">
+                <span class="material-symbols-outlined">person_add</span>
+            </button>
         </div>
     </section>
 
@@ -99,9 +98,14 @@
     <div id="lista-productos" class="grid grid-cols-1 gap-3"></div>
 </main>
 
-<div id="panel-carrito" class="fixed bottom-20 left-0 w-full z-40 carrito-container p-6 shadow-[0_-10px_40px_rgba(162,28,175,0.1)]">
-    <div class="max-w-2xl mx-auto space-y-3">
-        <div id="carrito-detalle" class="max-h-44 overflow-y-auto space-y-2"></div>
+<div id="panel-carrito" class="fixed bottom-20 left-0 w-full z-40 carrito-container p-6 shadow-[0_-10px_40px_rgba(162,28,175,0.15)]">
+    <div class="max-w-2xl mx-auto space-y-4">
+        <div id="carrito-detalle" class="max-h-40 overflow-y-auto space-y-2 pr-2"></div>
+
+        <div class="bg-white p-3 rounded-2xl border border-purple-100 flex items-center justify-between">
+            <label class="text-[9px] font-black uppercase text-gray-400 italic">Fecha Entrega:</label>
+            <input type="date" id="fecha-entrega" class="border-none bg-transparent font-black text-[#a21caf] text-sm p-0 focus:ring-0">
+        </div>
 
         <div class="flex justify-between items-center border-t border-purple-200 pt-3">
             <div>
@@ -109,11 +113,11 @@
                 <p class="text-2xl font-black text-[#a21caf]" id="total-final">$0.00</p>
             </div>
             <div class="flex gap-2 w-1/2">
-                <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="hidden bg-green-500 text-white p-4 rounded-2xl shadow-lg flex-1 font-black text-[10px] uppercase flex items-center justify-center gap-1">
+                <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="hidden bg-green-500 text-white p-4 rounded-2xl shadow-lg flex-1 font-black text-[10px] uppercase flex items-center justify-center gap-1 btn-animado">
                     <span class="material-symbols-outlined">share</span> WhatsApp
                 </button>
                 <button id="btn-finalizar" onclick="finalizarVenta()" 
-                        class="flex-1 bg-[#a21caf] text-white py-4 rounded-2xl font-black shadow-lg uppercase text-[10px]">
+                        class="flex-1 bg-[#a21caf] text-white py-4 rounded-2xl font-black shadow-lg uppercase text-[10px] transition-all">
                     Confirmar
                 </button>
             </div>
@@ -153,8 +157,7 @@ async function inicializar() {
 }
 
 function refrescarPagina() {
-    const btn = document.getElementById('btn-sync');
-    btn.classList.add('sync-active');
+    document.getElementById('btn-sync').classList.add('sync-active');
     setTimeout(() => window.location.reload(), 800);
 }
 
@@ -180,10 +183,8 @@ async function cargarEstadisticasDia() {
     if (ventas) {
         const hoy = new Date().toLocaleDateString();
         const ventasHoy = ventas.filter(v => v.Fecha && new Date(v.Fecha).toLocaleDateString() === hoy);
-        const idsUnicos = [...new Set(ventasHoy.map(v => v.ID_Venta))].length;
-        const totalUnidades = ventasHoy.reduce((acc, v) => acc + (parseFloat(v.Cantidad) || 0), 0);
-        document.getElementById('stat-ventas').innerText = idsUnicos;
-        document.getElementById('stat-prods').innerText = totalUnidades.toFixed(0);
+        document.getElementById('stat-ventas').innerText = [...new Set(ventasHoy.map(v => v.ID_Venta))].length;
+        document.getElementById('stat-prods').innerText = ventasHoy.reduce((acc, v) => acc + (parseFloat(v.Cantidad) || 0), 0).toFixed(0);
     }
 }
 
@@ -191,7 +192,7 @@ async function cargarClientes() {
     const clientes = await DairyAPI.obtenerDatos("Clientes");
     const select = document.getElementById('cliente-select');
     if (clientes) {
-        select.innerHTML = '<option value="">-- Seleccionar Cliente --</option>';
+        select.innerHTML = '<option value="">-- Buscar Cliente --</option>';
         clientes.forEach(c => select.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`);
     }
 }
@@ -220,7 +221,7 @@ function renderizarProductos(lista) {
                     <h3 class="font-black text-gray-800 uppercase text-xs">${p.Producto}</h3>
                     <div class="flex items-center gap-2">
                         <span class="text-[#a21caf] font-black text-lg">$${p.Precio_Venta.toFixed(2)}</span>
-                        <span class="text-[9px] bg-gray-100 px-2 rounded-full font-bold text-gray-400 uppercase">Stock: ${p.Stock}</span>
+                        <span class="text-[9px] bg-gray-100 px-2 rounded-full font-bold text-gray-400">Stock: ${p.Stock}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 bg-purple-50 p-2 rounded-2xl">
@@ -235,9 +236,8 @@ function renderizarProductos(lista) {
 function cambiarCant(id, delta) {
     const prod = productosMaster.find(p => p.ID === id);
     let item = carrito.find(i => i.ID === id);
-    if (!item && delta > 0) {
-        carrito.push({ ...prod, cantidad: 1 });
-    } else if (item) {
+    if (!item && delta > 0) carrito.push({ ...prod, cantidad: 1 });
+    else if (item) {
         item.cantidad += delta;
         if (item.cantidad <= 0) carrito = carrito.filter(i => i.ID !== id);
         else if (item.cantidad > prod.Stock) { alert("Stock agotado"); item.cantidad = prod.Stock; }
@@ -249,36 +249,37 @@ function cambiarCant(id, delta) {
 function actualizarTotales() {
     const ahora = new Date();
     const totalDinero = carrito.reduce((acc, i) => acc + (i.Precio_Venta * i.cantidad), 0);
-    // CONTEO REAL DE UNIDADES
     const totalUnidades = carrito.reduce((acc, i) => acc + i.cantidad, 0);
     
     document.getElementById('total-final').innerText = `$${totalDinero.toFixed(2)}`;
+    const btnFin = document.getElementById('btn-finalizar');
+    
+    if(totalUnidades > 0) btnFin.classList.add('btn-animado');
+    else btnFin.classList.remove('btn-animado');
+
     const detalle = document.getElementById('carrito-detalle');
     const cliente = document.getElementById('cliente-select').value || "SIN CLIENTE";
 
     let htmlEncabezado = `
-        <div class="bg-white/70 p-3 rounded-2xl border border-purple-100 mb-3 text-[10px] font-black text-[#a21caf] uppercase">
+        <div class="bg-white/70 p-3 rounded-2xl border border-purple-100 mb-2 text-[10px] font-black text-[#a21caf] uppercase">
             <div class="flex justify-between mb-1">
                 <span>ORDEN: ${currentIDVenta}</span> 
-                <span>${ahora.toLocaleDateString()} ${ahora.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                <span>${ahora.toLocaleDateString()}</span>
             </div>
             <div class="flex justify-between items-center border-t border-purple-50 pt-1">
                 <span class="truncate max-w-[150px]">👤 ${cliente}</span>
-                <span class="bg-[#a21caf] text-white px-3 py-0.5 rounded-lg">📦 ${totalUnidades} UNIDADES</span>
+                <span class="bg-[#a21caf] text-white px-3 py-0.5 rounded-lg">📦 ${totalUnidades} UNID.</span>
             </div>
         </div>
     `;
 
-    if(carrito.length === 0) {
-        detalle.innerHTML = htmlEncabezado + '<p class="text-center text-gray-400 text-[10px] py-2 italic uppercase">Carrito vacío</p>';
-    } else {
-        detalle.innerHTML = htmlEncabezado + carrito.map(i => `
+    detalle.innerHTML = htmlEncabezado + (carrito.length === 0 ? '<p class="text-center text-gray-400 text-[10px] py-2 italic uppercase">Carrito vacío</p>' : 
+        carrito.map(i => `
             <div class="flex justify-between text-[11px] font-bold uppercase mb-1 px-1">
                 <span class="text-gray-600">${i.cantidad}x ${i.Producto}</span>
                 <span class="text-[#a21caf] font-black">$${(i.cantidad * i.Precio_Venta).toFixed(2)}</span>
             </div>
-        `).join('');
-    }
+        `).join(''));
 }
 
 async function guardarNuevoCliente() {
@@ -286,7 +287,6 @@ async function guardarNuevoCliente() {
     const n = document.getElementById('new-nombre').value.trim();
     if(!n) return;
     btn.disabled = true;
-    btn.innerText = "GUARDANDO...";
     try {
         await DairyAPI.guardarDatos({
             pestaña: "Clientes", Nombre: n, CI_RUC: document.getElementById('new-ci').value,
@@ -296,19 +296,18 @@ async function guardarNuevoCliente() {
         document.getElementById('cliente-select').value = n;
         seleccionarCliente(n);
         cerrarModalCliente();
-    } catch (e) { alert("Error"); } finally {
-        btn.disabled = false; btn.innerText = "Guardar";
-    }
+    } catch (e) { alert("Error"); } finally { btn.disabled = false; }
 }
 
 async function finalizarVenta() {
-    if (carrito.length === 0 || !document.getElementById('cliente-select').value) return alert("Faltan datos");
+    const cli = document.getElementById('cliente-select').value;
+    if (carrito.length === 0 || !cli) return alert("Faltan productos o cliente");
     const btn = document.getElementById('btn-finalizar');
     btn.disabled = true;
     btn.innerHTML = '<span class="material-symbols-outlined rotate-animation">sync</span>';
     try {
         const p = carrito.map(i => DairyAPI.guardarDatos({
-            pestaña: "Ventas", ID_Venta: currentIDVenta, Cliente: document.getElementById('cliente-select').value,
+            pestaña: "Ventas", ID_Venta: currentIDVenta, Cliente: cli,
             Producto: i.Producto, Cantidad: i.cantidad, Precio_PVP: i.Precio_Venta, 
             Fecha_Entrega: document.getElementById('fecha-entrega').value
         }));
@@ -320,9 +319,8 @@ async function finalizarVenta() {
 }
 
 function enviarWhatsApp() {
-    const cli = document.getElementById('cliente-select').value;
     const items = carrito.map(i => `${i.cantidad}x ${i.Producto}`).join('%0A');
-    const msg = `*LÓGICA LÁCTEA*%0AID: ${currentIDVenta}%0ACliente: ${cli}%0A%0A*PEDIDO:*%0A${items}%0A%0A*TOTAL: ${document.getElementById('total-final').innerText}*`;
+    const msg = `*LÓGICA LÁCTEA*%0AID: ${currentIDVenta}%0ACliente: ${document.getElementById('cliente-select').value}%0AEntrega: ${document.getElementById('fecha-entrega').value}%0A%0A*PEDIDO:*%0A${items}%0A%0A*TOTAL: ${document.getElementById('total-final').innerText}*`;
     window.open(`https://wa.me/?text=${msg}`, '_blank');
     setTimeout(() => window.location.href='DashboardLacteo.html', 1000);
 }

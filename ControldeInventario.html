@@ -26,9 +26,10 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        height: 180px;
+        height: 190px;
+        cursor: pointer;
       }
-      .card-prod:active { transform: scale(0.96); }
+      .card-prod:active { transform: scale(0.95); opacity: 0.8; }
 
       ::-webkit-scrollbar { display: none; }
     </style>
@@ -48,6 +49,7 @@
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
   
+  <!-- RESUMEN TÉCNICO -->
   <section class="grid grid-cols-3 gap-3">
     <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-sm">
       <p class="text-[9px] text-gray-500 uppercase font-black mb-1 tracking-widest leading-none">Valor Neto</p>
@@ -63,18 +65,21 @@
     </div>
   </section>
 
+  <!-- BUSCADOR -->
   <div class="px-1">
-    <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar producto..." 
+    <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar por nombre o ID..." 
            class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold text-base shadow-sm focus:ring-2 focus:ring-[#a21caf] focus:border-[#a21caf] outline-none transition-all">
   </div>
 
+  <!-- GRILLA DE PRODUCTOS -->
   <div id="grid-productos" class="grid grid-cols-2 gap-4">
       <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando datos...</div>
   </div>
 
+  <!-- BOTÓN AGREGAR -->
   <div class="fixed bottom-24 left-0 w-full px-4 z-40">
-    <button onclick="alert('Función próximamente: Agregar Producto')" class="w-full bg-[#a21caf] text-white py-5 rounded-2xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase active:scale-95 transition-all">
-        <span class="material-symbols-outlined scale-125">add_circle</span> 
+    <button onclick="abrirModalNuevo()" class="w-full bg-[#a21caf] text-white py-5 rounded-3xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase active:scale-95 transition-all border-b-4 border-purple-900">
+        <span class="material-symbols-outlined scale-125">add_box</span> 
         <span>Nuevo Producto</span>
     </button>
   </div>
@@ -86,67 +91,61 @@
 <script>
 let inventarioLocal = [];
 
-// Función para limpiar y convertir números de Google Sheets
+// Utilidad para convertir texto de Sheets a número usable
 const aNum = (v) => {
     if (!v) return 0;
     let n = v.toString().replace(/[^\d,.-]/g, '').replace(',', '.');
     return parseFloat(n) || 0;
 };
 
+// 1. CARGAR DATOS
 async function cargarInventario() {
   const icon = document.getElementById('refresh-icon');
   if (icon) icon.classList.add('rotate-animation');
   
   try {
     const respuesta = await DairyAPI.obtenerDatos("Inventario");
-    
     if (Array.isArray(respuesta)) {
         inventarioLocal = respuesta;
         renderizar(inventarioLocal);
-    } else {
-        document.getElementById('grid-productos').innerHTML = `
-            <div class="col-span-full text-center py-10 bg-orange-50 border-2 border-orange-200 rounded-[2rem] p-6">
-                <p class="text-orange-600 font-black uppercase text-xs">Error de Estructura</p>
-                <p class="text-[10px] text-orange-400 mt-1">Asegúrate que la pestaña se llame "Inventario".</p>
-            </div>`;
     }
   } catch (e) { 
-      document.getElementById('grid-productos').innerHTML = '<div class="col-span-full text-center py-20 text-red-500 font-bold">Error de Conexión</div>';
+      document.getElementById('grid-productos').innerHTML = '<div class="col-span-full text-center py-20 text-red-500 font-bold">Error de Red</div>';
   } finally {
       if (icon) icon.classList.remove('rotate-animation');
   }
 }
 
+// 2. RENDERIZAR CON EVENTO DE CLIC
 function renderizar(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
-    
     let totalCosto = 0, criticos = 0;
 
     lista.forEach((prod) => {
         const stock = aNum(prod.Stock);
         const pvp = aNum(prod.Precio_Venta);
-        // Busca costo en cualquiera de los dos nombres posibles de columna
         const costo = aNum(prod.Costo_Unitario || prod.Precio_Distribuidor || 0);
         
         if(stock <= 5) criticos++;
         totalCosto += (costo * stock);
 
         container.innerHTML += `
-        <div class="card-prod p-4 ${stock <= 5 ? 'border-red-300 bg-red-50 shadow-inner' : 'border-[#e9d5ff] bg-white shadow-sm'}">
-          <div class="overflow-hidden">
-            <p class="text-[9px] font-black text-[#a21caf] mb-1 uppercase opacity-40 truncate">${prod.ID || 'S/ID'}</p> 
-            <h3 class="font-bold text-[13px] leading-tight uppercase text-slate-800 line-clamp-2 mb-2">${prod.Producto}</h3>
+        <div class="card-prod p-4 ${stock <= 5 ? 'border-red-300 bg-red-50' : 'border-[#e9d5ff] bg-white shadow-sm'}" 
+             onclick="gestionarProducto('${prod.ID}', '${prod.Producto}', ${stock})">
+          <div>
+            <p class="text-[9px] font-black text-[#a21caf] mb-1 uppercase opacity-40">ID: ${prod.ID || 'S/N'}</p> 
+            <h3 class="font-bold text-[13px] leading-tight uppercase text-slate-800 line-clamp-2">${prod.Producto}</h3>
           </div>
           
           <div class="flex justify-between items-end border-t border-purple-100 pt-3">
               <div>
-                  <p class="text-[8px] text-gray-400 font-black uppercase mb-0.5">Venta</p>
-                  <p class="text-[#a21caf] font-black text-lg leading-none">$${pvp.toFixed(2)}</p>
+                  <p class="text-[8px] text-gray-400 font-black uppercase mb-0.5">Precio</p>
+                  <p class="text-slate-400 font-black text-lg leading-none italic">$${pvp.toFixed(2)}</p>
               </div>
               <div class="text-right">
                   <p class="text-[8px] text-gray-400 font-black uppercase mb-0.5">Stock</p>
-                  <span class="inline-block text-[11px] px-3 py-1 rounded-full ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black italic">
+                  <span class="inline-block text-[12px] px-3 py-1 rounded-full ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black">
                     ${stock}
                   </span>
               </div>
@@ -157,6 +156,56 @@ function renderizar(lista) {
     document.getElementById('valor-bodega').innerText = `$${totalCosto.toFixed(2)}`;
     document.getElementById('count-critico').innerText = criticos;
     document.getElementById('total-sku').innerText = lista.length;
+}
+
+// 3. LOGICA EDITAR/ELIMINAR AL CLIC
+async function gestionarProducto(id, nombre, stockActual) {
+    const op = confirm(`PRODUCTO: ${nombre}\n\n¿Desea EDITAR EL STOCK?\n(Cancelar para ELIMINAR el producto)`);
+    
+    if (op) {
+        const suma = prompt(`Stock actual: ${stockActual}\n¿Cuánto desea sumar al inventario?`, "0");
+        if (suma !== null && !isNaN(suma)) {
+            const nuevoStock = stockActual + parseFloat(suma);
+            await ejecutarAccion(id, { Stock: nuevoStock }, "Actualizando Stock...");
+        }
+    } else {
+        if (confirm(`¿ELIMINAR definitivamente ${nombre}?\nEsta acción no se puede deshacer.`)) {
+            await ejecutarAccion(id, { ELIMINAR: true }, "Eliminando producto...");
+        }
+    }
+}
+
+// 4. LOGICA NUEVO PRODUCTO
+async function abrirModalNuevo() {
+    const nombre = prompt("Nombre del nuevo producto:");
+    if (!nombre) return;
+    const precio = prompt("Precio de Venta (PVP):", "0.00");
+    const costo = prompt("Costo Unitario (Distribuidor):", "0.00");
+    const stock = prompt("Stock inicial:", "0");
+
+    const data = {
+        ID: "ID-" + Math.floor(Math.random()*9999),
+        Producto: nombre.toUpperCase(),
+        Precio_Venta: aNum(precio),
+        Costo_Unitario: aNum(costo),
+        Stock: aNum(stock),
+        pestaña: "Inventario"
+    };
+
+    await ejecutarAccion(data.ID, data, "Guardando nuevo producto...");
+}
+
+// 5. ENVÍO A API
+async function ejecutarAccion(id, payload, msg) {
+    try {
+        console.log(msg, payload);
+        // Asegúrate de que tu Apps Script reciba "ID" y "pestaña"
+        await DairyAPI.enviarDatos("Inventario", { ID: id, ...payload, pestaña: "Inventario" });
+        alert("¡Operación completada!");
+        cargarInventario();
+    } catch (e) {
+        alert("Error al sincronizar con Google Sheets");
+    }
 }
 
 function filtrar() {

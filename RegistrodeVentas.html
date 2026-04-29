@@ -6,6 +6,7 @@
     <title>Ventas - Lógica Láctea</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
+    <!-- Tu script v2.4 -->
     <script src="menu-logic.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -30,15 +31,12 @@
         @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
         #carrito-flotante {
-            position: fixed; bottom: 80px; left: 10px; right: 10px;
+            position: fixed; bottom: 90px; left: 10px; right: 10px;
             background: white; border: 2.5px solid #a21caf; border-radius: 1.5rem;
             padding: 15px; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); z-index: 100;
         }
         .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 14px; border-radius: 1rem; font-weight: 900; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
         @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
-        
-        /* Contenedor del menú inferior */
-        #menu-navegacion { width: 100%; }
     </style>
 </head>
 <body class="pb-96"> 
@@ -58,6 +56,7 @@
 </header>
 
 <main class="mt-4 px-4 max-w-xl mx-auto">
+    <!-- SELECCIÓN DE CLIENTE -->
     <section class="bg-white p-4 rounded-2xl border-2 border-primary/20 mb-4 shadow-sm">
         <div id="vista-seleccion-cliente">
             <div class="flex justify-between items-center mb-2">
@@ -74,9 +73,9 @@
             <input type="text" id="reg-id" readonly class="hidden">
             <input type="text" id="reg-nombre" placeholder="Nombre (Solo letras)" class="input-sutil" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
             <input type="number" id="reg-ruc" placeholder="CI/RUC (Ej: 1712345678)" class="input-sutil">
-            <input type="tel" id="reg-tel" placeholder="Teléfono (Ej: 0984016000)" class="input-sutil">
-            <input type="text" id="reg-dir" placeholder="Dirección Principal" class="input-sutil">
-            <input type="text" id="reg-ref" placeholder="Referencia (Ej: Junto a la tienda)" class="input-sutil">
+            <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
+            <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
+            <input type="text" id="reg-ref" placeholder="Referencia" class="input-sutil">
             <select id="reg-sector" class="input-sutil">
                 <option value="">-- SELECCIONAR SECTOR --</option>
                 <option value="NORTE">NORTE</option>
@@ -91,12 +90,14 @@
         </div>
     </section>
 
+    <!-- LISTA DE PRODUCTOS -->
     <div id="seccion-operativa" class="bloqueado transition-all duration-500">
         <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="🔍 Buscar producto..." class="input-sutil mb-4">
         <div id="contenedor-productos" class="space-y-2"></div>
     </div>
 </main>
 
+<!-- CARRITO FLOTANTE -->
 <div id="carrito-flotante" class="bloqueado">
     <div class="flex justify-between items-center mb-2 border-b pb-2">
         <div class="flex-1">
@@ -118,7 +119,8 @@
     </button>
 </div>
 
-<div id="menu-navegacion"></div>
+<!-- CONTENEDOR DEL MENÚ DE NAVEGACIÓN v2.4 -->
+<div id="menu-container"></div>
 
 <script>
 let carrito = {}; let productosData = []; let idVenta = "";
@@ -138,7 +140,7 @@ async function iniciar() {
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
         });
         renderizar();
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("Error al cargar datos:", e); }
 }
 
 function activarInterfaz() {
@@ -157,7 +159,7 @@ function renderizar() {
                 <div class="flex-1">
                     <h4 class="font-black text-xs uppercase text-slate-700 leading-tight">${p.Producto}</h4>
                     <p class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
-                    <p class="text-[9px] font-bold text-slate-400">STOCK: ${p.Stock}</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Stock: ${p.Stock}</p>
                 </div>
                 <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl">
                     <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">-</button>
@@ -171,14 +173,14 @@ function renderizar() {
 function cambiarCant(n, d) {
     if(!carrito[n]) carrito[n] = 0;
     const p = productosData.find(x => x.Producto === n);
-    const stockDisponible = parseInt(p.Stock || 0);
+    const stockDisp = parseInt(p.Stock || 0);
     
-    if(carrito[n]+d >= 0 && (carrito[n]+d <= stockDisponible)) {
+    if(carrito[n]+d >= 0 && (carrito[n]+d <= stockDisp)) {
         carrito[n] += d;
         document.getElementById(`cant-${n.replace(/\s+/g,'-')}`).innerText = carrito[n];
         actualizarCarrito();
     } else if (d > 0) {
-        alert("Stock insuficiente");
+        alert("¡Stock insuficiente!");
     }
 }
 
@@ -200,12 +202,11 @@ function actualizarCarrito() {
 async function procesarVenta() {
     const cli = document.getElementById('select-cliente').value;
     const fec = document.getElementById('fecha-entrega').value;
-    if(!cli || document.getElementById('car-items').innerText === "0 ÍTEMS") return alert("Faltan datos");
+    if(!cli || document.getElementById('car-items').innerText === "0 ÍTEMS") return alert("Faltan datos o productos");
     
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
     document.getElementById('titulo-estado').innerText = "GUARDANDO PEDIDO...";
-    document.getElementById('icono-estado').innerText = "sync";
     document.getElementById('icono-estado').classList.add('animate-spin');
 
     try {
@@ -232,7 +233,7 @@ async function procesarVenta() {
         }, 2000);
     } catch(e) { 
         overlay.style.display = 'none';
-        alert("Error al guardar"); 
+        alert("Error al conectar con el servidor"); 
     }
 }
 
@@ -242,23 +243,23 @@ async function guardarCliente() {
         ID: document.getElementById('reg-id').value,
         Nombre: document.getElementById('reg-nombre').value,
         CI_RUC: document.getElementById('reg-ruc').value,
-        Telefono: document.getElementById('reg-tel').value, // Sin tilde
-        Direccion: document.getElementById('reg-dir').value, // Sin tilde
+        Telefono: document.getElementById('reg-tel').value,
+        Direccion: document.getElementById('reg-dir').value,
         Referencia: document.getElementById('reg-ref').value,
         Sector: document.getElementById('reg-sector').value,
         pestaña: "Clientes"
     };
 
-    if(!data.Nombre || data.CI_RUC.length < 10) return alert("Datos incompletos");
+    if(!data.Nombre || data.CI_RUC.length < 10) return alert("Nombre y CI/RUC (10 dígitos) requeridos");
 
     btn.innerText = "GUARDANDO...";
     btn.disabled = true;
 
     try {
         await DairyAPI.enviarDatos("Clientes", data);
-        alert("Cliente Registrado");
+        alert("Cliente Registrado con Éxito");
         location.reload();
-    } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "Guardar"; }
+    } catch(e) { alert("Error al registrar"); btn.disabled = false; btn.innerText = "Guardar"; }
 }
 
 function enviarWhatsApp() {

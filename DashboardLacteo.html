@@ -1,221 +1,221 @@
 <!DOCTYPE html>
 <html class="light" lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Lógica Láctea - Panel Principal</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Lógica Láctea - Panel Principal</title>
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
-    <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: "#a21caf",
-            secondary: "#db2777",
-            success: "#16a34a",
-            background: "#faf5ff",
-            outline: "#e9d5ff",
-            "on-surface": "#1f012a",
-          }
-        }
-      }
-    }
-    </script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#a21caf",
+            secondary: "#db2777",
+            success: "#16a34a",
+            background: "#faf5ff",
+            outline: "#e9d5ff",
+            "on-surface": "#1f012a",
+          }
+        }
+      }
+    }
+    </script>
 
-    <style>
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-    .rotate-animation { animation: spin 1s linear infinite; }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .active-icon { font-variation-settings: 'FILL' 1 !important; }
-    .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
-    ::-webkit-scrollbar { display: none; }
-    </style>
+    <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+    .rotate-animation { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .active-icon { font-variation-settings: 'FILL' 1 !important; }
+    .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+    ::-webkit-scrollbar { display: none; }
+    </style>
 </head>
 
 <body class="bg-background text-on-surface font-[Work_Sans] antialiased pb-40">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
-  <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
-    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
-      <span class="material-symbols-outlined text-3xl active-icon">opacity</span>
-    </div>
-    <h1 class="text-xl font-extrabold text-primary tracking-tight uppercase">Lógica Láctea</h1>
-  </div>
+  <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
+      <span class="material-symbols-outlined text-3xl active-icon">opacity</span>
+    </div>
+    <h1 class="text-xl font-extrabold text-primary tracking-tight uppercase">Lógica Láctea</h1>
+  </div>
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-4">
 
-    <div class="grid grid-cols-2 gap-3">
-      <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
-        <span class="text-secondary text-[10px] uppercase font-black tracking-widest block mb-1">Ventas Totales</span>
-        <span id="ventas-hoy" class="text-2xl md:text-4xl font-black tracking-tighter text-gray-900">$0.00</span>
-      </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
+        <span class="text-secondary text-[10px] uppercase font-black tracking-widest block mb-1">Ventas Totales</span>
+        <span id="ventas-hoy" class="text-2xl md:text-4xl font-black tracking-tighter text-gray-900">$0.00</span>
+      </div>
 
-      <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
-        <span class="text-primary text-[10px] uppercase font-black tracking-widest block mb-1">Valor Invertido</span>
-        <span id="valor-invertido" class="text-2xl md:text-4xl font-black tracking-tighter text-gray-900">$0.00</span>
-      </div>
-    </div>
+      <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
+        <span class="text-primary text-[10px] uppercase font-black tracking-widest block mb-1">Valor Invertido</span>
+        <span id="valor-invertido" class="text-2xl md:text-4xl font-black tracking-tighter text-gray-900">$0.00</span>
+      </div>
+    </div>
 
-    <div class="bg-white p-6 rounded-[2.5rem] border-2 border-success/20 shadow-md flex justify-between items-center bg-gradient-to-br from-white to-green-50/30">
-      <div>
-        <span class="text-success text-xs uppercase font-black tracking-widest block mb-1">Ganancia Bruta Estimada</span>
-        <span id="ganancia-total" class="text-4xl md:text-5xl font-black tracking-tighter text-success">$0.00</span>
-      </div>
-      <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-success">
-        <span class="material-symbols-outlined text-3xl active-icon">payments</span>
-      </div>
-    </div>
+    <div class="bg-white p-6 rounded-[2.5rem] border-2 border-success/20 shadow-md flex justify-between items-center bg-gradient-to-br from-white to-green-50/30">
+      <div>
+        <span class="text-success text-xs uppercase font-black tracking-widest block mb-1">Ganancia Bruta Estimada</span>
+        <span id="ganancia-total" class="text-4xl md:text-5xl font-black tracking-tighter text-success">$0.00</span>
+      </div>
+      <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-success">
+        <span class="material-symbols-outlined text-3xl active-icon">payments</span>
+      </div>
+    </div>
 
-    <div class="grid grid-cols-4 gap-2 py-2">
-        <button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
-          <span class="material-symbols-outlined">add_shopping_cart</span>
-          <span class="text-[9px] font-black uppercase">Vender</span>
-        </button>
-        <button onclick="window.location.href='ControldeInventario.html'" class="bg-secondary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
-          <span class="material-symbols-outlined">inventory</span>
-          <span class="text-[9px] font-black uppercase">Stock</span>
-        </button>
-        <button onclick="window.location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95">
-          <span class="material-symbols-outlined text-primary">group</span>
-          <span class="text-[9px] font-black uppercase text-primary">Clientes</span>
-        </button>
-        <button onclick="window.location.href='GestióndeDespachos.html'" class="bg-success text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-green-100">
-          <span class="material-symbols-outlined">local_shipping</span>
-          <span class="text-[9px] font-black uppercase">Ruta</span>
-        </button>
-    </div>
+    <div class="grid grid-cols-4 gap-2 py-2">
+        <button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
+          <span class="material-symbols-outlined">add_shopping_cart</span>
+          <span class="text-[9px] font-black uppercase">Vender</span>
+        </button>
+        <button onclick="window.location.href='ControldeInventario.html'" class="bg-secondary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
+          <span class="material-symbols-outlined">inventory</span>
+          <span class="text-[9px] font-black uppercase">Stock</span>
+        </button>
+        <button onclick="window.location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95">
+          <span class="material-symbols-outlined text-primary">group</span>
+          <span class="text-[9px] font-black uppercase text-primary">Clientes</span>
+        </button>
+        <button onclick="window.location.href='GestióndeDespachos.html'" class="bg-success text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-green-100">
+          <span class="material-symbols-outlined">local_shipping</span>
+          <span class="text-[9px] font-black uppercase">Ruta</span>
+        </button>
+    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <section class="bg-white p-5 rounded-[2.5rem] border border-outline shadow-sm">
-          <h3 class="text-xs font-black text-success flex items-center gap-2 mb-4 uppercase tracking-widest">
-            <span class="material-symbols-outlined text-sm">route</span> Próximas Entregas
-          </h3>
-          <div id="lista-entregas" class="space-y-3">
-            <p class="text-center py-4 text-gray-400 text-sm font-bold italic">Cargando...</p>
-          </div>
-        </section>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section class="bg-white p-5 rounded-[2.5rem] border border-outline shadow-sm">
+          <h3 class="text-xs font-black text-success flex items-center gap-2 mb-4 uppercase tracking-widest">
+            <span class="material-symbols-outlined text-sm">route</span> Próximas Entregas
+          </h3>
+          <div id="lista-entregas" class="space-y-3">
+            <p class="text-center py-4 text-gray-400 text-sm font-bold italic">Cargando...</p>
+          </div>
+        </section>
 
-        <section class="space-y-4">
-          <div class="flex justify-between items-center px-2">
-            <h3 class="text-lg font-black tracking-tight">Stock Crítico</h3>
-            <button onclick="cargarDatos()" class="text-primary text-[10px] font-black flex items-center gap-1 bg-white px-3 py-2 rounded-xl border border-outline active:bg-purple-50 transition-all">
-                <span id="icon-refresh" class="material-symbols-outlined text-sm">refresh</span> RECARGAR
-            </button>
-          </div>
+        <section class="space-y-4">
+          <div class="flex justify-between items-center px-2">
+            <h3 class="text-lg font-black tracking-tight">Stock Crítico</h3>
+            <button onclick="cargarDatos()" class="text-primary text-[10px] font-black flex items-center gap-1 bg-white px-3 py-2 rounded-xl border border-outline active:bg-purple-50 transition-all">
+                <span id="icon-refresh" class="material-symbols-outlined text-sm">refresh</span> RECARGAR
+            </button>
+          </div>
 
-          <div class="overflow-hidden border border-outline rounded-[2rem] bg-white shadow-sm">
-            <table class="w-full text-left">
-              <thead class="bg-gray-50 text-[9px] uppercase font-black text-gray-400 tracking-widest border-b border-outline">
-                <tr>
-                  <th class="p-4">Producto</th>
-                  <th class="p-4 text-center">Cant.</th>
-                  <th class="p-4 text-center">Estado</th>
-                </tr>
-              </thead>
-              <tbody id="tabla-inventario" class="text-sm">
-                <tr><td colspan="3" class="p-10 text-center text-gray-400">Sincronizando...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-    </div>
+          <div class="overflow-hidden border border-outline rounded-[2rem] bg-white shadow-sm">
+            <table class="w-full text-left">
+              <thead class="bg-gray-50 text-[9px] uppercase font-black text-gray-400 tracking-widest border-b border-outline">
+                <tr>
+                  <th class="p-4">Producto</th>
+                  <th class="p-4 text-center">Cant.</th>
+                  <th class="p-4 text-center">Estado</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-inventario" class="text-sm">
+                <tr><td colspan="3" class="p-10 text-center text-gray-400">Sincronizando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+    </div>
 </main>
 
 <div id="menu-container"></div>
 
 <script>
 async function cargarDatos() {
-    const icon = document.getElementById('icon-refresh');
-    if (icon) icon.classList.add('rotate-animation');
+    const icon = document.getElementById('icon-refresh');
+    if (icon) icon.classList.add('rotate-animation');
 
-    try {
-        const [resInventario, resVentas] = await Promise.all([
-            DairyAPI.obtenerDatos("Inventario"),
-            DairyAPI.obtenerDatos("Ventas")
-        ]);
+    try {
+        const [resInventario, resVentas] = await Promise.all([
+            DairyAPI.obtenerDatos("Inventario"),
+            DairyAPI.obtenerDatos("Ventas")
+        ]);
 
-        const inventario = Array.isArray(resInventario) ? resInventario : [];
-        const ventas = Array.isArray(resVentas) ? resVentas : [];
+        const inventario = Array.isArray(resInventario) ? resInventario : [];
+        const ventas = Array.isArray(resVentas) ? resVentas : [];
 
-        // 1. GESTIÓN DE INVENTARIO (TABLA)
-        const tabla = document.getElementById('tabla-inventario');
-        tabla.innerHTML = "";
-        
-        const invOrdenado = [...inventario].sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0));
+        // 1. GESTIÓN DE INVENTARIO (TABLA)
+        const tabla = document.getElementById('tabla-inventario');
+        tabla.innerHTML = "";
+        
+        const invOrdenado = [...inventario].sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0));
 
-        invOrdenado.forEach(p => {
-            const stock = parseFloat(p.Stock) || 0;
-            let statusHTML = "";
-            
-            if (stock <= 5) {
-                statusHTML = `<span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg border border-red-100 uppercase">Crítico</span>`;
-            } else if (stock > 10) {
-                statusHTML = `<span class="bg-green-50 text-green-600 text-[8px] font-black px-2 py-1 rounded-lg border border-green-100 uppercase">Óptimo</span>`;
-            } else {
-                statusHTML = `<span class="bg-amber-50 text-amber-600 text-[8px] font-black px-2 py-1 rounded-lg border border-amber-100 uppercase">Regular</span>`;
-            }
+        invOrdenado.forEach(p => {
+            const stock = parseFloat(p.Stock) || 0;
+            let statusHTML = "";
+            
+            if (stock <= 5) {
+                statusHTML = `<span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg border border-red-100 uppercase">Crítico</span>`;
+            } else if (stock > 10) {
+                statusHTML = `<span class="bg-green-50 text-green-600 text-[8px] font-black px-2 py-1 rounded-lg border border-green-100 uppercase">Óptimo</span>`;
+            } else {
+                statusHTML = `<span class="bg-amber-50 text-amber-600 text-[8px] font-black px-2 py-1 rounded-lg border border-amber-100 uppercase">Regular</span>`;
+            }
 
-            tabla.innerHTML += `
-                <tr class="border-t border-purple-50">
-                    <td class="p-4 font-bold text-gray-700">${p.Producto || 'Sin Nombre'}</td>
-                    <td class="p-4 text-center font-black text-base ${stock <= 5 ? 'text-red-500' : ''}">${stock}</td>
-                    <td class="p-4 text-center">${statusHTML}</td>
-                </tr>`;
-        });
+            tabla.innerHTML += `
+                <tr class="border-t border-purple-50">
+                    <td class="p-4 font-bold text-gray-700">${p.Producto || 'Sin Nombre'}</td>
+                    <td class="p-4 text-center font-black text-base ${stock <= 5 ? 'text-red-500' : ''}">${stock}</td>
+                    <td class="p-4 text-center">${statusHTML}</td>
+                </tr>`;
+        });
 
-        // 2. CÁLCULOS FINANCIEROS
-        let vendido = 0, invertido = 0;
-        
-        inventario.forEach(p => {
-            const costo = parseFloat(String(p.Costo_Unitario || 0).replace(',', '.')) || 0;
-            invertido += (costo * (parseFloat(p.Stock) || 0));
-        });
+        // 2. CÁLCULOS FINANCIEROS
+        let vendido = 0, invertido = 0;
+        
+        inventario.forEach(p => {
+            const costo = parseFloat(String(p.Costo_Unitario || 0).replace(',', '.')) || 0;
+            invertido += (costo * (parseFloat(p.Stock) || 0));
+        });
 
-        ventas.forEach(v => {
-            const totalFila = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
-            vendido += totalFila;
-        });
+        ventas.forEach(v => {
+            const totalFila = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
+            vendido += totalFila;
+        });
 
-        document.getElementById('ventas-hoy').innerText = `$${vendido.toFixed(2)}`;
-        document.getElementById('valor-invertido').innerText = `$${invertido.toFixed(2)}`;
-        document.getElementById('ganancia-total').innerText = `$${(vendido - invertido).toFixed(2)}`;
+        document.getElementById('ventas-hoy').innerText = `$${vendido.toFixed(2)}`;
+        document.getElementById('valor-invertido').innerText = `$${invertido.toFixed(2)}`;
+        document.getElementById('ganancia-total').innerText = `$${(vendido - invertido).toFixed(2)}`;
 
-        // 3. SECCIÓN DE ENTREGAS
-        const listaEntregas = document.getElementById('lista-entregas');
-        const pendientes = ventas.filter(v => String(v.Estado || "").trim().toUpperCase() === "PENDIENTE");
-        const clientesUnicos = [...new Set(pendientes.map(v => v.Cliente))].slice(0, 3);
+        // 3. SECCIÓN DE ENTREGAS
+        const listaEntregas = document.getElementById('lista-entregas');
+        const pendientes = ventas.filter(v => String(v.Estado || "").trim().toUpperCase() === "PENDIENTE");
+        const clientesUnicos = [...new Set(pendientes.map(v => v.Cliente))].slice(0, 3);
 
-        listaEntregas.innerHTML = "";
-        if (clientesUnicos.length === 0) {
-            listaEntregas.innerHTML = `<p class="text-center py-4 text-gray-400 font-bold">Sin rutas pendientes</p>`;
-        } else {
-            clientesUnicos.forEach(c => {
-                listaEntregas.innerHTML += `
-                    <div class="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
-                        <div>
-                            <p class="text-xs font-black text-green-900 uppercase tracking-tight">${c}</p>
-                            <p class="text-[9px] font-bold text-green-600 uppercase">Pendiente de despacho</p>
-                        </div>
-                        <span class="material-symbols-outlined text-green-500">local_shipping</span>
-                    </div>`;
-            });
-        }
+        listaEntregas.innerHTML = "";
+        if (clientesUnicos.length === 0) {
+            listaEntregas.innerHTML = `<p class="text-center py-4 text-gray-400 font-bold">Sin rutas pendientes</p>`;
+        } else {
+            clientesUnicos.forEach(c => {
+                listaEntregas.innerHTML += `
+                    <div class="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
+                        <div>
+                            <p class="text-xs font-black text-green-900 uppercase tracking-tight">${c}</p>
+                            <p class="text-[9px] font-bold text-green-600 uppercase">Pendiente de despacho</p>
+                        </div>
+                        <span class="material-symbols-outlined text-green-500">local_shipping</span>
+                    </div>`;
+            });
+        }
 
-    } catch (e) {
-        console.error("Error al cargar datos del Dashboard:", e);
-        const tabla = document.getElementById('tabla-inventario');
-        if(tabla) tabla.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-red-500 font-bold">Error de sincronización</td></tr>`;
-    } finally {
-        if (icon) icon.classList.remove('rotate-animation');
-    }
+    } catch (e) {
+        console.error("Error al cargar datos del Dashboard:", e);
+        const tabla = document.getElementById('tabla-inventario');
+        if(tabla) tabla.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-red-500 font-bold">Error de sincronización</td></tr>`;
+    } finally {
+        if (icon) icon.classList.remove('rotate-animation');
+    }
 }
 
 // Iniciar carga al abrir la página

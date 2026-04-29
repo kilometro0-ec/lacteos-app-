@@ -1,7 +1,117 @@
 <!DOCTYPE html>
 <html class="light" lang="es">
 <head>
-    <meta charset="utf-8"/>
+    <meta charset=<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Lógica Láctea - Gestión de Proveedores</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script src="api-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { primary: "#a21caf", background: "#faf5ff", outline: "#e9d5ff" } } }
+        }
+    </script>
+    <style>
+        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    </style>
+</head>
+<body class="bg-background text-slate-900 antialiased pb-32">
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
+    <div class="flex items-center gap-3" onclick="window.location.href='DashboardLacteo.html'">
+        <span class="material-symbols-outlined text-primary">arrow_back_ios</span>
+        <h1 class="text-lg font-extrabold text-primary uppercase tracking-tighter">Mis Proveedores</h1>
+    </div>
+</header>
+
+<main class="pt-20 px-4 max-w-lg mx-auto space-y-6">
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-md space-y-4">
+        <h2 class="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">person_add</span> Registrar Nuevo
+        </h2>
+        
+        <div class="space-y-4">
+            <input type="text" id="nombre" placeholder="Nombre de la Empresa" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <input type="tel" id="telefono" placeholder="Teléfono" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
+                <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary">
+                    <option value="Lácteos">Lácteos</option>
+                    <option value="Insumos">Insumos</option>
+                    <option value="Empaques">Empaques</option>
+                </select>
+            </div>
+
+            <button onclick="guardarProveedor()" id="btn-guardar" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
+                GUARDAR PROVEEDOR
+            </button>
+        </div>
+    </section>
+
+    <div class="space-y-3" id="lista-proveedores">
+        <p class="text-center py-10 text-slate-400 italic">Cargando distribuidores...</p>
+    </div>
+</main>
+
+<div class="fixed bottom-28 right-6 z-50">
+    <button onclick="window.location.href='PedidosProveedor.html'" class="bg-amber-500 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all border-4 border-white">
+        <span class="material-symbols-outlined text-3xl">shopping_cart_checkout</span>
+    </button>
+</div>
+
+<div id="menu-container"></div>
+
+<script>
+    async function cargarPagina() {
+        const resMenu = await fetch('menu.html');
+        document.getElementById('menu-container').innerHTML = await resMenu.text();
+        
+        try {
+            const proveedores = await DairyAPI.obtenerDatos("Proveedores");
+            const contenedor = document.getElementById('lista-proveedores');
+            contenedor.innerHTML = "";
+            proveedores.forEach(p => {
+                contenedor.innerHTML += `
+                    <div class="bg-white p-4 rounded-3xl border border-outline flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                                <span class="material-symbols-outlined">storefront</span>
+                            </div>
+                            <div>
+                                <p class="font-black text-slate-800 uppercase text-xs">${p["Nombre del Proveedor"]}</p>
+                                <p class="text-[10px] text-slate-400">${p["Contacto / Teléfono"]}</p>
+                            </div>
+                        </div>
+                        <span class="text-[8px] font-black px-2 py-1 bg-slate-50 rounded-lg uppercase">${p.Categoría || 'Lácteos'}</span>
+                    </div>`;
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async function guardarProveedor() {
+        const btn = document.getElementById('btn-guardar');
+        const nuevo = {
+            "Nombre del Proveedor": document.getElementById('nombre').value,
+            "Contacto / Teléfono": document.getElementById('telefono').value,
+            "Categoría": document.getElementById('categoria').value
+        };
+
+        if(!nuevo["Nombre del Proveedor"]) return alert("Falta el nombre");
+
+        btn.disabled = true;
+        await DairyAPI.guardarDatos("Proveedores", nuevo);
+        location.reload();
+    }
+
+    window.onload = cargarPagina;
+</script>
+</body>
+</html>PedidosProveedor.html"utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Lógica Láctea - Gestión de Proveedores</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>

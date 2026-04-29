@@ -23,28 +23,28 @@
     </script>
 
     <style>
-        body { 
-            font-family: 'Work Sans', sans-serif; 
-            background-color: #faf5ff; 
-            -webkit-tap-highlight-color: transparent; 
-            color: #1f012a; 
-            font-size: 14px; 
-        }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; color: #1f012a; font-size: 15px; }
         
-        .card-sutil { 
+        /* Card de producto en FILA ÚNICA */
+        .card-producto { 
             background: white; 
-            border-radius: 1.25rem; 
+            border-radius: 1rem; 
             border: 1px solid #e9d5ff; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
         }
 
         .input-sutil { 
             background-color: #fdfaff; 
             border: 1.5px solid #f3e8ff; 
-            border-radius: 1rem; 
-            padding: 0.6rem 1rem; 
+            border-radius: 0.75rem; 
+            padding: 0.7rem; 
             width: 100%; 
-            font-size: 13px; 
+            font-weight: 600;
         }
         
         .btn-magenta { 
@@ -52,84 +52,76 @@
             color: white; 
             font-weight: 800; 
             text-transform: uppercase; 
-            border-radius: 1rem; 
-            padding: 0.8rem; 
+            border-radius: 0.75rem; 
+            padding: 1rem; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            gap: 8px; 
             cursor: pointer;
+            width: 100%;
         }
 
-        .btn-magenta:active { transform: scale(0.95); }
-
-        #contenedor-productos { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 10px; 
-        }
+        /* Menú de navegación forzado a ser bajo */
+        #menu-container nav { padding: 4px 0 !important; height: 55px !important; }
     </style>
 </head>
-<body class="pb-24"> 
+<body class="pb-40"> 
 
-<header class="h-14 bg-white/80 backdrop-blur-md border-b border-outline flex justify-between items-center px-4 sticky top-0 z-40">
-    <div>
-        <h1 class="text-lg font-black text-primary tracking-tighter uppercase italic">Ventas</h1>
-        <p class="text-[7px] font-black text-secondary uppercase">Acceso Directo • 2026</p>
-    </div>
-    <button onclick="location.reload()" class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-primary">
-        <span class="material-symbols-outlined text-xl">sync</span>
-    </button>
+<header class="h-14 bg-white border-b border-outline flex justify-between items-center px-4 sticky top-0 z-40">
+    <h1 class="text-lg font-black text-primary italic uppercase">Ventas</h1>
+    <button onclick="location.reload()" class="text-primary"><span class="material-symbols-outlined">sync</span></button>
 </header>
 
-<main id="main-content" class="mt-4 px-3 max-w-6xl mx-auto">
-    <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="card-sutil p-3 flex flex-col items-center border-b-2 border-primary">
-            <span class="text-[7px] font-black text-slate-400 uppercase">Pendientes</span>
-            <span id="card-pedidos-pendientes" class="text-xl font-black text-primary">0</span>
+<main class="mt-4 px-4 max-w-xl mx-auto">
+    <div class="flex gap-2 mb-4">
+        <div class="flex-1 bg-white p-2 rounded-xl border border-primary/20 text-center">
+            <p class="text-[8px] font-bold text-slate-400 uppercase">En Carrito</p>
+            <p id="card-productos-total" class="text-lg font-black text-primary">0</p>
         </div>
-        <div class="card-sutil p-3 flex flex-col items-center border-b-2 border-secondary">
-            <span class="text-[7px] font-black text-slate-400 uppercase">Carrito</span>
-            <span id="card-productos-total" class="text-xl font-black text-secondary">0</span>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div class="lg:col-span-7 space-y-4">
-            <section class="card-sutil p-4">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-[9px] font-black text-primary uppercase">Seleccionar Cliente</span>
-                    <button onclick="alternarFormularioCliente(true)" class="text-[8px] font-bold text-secondary border border-secondary px-2 py-0.5 rounded-md">NUEVO +</button>
-                </div>
-                <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil font-bold">
-                    <option value="">Cargando lista...</option>
-                </select>
-            </section>
-
-            <input type="text" id="buscarProducto" oninput="filtrarProductos()" placeholder="Buscar producto..." class="input-sutil">
-            
-            <section id="contenedor-productos"></section>
-        </div>
-
-        <div class="lg:col-span-5">
-            <section class="card-sutil overflow-hidden sticky top-20">
-                <div class="bg-primary p-3 text-white text-center">
-                    <h2 id="cliente-resumen" class="text-xs font-black uppercase truncate">SIN SELECCIONAR</h2>
-                    <input type="date" id="fecha-entrega" class="w-full mt-2 text-xs font-bold text-slate-900 py-1 px-2 rounded-lg text-center">
-                </div>
-                <div class="p-4">
-                    <div id="lista-carrito" class="space-y-1 mb-3 max-h-40 overflow-y-auto text-[10px]">
-                        <div class="text-center py-2 text-slate-300 italic">No hay productos</div>
-                    </div>
-                    <div class="flex justify-between items-baseline border-t pt-2 mb-3">
-                        <span class="text-[9px] font-black text-slate-400">TOTAL</span>
-                        <span id="total-venta" class="text-2xl font-black text-slate-900">$0.00</span>
-                    </div>
-                    <button id="btn-finalizar" onclick="procesarVenta()" class="w-full btn-magenta">CONFIRMAR PEDIDO</button>
-                </div>
-            </section>
+        <div class="flex-1 bg-white p-2 rounded-xl border border-secondary/20 text-center">
+            <p class="text-[8px] font-bold text-slate-400 uppercase">Total $</p>
+            <p id="total-venta-resumen" class="text-lg font-black text-secondary">$0.00</p>
         </div>
     </div>
+
+    <section class="bg-white p-4 rounded-2xl border border-outline mb-4">
+        <div id="vista-seleccion-cliente">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] font-black text-primary uppercase">Cliente</span>
+                <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-bold text-secondary border border-secondary px-3 py-1 rounded-lg">NUEVO +</button>
+            </div>
+            <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil">
+                <option value="">-- Seleccionar --</option>
+            </select>
+        </div>
+
+        <div id="vista-nuevo-cliente" class="hidden space-y-3">
+            <input type="text" id="reg-nombre" placeholder="Nombre del cliente" class="input-sutil">
+            <div class="flex gap-2">
+                <button onclick="guardarNuevoCliente()" class="flex-1 bg-primary text-white font-bold py-2 rounded-lg text-sm">GUARDAR</button>
+                <button onclick="alternarFormularioCliente(false)" class="flex-1 bg-slate-100 text-slate-500 font-bold py-2 rounded-lg text-sm">CANCELAR</button>
+            </div>
+        </div>
+    </section>
+
+    <input type="text" id="buscarProducto" oninput="filtrarProductos()" placeholder="🔍 Buscar producto..." class="input-sutil mb-4">
+    
+    <div id="contenedor-productos" class="space-y-2"></div>
+
+    <section class="mt-8 bg-white rounded-2xl border-2 border-primary overflow-hidden">
+        <div class="bg-primary p-3 text-white">
+            <h2 id="cliente-resumen" class="text-center font-black text-sm uppercase italic">Sin Cliente</h2>
+        </div>
+        <div class="p-4">
+            <input type="date" id="fecha-entrega" class="input-sutil mb-4 text-center">
+            <div id="lista-carrito" class="space-y-2 mb-4 text-sm font-bold border-b pb-2"></div>
+            <div class="flex justify-between items-center mb-4 px-2">
+                <span class="text-xs font-black text-slate-400 uppercase">Total a Cobrar:</span>
+                <span id="total-venta" class="text-2xl font-black text-slate-900">$0.00</span>
+            </div>
+            <button id="btn-finalizar" onclick="procesarVenta()" class="btn-magenta">CONFIRMAR PEDIDO</button>
+        </div>
+    </section>
 </main>
 
 <div id="menu-container"></div>
@@ -143,49 +135,38 @@ async function iniciar() {
     document.getElementById('fecha-entrega').value = new Date().toISOString().split('T')[0];
 
     try {
-        const [cl, pr, vnt] = await Promise.all([
+        const [cl, pr] = await Promise.all([
             DairyAPI.obtenerDatos("Clientes"), 
-            DairyAPI.obtenerDatos("Inventario"),
-            DairyAPI.obtenerDatos("Ventas")
+            DairyAPI.obtenerDatos("Inventario")
         ]);
-        
         productosData = pr;
-        
-        // Actualizar pedidos pendientes
-        const pendientes = vnt.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE");
-        const ordenesUnicas = [...new Set(pendientes.map(v => v.ID_Venta))].length;
-        document.getElementById('card-pedidos-pendientes').innerText = ordenesUnicas;
-
-        // Cargar Clientes
         const sel = document.getElementById('select-cliente');
-        sel.innerHTML = '<option value="">-- Seleccionar --</option>';
         cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
         });
-        
         renderizarProductos();
-
-    } catch(e) { 
-        console.error("Error al cargar:", e);
-    }
+    } catch(e) { console.error(e); }
 }
 
 function renderizarProductos() {
     const cont = document.getElementById('contenedor-productos'); 
     cont.innerHTML = "";
     productosData.forEach(p => {
-        const stock = parseInt(p.Stock || p["Stock Inicial"] || 0);
+        const stock = parseInt(p.Stock || 0);
         const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
         cont.innerHTML += `
-            <div class="card-sutil p-3 flex flex-col justify-between min-h-[130px] ${stock <= 0 ? 'opacity-40' : ''}">
-                <h4 class="font-black text-[9px] uppercase text-primary leading-tight">${p.Producto}</h4>
-                <div>
-                    <p class="text-base font-black text-slate-800">$${parseFloat(p.Precio_Venta || 0).toFixed(2)}</p>
-                    <div class="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-1">
-                        <button onclick="cambiarCant('${p.Producto}',-1)" class="w-8 h-8 bg-white rounded shadow-sm text-primary font-black">-</button>
-                        <span id="${idCant}" class="font-black text-primary text-xs">0</span>
-                        <button onclick="cambiarCant('${p.Producto}',1)" class="w-8 h-8 bg-white rounded shadow-sm text-primary font-black">+</button>
+            <div class="card-producto">
+                <div class="flex-1">
+                    <h4 class="font-black text-xs uppercase text-slate-700 leading-tight">${p.Producto}</h4>
+                    <div class="flex items-center gap-3 mt-1">
+                        <span class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
+                        <span class="text-[10px] font-bold ${stock < 5 ? 'text-red-500' : 'text-slate-400'}">STOCK: ${stock}</span>
                     </div>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                    <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">-</button>
+                    <span id="${idCant}" class="w-6 text-center font-black text-lg">0</span>
+                    <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">+</button>
                 </div>
             </div>`;
     });
@@ -194,7 +175,7 @@ function renderizarProductos() {
 function cambiarCant(n, d) {
     if(!carrito[n]) carrito[n] = 0;
     const p = productosData.find(x => x.Producto === n);
-    const stock = parseInt(p.Stock || p["Stock Inicial"] || 0);
+    const stock = parseInt(p.Stock || 0);
     if(carrito[n]+d >= 0 && (carrito[n]+d <= stock)) {
         carrito[n] += d;
         document.getElementById(`cant-${n.replace(/\s+/g,'-')}`).innerText = carrito[n];
@@ -204,37 +185,42 @@ function cambiarCant(n, d) {
 
 function actualizarCarritoUI() {
     const l = document.getElementById('lista-carrito'); 
-    l.innerHTML = ""; 
-    let totalPrecio = 0; 
-    let totalItems = 0;
-    
+    l.innerHTML = ""; let t = 0; let totalItems = 0;
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
-            const sub = carrito[n] * parseFloat(p.Precio_Venta || 0);
-            totalPrecio += sub; 
-            totalItems += carrito[n];
-            l.innerHTML += `
-                <div class="flex justify-between p-1 border-b border-purple-50">
-                    <span>${n} (x${carrito[n]})</span>
-                    <span class="font-bold">$${sub.toFixed(2)}</span>
-                </div>`;
+            const sub = carrito[n] * parseFloat(p.Precio_Venta);
+            t += sub; totalItems += carrito[n];
+            l.innerHTML += `<div class="flex justify-between py-1 border-b border-dashed"><span>${n} x${carrito[n]}</span><span>$${sub.toFixed(2)}</span></div>`;
         }
     });
-    
-    if(totalItems === 0) l.innerHTML = '<div class="text-center py-2 text-slate-300 italic">No hay productos</div>';
-    
-    document.getElementById('total-venta').innerText = `$${totalPrecio.toFixed(2)}`;
+    document.getElementById('total-venta').innerText = `$${t.toFixed(2)}`;
+    document.getElementById('total-venta-resumen').innerText = `$${t.toFixed(2)}`;
     document.getElementById('card-productos-total').innerText = totalItems;
 }
 
+function alternarFormularioCliente(mostrar) {
+    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', mostrar);
+    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !mostrar);
+}
+
+async function guardarNuevoCliente() {
+    const nombre = document.getElementById('reg-nombre').value.trim();
+    if(!nombre) return alert("Escribe el nombre");
+    try {
+        await DairyAPI.enviarDatos("Clientes", { Nombre: nombre });
+        alert("Cliente Guardado");
+        location.reload();
+    } catch(e) { alert("Error"); }
+}
+
 function actualizarNombreCarrito() { 
-    document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "SIN SELECCIONAR"; 
+    document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "Sin Cliente"; 
 }
 
 function filtrarProductos() {
     const q = document.getElementById('buscarProducto').value.toLowerCase();
-    document.querySelectorAll('#contenedor-productos > div').forEach(c => {
+    document.querySelectorAll('.card-producto').forEach(c => {
         c.style.display = c.innerText.toLowerCase().includes(q) ? "flex" : "none";
     });
 }
@@ -242,31 +228,24 @@ function filtrarProductos() {
 async function procesarVenta() {
     const cli = document.getElementById('select-cliente').value;
     const fec = document.getElementById('fecha-entrega').value;
-    if(!cli || !fec) return alert("Seleccione cliente y fecha");
-    
-    const items = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(items.length === 0) return alert("Carrito vacío");
+    if(!cli || !fec || document.getElementById('card-productos-total').innerText == "0") 
+        return alert("Datos incompletos o carrito vacío");
     
     const btn = document.getElementById('btn-finalizar');
-    btn.innerText = "GUARDANDO...";
-    btn.disabled = true;
+    btn.innerText = "GUARDANDO..."; btn.disabled = true;
 
     try {
-        for(const n of items) {
-            const p = productosData.find(x => x.Producto === n);
-            await DairyAPI.enviarDatos("Ventas", { 
-                ID_Venta: idOrdenActual, Cliente: cli, Producto: n, 
-                Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: fec, 
-                Estado: "PENDIENTE" 
-            });
+        for(const n in carrito) {
+            if(carrito[n] > 0) {
+                const p = productosData.find(x => x.Producto === n);
+                await DairyAPI.enviarDatos("Ventas", { 
+                    ID_Venta: idOrdenActual, Cliente: cli, Producto: n, 
+                    Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: fec, Estado: "PENDIENTE" 
+                });
+            }
         }
-        alert("¡Venta Exitosa!");
-        location.reload();
-    } catch(e) { 
-        alert("Error al guardar"); 
-        btn.innerText = "CONFIRMAR PEDIDO";
-        btn.disabled = false;
-    }
+        alert("Pedido Guardado"); location.reload();
+    } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "CONFIRMAR PEDIDO"; }
 }
 
 window.onload = iniciar;

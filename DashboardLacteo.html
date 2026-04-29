@@ -33,8 +33,6 @@
     .rotate-animation { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .active-icon { font-variation-settings: 'FILL' 1 !important; }
-    
-    /* Efecto de cristal sutil para las tarjetas */
     .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
     </style>
 </head>
@@ -132,30 +130,37 @@
 <div id="menu-container"></div>
 
 <script>
+// Carga del menú lateral
 fetch('menu.html').then(r => r.text()).then(d => {
     document.getElementById('menu-container').innerHTML = d;
-});
+}).catch(e => console.error("Error al cargar el menú:", e));
 
 async function cargarDatos() {
     const icon = document.getElementById('icon-refresh');
-    icon.classList.add('rotate-animation');
+    if (icon) icon.classList.add('rotate-animation');
 
     try {
-        const [inventario, ventas] = await Promise.all([
+        // Obtenemos los datos de la API
+        const [resInventario, resVentas] = await Promise.all([
             DairyAPI.obtenerDatos("Inventario"),
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        // 1. INVENTARIO ORDENADO (MENOR A MAYOR STOCK)
+        // VALIDACIÓN: Si no son arrays (listas), los forzamos a estar vacíos para que no rompan el .sort
+        const inventario = Array.isArray(resInventario) ? resInventario : [];
+        const ventas = Array.isArray(resVentas) ? resVentas : [];
+
+        // 1. GESTIÓN DE INVENTARIO (TABLA)
         const tabla = document.getElementById('tabla-inventario');
         tabla.innerHTML = "";
-        const invOrdenado = inventario.sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0));
+        
+        // Ordenamos una copia para no afectar los cálculos de finanzas
+        const invOrdenado = [...inventario].sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0));
 
         invOrdenado.forEach(p => {
             const stock = parseFloat(p.Stock) || 0;
             let statusHTML = "";
             
-            // LÓGICA DE ESTADOS
             if (stock <= 5) {
                 statusHTML = `<span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg border border-red-100 uppercase">Crítico</span>`;
             } else if (stock > 10) {
@@ -166,29 +171,35 @@ async function cargarDatos() {
 
             tabla.innerHTML += `
                 <tr class="border-t border-purple-50">
-                    <td class="p-4 font-bold text-gray-700">${p.Producto}</td>
+                    <td class="p-4 font-bold text-gray-700">${p.Producto || 'Sin Nombre'}</td>
                     <td class="p-4 text-center font-black text-base ${stock <= 5 ? 'text-red-500' : ''}">${stock}</td>
                     <td class="p-4 text-center">${statusHTML}</td>
                 </tr>`;
         });
 
-        // 2. FINANZAS
+        // 2. CÁLCULOS FINANCIEROS
         let vendido = 0, invertido = 0;
+        
         inventario.forEach(p => {
-            const costo = parseFloat(p.Costo_Unitario?.toString().replace(',','.')) || 0;
+            const costo = parseFloat(String(p.Costo_Unitario || 0).replace(',', '.')) || 0;
             invertido += (costo * (parseFloat(p.Stock) || 0));
         });
+
         ventas.forEach(v => {
-            vendido += (parseFloat(v["Precio Total"]?.toString().replace(',','.')) || 0);
+            // Buscamos "Precio Total" o "Precio_Total" por si acaso
+            const totalFila = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
+            vendido += totalFila;
         });
 
         document.getElementById('ventas-hoy').innerText = `$${vendido.toFixed(2)}`;
         document.getElementById('valor-invertido').innerText = `$${invertido.toFixed(2)}`;
         document.getElementById('ganancia-total').innerText = `$${(vendido - invertido).toFixed(2)}`;
 
-        // 3. ENTREGAS
+        // 3. SECCIÓN DE ENTREGAS (RUTA)
         const listaEntregas = document.getElementById('lista-entregas');
-        const pendientes = ventas.filter(v => v.Estado === "PENDIENTE");
+        const pendientes = ventas.filter(v => String(v.Estado || "").trim().toUpperCase() === "PENDIENTE");
+        
+        // Obtenemos solo los primeros 3 clientes únicos para el dashboard
         const clientesUnicos = [...new Set(pendientes.map(v => v.Cliente))].slice(0, 3);
 
         listaEntregas.innerHTML = "";
@@ -208,11 +219,15 @@ async function cargarDatos() {
         }
 
     } catch (e) {
-        console.error(e);
+        console.error("Error al cargar datos del Dashboard:", e);
+        const tabla = document.getElementById('tabla-inventario');
+        if(tabla) tabla.innerHTML = `<tr><td colspan="3" class="p-10 text-center text-red-500 font-bold">Error de sincronización</td></tr>`;
     } finally {
-        setTimeout(() => icon.classList.remove('rotate-animation'), 800);
+        if (icon) setTimeout(() => icon.classList.remove('rotate-animation'), 800);
     }
 }
+
+// Iniciar carga al abrir la página
 window.onload = cargarDatos;
 </script>
 </body>

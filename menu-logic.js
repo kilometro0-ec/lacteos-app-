@@ -1,10 +1,20 @@
 /**
- * LÓGICA LÁCTEA - CONTROL DE NAVEGACIÓN v2.1
- * Corregido: Nombre "Panel" y efecto visual uniforme.
+ * LÓGICA LÁCTEA - CONTROL DE NAVEGACIÓN v2.2
+ * Integrado: Transiciones suaves entre páginas y efecto Glow.
  */
 
+// Función global para la transición de salida
+window.navegarA = function(url) {
+    document.body.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+    document.body.style.opacity = "0";
+    document.body.style.transform = "translateY(-10px)";
+    
+    setTimeout(() => {
+        window.location.href = url;
+    }, 300);
+};
+
 const MenuLogic = {
-    // Definición de los botones del menú y sus destinos exactos
     opciones: [
         { nombre: 'Panel', icon: 'dashboard', link: 'DashboardLacteo.html' },
         { nombre: 'Ventas', icon: 'add_shopping_cart', link: 'RegistrodeVentas.html' },
@@ -13,19 +23,25 @@ const MenuLogic = {
         { nombre: 'Rutas', icon: 'local_shipping', link: 'GestióndeDespachos.html' }
     ],
 
-    /**
-     * Inyecta el menú en el contenedor 'menu-container'
-     */
     render() {
         const container = document.getElementById('menu-container');
         if (!container) return;
 
-        // Detectar en qué página estamos (manejando tildes y variaciones)
         const pathActual = decodeURIComponent(window.location.pathname.split("/").pop()) || 'DashboardLacteo.html';
 
-        // Estilos para el efecto de sombra morada (Glow) y animación
+        // Estilos integrados: Animación de entrada y estados del menú
         const style = document.createElement('style');
         style.innerHTML = `
+            /* Animación de entrada para la página */
+            @keyframes pageIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            body {
+                animation: pageIn 0.4s ease-out forwards;
+            }
+
+            /* Estilos del menú */
             .active-btn { 
                 color: #a21caf !important; 
                 position: relative;
@@ -52,11 +68,10 @@ const MenuLogic = {
         `;
 
         this.opciones.forEach(opt => {
-            // Comparación exacta incluyendo caracteres especiales para "Rutas"
             const esActivo = (pathActual === opt.link);
             
             html += `
-                <button onclick="window.location.href='${opt.link}'" 
+                <button onclick="navegarA('${opt.link}')" 
                         class="flex flex-col items-center gap-1 transition-all active:scale-95 ${esActivo ? 'active-btn' : 'text-gray-400'}">
                     <span class="material-symbols-outlined text-[26px]">
                         ${opt.icon}
@@ -75,7 +90,6 @@ const MenuLogic = {
     }
 };
 
-// Ejecutar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     MenuLogic.render();
 });

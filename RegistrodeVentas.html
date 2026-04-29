@@ -9,6 +9,7 @@
     
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -43,9 +44,7 @@
         .spin-animation { animation: spin 0.8s ease-in-out; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
-        /* Estilos para resaltar el botón activo que viene del menú externo */
-        .active-nav { color: #a21caf !important; font-weight: 900; }
-        .active-nav .icon-box { background-color: #f5f3ff !important; transform: translateY(-5px); }
+        ::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="pb-44"> 
@@ -63,9 +62,6 @@
     <div class="flex items-center gap-2">
         <button onclick="recargarPagina()" id="btn-sync" class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-primary transition-all">
             <span class="material-symbols-outlined" id="icon-sync">sync</span>
-        </button>
-        <button onclick="window.location.href='DashboardLacteo.html'" class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
-            <span class="material-symbols-outlined">home</span>
         </button>
     </div>
 </header>
@@ -144,35 +140,13 @@ let carrito = {};
 let productosData = []; 
 let idOrdenActual = "";
 
-// FUNCIÓN PARA CARGAR EL MENÚ EXTERNO
-async function cargarMenu() {
-    try {
-        const response = await fetch('menu.html');
-        const text = await response.text();
-        const contenedor = document.getElementById('menu-container');
-        contenedor.innerHTML = text;
-
-        const urlActual = window.location.href.toLowerCase();
-        const botones = contenedor.querySelectorAll('.nav-link');
-        
-        botones.forEach(btn => {
-            const dataPath = btn.getAttribute('data-path').toLowerCase();
-            // Si la URL contiene "ventas", marcamos este botón como activo
-            if (urlActual.includes(dataPath)) {
-                btn.classList.add('active-nav');
-                btn.classList.remove('text-gray-400');
-            }
-        });
-    } catch (e) { console.error("Error cargando menú:", e); }
-}
-
 function recargarPagina() {
     document.getElementById('icon-sync').classList.add('spin-animation');
     location.reload();
 }
 
 async function iniciar() {
-    cargarMenu(); // Cargamos el menú apenas inicia
+    // Configuración inicial de orden
     const d = new Date();
     idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
     document.getElementById('num-orden').innerText = idOrdenActual;
@@ -294,7 +268,7 @@ async function procesarVenta() {
                 Estado: "PENDIENTE" 
             });
         }
-        alert("Pedido guardado.");
+        alert("Pedido guardado con éxito.");
         location.reload();
     } catch(e) { 
         alert("Error al guardar."); 
@@ -347,6 +321,7 @@ function filtrarProductos() {
     });
 }
 
+// IMPORTANTE: Solo llamar a iniciar()
 window.onload = iniciar;
 </script>
 </body>

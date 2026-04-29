@@ -1,10 +1,44 @@
-/* 1. Definir la animación de entrada */
+/* --- ANIMACIONES DE PÁGINA --- */
 @keyframes fadeInPage {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { 
+        opacity: 0; 
+        transform: translateY(15px); /* Un poco más de recorrido para que se note el flujo */
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }
 
-/* 2. Aplicarla al body */
 body {
-    animation: fadeInPage 0.4s ease-out;
+    animation: fadeInPage 0.4s ease-out forwards;
+    background-color: #faf5ff; /* Color base para evitar destellos blancos */
+    -webkit-tap-highlight-color: transparent; /* Quita el cuadro azul al tocar botones en Android/iOS */
+    overflow-x: hidden; /* Evita desplazamientos laterales accidentales */
+}
+
+/* --- ESTILOS DE SCROLLBAR (Invisibles pero funcionales) --- */
+::-webkit-scrollbar {
+    display: none;
+}
+
+/* --- CLASES DE SOPORTE PARA TRANSICIONES --- */
+.page-exit {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* --- OPTIMIZACIÓN DE BOTONES --- */
+button:active {
+    scale: 0.95;
+    transition: transform 0.1s;
+}
+
+/* --- ESTADO BLOQUEADO (Para el carrito) --- */
+.bloqueado {
+    opacity: 0.5;
+    pointer-events: none;
+    filter: grayscale(0.8);
+    transition: all 0.4s ease;
 }

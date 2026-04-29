@@ -12,34 +12,40 @@
     
     <script>
       tailwind.config = {
-        theme: {
-          extend: {
-            colors: { primary: "#a21caf", secondary: "#db2777", success: "#22c55e" }
-          }
-        }
+        theme: { extend: { colors: { primary: "#a21caf", secondary: "#db2777", whatsapp: "#25d366" } } }
       }
     </script>
 
     <style>
         body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
-        .card-producto { background: white; border-radius: 1rem; border: 1px solid #e9d5ff; padding: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; transition: all 0.3s; }
+        .card-producto { background: white; border-radius: 1rem; border: 1px solid #e9d5ff; padding: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
         .bloqueado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
         .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 0.75rem; padding: 0.6rem; width: 100%; font-size: 13px; font-weight: 600; }
         
-        /* CARRITO FLOTANTE MEJORADO */
+        /* Animación de Éxito */
+        #overlay-exito {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.9);
+            display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200;
+        }
+        .check-anim { font-size: 80px; color: #22c55e; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
         #carrito-flotante {
             position: fixed; bottom: 65px; left: 10px; right: 10px;
-            background: white; border: 2px solid #a21caf; border-radius: 1.5rem;
-            padding: 15px; box-shadow: 0 -10px 25px rgba(0,0,0,0.15); z-index: 100;
+            background: white; border: 2.5px solid #a21caf; border-radius: 1.5rem;
+            padding: 15px; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); z-index: 100;
         }
-
-        .btn-confirmar { background: #db2777; color: white; width: 100%; padding: 12px; border-radius: 1rem; font-weight: 800; text-transform: uppercase; margin-top: 8px; }
-        .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 12px; border-radius: 1rem; font-weight: 800; display: none; align-items: center; justify-content: center; gap: 8px; animation: pulse-green 2s infinite; margin-top: 8px; }
-        
-        @keyframes pulse-green { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); } }
+        .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 14px; border-radius: 1rem; font-weight: 900; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
+        @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
     </style>
 </head>
-<body class="pb-80"> 
+<body class="pb-96"> 
+
+<div id="overlay-exito">
+    <span class="material-symbols-outlined check-anim">check_circle</span>
+    <h2 class="text-2xl font-black text-slate-800">PEDIDO GUARDADO</h2>
+    <p class="text-slate-500 font-bold uppercase text-[10px]">No cierres esta ventana</p>
+</div>
 
 <header class="h-14 bg-white border-b border-outline flex justify-between items-center px-4 sticky top-0 z-50">
     <div class="flex flex-col">
@@ -53,24 +59,30 @@
     <section class="bg-white p-4 rounded-2xl border-2 border-primary/20 mb-4 shadow-sm">
         <div id="vista-seleccion-cliente">
             <div class="flex justify-between items-center mb-2">
-                <span class="text-[10px] font-black text-primary uppercase tracking-widest">Paso 1: Seleccionar Cliente</span>
+                <span class="text-[10px] font-black text-primary uppercase">1. Seleccionar Cliente</span>
                 <button onclick="alternarFormulario(true)" class="text-[9px] font-bold text-white bg-secondary px-3 py-1 rounded-full uppercase">Nuevo +</button>
             </div>
-            <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil border-primary/30 text-primary italic">
-                <option value="">-- BUSCAR CLIENTE EN LISTA --</option>
+            <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil border-primary/30 text-primary">
+                <option value="">-- BUSCAR CLIENTE --</option>
             </select>
         </div>
 
         <div id="vista-nuevo-cliente" class="hidden space-y-2">
             <p class="text-[10px] font-black text-secondary uppercase italic">Registro de Nuevo Cliente</p>
-            <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="reg-id" readonly class="input-sutil bg-slate-100 text-slate-400" placeholder="ID Auto">
-                <input type="date" id="reg-fecha" class="input-sutil">
-            </div>
-            <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
-            <input type="number" id="reg-ruc" placeholder="CI o RUC" class="input-sutil">
-            <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
-            <input type="text" id="reg-dir" placeholder="Dirección Exacta" class="input-sutil">
+            <input type="text" id="reg-id" readonly class="hidden">
+            <input type="text" id="reg-nombre" placeholder="Nombre (Ej: Juan Pérez)" class="input-sutil" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
+            <input type="number" id="reg-ruc" placeholder="CI/RUC (10 a 13 números)" class="input-sutil">
+            <input type="tel" id="reg-tel" placeholder="Teléfono (Ej: 0984016000)" class="input-sutil">
+            <input type="text" id="reg-dir" placeholder="Calle Principal / Número Casa" class="input-sutil">
+            <input type="text" id="reg-ref" placeholder="Referencia (Ej: Tras la iglesia)" class="input-sutil">
+            <select id="reg-sector" class="input-sutil">
+                <option value="">-- SELECCIONAR SECTOR --</option>
+                <option value="NORTE">NORTE</option>
+                <option value="SUR">SUR</option>
+                <option value="CENTRO">CENTRO</option>
+                <option value="VALLES">VALLES</option>
+            </select>
+
             <div class="flex gap-2 pt-2">
                 <button onclick="guardarCliente()" class="flex-1 bg-primary text-white font-black py-3 rounded-xl text-xs uppercase">Guardar</button>
                 <button onclick="alternarFormulario(false)" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl text-xs uppercase">Cancelar</button>
@@ -79,73 +91,61 @@
     </section>
 
     <div id="seccion-operativa" class="bloqueado transition-all duration-500">
-        <div class="relative mb-4">
-            <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="Buscar producto lácteo..." class="input-sutil pl-10 shadow-inner">
-            <span class="material-symbols-outlined absolute left-3 top-2.5 text-primary/40">search</span>
-        </div>
+        <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="🔍 Buscar producto..." class="input-sutil mb-4">
         <div id="contenedor-productos" class="space-y-2"></div>
     </div>
 </main>
 
-<div id="carrito-flotante" class="bloqueado shadow-2xl">
+<div id="carrito-flotante" class="bloqueado">
     <div class="flex justify-between items-center mb-2 border-b pb-2">
-        <div>
-            <p id="car-cliente" class="text-xs font-black text-primary uppercase truncate w-40">SIN CLIENTE</p>
+        <div class="flex-1">
+            <p id="car-cliente" class="text-xs font-black text-primary uppercase truncate italic">Sin Cliente</p>
             <p id="car-id" class="text-[9px] font-mono text-slate-400">ID: ---</p>
         </div>
         <div class="text-right">
             <p id="car-total" class="text-2xl font-black text-slate-800 leading-none">$0.00</p>
-            <p id="car-items" class="text-[9px] font-bold text-secondary uppercase tracking-tighter">0 productos</p>
+            <p id="car-items" class="text-[9px] font-bold text-secondary uppercase">0 ÍTEMS</p>
         </div>
     </div>
 
-    <div id="car-detalle" class="max-h-24 overflow-y-auto mb-3 space-y-1 text-[10px] font-bold text-slate-600 italic">
-        <p class="text-center text-slate-300 py-2">Lista de pedido vacía...</p>
+    <div id="car-detalle" class="max-h-24 overflow-y-auto mb-3 space-y-1 text-[10px] font-bold text-slate-500 italic">
+        <p class="text-center text-slate-200 py-2">Esperando selección...</p>
     </div>
 
-    <input type="date" id="fecha-entrega" class="input-sutil text-center mb-2 bg-purple-50 border-none h-8 !py-0">
+    <input type="date" id="fecha-entrega" class="input-sutil text-center mb-2 bg-purple-50 border-none h-9">
     
-    <button id="btn-confirmar" onclick="procesarVenta()" class="btn-confirmar">Confirmar Pedido</button>
+    <button id="btn-confirmar" onclick="procesarVenta()" class="bg-secondary text-white w-full py-4 rounded-xl font-black uppercase text-sm shadow-lg active:scale-95 transition-transform">Confirmar Pedido</button>
     <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-whatsapp">
-        <span class="material-symbols-outlined">chat</span> ENVIAR POR WHATSAPP
+        <span class="material-symbols-outlined">chat</span> ENVIAR DETALLE WHATSAPP
     </button>
 </div>
 
 <div id="menu-container"></div>
 
 <script>
-let carrito = {}; let productosData = []; let idVenta = ""; let resumenTexto = "";
+let carrito = {}; let productosData = []; let idVenta = "";
 
 async function iniciar() {
     const d = new Date();
-    idVenta = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
+    idVenta = `V-${d.getFullYear().toString().slice(-2)}${Math.floor(100000 + Math.random() * 900000)}`;
     document.getElementById('car-id').innerText = `ID: ${idVenta}`;
     document.getElementById('id-venta-display').innerText = `ID: ${idVenta}`;
-    document.getElementById('fecha-entrega').value = new Date().toISOString().split('T')[0];
-    document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
-    document.getElementById('reg-id').value = `CLI-${Date.now().toString().slice(-6)}`;
+    document.getElementById('fecha-entrega').value = d.toISOString().split('T')[0];
 
     try {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
         productosData = pr;
         const sel = document.getElementById('select-cliente');
-        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
-            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
-        });
+        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; });
         renderizar();
     } catch(e) { console.error(e); }
 }
 
 function activarInterfaz() {
     const cli = document.getElementById('select-cliente').value;
-    if(cli) {
-        document.getElementById('seccion-operativa').classList.remove('bloqueado');
-        document.getElementById('carrito-flotante').classList.remove('bloqueado');
-        document.getElementById('car-cliente').innerText = cli;
-    } else {
-        document.getElementById('seccion-operativa').classList.add('bloqueado');
-        document.getElementById('carrito-flotante').classList.add('bloqueado');
-    }
+    document.getElementById('seccion-operativa').classList.toggle('bloqueado', !cli);
+    document.getElementById('carrito-flotante').classList.toggle('bloqueado', !cli);
+    document.getElementById('car-cliente').innerText = cli || "Sin Cliente";
 }
 
 function renderizar() {
@@ -157,9 +157,9 @@ function renderizar() {
             <div class="card-producto shadow-sm">
                 <div class="flex-1">
                     <h4 class="font-black text-xs uppercase text-slate-700 leading-tight">${p.Producto}</h4>
-                    <p class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)} <span class="ml-2 text-[10px] font-bold text-slate-400">STOCK: ${stock}</span></p>
+                    <p class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)} <span class="ml-2 text-[9px] text-slate-300">STOCK: ${stock}</span></p>
                 </div>
-                <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-outline">
+                <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl">
                     <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">-</button>
                     <span id="${idCant}" class="w-6 text-center font-black text-lg">0</span>
                     <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">+</button>
@@ -179,66 +179,90 @@ function cambiarCant(n, d) {
 }
 
 function actualizarCarrito() {
-    let t = 0; let items = 0; let html = ""; resumenTexto = "*PEDIDO LÓGICA LÁCTEA*\n";
+    let t = 0; let items = 0; let html = "";
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
             const sub = (carrito[n] * parseFloat(p.Precio_Venta));
             t += sub; items += carrito[n];
-            html += `<div class="flex justify-between border-b border-dashed pb-1"><span>${n} (x${carrito[n]})</span><span>$${sub.toFixed(2)}</span></div>`;
-            resumenTexto += `• ${n} x${carrito[n]} ($${sub.toFixed(2)})\n`;
+            html += `<div class="flex justify-between border-b border-dashed"><span>${n} (x${carrito[n]})</span><span>$${sub.toFixed(2)}</span></div>`;
         }
     });
-    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-300 py-2">Lista de pedido vacía...</p>';
+    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-200 py-2">Esperando selección...</p>';
     document.getElementById('car-total').innerText = `$${t.toFixed(2)}`;
-    document.getElementById('car-items').innerText = `${items} productos`;
-    resumenTexto += `\n*TOTAL: $${t.toFixed(2)}*`;
+    document.getElementById('car-items').innerText = `${items} ÍTEMS`;
 }
 
 async function procesarVenta() {
-    const btn = document.getElementById('btn-confirmar');
-    btn.innerText = "PROCESANDO..."; btn.disabled = true;
+    const cli = document.getElementById('select-cliente').value;
+    const fec = document.getElementById('fecha-entrega').value;
+    if(!cli || document.getElementById('car-items').innerText === "0 ÍTEMS") return alert("Seleccione cliente y productos");
+    
+    document.getElementById('btn-confirmar').innerText = "GUARDANDO...";
     try {
-        const cli = document.getElementById('select-cliente').value;
-        const fec = document.getElementById('fecha-entrega').value;
         for(const n in carrito) {
             if(carrito[n] > 0) {
                 const p = productosData.find(x => x.Producto === n);
                 await DairyAPI.enviarDatos("Ventas", { ID_Venta: idVenta, Cliente: cli, Producto: n, Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: fec, Estado: "PENDIENTE" });
             }
         }
-        btn.style.display = 'none';
-        document.getElementById('btn-whatsapp').style.display = 'flex';
-        alert("¡Pedido Registrado!");
-    } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "Confirmar Pedido"; }
+        document.getElementById('overlay-exito').style.display = 'flex';
+        setTimeout(() => {
+            document.getElementById('overlay-exito').style.display = 'none';
+            document.getElementById('btn-confirmar').style.display = 'none';
+            document.getElementById('btn-whatsapp').style.display = 'flex';
+        }, 1500);
+    } catch(e) { alert("Error"); }
 }
 
 function enviarWhatsApp() {
     const cli = document.getElementById('select-cliente').value;
-    const msg = encodeURIComponent(`Hola ${cli}, aquí el detalle de tu pedido ${idVenta}:\n\n${resumenTexto}\n\n¡Gracias por preferirnos!`);
-    window.open(`https://wa.me/?text=${msg}`, '_blank');
+    const fec = document.getElementById('fecha-entrega').value;
+    let listado = ""; let t = 0;
+    Object.keys(carrito).forEach(n => {
+        if(carrito[n] > 0) {
+            const p = productosData.find(x => x.Producto === n);
+            const sub = (carrito[n] * parseFloat(p.Precio_Venta)).toFixed(2);
+            listado += `*${carrito[n]}x* ${n} ($${p.Precio_Venta})\n`;
+            t += parseFloat(sub);
+        }
+    });
+
+    const msg = `*LÓGICA LÁCTEA - PEDIDO*\n\n` +
+                `*ID:* ${idVenta}\n` +
+                `*Cliente:* ${cli}\n` +
+                `*Entrega:* ${fec}\n\n` +
+                `*PRODUCTOS:*\n${listado}\n` +
+                `*TOTAL: $${t.toFixed(2)}*\n\n` +
+                `¡Gracias por su compra! 🥛🧀`;
+    
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     location.reload();
 }
 
 function alternarFormulario(m) {
     document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
     document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
+    if(m) document.getElementById('reg-id').value = `C-${Date.now().toString().slice(-6)}`;
 }
 
 async function guardarCliente() {
-    const data = {
-        ID: document.getElementById('reg-id').value,
-        Nombre: document.getElementById('reg-nombre').value,
-        CI_RUC: document.getElementById('reg-ruc').value,
-        Telefono: document.getElementById('reg-tel').value,
-        Direccion: document.getElementById('reg-dir').value,
-        Fecha: document.getElementById('reg-fecha').value
-    };
-    if(!data.Nombre || !data.CI_RUC) return alert("Nombre y CI/RUC son obligatorios");
+    const nombre = document.getElementById('reg-nombre').value;
+    const ruc = document.getElementById('reg-ruc').value;
+    const sector = document.getElementById('reg-sector').value;
+    
+    if(!nombre || ruc.length < 10 || ruc.length > 13 || !sector) {
+        return alert("Verifica: Nombre (letras), CI/RUC (10-13 dígitos) y Sector.");
+    }
+
     try {
-        await DairyAPI.enviarDatos("Clientes", data);
+        await DairyAPI.enviarDatos("Clientes", { 
+            Nombre: nombre, CI_RUC: ruc, Telefono: document.getElementById('reg-tel').value, 
+            Direccion: document.getElementById('reg-dir').value, Referencia: document.getElementById('reg-ref').value, 
+            Sector: sector, Fecha: new Date().toISOString().split('T')[0]
+        });
         location.reload();
-    } catch(e) { alert("Error"); }
+    } catch(e) { alert("Error al guardar"); }
 }
 
 function filtrar() {

@@ -6,289 +6,202 @@
     <title>Ventas - Lógica Láctea</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: { primary: "#a21caf", secondary: "#db2777", background: "#faf5ff", outline: "#e9d5ff" }
-          }
+        // CONFIGURACIÓN DE TEMA
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: "#a21caf", secondary: "#db2777", background: "#faf5ff", outline: "#e9d5ff" }
+                }
+            }
         }
-      }
+
+        // --- API CONFIG INCRUSTADA PARA EVITAR ERRORES ---
+        const DAIRY_API_URL = "AQUÍ_VA_TU_URL_DE_APPS_SCRIPT"; // Asegúrate de que esta URL sea la correcta
+
+        const DairyAPI = {
+            async obtenerDatos(pestaña) {
+                const res = await fetch(`${DAIRY_API_URL}?pestaña=${pestaña}`);
+                return await res.json();
+            },
+            async enviarDatos(pestaña, datos) {
+                return await fetch(DAIRY_API_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ pestaña, ...datos })
+                });
+            }
+        };
     </script>
 
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; color: #1f012a; }
-        .card-sutil { background: white; border-radius: 2.5rem; border: 1px solid #e9d5ff; }
-        .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 2rem; padding: 1rem 1.5rem; width: 100%; outline: none; }
-        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; text-transform: uppercase; border-radius: 2rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
+        .card-sutil { background: white; border-radius: 2rem; border: 1px solid #e9d5ff; }
+        .input-sutil { background: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 1.5rem; padding: 0.8rem 1.2rem; width: 100%; outline: none; }
+        .btn-magenta { background: #db2777; color: white; font-weight: 800; border-radius: 1.5rem; padding: 1rem; transition: all 0.2s; text-align: center; width: 100%; }
         .btn-magenta:active { transform: scale(0.95); }
-        
-        #loading-overlay {
-            position: fixed; inset: 0; background: rgba(250, 245, 255, 0.95);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
-        }
-        .vaca-animada { width: 100px; animation: bounce 1.2s infinite; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        #loading { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         ::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="pb-44"> 
+<body class="pb-32">
 
-<div id="loading-overlay">
-    <img src="https://cdn-icons-png.flaticon.com/512/2395/2395796.png" class="vaca-animada">
-    <p class="mt-4 text-primary font-black uppercase text-[10px] animate-pulse">Sincronizando Lógica Láctea...</p>
+<div id="loading">
+    <p class="font-black text-primary animate-pulse">CARGANDO SISTEMA...</p>
 </div>
 
 <header class="h-16 bg-white border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
-    <div>
-        <h1 class="text-xl font-black text-primary tracking-tighter uppercase">Ventas</h1>
-        <p id="estado-carga" class="text-[8px] font-black text-secondary uppercase">En Línea</p>
-    </div>
-    <button onclick="location.reload()" class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-primary">
-        <span class="material-symbols-outlined">sync</span>
-    </button>
+    <h1 class="text-xl font-black text-primary uppercase">Ventas</h1>
+    <button onclick="location.reload()" class="text-primary"><span class="material-symbols-outlined">sync</span></button>
 </header>
 
-<main class="mt-6 px-4 max-w-6xl mx-auto space-y-6">
-    <div class="grid grid-cols-2 gap-4">
-        <div class="card-sutil p-5 text-center border-b-4 border-primary">
-            <span class="text-[9px] font-black text-slate-400 uppercase">Pedidos Hoy</span>
-            <span id="card-pedidos-pendientes" class="block text-3xl font-black text-primary">0</span>
-        </div>
-        <div class="card-sutil p-5 text-center border-b-4 border-secondary">
-            <span class="text-[9px] font-black text-slate-400 uppercase">Unidades Hoy</span>
-            <span id="card-productos-total" class="block text-3xl font-black text-secondary">0</span>
-        </div>
-    </div>
-
-    <section class="card-sutil p-6 shadow-sm">
-        <div id="vista-seleccion-cliente">
-            <div class="flex justify-between items-center mb-4">
-                <span class="text-[10px] font-black text-primary uppercase">Cliente</span>
-                <button onclick="alternarCliente(true)" class="text-[9px] font-black text-white bg-secondary px-4 py-2 rounded-full">+ NUEVO</button>
-            </div>
-            <select id="select-cliente" onchange="actualizarCarritoUI()" class="input-sutil font-bold">
-                <option value="">Cargando clientes...</option>
-            </select>
-        </div>
-
-        <div id="vista-nuevo-cliente" class="hidden space-y-3">
-            <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
-            <input type="tel" id="reg-telefono" placeholder="Teléfono" class="input-sutil">
-            <div class="flex gap-2">
-                <button onclick="alternarCliente(false)" class="w-1/3 bg-slate-100 text-slate-400 font-black py-4 rounded-2xl text-[10px]">ATRÁS</button>
-                <button onclick="guardarCliente()" class="w-2/3 btn-magenta py-4">GUARDAR</button>
-            </div>
-        </div>
+<main class="p-4 max-w-lg mx-auto space-y-6">
+    <section class="card-sutil p-4">
+        <label class="text-[10px] font-black text-primary uppercase block mb-2">Seleccionar Cliente</label>
+        <select id="select-cliente" onchange="actualizarResumen()" class="input-sutil font-bold text-sm">
+            <option value="">Cargando...</option>
+        </select>
     </section>
 
-    <div class="px-1 relative">
-        <span class="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-primary opacity-40">search</span>
-        <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="¿Qué producto buscas?" class="input-sutil pl-12">
-    </div>
-    
-    <section id="contenedor-productos" class="grid grid-cols-2 gap-4"></section>
+    <div id="lista-productos" class="grid grid-cols-2 gap-3">
+        </div>
 
-    <section class="card-sutil overflow-hidden shadow-xl border-2 border-primary">
-        <div class="bg-primary p-6 text-white">
-            <div class="flex justify-between items-center mb-1">
-                <h2 id="num-orden" class="text-[10px] font-mono opacity-80 uppercase">---</h2>
-                <input type="date" id="fecha-entrega" class="bg-white/20 border-none text-white text-xs font-bold rounded-lg p-1">
+    <section class="card-sutil p-6 border-2 border-primary shadow-lg">
+        <h2 id="resumen-nombre" class="font-black uppercase text-gray-400 text-xs mb-1">Sin cliente</h2>
+        <div id="items-carrito" class="space-y-2 text-xs font-bold uppercase py-2">
             </div>
-            <h2 id="cliente-resumen" class="text-xl font-black uppercase truncate">SIN CLIENTE</h2>
+        <div class="flex justify-between items-baseline border-t pt-3 mt-3">
+            <span class="text-xs font-black text-gray-400">TOTAL</span>
+            <span id="total-txt" class="text-3xl font-black text-primary">$0.00</span>
         </div>
-        
-        <div class="p-6 space-y-6">
-            <div id="lista-carrito" class="space-y-2 max-h-60 overflow-y-auto min-h-[50px] text-center text-slate-300 text-xs italic">
-                El carrito está esperando...
-            </div>
-            
-            <div class="flex justify-between items-end border-t pt-4">
-                <span class="text-xs font-black text-slate-400">TOTAL A COBRAR</span>
-                <span id="total-venta" class="text-4xl font-black text-slate-900">$0.00</span>
-            </div>
-            
-            <button id="btn-confirmar" onclick="confirmarPedido()" class="w-full btn-magenta py-5 text-lg shadow-lg">
-                CONFIRMAR PEDIDO
-            </button>
-        </div>
+        <button id="btn-enviar" onclick="enviarPedido()" class="btn-magenta mt-4">CONFIRMAR PEDIDO</button>
     </section>
 </main>
 
-<div id="menu-container"></div>
+<nav class="fixed bottom-0 left-0 w-full bg-white border-t p-4 flex justify-around items-center z-[100]">
+    <button onclick="window.location.href='DashboardLacteo.html'" class="flex flex-col items-center text-gray-400">
+        <span class="material-symbols-outlined">home</span>
+        <span class="text-[8px] font-black uppercase">Inicio</span>
+    </button>
+    <button class="flex flex-col items-center text-primary">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span class="text-[8px] font-black uppercase">Ventas</span>
+    </button>
+    <button onclick="window.location.href='ControldeInventario.html'" class="flex flex-col items-center text-gray-400">
+        <span class="material-symbols-outlined">inventory_2</span>
+        <span class="text-[8px] font-black uppercase">Stock</span>
+    </button>
+    <button onclick="window.location.href='GestióndeDespachos.html'" class="flex flex-col items-center text-gray-400">
+        <span class="material-symbols-outlined">local_shipping</span>
+        <span class="text-[8px] font-black uppercase">Ruta</span>
+    </button>
+</nav>
 
 <script>
-let state = {
-    productos: [],
-    carrito: {},
-    orden: ""
-};
+let localData = { productos: [], carrito: {} };
 
-// --- INICIO ---
-async function iniciar() {
-    state.orden = `LL-${Date.now().toString().slice(-6)}`;
-    document.getElementById('num-orden').innerText = state.orden;
-    document.getElementById('fecha-entrega').valueAsDate = new Date();
-
+async function cargar() {
     try {
-        const [cl, pr, vn] = await Promise.all([
+        const [cl, pr] = await Promise.all([
             DairyAPI.obtenerDatos("Clientes"),
-            DairyAPI.obtenerDatos("Inventario"),
-            DairyAPI.obtenerDatos("Ventas")
+            DairyAPI.obtenerDatos("Inventario")
         ]);
-
-        state.productos = pr || [];
         
-        // Cargar Clientes en Select
+        localData.productos = pr;
+
+        // Llenar Clientes
         const sel = document.getElementById('select-cliente');
-        sel.innerHTML = '<option value="">-- Seleccionar --</option>';
-        cl.sort((a,b) => a.Nombre.localeCompare(b.Nombre)).forEach(c => {
-            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
-        });
+        sel.innerHTML = '<option value="">-- CLIENTE --</option>';
+        cl.forEach(c => sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`);
 
-        // Stats Rápidas
-        const hoy = vn.filter(v => v.Estado === "PENDIENTE");
-        document.getElementById('card-pedidos-pendientes').innerText = [...new Set(hoy.map(h => h.ID_Venta))].length;
-        document.getElementById('card-productos-total').innerText = hoy.reduce((a, b) => a + (parseInt(b.Cantidad) || 0), 0);
-
-        renderizarProductos();
-        document.getElementById('loading-overlay').classList.add('hidden');
-    } catch (e) {
-        alert("Error de conexión. Reintenta.");
-        console.error(e);
-    }
-}
-
-// --- RENDER ---
-function renderizarProductos() {
-    const cont = document.getElementById('contenedor-productos');
-    cont.innerHTML = "";
-    
-    state.productos.forEach(p => {
-        const stock = parseInt(p.Stock) || 0;
-        const nombreID = p.Producto.replace(/\s+/g, '');
-        cont.innerHTML += `
-            <div class="card-sutil p-4 flex flex-col justify-between min-h-[160px] ${stock <= 0 ? 'opacity-40 grayscale' : ''}">
-                <h4 class="font-black text-[10px] uppercase text-primary leading-tight">${p.Producto}</h4>
-                <div>
-                    <p class="text-xl font-black text-slate-800">$${parseFloat(p.Precio_Venta || 0).toFixed(2)}</p>
-                    <p class="text-[8px] font-bold text-slate-400">STOCK: ${stock}</p>
-                    
-                    <div class="flex items-center justify-between bg-purple-50 rounded-2xl p-1 mt-2">
-                        <button onclick="controlCant('${p.Producto}', -1)" class="w-8 h-8 bg-white rounded-xl shadow-sm text-primary font-black active:scale-90">-</button>
-                        <span id="cant-${nombreID}" class="font-black text-primary">0</span>
-                        <button onclick="controlCant('${p.Producto}', 1)" class="w-8 h-8 bg-white rounded-xl shadow-sm text-primary font-black active:scale-90">+</button>
+        // Llenar Productos
+        const cont = document.getElementById('lista-productos');
+        cont.innerHTML = "";
+        pr.forEach(p => {
+            const idBtn = p.Producto.replace(/\s+/g, '');
+            cont.innerHTML += `
+                <div class="card-sutil p-3">
+                    <h4 class="text-[10px] font-black uppercase truncate mb-1">${p.Producto}</h4>
+                    <p class="font-black text-lg">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
+                    <div class="flex items-center justify-between bg-purple-50 rounded-xl p-1 mt-2">
+                        <button onclick="sumar('${p.Producto}', -1)" class="w-8 h-8 bg-white rounded-lg font-black">-</button>
+                        <span id="q-${idBtn}" class="font-black text-primary text-sm">0</span>
+                        <button onclick="sumar('${p.Producto}', 1)" class="w-8 h-8 bg-white rounded-lg font-black">+</button>
                     </div>
-                </div>
-            </div>`;
-    });
+                </div>`;
+        });
+        document.getElementById('loading').style.display = 'none';
+    } catch(e) { alert("Error de carga. Revisa la URL de tu API."); }
 }
 
-// --- LÓGICA BOTONES ---
-function controlCant(prod, delta) {
-    const p = state.productos.find(x => x.Producto === prod);
-    const actual = state.carrito[prod] || 0;
-    const nuevo = actual + delta;
-
-    if (nuevo >= 0 && nuevo <= (parseInt(p.Stock) || 999)) {
-        state.carrito[prod] = nuevo;
-        document.getElementById(`cant-${prod.replace(/\s+/g, '')}`).innerText = nuevo;
-        actualizarCarritoUI();
+function sumar(prod, d) {
+    const actual = localData.carrito[prod] || 0;
+    const nuevo = actual + d;
+    if(nuevo >= 0) {
+        localData.carrito[prod] = nuevo;
+        document.getElementById(`q-${prod.replace(/\s+/g, '')}`).innerText = nuevo;
+        actualizarResumen();
     }
 }
 
-function actualizarCarritoUI() {
-    const lista = document.getElementById('lista-carrito');
-    const cliente = document.getElementById('select-cliente').value;
-    document.getElementById('cliente-resumen').innerText = cliente || "SIN CLIENTE";
+function actualizarResumen() {
+    const cont = document.getElementById('items-carrito');
+    const cli = document.getElementById('select-cliente').value;
+    document.getElementById('resumen-nombre').innerText = cli || "Sin cliente";
     
-    lista.innerHTML = "";
+    cont.innerHTML = "";
     let total = 0;
-
-    Object.entries(state.carrito).forEach(([nombre, cant]) => {
-        if (cant > 0) {
-            const p = state.productos.find(x => x.Producto === nombre);
-            const sub = cant * parseFloat(p.Precio_Venta || 0);
+    Object.entries(localData.carrito).forEach(([nom, cant]) => {
+        if(cant > 0) {
+            const p = localData.productos.find(x => x.Producto === nom);
+            const sub = cant * parseFloat(p.Precio_Venta);
             total += sub;
-            lista.innerHTML += `
-                <div class="flex justify-between bg-purple-50 p-2 rounded-xl text-[10px] font-black uppercase">
-                    <span>${nombre} x${cant}</span>
-                    <span>$${sub.toFixed(2)}</span>
-                </div>`;
+            cont.innerHTML += `<div class="flex justify-between"><span>${nom} x${cant}</span><span>$${sub.toFixed(2)}</span></div>`;
         }
     });
-
-    if (total === 0) lista.innerHTML = "El carrito está esperando...";
-    document.getElementById('total-venta').innerText = `$${total.toFixed(2)}`;
+    document.getElementById('total-txt').innerText = `$${total.toFixed(2)}`;
 }
 
-async function confirmarPedido() {
+async function enviarPedido() {
     const cli = document.getElementById('select-cliente').value;
-    const fec = document.getElementById('fecha-entrega').value;
-    const items = Object.entries(state.carrito).filter(i => i[1] > 0);
+    if(!cli) return alert("Selecciona un cliente");
+    
+    const items = Object.entries(localData.carrito).filter(i => i[1] > 0);
+    if(items.length === 0) return alert("Carrito vacío");
 
-    if (!cli) return alert("Por favor, selecciona un cliente.");
-    if (items.length === 0) return alert("Agrega al menos un producto.");
-
-    const btn = document.getElementById('btn-confirmar');
+    const btn = document.getElementById('btn-enviar');
     btn.innerText = "ENVIANDO...";
     btn.disabled = true;
 
+    const idVenta = "V-" + Math.floor(Math.random()*9999);
+
     try {
-        for (const [nombre, cant] of items) {
-            const p = state.productos.find(x => x.Producto === nombre);
+        for(const [nom, cant] of items) {
+            const p = localData.productos.find(x => x.Producto === nom);
             await DairyAPI.enviarDatos("Ventas", {
-                ID_Venta: state.orden,
+                ID_Venta: idVenta,
                 Cliente: cli,
-                Producto: nombre,
+                Producto: nom,
                 Cantidad: cant,
                 Precio_PVP: p.Precio_Venta,
-                Fecha_Entrega: fec,
-                Estado: "PENDIENTE"
+                Estado: "PENDIENTE",
+                Fecha_Entrega: new Date().toISOString().split('T')[0]
             });
         }
-        alert("¡Pedido guardado con éxito!");
+        alert("¡Venta registrada!");
         location.reload();
-    } catch (e) {
-        alert("Error al enviar. Verifica tu conexión.");
+    } catch(e) {
+        alert("Error al enviar.");
         btn.innerText = "CONFIRMAR PEDIDO";
         btn.disabled = false;
     }
 }
 
-function alternarCliente(mostrarNuevo) {
-    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', mostrarNuevo);
-    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !mostrarNuevo);
-}
-
-async function guardarCliente() {
-    const n = document.getElementById('reg-nombre').value;
-    const t = document.getElementById('reg-telefono').value;
-    if (!n) return alert("El nombre es obligatorio.");
-
-    try {
-        await DairyAPI.enviarDatos("Clientes", { Nombre: n, Telefono: t });
-        alert("Cliente registrado.");
-        location.reload();
-    } catch (e) { alert("Error al guardar."); }
-}
-
-function filtrar() {
-    const q = document.getElementById('buscarProducto').value.toLowerCase();
-    document.querySelectorAll('#contenedor-productos > div').forEach(card => {
-        card.style.display = card.innerText.toLowerCase().includes(q) ? "flex" : "none";
-    });
-}
-
-window.onload = iniciar;
+window.onload = cargar;
 </script>
 </body>
 </html>

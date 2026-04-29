@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Lógica Láctea v18.0</title>
+    <title>Lógica Láctea v19.0</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
@@ -14,7 +14,10 @@
 
     <style>
         body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
-        .card-item { background: white; border-radius: 2rem; border: 2px solid #e9d5ff; transition: all 0.2s; }
+        .card-item { background: white; border-radius: 2rem; border: 2px solid #e9d5ff; transition: all 0.3s; }
+        
+        /* Estado bloqueado */
+        .bloqueado { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
         
         @keyframes custom-spin {
             0% { transform: rotate(0deg) scale(1); }
@@ -35,11 +38,15 @@
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; backdrop-filter: blur(4px); }
         .modal-content { position: absolute; bottom: 0; width: 100%; background: white; border-radius: 3rem 3rem 0 0; padding: 2rem; max-height: 90vh; }
         
-        .carrito-container { background: #fdf4ff; border-top: 4px solid #a21caf; border-radius: 2.5rem 2.5rem 0 0; transition: all 0.3s; }
+        .carrito-container { 
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .carrito-visible { transform: translateY(0); }
+
         .stat-card { background: white; border: 2px solid #f3e8ff; border-radius: 1.5rem; padding: 0.75rem; display: flex; flex-direction: column; align-items: center; }
-        
-        #seccion-cliente { transition: max-height 0.3s ease-out; overflow: hidden; }
-        .cliente-minimizado { max-height: 60px !important; opacity: 0.9; }
+        #seccion-cliente { transition: all 0.3s ease; }
+        .cliente-minimizado { max-height: 65px !important; opacity: 0.9; border-color: #a21caf; }
     </style>
 </head>
 
@@ -71,34 +78,35 @@
         </div>
     </div>
 
-    <section id="seccion-cliente" class="bg-white p-5 rounded-[2.5rem] border-2 border-[#e9d5ff] shadow-sm space-y-4 max-h-[200px]">
+    <section id="seccion-cliente" class="bg-white p-5 rounded-[2.5rem] border-4 border-dashed border-purple-200 shadow-sm space-y-4 overflow-hidden max-h-[300px]">
         <div class="flex justify-between items-center" onclick="toggleCliente()">
-            <label class="text-[10px] font-black uppercase text-[#a21caf] tracking-widest">Cliente Seleccionado</label>
-            <span id="icon-toggle" class="material-symbols-outlined text-gray-300">expand_less</span>
+            <label id="label-cliente" class="text-[10px] font-black uppercase text-[#a21caf] tracking-widest">⚠️ Seleccione Cliente para empezar</label>
+            <span id="icon-toggle" class="material-symbols-outlined text-purple-300">expand_less</span>
         </div>
         
         <div class="flex justify-between items-end gap-2">
             <div class="flex-1">
-                <select id="cliente-select" onchange="seleccionarCliente(this.value)" class="w-full border-none bg-purple-50 rounded-2xl p-4 font-bold text-gray-700 mt-1">
+                <select id="cliente-select" onchange="activarVenta(this.value)" class="w-full border-none bg-purple-50 rounded-2xl p-4 font-bold text-gray-700 mt-1 ring-2 ring-purple-100 focus:ring-[#a21caf]">
                     <option value="">Cargando clientes...</option>
                 </select>
             </div>
-            <button onclick="abrirModalCliente()" class="bg-[#a21caf] text-white p-4 rounded-2xl shadow-lg">
+            <button onclick="abrirModalCliente()" class="bg-[#a21caf] text-white p-4 rounded-2xl shadow-lg active:scale-90">
                 <span class="material-symbols-outlined">person_add</span>
             </button>
         </div>
     </section>
 
-    <div class="relative">
-        <input type="text" id="busqueda" oninput="filtrarProductos()" placeholder="Buscar producto..." 
-               class="w-full bg-white border-2 border-[#e9d5ff] rounded-3xl p-4 pl-12 font-bold outline-none focus:border-[#a21caf] shadow-inner">
-        <span class="material-symbols-outlined absolute left-4 top-4 text-gray-400">search</span>
+    <div id="contenedor-productos" class="bloqueado space-y-4">
+        <div class="relative">
+            <input type="text" id="busqueda" oninput="filtrarProductos()" placeholder="Buscar producto..." 
+                   class="w-full bg-white border-2 border-[#e9d5ff] rounded-3xl p-4 pl-12 font-bold outline-none shadow-inner">
+            <span class="material-symbols-outlined absolute left-4 top-4 text-gray-400">search</span>
+        </div>
+        <div id="lista-productos" class="grid grid-cols-1 gap-3"></div>
     </div>
-
-    <div id="lista-productos" class="grid grid-cols-1 gap-3"></div>
 </main>
 
-<div id="panel-carrito" class="fixed bottom-20 left-0 w-full z-40 carrito-container p-6 shadow-[0_-10px_40px_rgba(162,28,175,0.15)]">
+<div id="panel-carrito" class="fixed bottom-20 left-0 w-full z-40 carrito-container bg-[#fdf4ff] border-top-4 border-[#a21caf] rounded-t-[2.5rem] p-6 shadow-[0_-15px_50px_rgba(162,28,175,0.2)]">
     <div class="max-w-2xl mx-auto space-y-4">
         <div id="carrito-detalle" class="max-h-40 overflow-y-auto space-y-2 pr-2"></div>
 
@@ -109,7 +117,7 @@
 
         <div class="flex justify-between items-center border-t border-purple-200 pt-3">
             <div>
-                <p class="text-[10px] font-black text-gray-400 uppercase tracking-tighter">Total Pedido</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase">Total Pedido</p>
                 <p class="text-2xl font-black text-[#a21caf]" id="total-final">$0.00</p>
             </div>
             <div class="flex gap-2 w-1/2">
@@ -156,6 +164,29 @@ async function inicializar() {
     actualizarTotales();
 }
 
+function activarVenta(val) {
+    const contenedor = document.getElementById('contenedor-productos');
+    const panel = document.getElementById('panel-carrito');
+    const seccionCli = document.getElementById('seccion-cliente');
+    const labelCli = document.getElementById('label-cliente');
+
+    if(val) {
+        contenedor.classList.remove('bloqueado');
+        panel.classList.add('carrito-visible');
+        seccionCli.classList.add('cliente-minimizado');
+        seccionCli.style.borderStyle = "solid";
+        labelCli.innerText = "👤 Cliente: " + val;
+        document.getElementById('icon-toggle').innerText = 'expand_more';
+    } else {
+        contenedor.classList.add('bloqueado');
+        panel.classList.remove('carrito-visible');
+        seccionCli.classList.remove('cliente-minimizado');
+        seccionCli.style.borderStyle = "dashed";
+        labelCli.innerText = "⚠️ Seleccione Cliente para empezar";
+    }
+    actualizarTotales();
+}
+
 function refrescarPagina() {
     document.getElementById('btn-sync').classList.add('sync-active');
     setTimeout(() => window.location.reload(), 800);
@@ -166,16 +197,6 @@ function toggleCliente() {
     const ico = document.getElementById('icon-toggle');
     sec.classList.toggle('cliente-minimizado');
     ico.innerText = sec.classList.contains('cliente-minimizado') ? 'expand_more' : 'expand_less';
-}
-
-function seleccionarCliente(val) {
-    if(val) {
-        setTimeout(() => {
-            document.getElementById('seccion-cliente').classList.add('cliente-minimizado');
-            document.getElementById('icon-toggle').innerText = 'expand_more';
-        }, 300);
-    }
-    actualizarTotales();
 }
 
 async function cargarEstadisticasDia() {
@@ -240,7 +261,7 @@ function cambiarCant(id, delta) {
     else if (item) {
         item.cantidad += delta;
         if (item.cantidad <= 0) carrito = carrito.filter(i => i.ID !== id);
-        else if (item.cantidad > prod.Stock) { alert("Stock agotado"); item.cantidad = prod.Stock; }
+        else if (item.cantidad > prod.Stock) { alert("Stock insuficiente"); item.cantidad = prod.Stock; }
     }
     actualizarTotales();
     renderizarProductos(productosMaster);
@@ -273,7 +294,7 @@ function actualizarTotales() {
         </div>
     `;
 
-    detalle.innerHTML = htmlEncabezado + (carrito.length === 0 ? '<p class="text-center text-gray-400 text-[10px] py-2 italic uppercase">Carrito vacío</p>' : 
+    detalle.innerHTML = htmlEncabezado + (carrito.length === 0 ? '<p class="text-center text-gray-400 text-[10px] py-2 italic uppercase">Cargue productos para continuar</p>' : 
         carrito.map(i => `
             <div class="flex justify-between text-[11px] font-bold uppercase mb-1 px-1">
                 <span class="text-gray-600">${i.cantidad}x ${i.Producto}</span>
@@ -294,14 +315,14 @@ async function guardarNuevoCliente() {
         });
         await cargarClientes();
         document.getElementById('cliente-select').value = n;
-        seleccionarCliente(n);
+        activarVenta(n);
         cerrarModalCliente();
     } catch (e) { alert("Error"); } finally { btn.disabled = false; }
 }
 
 async function finalizarVenta() {
     const cli = document.getElementById('cliente-select').value;
-    if (carrito.length === 0 || !cli) return alert("Faltan productos o cliente");
+    if (carrito.length === 0 || !cli) return;
     const btn = document.getElementById('btn-finalizar');
     btn.disabled = true;
     btn.innerHTML = '<span class="material-symbols-outlined rotate-animation">sync</span>';

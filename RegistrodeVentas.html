@@ -22,7 +22,6 @@
         .bloqueado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
         .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 0.75rem; padding: 0.6rem; width: 100%; font-size: 13px; font-weight: 600; }
         
-        /* Animación de Bloqueo y Éxito */
         #overlay-exito {
             position: fixed; inset: 0; background: rgba(255,255,255,0.95);
             display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200;
@@ -31,12 +30,15 @@
         @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
         #carrito-flotante {
-            position: fixed; bottom: 65px; left: 10px; right: 10px;
+            position: fixed; bottom: 80px; left: 10px; right: 10px;
             background: white; border: 2.5px solid #a21caf; border-radius: 1.5rem;
             padding: 15px; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); z-index: 100;
         }
         .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 14px; border-radius: 1rem; font-weight: 900; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
         @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        
+        /* Contenedor del menú inferior */
+        #menu-navegacion { width: 100%; }
     </style>
 </head>
 <body class="pb-96"> 
@@ -116,6 +118,8 @@
     </button>
 </div>
 
+<div id="menu-navegacion"></div>
+
 <script>
 let carrito = {}; let productosData = []; let idVenta = "";
 
@@ -147,13 +151,13 @@ function activarInterfaz() {
 function renderizar() {
     const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
     productosData.forEach(p => {
-        const stock = parseInt(p.Stock || 0);
         const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
         cont.innerHTML += `
             <div class="card-producto shadow-sm">
                 <div class="flex-1">
                     <h4 class="font-black text-xs uppercase text-slate-700 leading-tight">${p.Producto}</h4>
                     <p class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
+                    <p class="text-[9px] font-bold text-slate-400">STOCK: ${p.Stock}</p>
                 </div>
                 <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl">
                     <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">-</button>
@@ -167,10 +171,14 @@ function renderizar() {
 function cambiarCant(n, d) {
     if(!carrito[n]) carrito[n] = 0;
     const p = productosData.find(x => x.Producto === n);
-    if(carrito[n]+d >= 0 && (carrito[n]+d <= parseInt(p.Stock))) {
+    const stockDisponible = parseInt(p.Stock || 0);
+    
+    if(carrito[n]+d >= 0 && (carrito[n]+d <= stockDisponible)) {
         carrito[n] += d;
         document.getElementById(`cant-${n.replace(/\s+/g,'-')}`).innerText = carrito[n];
         actualizarCarrito();
+    } else if (d > 0) {
+        alert("Stock insuficiente");
     }
 }
 
@@ -189,13 +197,11 @@ function actualizarCarrito() {
     document.getElementById('car-items').innerText = `${items} ÍTEMS`;
 }
 
-// PROCESAR VENTA CON BLOQUEO TOTAL
 async function procesarVenta() {
     const cli = document.getElementById('select-cliente').value;
     const fec = document.getElementById('fecha-entrega').value;
     if(!cli || document.getElementById('car-items').innerText === "0 ÍTEMS") return alert("Faltan datos");
     
-    // ACTIVAR OVERLAY DE BLOQUEO
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
     document.getElementById('titulo-estado').innerText = "GUARDANDO PEDIDO...";
@@ -214,12 +220,10 @@ async function procesarVenta() {
             }
         }
         
-        // MODO ÉXITO
         document.getElementById('icono-estado').classList.remove('animate-spin');
         document.getElementById('icono-estado').innerText = "check_circle";
         document.getElementById('icono-estado').style.color = "#22c55e";
         document.getElementById('titulo-estado').innerText = "¡PEDIDO GUARDADO!";
-        document.getElementById('p-estado').innerText = "Ya puedes enviar el WhatsApp";
 
         setTimeout(() => {
             overlay.style.display = 'none';
@@ -238,14 +242,14 @@ async function guardarCliente() {
         ID: document.getElementById('reg-id').value,
         Nombre: document.getElementById('reg-nombre').value,
         CI_RUC: document.getElementById('reg-ruc').value,
-        Telefono: document.getElementById('reg-tel').value,
-        Direccion: document.getElementById('reg-dir').value,
+        Telefono: document.getElementById('reg-tel').value, // Sin tilde
+        Direccion: document.getElementById('reg-dir').value, // Sin tilde
         Referencia: document.getElementById('reg-ref').value,
         Sector: document.getElementById('reg-sector').value,
         pestaña: "Clientes"
     };
 
-    if(!data.Nombre || data.CI_RUC.length < 10) return alert("Nombre y CI/RUC son obligatorios");
+    if(!data.Nombre || data.CI_RUC.length < 10) return alert("Datos incompletos");
 
     btn.innerText = "GUARDANDO...";
     btn.disabled = true;

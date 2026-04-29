@@ -4,11 +4,9 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ventas - Lógica Láctea</title>
-    
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
-    
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
@@ -16,137 +14,150 @@
       tailwind.config = {
         theme: {
           extend: {
-            colors: { primary: "#a21caf", secondary: "#db2777", background: "#faf5ff", outline: "#e9d5ff" }
+            colors: { primary: "#a21caf", secondary: "#db2777", success: "#22c55e" }
           }
         }
       }
     </script>
 
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; color: #1f012a; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
+        .card-producto { background: white; border-radius: 1rem; border: 1px solid #e9d5ff; padding: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; transition: all 0.3s; }
+        .bloqueado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+        .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 0.75rem; padding: 0.6rem; width: 100%; font-size: 13px; font-weight: 600; }
         
-        .card-producto { 
-            background: white; border-radius: 1rem; border: 1px solid #e9d5ff; 
-            padding: 12px; display: flex; align-items: center; justify-content: space-between;
-            gap: 10px; margin-bottom: 8px;
-        }
-
-        .input-sutil { 
-            background-color: #fdfaff; border: 1.5px solid #f3e8ff; 
-            border-radius: 0.75rem; padding: 0.7rem; width: 100%; font-weight: 600;
-        }
-
-        /* CARRITO FLOTANTE */
+        /* CARRITO FLOTANTE MEJORADO */
         #carrito-flotante {
             position: fixed; bottom: 65px; left: 10px; right: 10px;
-            background: #a21caf; color: white; border-radius: 1.5rem;
-            padding: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
-            z-index: 100; transition: all 0.3s ease;
-            display: flex; flex-direction: column; gap: 8px;
+            background: white; border: 2px solid #a21caf; border-radius: 1.5rem;
+            padding: 15px; box-shadow: 0 -10px 25px rgba(0,0,0,0.15); z-index: 100;
         }
+
+        .btn-confirmar { background: #db2777; color: white; width: 100%; padding: 12px; border-radius: 1rem; font-weight: 800; text-transform: uppercase; margin-top: 8px; }
+        .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 12px; border-radius: 1rem; font-weight: 800; display: none; align-items: center; justify-content: center; gap: 8px; animation: pulse-green 2s infinite; margin-top: 8px; }
         
-        /* Ajuste para que el menú de abajo no tape nada */
-        #menu-container nav { height: 55px !important; }
+        @keyframes pulse-green { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); } 70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); } }
     </style>
 </head>
-<body class="pb-60"> 
+<body class="pb-80"> 
 
-<header class="h-14 bg-white border-b border-outline flex justify-between items-center px-4 sticky top-0 z-40">
-    <div>
+<header class="h-14 bg-white border-b border-outline flex justify-between items-center px-4 sticky top-0 z-50">
+    <div class="flex flex-col">
         <h1 class="text-lg font-black text-primary italic uppercase leading-none">Ventas</h1>
-        <span id="orden-header" class="text-[9px] font-mono font-bold text-slate-400">ID: ---</span>
+        <span id="id-venta-display" class="text-[9px] font-mono text-slate-400 font-bold">ID: ---</span>
     </div>
     <button onclick="location.reload()" class="text-primary"><span class="material-symbols-outlined">sync</span></button>
 </header>
 
 <main class="mt-4 px-4 max-w-xl mx-auto">
-    <section class="bg-white p-4 rounded-2xl border border-outline mb-4">
+    <section class="bg-white p-4 rounded-2xl border-2 border-primary/20 mb-4 shadow-sm">
         <div id="vista-seleccion-cliente">
             <div class="flex justify-between items-center mb-2">
-                <span class="text-[10px] font-black text-primary uppercase">Cliente</span>
-                <button onclick="alternarFormularioCliente(true)" class="text-[9px] font-bold text-secondary border border-secondary px-3 py-1 rounded-lg">NUEVO +</button>
+                <span class="text-[10px] font-black text-primary uppercase tracking-widest">Paso 1: Seleccionar Cliente</span>
+                <button onclick="alternarFormulario(true)" class="text-[9px] font-bold text-white bg-secondary px-3 py-1 rounded-full uppercase">Nuevo +</button>
             </div>
-            <select id="select-cliente" onchange="actualizarNombreCarrito()" class="input-sutil">
-                <option value="">-- Seleccionar --</option>
+            <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil border-primary/30 text-primary italic">
+                <option value="">-- BUSCAR CLIENTE EN LISTA --</option>
             </select>
         </div>
 
-        <div id="vista-nuevo-cliente" class="hidden space-y-3">
-            <input type="text" id="reg-nombre" placeholder="Nombre del cliente" class="input-sutil">
-            <div class="flex gap-2">
-                <button onclick="guardarNuevoCliente()" class="flex-1 bg-primary text-white font-bold py-2 rounded-lg text-sm uppercase">Guardar</button>
-                <button onclick="alternarFormularioCliente(false)" class="flex-1 bg-slate-100 text-slate-500 font-bold py-2 rounded-lg text-sm uppercase">Cancelar</button>
+        <div id="vista-nuevo-cliente" class="hidden space-y-2">
+            <p class="text-[10px] font-black text-secondary uppercase italic">Registro de Nuevo Cliente</p>
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="reg-id" readonly class="input-sutil bg-slate-100 text-slate-400" placeholder="ID Auto">
+                <input type="date" id="reg-fecha" class="input-sutil">
+            </div>
+            <input type="text" id="reg-nombre" placeholder="Nombre Completo" class="input-sutil">
+            <input type="number" id="reg-ruc" placeholder="CI o RUC" class="input-sutil">
+            <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
+            <input type="text" id="reg-dir" placeholder="Dirección Exacta" class="input-sutil">
+            <div class="flex gap-2 pt-2">
+                <button onclick="guardarCliente()" class="flex-1 bg-primary text-white font-black py-3 rounded-xl text-xs uppercase">Guardar</button>
+                <button onclick="alternarFormulario(false)" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl text-xs uppercase">Cancelar</button>
             </div>
         </div>
     </section>
 
-    <div class="relative mb-4">
-        <input type="text" id="buscarProducto" oninput="filtrarProductos()" placeholder="Buscar producto lácteo..." class="input-sutil pl-10">
-        <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-300">search</span>
+    <div id="seccion-operativa" class="bloqueado transition-all duration-500">
+        <div class="relative mb-4">
+            <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="Buscar producto lácteo..." class="input-sutil pl-10 shadow-inner">
+            <span class="material-symbols-outlined absolute left-3 top-2.5 text-primary/40">search</span>
+        </div>
+        <div id="contenedor-productos" class="space-y-2"></div>
     </div>
-    
-    <div id="contenedor-productos" class="space-y-2"></div>
 </main>
 
-<div id="carrito-flotante">
-    <div class="flex justify-between items-start border-b border-white/20 pb-2">
-        <div class="flex-1">
-            <p id="flotante-cliente" class="text-xs font-black uppercase truncate italic">SIN CLIENTE</p>
-            <p id="flotante-id" class="text-[9px] font-mono opacity-80">ID: LL-0000</p>
+<div id="carrito-flotante" class="bloqueado shadow-2xl">
+    <div class="flex justify-between items-center mb-2 border-b pb-2">
+        <div>
+            <p id="car-cliente" class="text-xs font-black text-primary uppercase truncate w-40">SIN CLIENTE</p>
+            <p id="car-id" class="text-[9px] font-mono text-slate-400">ID: ---</p>
         </div>
         <div class="text-right">
-            <p id="flotante-items" class="text-[10px] font-black bg-white text-primary px-2 py-0.5 rounded-full inline-block">0 ÍTEMS</p>
-            <p id="flotante-total" class="text-xl font-black">$0.00</p>
+            <p id="car-total" class="text-2xl font-black text-slate-800 leading-none">$0.00</p>
+            <p id="car-items" class="text-[9px] font-bold text-secondary uppercase tracking-tighter">0 productos</p>
         </div>
     </div>
-    
-    <div class="flex gap-2 items-center">
-        <input type="date" id="fecha-entrega" class="flex-1 bg-white/20 border-none rounded-lg text-[11px] font-bold text-white py-2 px-2">
-        <button id="btn-finalizar" onclick="procesarVenta()" class="flex-[1.5] bg-secondary text-white font-black py-3 rounded-xl text-xs uppercase shadow-lg active:scale-95 transition-transform">
-            Confirmar Pedido
-        </button>
+
+    <div id="car-detalle" class="max-h-24 overflow-y-auto mb-3 space-y-1 text-[10px] font-bold text-slate-600 italic">
+        <p class="text-center text-slate-300 py-2">Lista de pedido vacía...</p>
     </div>
+
+    <input type="date" id="fecha-entrega" class="input-sutil text-center mb-2 bg-purple-50 border-none h-8 !py-0">
+    
+    <button id="btn-confirmar" onclick="procesarVenta()" class="btn-confirmar">Confirmar Pedido</button>
+    <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-whatsapp">
+        <span class="material-symbols-outlined">chat</span> ENVIAR POR WHATSAPP
+    </button>
 </div>
 
 <div id="menu-container"></div>
 
 <script>
-let carrito = {}; let productosData = []; let idOrdenActual = "";
+let carrito = {}; let productosData = []; let idVenta = ""; let resumenTexto = "";
 
 async function iniciar() {
     const d = new Date();
-    idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
-    document.getElementById('flotante-id').innerText = `ID: ${idOrdenActual}`;
-    document.getElementById('orden-header').innerText = `ID: ${idOrdenActual}`;
+    idVenta = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
+    document.getElementById('car-id').innerText = `ID: ${idVenta}`;
+    document.getElementById('id-venta-display').innerText = `ID: ${idVenta}`;
     document.getElementById('fecha-entrega').value = new Date().toISOString().split('T')[0];
+    document.getElementById('reg-fecha').value = new Date().toISOString().split('T')[0];
+    document.getElementById('reg-id').value = `CLI-${Date.now().toString().slice(-6)}`;
 
     try {
-        const [cl, pr] = await Promise.all([
-            DairyAPI.obtenerDatos("Clientes"), 
-            DairyAPI.obtenerDatos("Inventario")
-        ]);
+        const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
         productosData = pr;
         const sel = document.getElementById('select-cliente');
         cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
         });
-        renderizarProductos();
+        renderizar();
     } catch(e) { console.error(e); }
 }
 
-function renderizarProductos() {
+function activarInterfaz() {
+    const cli = document.getElementById('select-cliente').value;
+    if(cli) {
+        document.getElementById('seccion-operativa').classList.remove('bloqueado');
+        document.getElementById('carrito-flotante').classList.remove('bloqueado');
+        document.getElementById('car-cliente').innerText = cli;
+    } else {
+        document.getElementById('seccion-operativa').classList.add('bloqueado');
+        document.getElementById('carrito-flotante').classList.add('bloqueado');
+    }
+}
+
+function renderizar() {
     const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
     productosData.forEach(p => {
         const stock = parseInt(p.Stock || 0);
         const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
         cont.innerHTML += `
-            <div class="card-producto">
+            <div class="card-producto shadow-sm">
                 <div class="flex-1">
                     <h4 class="font-black text-xs uppercase text-slate-700 leading-tight">${p.Producto}</h4>
-                    <div class="flex items-center gap-3 mt-1">
-                        <span class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
-                        <span class="text-[10px] font-bold ${stock < 5 ? 'text-red-500' : 'text-slate-400'}">STOCK: ${stock}</span>
-                    </div>
+                    <p class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)} <span class="ml-2 text-[10px] font-bold text-slate-400">STOCK: ${stock}</span></p>
                 </div>
                 <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-outline">
                     <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">-</button>
@@ -160,74 +171,79 @@ function renderizarProductos() {
 function cambiarCant(n, d) {
     if(!carrito[n]) carrito[n] = 0;
     const p = productosData.find(x => x.Producto === n);
-    const stock = parseInt(p.Stock || 0);
-    if(carrito[n]+d >= 0 && (carrito[n]+d <= stock)) {
+    if(carrito[n]+d >= 0 && (carrito[n]+d <= parseInt(p.Stock))) {
         carrito[n] += d;
         document.getElementById(`cant-${n.replace(/\s+/g,'-')}`).innerText = carrito[n];
-        actualizarCarritoUI();
+        actualizarCarrito();
     }
 }
 
-function actualizarCarritoUI() {
-    let t = 0; let totalItems = 0;
+function actualizarCarrito() {
+    let t = 0; let items = 0; let html = ""; resumenTexto = "*PEDIDO LÓGICA LÁCTEA*\n";
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
-            t += (carrito[n] * parseFloat(p.Precio_Venta));
-            totalItems += carrito[n];
+            const sub = (carrito[n] * parseFloat(p.Precio_Venta));
+            t += sub; items += carrito[n];
+            html += `<div class="flex justify-between border-b border-dashed pb-1"><span>${n} (x${carrito[n]})</span><span>$${sub.toFixed(2)}</span></div>`;
+            resumenTexto += `• ${n} x${carrito[n]} ($${sub.toFixed(2)})\n`;
         }
     });
-    document.getElementById('flotante-total').innerText = `$${t.toFixed(2)}`;
-    document.getElementById('flotante-items').innerText = `${totalItems} ÍTEMS`;
+    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-300 py-2">Lista de pedido vacía...</p>';
+    document.getElementById('car-total').innerText = `$${t.toFixed(2)}`;
+    document.getElementById('car-items').innerText = `${items} productos`;
+    resumenTexto += `\n*TOTAL: $${t.toFixed(2)}*`;
 }
 
-function alternarFormularioCliente(mostrar) {
-    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', mostrar);
-    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !mostrar);
-}
-
-async function guardarNuevoCliente() {
-    const nombre = document.getElementById('reg-nombre').value.trim();
-    if(!nombre) return alert("Escribe el nombre");
+async function procesarVenta() {
+    const btn = document.getElementById('btn-confirmar');
+    btn.innerText = "PROCESANDO..."; btn.disabled = true;
     try {
-        await DairyAPI.enviarDatos("Clientes", { Nombre: nombre });
+        const cli = document.getElementById('select-cliente').value;
+        const fec = document.getElementById('fecha-entrega').value;
+        for(const n in carrito) {
+            if(carrito[n] > 0) {
+                const p = productosData.find(x => x.Producto === n);
+                await DairyAPI.enviarDatos("Ventas", { ID_Venta: idVenta, Cliente: cli, Producto: n, Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: fec, Estado: "PENDIENTE" });
+            }
+        }
+        btn.style.display = 'none';
+        document.getElementById('btn-whatsapp').style.display = 'flex';
+        alert("¡Pedido Registrado!");
+    } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "Confirmar Pedido"; }
+}
+
+function enviarWhatsApp() {
+    const cli = document.getElementById('select-cliente').value;
+    const msg = encodeURIComponent(`Hola ${cli}, aquí el detalle de tu pedido ${idVenta}:\n\n${resumenTexto}\n\n¡Gracias por preferirnos!`);
+    window.open(`https://wa.me/?text=${msg}`, '_blank');
+    location.reload();
+}
+
+function alternarFormulario(m) {
+    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
+    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
+}
+
+async function guardarCliente() {
+    const data = {
+        ID: document.getElementById('reg-id').value,
+        Nombre: document.getElementById('reg-nombre').value,
+        CI_RUC: document.getElementById('reg-ruc').value,
+        Telefono: document.getElementById('reg-tel').value,
+        Direccion: document.getElementById('reg-dir').value,
+        Fecha: document.getElementById('reg-fecha').value
+    };
+    if(!data.Nombre || !data.CI_RUC) return alert("Nombre y CI/RUC son obligatorios");
+    try {
+        await DairyAPI.enviarDatos("Clientes", data);
         location.reload();
     } catch(e) { alert("Error"); }
 }
 
-function actualizarNombreCarrito() { 
-    const val = document.getElementById('select-cliente').value;
-    document.getElementById('flotante-cliente').innerText = val || "SIN CLIENTE"; 
-}
-
-function filtrarProductos() {
+function filtrar() {
     const q = document.getElementById('buscarProducto').value.toLowerCase();
-    document.querySelectorAll('.card-producto').forEach(c => {
-        c.style.display = c.innerText.toLowerCase().includes(q) ? "flex" : "none";
-    });
-}
-
-async function procesarVenta() {
-    const cli = document.getElementById('select-cliente').value;
-    const fec = document.getElementById('fecha-entrega').value;
-    if(!cli || !fec || document.getElementById('flotante-items').innerText === "0 ÍTEMS") 
-        return alert("Seleccione cliente, fecha y productos");
-    
-    const btn = document.getElementById('btn-finalizar');
-    btn.innerText = "PROCESANDO..."; btn.disabled = true;
-
-    try {
-        for(const n in carrito) {
-            if(carrito[n] > 0) {
-                const p = productosData.find(x => x.Producto === n);
-                await DairyAPI.enviarDatos("Ventas", { 
-                    ID_Venta: idOrdenActual, Cliente: cli, Producto: n, 
-                    Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, Fecha_Entrega: fec, Estado: "PENDIENTE" 
-                });
-            }
-        }
-        alert("¡Venta Exitosa!"); location.reload();
-    } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "Confirmar Pedido"; }
+    document.querySelectorAll('.card-producto').forEach(c => c.style.display = c.innerText.toLowerCase().includes(q) ? "flex" : "none");
 }
 
 window.onload = iniciar;

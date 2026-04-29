@@ -42,7 +42,10 @@
         @keyframes vaca-bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1) translateY(-10px); } }
         .spin-animation { animation: spin 0.8s ease-in-out; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .active-nav { color: #a21caf !important; }
+        
+        /* Estilos para resaltar el botón activo que viene del menú externo */
+        .active-nav { color: #a21caf !important; font-weight: 900; }
+        .active-nav .icon-box { background-color: #f5f3ff !important; transform: translateY(-5px); }
     </style>
 </head>
 <body class="pb-44"> 
@@ -134,24 +137,34 @@
     </div>
 </main>
 
-<nav class="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-purple-100 pb-8 pt-4 z-[100]">
-    <div class="flex justify-around items-center max-w-lg mx-auto">
-        <button onclick="window.location.href='DashboardLacteo.html'" class="text-slate-400 flex flex-col items-center">
-            <span class="material-symbols-outlined">home</span><span class="text-[9px] font-black">Panel</span>
-        </button>
-        <button class="active-nav flex flex-col items-center">
-            <span class="material-symbols-outlined">receipt_long</span><span class="text-[9px] font-black">Ventas</span>
-        </button>
-        <button onclick="window.location.href='ControldeInventario.html'" class="text-slate-400 flex flex-col items-center">
-            <span class="material-symbols-outlined">inventory_2</span><span class="text-[9px] font-black">Stock</span>
-        </button>
-    </div>
-</nav>
+<div id="menu-container"></div>
 
 <script>
 let carrito = {}; 
 let productosData = []; 
 let idOrdenActual = "";
+
+// FUNCIÓN PARA CARGAR EL MENÚ EXTERNO
+async function cargarMenu() {
+    try {
+        const response = await fetch('menu.html');
+        const text = await response.text();
+        const contenedor = document.getElementById('menu-container');
+        contenedor.innerHTML = text;
+
+        const urlActual = window.location.href.toLowerCase();
+        const botones = contenedor.querySelectorAll('.nav-link');
+        
+        botones.forEach(btn => {
+            const dataPath = btn.getAttribute('data-path').toLowerCase();
+            // Si la URL contiene "ventas", marcamos este botón como activo
+            if (urlActual.includes(dataPath)) {
+                btn.classList.add('active-nav');
+                btn.classList.remove('text-gray-400');
+            }
+        });
+    } catch (e) { console.error("Error cargando menú:", e); }
+}
 
 function recargarPagina() {
     document.getElementById('icon-sync').classList.add('spin-animation');
@@ -159,13 +172,13 @@ function recargarPagina() {
 }
 
 async function iniciar() {
+    cargarMenu(); // Cargamos el menú apenas inicia
     const d = new Date();
     idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
     document.getElementById('num-orden').innerText = idOrdenActual;
     document.getElementById('fecha-entrega').value = new Date().toISOString().split('T')[0];
 
     try {
-        // Carga con seguridad: si falla una hoja, devuelve array vacío en lugar de romper todo
         const [cl, pr, vnt] = await Promise.all([
             DairyAPI.obtenerDatos("Clientes").catch(() => []), 
             DairyAPI.obtenerDatos("Inventario").catch(() => []),
@@ -174,7 +187,6 @@ async function iniciar() {
         
         productosData = pr || [];
         
-        // Indicadores (evitar errores si vnt o pr son nulos)
         const pendientes = (vnt || []).filter(v => v && v.Estado === "PENDIENTE");
         document.getElementById('card-pedidos-pendientes').innerText = [...new Set(pendientes.map(v => v.ID_Venta))].length;
         document.getElementById('card-productos-total').innerText = pendientes.reduce((acc, v) => acc + (parseInt(v.Cantidad) || 0), 0);
@@ -197,8 +209,10 @@ async function iniciar() {
 
 function ocultarLoader() {
     const loader = document.getElementById('loading-overlay');
-    loader.style.opacity = '0';
-    setTimeout(() => loader.classList.add('hidden'), 500);
+    if(loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => loader.classList.add('hidden'), 500);
+    }
 }
 
 function renderizarProductos() {

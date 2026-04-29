@@ -28,7 +28,7 @@ const menuPrincipal = `
             <span class="text-[10px] font-black uppercase mt-1">Stock</span>
         </button>
 
-        <button onclick="window.location.href='Despachos.html'" class="nav-item text-gray-400 flex flex-col items-center transition-all" data-name="despachos">
+        <button onclick="window.location.href='GestióndeDespachos.html'" class="nav-item text-gray-400 flex flex-col items-center transition-all" data-name="despachos">
             <div class="icon-container p-2 rounded-2xl transition-all active:scale-75">
                 <span class="material-symbols-outlined text-[28px]">local_shipping</span>
             </div>

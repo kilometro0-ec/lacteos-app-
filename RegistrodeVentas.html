@@ -23,67 +23,43 @@
     </script>
 
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; color: #1f012a; font-size: 15px; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; color: #1f012a; }
         
-        /* Card de producto en FILA ÚNICA */
         .card-producto { 
-            background: white; 
-            border-radius: 1rem; 
-            border: 1px solid #e9d5ff; 
-            padding: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 8px;
+            background: white; border-radius: 1rem; border: 1px solid #e9d5ff; 
+            padding: 12px; display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; margin-bottom: 8px;
         }
 
         .input-sutil { 
-            background-color: #fdfaff; 
-            border: 1.5px solid #f3e8ff; 
-            border-radius: 0.75rem; 
-            padding: 0.7rem; 
-            width: 100%; 
-            font-weight: 600;
+            background-color: #fdfaff; border: 1.5px solid #f3e8ff; 
+            border-radius: 0.75rem; padding: 0.7rem; width: 100%; font-weight: 600;
+        }
+
+        /* CARRITO FLOTANTE */
+        #carrito-flotante {
+            position: fixed; bottom: 65px; left: 10px; right: 10px;
+            background: #a21caf; color: white; border-radius: 1.5rem;
+            padding: 15px; box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+            z-index: 100; transition: all 0.3s ease;
+            display: flex; flex-direction: column; gap: 8px;
         }
         
-        .btn-magenta { 
-            background-color: #db2777; 
-            color: white; 
-            font-weight: 800; 
-            text-transform: uppercase; 
-            border-radius: 0.75rem; 
-            padding: 1rem; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            cursor: pointer;
-            width: 100%;
-        }
-
-        /* Menú de navegación forzado a ser bajo */
-        #menu-container nav { padding: 4px 0 !important; height: 55px !important; }
+        /* Ajuste para que el menú de abajo no tape nada */
+        #menu-container nav { height: 55px !important; }
     </style>
 </head>
-<body class="pb-40"> 
+<body class="pb-60"> 
 
 <header class="h-14 bg-white border-b border-outline flex justify-between items-center px-4 sticky top-0 z-40">
-    <h1 class="text-lg font-black text-primary italic uppercase">Ventas</h1>
+    <div>
+        <h1 class="text-lg font-black text-primary italic uppercase leading-none">Ventas</h1>
+        <span id="orden-header" class="text-[9px] font-mono font-bold text-slate-400">ID: ---</span>
+    </div>
     <button onclick="location.reload()" class="text-primary"><span class="material-symbols-outlined">sync</span></button>
 </header>
 
 <main class="mt-4 px-4 max-w-xl mx-auto">
-    <div class="flex gap-2 mb-4">
-        <div class="flex-1 bg-white p-2 rounded-xl border border-primary/20 text-center">
-            <p class="text-[8px] font-bold text-slate-400 uppercase">En Carrito</p>
-            <p id="card-productos-total" class="text-lg font-black text-primary">0</p>
-        </div>
-        <div class="flex-1 bg-white p-2 rounded-xl border border-secondary/20 text-center">
-            <p class="text-[8px] font-bold text-slate-400 uppercase">Total $</p>
-            <p id="total-venta-resumen" class="text-lg font-black text-secondary">$0.00</p>
-        </div>
-    </div>
-
     <section class="bg-white p-4 rounded-2xl border border-outline mb-4">
         <div id="vista-seleccion-cliente">
             <div class="flex justify-between items-center mb-2">
@@ -98,31 +74,39 @@
         <div id="vista-nuevo-cliente" class="hidden space-y-3">
             <input type="text" id="reg-nombre" placeholder="Nombre del cliente" class="input-sutil">
             <div class="flex gap-2">
-                <button onclick="guardarNuevoCliente()" class="flex-1 bg-primary text-white font-bold py-2 rounded-lg text-sm">GUARDAR</button>
-                <button onclick="alternarFormularioCliente(false)" class="flex-1 bg-slate-100 text-slate-500 font-bold py-2 rounded-lg text-sm">CANCELAR</button>
+                <button onclick="guardarNuevoCliente()" class="flex-1 bg-primary text-white font-bold py-2 rounded-lg text-sm uppercase">Guardar</button>
+                <button onclick="alternarFormularioCliente(false)" class="flex-1 bg-slate-100 text-slate-500 font-bold py-2 rounded-lg text-sm uppercase">Cancelar</button>
             </div>
         </div>
     </section>
 
-    <input type="text" id="buscarProducto" oninput="filtrarProductos()" placeholder="🔍 Buscar producto..." class="input-sutil mb-4">
+    <div class="relative mb-4">
+        <input type="text" id="buscarProducto" oninput="filtrarProductos()" placeholder="Buscar producto lácteo..." class="input-sutil pl-10">
+        <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-300">search</span>
+    </div>
     
     <div id="contenedor-productos" class="space-y-2"></div>
-
-    <section class="mt-8 bg-white rounded-2xl border-2 border-primary overflow-hidden">
-        <div class="bg-primary p-3 text-white">
-            <h2 id="cliente-resumen" class="text-center font-black text-sm uppercase italic">Sin Cliente</h2>
-        </div>
-        <div class="p-4">
-            <input type="date" id="fecha-entrega" class="input-sutil mb-4 text-center">
-            <div id="lista-carrito" class="space-y-2 mb-4 text-sm font-bold border-b pb-2"></div>
-            <div class="flex justify-between items-center mb-4 px-2">
-                <span class="text-xs font-black text-slate-400 uppercase">Total a Cobrar:</span>
-                <span id="total-venta" class="text-2xl font-black text-slate-900">$0.00</span>
-            </div>
-            <button id="btn-finalizar" onclick="procesarVenta()" class="btn-magenta">CONFIRMAR PEDIDO</button>
-        </div>
-    </section>
 </main>
+
+<div id="carrito-flotante">
+    <div class="flex justify-between items-start border-b border-white/20 pb-2">
+        <div class="flex-1">
+            <p id="flotante-cliente" class="text-xs font-black uppercase truncate italic">SIN CLIENTE</p>
+            <p id="flotante-id" class="text-[9px] font-mono opacity-80">ID: LL-0000</p>
+        </div>
+        <div class="text-right">
+            <p id="flotante-items" class="text-[10px] font-black bg-white text-primary px-2 py-0.5 rounded-full inline-block">0 ÍTEMS</p>
+            <p id="flotante-total" class="text-xl font-black">$0.00</p>
+        </div>
+    </div>
+    
+    <div class="flex gap-2 items-center">
+        <input type="date" id="fecha-entrega" class="flex-1 bg-white/20 border-none rounded-lg text-[11px] font-bold text-white py-2 px-2">
+        <button id="btn-finalizar" onclick="procesarVenta()" class="flex-[1.5] bg-secondary text-white font-black py-3 rounded-xl text-xs uppercase shadow-lg active:scale-95 transition-transform">
+            Confirmar Pedido
+        </button>
+    </div>
+</div>
 
 <div id="menu-container"></div>
 
@@ -132,6 +116,8 @@ let carrito = {}; let productosData = []; let idOrdenActual = "";
 async function iniciar() {
     const d = new Date();
     idOrdenActual = `LL-${d.getHours()}${d.getMinutes()}-${Math.floor(Math.random()*90+10)}`;
+    document.getElementById('flotante-id').innerText = `ID: ${idOrdenActual}`;
+    document.getElementById('orden-header').innerText = `ID: ${idOrdenActual}`;
     document.getElementById('fecha-entrega').value = new Date().toISOString().split('T')[0];
 
     try {
@@ -149,8 +135,7 @@ async function iniciar() {
 }
 
 function renderizarProductos() {
-    const cont = document.getElementById('contenedor-productos'); 
-    cont.innerHTML = "";
+    const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
     productosData.forEach(p => {
         const stock = parseInt(p.Stock || 0);
         const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
@@ -163,7 +148,7 @@ function renderizarProductos() {
                         <span class="text-[10px] font-bold ${stock < 5 ? 'text-red-500' : 'text-slate-400'}">STOCK: ${stock}</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-outline">
                     <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">-</button>
                     <span id="${idCant}" class="w-6 text-center font-black text-lg">0</span>
                     <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">+</button>
@@ -184,19 +169,16 @@ function cambiarCant(n, d) {
 }
 
 function actualizarCarritoUI() {
-    const l = document.getElementById('lista-carrito'); 
-    l.innerHTML = ""; let t = 0; let totalItems = 0;
+    let t = 0; let totalItems = 0;
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
-            const sub = carrito[n] * parseFloat(p.Precio_Venta);
-            t += sub; totalItems += carrito[n];
-            l.innerHTML += `<div class="flex justify-between py-1 border-b border-dashed"><span>${n} x${carrito[n]}</span><span>$${sub.toFixed(2)}</span></div>`;
+            t += (carrito[n] * parseFloat(p.Precio_Venta));
+            totalItems += carrito[n];
         }
     });
-    document.getElementById('total-venta').innerText = `$${t.toFixed(2)}`;
-    document.getElementById('total-venta-resumen').innerText = `$${t.toFixed(2)}`;
-    document.getElementById('card-productos-total').innerText = totalItems;
+    document.getElementById('flotante-total').innerText = `$${t.toFixed(2)}`;
+    document.getElementById('flotante-items').innerText = `${totalItems} ÍTEMS`;
 }
 
 function alternarFormularioCliente(mostrar) {
@@ -209,13 +191,13 @@ async function guardarNuevoCliente() {
     if(!nombre) return alert("Escribe el nombre");
     try {
         await DairyAPI.enviarDatos("Clientes", { Nombre: nombre });
-        alert("Cliente Guardado");
         location.reload();
     } catch(e) { alert("Error"); }
 }
 
 function actualizarNombreCarrito() { 
-    document.getElementById('cliente-resumen').innerText = document.getElementById('select-cliente').value || "Sin Cliente"; 
+    const val = document.getElementById('select-cliente').value;
+    document.getElementById('flotante-cliente').innerText = val || "SIN CLIENTE"; 
 }
 
 function filtrarProductos() {
@@ -228,11 +210,11 @@ function filtrarProductos() {
 async function procesarVenta() {
     const cli = document.getElementById('select-cliente').value;
     const fec = document.getElementById('fecha-entrega').value;
-    if(!cli || !fec || document.getElementById('card-productos-total').innerText == "0") 
-        return alert("Datos incompletos o carrito vacío");
+    if(!cli || !fec || document.getElementById('flotante-items').innerText === "0 ÍTEMS") 
+        return alert("Seleccione cliente, fecha y productos");
     
     const btn = document.getElementById('btn-finalizar');
-    btn.innerText = "GUARDANDO..."; btn.disabled = true;
+    btn.innerText = "PROCESANDO..."; btn.disabled = true;
 
     try {
         for(const n in carrito) {
@@ -244,8 +226,8 @@ async function procesarVenta() {
                 });
             }
         }
-        alert("Pedido Guardado"); location.reload();
-    } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "CONFIRMAR PEDIDO"; }
+        alert("¡Venta Exitosa!"); location.reload();
+    } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "Confirmar Pedido"; }
 }
 
 window.onload = iniciar;

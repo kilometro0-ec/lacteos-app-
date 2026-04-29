@@ -5,53 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ventas - Lógica Láctea</title>
     
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <script>
-        // CONFIGURACIÓN DE TEMA
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { primary: "#a21caf", secondary: "#db2777", background: "#faf5ff", outline: "#e9d5ff" }
-                }
-            }
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { primary: "#a21caf", secondary: "#db2777", background: "#faf5ff" }
+          }
         }
-
-        // --- API CONFIG INCRUSTADA PARA EVITAR ERRORES ---
-        const DAIRY_API_URL = "AQUÍ_VA_TU_URL_DE_APPS_SCRIPT"; // Asegúrate de que esta URL sea la correcta
-
-        const DairyAPI = {
-            async obtenerDatos(pestaña) {
-                const res = await fetch(`${DAIRY_API_URL}?pestaña=${pestaña}`);
-                return await res.json();
-            },
-            async enviarDatos(pestaña, datos) {
-                return await fetch(DAIRY_API_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ pestaña, ...datos })
-                });
-            }
-        };
+      }
     </script>
 
     <style>
         body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
-        .card-sutil { background: white; border-radius: 2rem; border: 1px solid #e9d5ff; }
-        .input-sutil { background: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 1.5rem; padding: 0.8rem 1.2rem; width: 100%; outline: none; }
-        .btn-magenta { background: #db2777; color: white; font-weight: 800; border-radius: 1.5rem; padding: 1rem; transition: all 0.2s; text-align: center; width: 100%; }
+        .card-sutil { background: white; border-radius: 1.5rem; border: 1px solid #e9d5ff; }
+        .btn-magenta { background-color: #db2777; color: white; font-weight: 800; border-radius: 1rem; transition: all 0.2s; }
         .btn-magenta:active { transform: scale(0.95); }
-        #loading { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        ::-webkit-scrollbar { display: none; }
+        #loading-overlay { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body class="pb-32">
 
-<div id="loading">
-    <p class="font-black text-primary animate-pulse">CARGANDO SISTEMA...</p>
+<div id="loading-overlay">
+    <div class="text-center">
+        <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="mt-4 text-[10px] font-black text-primary uppercase">Sincronizando...</p>
+    </div>
 </div>
 
 <header class="h-16 bg-white border-b border-outline flex justify-between items-center px-6 sticky top-0 z-50">
@@ -61,129 +48,111 @@
 
 <main class="p-4 max-w-lg mx-auto space-y-6">
     <section class="card-sutil p-4">
-        <label class="text-[10px] font-black text-primary uppercase block mb-2">Seleccionar Cliente</label>
-        <select id="select-cliente" onchange="actualizarResumen()" class="input-sutil font-bold text-sm">
-            <option value="">Cargando...</option>
+        <select id="select-cliente" onchange="renderCarrito()" class="w-full p-3 rounded-xl border-none font-bold text-sm bg-purple-50">
+            <option value="">Cargando clientes...</option>
         </select>
     </section>
 
-    <div id="lista-productos" class="grid grid-cols-2 gap-3">
-        </div>
+    <div id="contenedor-productos" class="grid grid-cols-2 gap-3"></div>
 
-    <section class="card-sutil p-6 border-2 border-primary shadow-lg">
-        <h2 id="resumen-nombre" class="font-black uppercase text-gray-400 text-xs mb-1">Sin cliente</h2>
-        <div id="items-carrito" class="space-y-2 text-xs font-bold uppercase py-2">
-            </div>
-        <div class="flex justify-between items-baseline border-t pt-3 mt-3">
-            <span class="text-xs font-black text-gray-400">TOTAL</span>
-            <span id="total-txt" class="text-3xl font-black text-primary">$0.00</span>
+    <section class="card-sutil p-5 border-2 border-primary">
+        <h2 id="cliente-resumen" class="text-[10px] font-black text-gray-400 uppercase mb-2">Sin Cliente</h2>
+        <div id="lista-carrito" class="text-[10px] font-bold uppercase space-y-2 mb-4">
+            <p class="text-gray-300 italic">Carrito vacío</p>
         </div>
-        <button id="btn-enviar" onclick="enviarPedido()" class="btn-magenta mt-4">CONFIRMAR PEDIDO</button>
+        <div class="flex justify-between items-center border-t pt-3">
+            <span class="text-xs font-black text-gray-400">TOTAL</span>
+            <span id="total-txt" class="text-2xl font-black text-gray-900">$0.00</span>
+        </div>
+        <button onclick="procesarVenta()" class="btn-magenta w-full mt-4 py-4 uppercase">Confirmar Pedido</button>
     </section>
 </main>
 
-<nav class="fixed bottom-0 left-0 w-full bg-white border-t p-4 flex justify-around items-center z-[100]">
-    <button onclick="window.location.href='DashboardLacteo.html'" class="flex flex-col items-center text-gray-400">
-        <span class="material-symbols-outlined">home</span>
-        <span class="text-[8px] font-black uppercase">Inicio</span>
-    </button>
-    <button class="flex flex-col items-center text-primary">
-        <span class="material-symbols-outlined">receipt_long</span>
-        <span class="text-[8px] font-black uppercase">Ventas</span>
-    </button>
-    <button onclick="window.location.href='ControldeInventario.html'" class="flex flex-col items-center text-gray-400">
-        <span class="material-symbols-outlined">inventory_2</span>
-        <span class="text-[8px] font-black uppercase">Stock</span>
-    </button>
-    <button onclick="window.location.href='GestióndeDespachos.html'" class="flex flex-col items-center text-gray-400">
-        <span class="material-symbols-outlined">local_shipping</span>
-        <span class="text-[8px] font-black uppercase">Ruta</span>
-    </button>
-</nav>
+<div id="menu-container"></div>
 
 <script>
-let localData = { productos: [], carrito: {} };
+let db = { productos: [], carrito: {} };
 
-async function cargar() {
+async function iniciar() {
     try {
+        // AQUÍ USAMOS DairyAPI QUE YA TIENE TU URL REAL
         const [cl, pr] = await Promise.all([
             DairyAPI.obtenerDatos("Clientes"),
             DairyAPI.obtenerDatos("Inventario")
         ]);
-        
-        localData.productos = pr;
 
-        // Llenar Clientes
+        db.productos = pr || [];
+
         const sel = document.getElementById('select-cliente');
-        sel.innerHTML = '<option value="">-- CLIENTE --</option>';
-        cl.forEach(c => sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`);
+        sel.innerHTML = '<option value="">-- SELECCIONAR CLIENTE --</option>';
+        (cl || []).forEach(c => {
+            if(c.Nombre) sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
+        });
 
-        // Llenar Productos
-        const cont = document.getElementById('lista-productos');
+        const cont = document.getElementById('contenedor-productos');
         cont.innerHTML = "";
-        pr.forEach(p => {
-            const idBtn = p.Producto.replace(/\s+/g, '');
+        db.productos.forEach(p => {
+            const idLimpio = p.Producto.replace(/\s+/g, '');
             cont.innerHTML += `
-                <div class="card-sutil p-3">
-                    <h4 class="text-[10px] font-black uppercase truncate mb-1">${p.Producto}</h4>
-                    <p class="font-black text-lg">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
-                    <div class="flex items-center justify-between bg-purple-50 rounded-xl p-1 mt-2">
-                        <button onclick="sumar('${p.Producto}', -1)" class="w-8 h-8 bg-white rounded-lg font-black">-</button>
-                        <span id="q-${idBtn}" class="font-black text-primary text-sm">0</span>
-                        <button onclick="sumar('${p.Producto}', 1)" class="w-8 h-8 bg-white rounded-lg font-black">+</button>
+                <div class="card-sutil p-3 flex flex-col justify-between">
+                    <h4 class="text-[10px] font-black uppercase truncate">${p.Producto}</h4>
+                    <p class="text-lg font-black text-primary">$${parseFloat(p.Precio_Venta || 0).toFixed(2)}</p>
+                    <div class="flex items-center justify-between bg-purple-50 rounded-lg p-1 mt-2">
+                        <button onclick="update('${p.Producto}', -1)" class="w-8 h-8 bg-white rounded shadow text-primary font-bold">-</button>
+                        <span id="cant-${idLimpio}" class="text-xs font-black text-primary">0</span>
+                        <button onclick="update('${p.Producto}', 1)" class="w-8 h-8 bg-white rounded shadow text-primary font-bold">+</button>
                     </div>
                 </div>`;
         });
-        document.getElementById('loading').style.display = 'none';
-    } catch(e) { alert("Error de carga. Revisa la URL de tu API."); }
-}
 
-function sumar(prod, d) {
-    const actual = localData.carrito[prod] || 0;
-    const nuevo = actual + d;
-    if(nuevo >= 0) {
-        localData.carrito[prod] = nuevo;
-        document.getElementById(`q-${prod.replace(/\s+/g, '')}`).innerText = nuevo;
-        actualizarResumen();
+        document.getElementById('loading-overlay').classList.add('hidden');
+    } catch(e) {
+        console.error(e);
+        alert("Error al cargar datos. Revisa la consola.");
     }
 }
 
-function actualizarResumen() {
-    const cont = document.getElementById('items-carrito');
+function update(nom, cant) {
+    const actual = db.carrito[nom] || 0;
+    const nuevo = actual + cant;
+    if(nuevo >= 0) {
+        db.carrito[nom] = nuevo;
+        document.getElementById(`cant-${nom.replace(/\s+/g, '')}`).innerText = nuevo;
+        renderCarrito();
+    }
+}
+
+function renderCarrito() {
+    const list = document.getElementById('lista-carrito');
     const cli = document.getElementById('select-cliente').value;
-    document.getElementById('resumen-nombre').innerText = cli || "Sin cliente";
+    document.getElementById('cliente-resumen').innerText = cli || "Sin Cliente";
     
-    cont.innerHTML = "";
+    list.innerHTML = "";
     let total = 0;
-    Object.entries(localData.carrito).forEach(([nom, cant]) => {
-        if(cant > 0) {
-            const p = localData.productos.find(x => x.Producto === nom);
-            const sub = cant * parseFloat(p.Precio_Venta);
+    Object.entries(db.carrito).forEach(([n, c]) => {
+        if(c > 0) {
+            const p = db.productos.find(x => x.Producto === n);
+            const sub = c * parseFloat(p.Precio_Venta);
             total += sub;
-            cont.innerHTML += `<div class="flex justify-between"><span>${nom} x${cant}</span><span>$${sub.toFixed(2)}</span></div>`;
+            list.innerHTML += `<div class="flex justify-between"><span>${n} x${c}</span><span>$${sub.toFixed(2)}</span></div>`;
         }
     });
+    if(total === 0) list.innerHTML = "Carrito vacío";
     document.getElementById('total-txt').innerText = `$${total.toFixed(2)}`;
 }
 
-async function enviarPedido() {
+async function procesarVenta() {
     const cli = document.getElementById('select-cliente').value;
     if(!cli) return alert("Selecciona un cliente");
     
-    const items = Object.entries(localData.carrito).filter(i => i[1] > 0);
+    const items = Object.entries(db.carrito).filter(i => i[1] > 0);
     if(items.length === 0) return alert("Carrito vacío");
-
-    const btn = document.getElementById('btn-enviar');
-    btn.innerText = "ENVIANDO...";
-    btn.disabled = true;
-
-    const idVenta = "V-" + Math.floor(Math.random()*9999);
 
     try {
         for(const [nom, cant] of items) {
-            const p = localData.productos.find(x => x.Producto === nom);
+            const p = db.productos.find(x => x.Producto === n);
             await DairyAPI.enviarDatos("Ventas", {
-                ID_Venta: idVenta,
+                ID_Venta: "V-" + Date.now().toString().slice(-5),
                 Cliente: cli,
                 Producto: nom,
                 Cantidad: cant,
@@ -192,16 +161,12 @@ async function enviarPedido() {
                 Fecha_Entrega: new Date().toISOString().split('T')[0]
             });
         }
-        alert("¡Venta registrada!");
+        alert("¡Venta enviada!");
         location.reload();
-    } catch(e) {
-        alert("Error al enviar.");
-        btn.innerText = "CONFIRMAR PEDIDO";
-        btn.disabled = false;
-    }
+    } catch(e) { alert("Error al enviar"); }
 }
 
-window.onload = cargar;
+window.onload = iniciar;
 </script>
 </body>
 </html>

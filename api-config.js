@@ -1,54 +1,70 @@
 /**
- * LÓGICA LÁCTEA - CLIENTE API v3.3
- * Conexión centralizada con Google Apps Script
+ * LÓGICA LÁCTEA - CONFIGURACIÓN DE API v2.0
+ * Unificación de variables y Caché de alto rendimiento
  */
 
-const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbzCoUpz-75uexRrQGXRiteSq4TRIZsCo5h_NHqj9pXHBJ96R1tnVFr2WXEGQ_WYRHsx/exec";
-
 const DairyAPI = {
+    // REEMPLAZA ESTA URL con la que obtengas al "Implementar" en Apps Script
+    url_base: "https://script.google.com/macros/s/AKfycbx8WzXYLjDlxtvCcQ6Hp6n0a2HRerGMxLBFtex6a6GGfM7yV1Tl8MNgblXWh_fwiQgKpg/exec",
+    
+    // Almacén de caché para evitar recargas innecesarias
+    cache: {},
+    cache_duration: 30000, // 30 segundos de vida para los datos en memoria
+
     /**
-     * Obtiene datos de cualquier pestaña (Inventario, Ventas, Clientes)
-     * @param {string} pestaña - Nombre exacto de la hoja en Google Sheets
+     * Obtiene datos de Google Sheets con lógica de caché
+     * @param {string} pestaña - Nombre de la hoja (Ventas, Inventario, Clientes, etc.)
      */
-    obtenerDatos: async (pestaña) => {
+    async obtenerDatos(pestaña) {
+        const ahora = Date.now();
+        
+        // Si los datos están en caché y no han expirado, devolverlos de inmediato
+        if (this.cache[pestaña] && (ahora - this.cache[pestaña].timestamp < this.cache_duration)) {
+            console.log(`[API] Cargando ${pestaña} desde caché.`);
+            return this.cache[pestaña].data;
+        }
+
         try {
-            const response = await fetch(`${DAIRY_API_URL}?pestaña=${pestaña}`);
-            if (!response.ok) throw new Error("Error en la respuesta del servidor");
-            return await response.json();
+            const response = await fetch(`${this.url_base}?pestaña=${pestaña}`);
+            if (!response.ok) throw new Error("Error en la red");
+            
+            const data = await response.json();
+            
+            // Guardar en caché para la próxima vez
+            this.cache[pestaña] = {
+                data: data,
+                timestamp: ahora
+            };
+            
+            return data;
         } catch (error) {
-            console.error(`Error al obtener datos de ${pestaña}:`, error);
-            return [];
+            console.error(`[API] Error al obtener ${pestaña}:`, error);
+            // Si falla la red pero tenemos algo en caché (aunque sea viejo), lo devolvemos
+            return this.cache[pestaña] ? this.cache[pestaña].data : null;
         }
     },
 
     /**
-     * Envía datos para registrar Ventas, Clientes o actualizar Inventario
-     * @param {string} pestaña - Nombre de la hoja destino
-     * @param {Object} datos - Objeto con la información a guardar
+     * Envía datos a Google Sheets
+     * @param {Object} payload - Objeto con los datos y la pestaña de destino
      */
-    enviarDatos: async (pestaña, datos) => {
+    async guardarDatos(payload) {
         try {
-            // Añadimos el nombre de la pestaña al objeto de datos
-            const payload = { 
-                pestaña: pestaña, 
-                ...datos 
-            };
+            // Limpiamos la caché de la pestaña afectada para forzar recarga tras guardar
+            if (payload.pestaña) delete this.cache[payload.pestaña];
+            if (payload.pestaña === "Ventas") delete this.cache["Inventario"]; // Las ventas afectan al stock
 
-            const response = await fetch(DAIRY_API_URL, {
-                method: 'POST',
-                mode: 'no-cors', // Evita problemas de política CORS en navegadores
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+            const response = await fetch(this.url_base, {
+                method: "POST",
+                mode: "no-cors", // Para evitar problemas de redirección de Google
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
 
-            // Nota: Con 'no-cors', la respuesta siempre será opaca (no se puede leer el texto)
-            // pero si no hay error de red, el envío fue exitoso.
-            return true; 
+            return { success: true, msg: "Petición enviada correctamente" };
         } catch (error) {
-            console.error(`Error al enviar datos a ${pestaña}:`, error);
-            throw error;
+            console.error("[API] Error al guardar:", error);
+            return { success: false, msg: error.message };
         }
     }
 };

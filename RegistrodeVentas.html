@@ -23,26 +23,42 @@
         .modal-content { position: absolute; bottom: 0; width: 100%; background: white; border-radius: 3rem 3rem 0 0; padding: 2rem; max-height: 90vh; }
         
         .carrito-container { background: #fdf4ff; border-top: 4px solid #a21caf; border-radius: 2.5rem 2.5rem 0 0; }
+        .stat-card { background: white; border: 2px solid #f3e8ff; border-radius: 1.5rem; padding: 0.75rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 
 <body class="pb-[350px]">
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-purple-100 flex justify-between items-center px-4 z-50 shadow-sm">
-    <div class="flex items-center gap-3" onclick="window.location.href='DashboardLacteo.html'">
-        <span class="material-symbols-outlined text-[#a21caf]">arrow_back_ios</span>
-        <h1 class="text-xl font-black text-[#a21caf] uppercase tracking-tighter">Nueva Venta</h1>
+    <div class="flex items-center gap-2">
+        <h1 class="text-xl font-black text-[#a21caf] uppercase tracking-tighter italic">Lógica Láctea</h1>
     </div>
-    <button onclick="window.location.href='index.html'" class="p-2 text-[#a21caf] bg-purple-50 rounded-xl active:scale-90 transition-all">
-        <span class="material-symbols-outlined">home</span>
-    </button>
+    <div class="flex items-center gap-2">
+        <button onclick="window.location.reload()" class="p-2 text-[#a21caf] bg-purple-50 rounded-xl active:rotate-180 transition-all duration-500">
+            <span class="material-symbols-outlined">sync</span>
+        </button>
+        <button onclick="window.location.href='index.html'" class="p-2 text-[#a21caf] bg-purple-50 rounded-xl active:scale-90 transition-all">
+            <span class="material-symbols-outlined">home</span>
+        </button>
+    </div>
 </header>
 
-<main class="pt-20 px-4 space-y-6 max-w-2xl mx-auto">
+<main class="pt-20 px-4 space-y-4 max-w-2xl mx-auto">
+    <div class="grid grid-cols-2 gap-3">
+        <div class="stat-card shadow-sm">
+            <span class="text-[9px] font-black uppercase text-gray-400">Ventas Hoy</span>
+            <span id="stat-ventas" class="text-xl font-black text-[#a21caf]">0</span>
+        </div>
+        <div class="stat-card shadow-sm">
+            <span class="text-[9px] font-black uppercase text-gray-400">Productos Hoy</span>
+            <span id="stat-prods" class="text-xl font-black text-[#a21caf]">0</span>
+        </div>
+    </div>
+
     <section class="bg-white p-6 rounded-[2.5rem] border-2 border-[#e9d5ff] shadow-sm space-y-4">
         <div class="flex justify-between items-end gap-2">
             <div class="flex-1">
-                <label class="text-[10px] font-black uppercase text-gray-400 ml-2 tracking-widest">Cliente</label>
+                <label class="text-[10px] font-black uppercase text-gray-400 ml-2 tracking-widest">Seleccionar Cliente</label>
                 <select id="cliente-select" onchange="actualizarTotales()" class="w-full border-none bg-purple-50 rounded-2xl p-4 font-bold text-gray-700 mt-1">
                     <option value="">Cargando...</option>
                 </select>
@@ -52,7 +68,7 @@
             </button>
         </div>
         <div>
-            <label class="text-[10px] font-black uppercase text-gray-400 ml-2 tracking-widest">Fecha de Entrega Deseada</label>
+            <label class="text-[10px] font-black uppercase text-gray-400 ml-2 tracking-widest">Fecha de Entrega</label>
             <input type="date" id="fecha-entrega" class="w-full border-none bg-purple-50 rounded-2xl p-4 font-bold text-gray-700 mt-1">
         </div>
     </section>
@@ -68,12 +84,11 @@
 
 <div id="panel-carrito" class="fixed bottom-20 left-0 w-full z-40 carrito-container p-6 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
     <div class="max-w-2xl mx-auto space-y-3">
-        <div id="carrito-detalle" class="max-h-40 overflow-y-auto space-y-2">
-            </div>
+        <div id="carrito-detalle" class="max-h-40 overflow-y-auto space-y-2"></div>
 
         <div class="flex justify-between items-center border-t border-purple-200 pt-3">
             <div>
-                <p class="text-[10px] font-black text-gray-400 uppercase">Total a Cobrar</p>
+                <p class="text-[10px] font-black text-gray-400 uppercase">Total</p>
                 <p class="text-2xl font-black text-[#a21caf]" id="total-final">$0.00</p>
             </div>
             <div class="flex gap-2 w-1/2">
@@ -92,15 +107,15 @@
 <div id="modal-cliente" class="modal-overlay">
     <div class="modal-content">
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-black text-[#a21caf] uppercase">Nuevo Cliente</h2>
+            <h2 class="text-xl font-black text-[#a21caf] uppercase italic">Nuevo Cliente</h2>
             <button onclick="cerrarModalCliente()" class="text-gray-400"><span class="material-symbols-outlined">close</span></button>
         </div>
         <div class="space-y-4">
             <input type="text" id="new-nombre" placeholder="Nombre Completo" class="w-full bg-purple-50 border-none rounded-2xl p-4 font-bold">
             <input type="text" id="new-ci" placeholder="CI o RUC" class="w-full bg-purple-50 border-none rounded-2xl p-4 font-bold">
-            <input type="tel" id="new-tel" placeholder="WhatsApp (Ej: 099...)" class="w-full bg-purple-50 border-none rounded-2xl p-4 font-bold">
+            <input type="tel" id="new-tel" placeholder="WhatsApp" class="w-full bg-purple-50 border-none rounded-2xl p-4 font-bold">
             <input type="text" id="new-dir" placeholder="Dirección" class="w-full bg-purple-50 border-none rounded-2xl p-4 font-bold">
-            <button id="btn-guardar-cliente" onclick="guardarNuevoCliente()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg">Guardar y Seleccionar</button>
+            <button id="btn-guardar-cliente" onclick="guardarNuevoCliente()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg">Guardar Cliente</button>
         </div>
     </div>
 </div>
@@ -116,7 +131,25 @@ async function inicializar() {
     document.getElementById('fecha-entrega').valueAsDate = new Date();
     await cargarClientes();
     await cargarInventario();
+    await cargarEstadisticasDia();
     actualizarTotales();
+}
+
+async function cargarEstadisticasDia() {
+    const ventas = await DairyAPI.obtenerDatos("Ventas");
+    if (ventas) {
+        const hoy = new Date().toLocaleDateString();
+        // Filtrar ventas de hoy (basado en la columna Fecha que el script pone como Date)
+        const ventasHoy = ventas.filter(v => new Date(v.Fecha).toLocaleDateString() === hoy);
+        
+        // Conteo de IDs de venta únicos
+        const idsUnicos = [...new Set(ventasHoy.map(v => v.ID_Venta))].length;
+        // Suma de cantidades vendidas
+        const totalProds = ventasHoy.reduce((acc, v) => acc + (parseFloat(v.Cantidad) || 0), 0);
+
+        document.getElementById('stat-ventas').innerText = idsUnicos;
+        document.getElementById('stat-prods').innerText = totalProds.toFixed(0);
+    }
 }
 
 async function cargarClientes() {
@@ -213,32 +246,20 @@ async function guardarNuevoCliente() {
     btn.disabled = true;
     btn.innerText = "GUARDANDO...";
 
-    const payload = {
-        pestaña: "Clientes",
-        Nombre: n,
-        CI_RUC: document.getElementById('new-ci').value,
-        Teléfono: document.getElementById('new-tel').value,
-        Dirección: document.getElementById('new-dir').value
-    };
-
     try {
-        await DairyAPI.guardarDatos(payload);
+        await DairyAPI.guardarDatos({
+            pestaña: "Clientes", Nombre: n,
+            CI_RUC: document.getElementById('new-ci').value,
+            Teléfono: document.getElementById('new-tel').value,
+            Dirección: document.getElementById('new-dir').value
+        });
         await cargarClientes();
         document.getElementById('cliente-select').value = n;
-        
-        // Limpiar
-        document.getElementById('new-nombre').value = "";
-        document.getElementById('new-ci').value = "";
-        document.getElementById('new-tel').value = "";
-        document.getElementById('new-dir').value = "";
-        
         cerrarModalCliente();
         actualizarTotales();
-    } catch (e) {
-        alert("Error al guardar");
-    } finally {
+    } catch (e) { alert("Error"); } finally {
         btn.disabled = false;
-        btn.innerText = "Guardar y Seleccionar";
+        btn.innerText = "Guardar Cliente";
     }
 }
 
@@ -257,10 +278,9 @@ async function finalizarVenta() {
             Cantidad: i.cantidad, Precio_PVP: i.Precio_Venta, Fecha_Entrega: document.getElementById('fecha-entrega').value
         }));
         await Promise.all(p);
-        
         document.getElementById('btn-whatsapp').classList.remove('hidden');
         btn.classList.add('hidden');
-        alert("¡Venta Exitosa! Detalle listo para WhatsApp.");
+        await cargarEstadisticasDia(); // Actualizar las cards superiores
     } catch (e) { alert("Error"); btn.disabled = false; btn.innerHTML = "Confirmar"; }
 }
 
@@ -268,16 +288,7 @@ function enviarWhatsApp() {
     const cli = document.getElementById('cliente-select').value;
     const items = carrito.map(i => `*${i.cantidad}x* ${i.Producto} ($${i.Precio_Venta.toFixed(2)})`).join('%0A');
     const total = document.getElementById('total-final').innerText;
-    const fecha = document.getElementById('fecha-entrega').value;
-
-    const mensaje = `*LÓGICA LÁCTEA - PEDIDO*%0A%0A` +
-                    `*ID:* ${currentIDVenta}%0A` +
-                    `*Cliente:* ${cli}%0A` +
-                    `*Entrega:* ${fecha}%0A%0A` +
-                    `*PRODUCTOS:*%0A${items}%0A%0A` +
-                    `*TOTAL: ${total}*%0A%0A` +
-                    `¡Gracias por su compra! 🥛🧀`;
-
+    const mensaje = `*LÓGICA LÁCTEA*%0A*ID:* ${currentIDVenta}%0A*Cliente:* ${cli}%0A*PRODUCTOS:*%0A${items}%0A*TOTAL: ${total}*`;
     window.open(`https://wa.me/?text=${mensaje}`, '_blank');
     setTimeout(() => { window.location.href = 'DashboardLacteo.html'; }, 1000);
 }
@@ -288,7 +299,6 @@ function filtrarProductos() {
     const b = document.getElementById('busqueda').value.toLowerCase();
     renderizarProductos(productosMaster.filter(p => p.Producto.toLowerCase().includes(b)));
 }
-
 window.onload = inicializar;
 </script>
 </body>

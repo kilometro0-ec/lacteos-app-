@@ -6,7 +6,6 @@
     <title>Lógica Láctea - Dashboard Principal</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-    <!-- Eliminamos menu-logic.js para quitar la navegación inferior -->
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
@@ -17,7 +16,7 @@
             primary: "#a21caf", 
             secondary: "#db2777", 
             success: "#16a34a", 
-            electric: "#0055ff", /* Azul Eléctrico para Logística */
+            electric: "#0055ff", 
             background: "#faf5ff", 
             outline: "#e9d5ff" 
           }
@@ -29,14 +28,19 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
     .rotate-animation { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    
     .pulse-notif { animation: shadow-pulse 1.5s infinite; }
     @keyframes shadow-pulse {
+        0% { box-shadow: 0 0 0 0px rgba(0, 85, 255, 0.5); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 85, 255, 0); }
+        100% { box-shadow: 0 0 0 0px rgba(0, 85, 255, 0); }
+    }
+    
+    .pulse-success { animation: shadow-success 1.5s infinite; }
+    @keyframes shadow-success {
         0% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0.5); }
         70% { box-shadow: 0 0 0 10px rgba(22, 163, 74, 0); }
         100% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0); }
-    }
-    .btn-logistica {
-        box-shadow: 0 10px 20px -5px rgba(0, 85, 255, 0.4);
     }
     </style>
 </head>
@@ -60,7 +64,7 @@
 
 <main class="pt-24 px-4 max-w-7xl mx-auto space-y-4">
 
-    <!-- 1. BLOQUE DE MÉTRICAS -->
+    <!-- 1. MÉTRICAS -->
     <div class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm space-y-6">
         <div class="flex justify-between items-start">
             <div>
@@ -84,9 +88,8 @@
         </div>
     </div>
 
-    <!-- 2. BOTONES DE ACCIÓN (PANEL CENTRALIZADO) -->
+    <!-- 2. BOTONES DE ACCIÓN -->
     <div class="grid grid-cols-2 gap-3">
-        
         <button onclick="location.href='RegistrodeVentas.html'" class="bg-primary text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
           <span class="material-symbols-outlined text-3xl">add_shopping_cart</span>
           <span class="text-[10px] font-black uppercase">Vender</span>
@@ -108,39 +111,38 @@
           <span class="text-[10px] font-black uppercase">Proveedores</span>
         </button>
 
-        <!-- BOTÓN AZUL ELÉCTRICO: CONFIRMAR LLEGADA -->
-        <button onclick="location.href='ConfirmarRecepcion.html'" class="btn-logistica bg-electric text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 active:scale-95 transition-all col-span-2 border-b-4 border-blue-800">
-          <span class="material-symbols-outlined text-3xl">task_alt</span>
-          <span class="text-[11px] font-black uppercase tracking-widest">Confirmar Llegada de Pedido</span>
+        <!-- BOTÓN RECIBIR (AZUL ELÉCTRICO) -->
+        <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-electric text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
+            <span id="badge-recepcion" class="absolute top-2 right-4 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+            <span class="material-symbols-outlined text-3xl">inventory_2</span>
+            <span class="text-[10px] font-black uppercase">Recibir</span>
         </button>
 
-        <button onclick="location.href='GestiondeClientes.html'" class="bg-white border-2 border-primary/20 p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 active:bg-slate-50 transition-all col-span-2">
+        <button onclick="location.href='GestiondeClientes.html'" class="bg-white border-2 border-primary/20 p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 active:bg-slate-50 transition-all shadow-sm">
           <span class="material-symbols-outlined text-primary text-3xl">person_search</span>
-          <span class="text-[11px] font-black uppercase text-primary tracking-widest">Base de Clientes</span>
+          <span class="text-[10px] font-black uppercase text-primary">Clientes</span>
         </button>
     </div>
 
-    <!-- 3. ALERTAS Y TENDENCIAS -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-            <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
-                <span class="material-symbols-outlined text-sm font-bold">pending_actions</span> Pedidos Pendientes
-            </h3>
-            <div id="lista-pedidos" class="space-y-2"></div>
-        </section>
+    <!-- 3. LISTADO PENDIENTES -->
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+        <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
+            <span class="material-symbols-outlined text-sm font-bold">pending_actions</span> Pedidos de Clientes
+        </h3>
+        <div id="lista-pedidos" class="space-y-2"></div>
+    </section>
 
-        <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
-            <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
-                <span class="material-symbols-outlined text-sm font-bold">warning</span> Stock Crítico
-            </h3>
-            <div id="cont-criticos" class="space-y-2 text-[11px]"></div>
-        </section>
-    </div>
+    <!-- 4. STOCK CRÍTICO -->
+    <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
+        <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
+            <span class="material-symbols-outlined text-sm font-bold">warning</span> Por agotarse
+        </h3>
+        <div id="cont-criticos" class="space-y-2 text-[11px]"></div>
+    </section>
 
 </main>
 
 <script>
-// Lógica de carga de datos (idéntica a la anterior para mantener funcionalidad)
 const hoy = new Date();
 const offset = hoy.getTimezoneOffset() * 60000;
 const fechaLocal = new Date(hoy - offset).toISOString().split('T')[0];
@@ -152,23 +154,92 @@ async function cargarDatos() {
     const fechaSel = document.getElementById('filtro-fecha').value;
 
     try {
-        const [resInv, resVentas] = await Promise.all([
+        const [resInv, resVentas, resCompras] = await Promise.all([
             DairyAPI.obtenerDatos("Inventario"),
-            DairyAPI.obtenerDatos("Ventas")
+            DairyAPI.obtenerDatos("Ventas"),
+            DairyAPI.obtenerDatos("Compras")
         ]);
 
         const inventario = Array.isArray(resInv) ? resInv : [];
         const ventas = Array.isArray(resVentas) ? resVentas : [];
+        const compras = Array.isArray(resCompras) ? resCompras : [];
 
-        // Cálculos de dinero, stock y ruta omitidos aquí por brevedad, 
-        // pero se mantienen igual que en tu versión funcional.
-        // ... (resto de tu lógica de JS de cargarDatos) ...
-        
+        // 1. LÓGICA DE INVENTARIO Y UTILIDAD
+        const costosMap = {};
+        let totalCostoBodega = 0;
+        let utilidadProyectada = 0;
+        inventario.forEach(p => {
+            const costo = parseFloat(String(p.Precio_Distribuidor || 0).replace(',','.')) || 0;
+            const precioVenta = parseFloat(String(p.Precio_Venta || 0).replace(',','.')) || 0;
+            const stock = parseFloat(p.Stock) || 0;
+            costosMap[p.Producto] = costo;
+            totalCostoBodega += (costo * stock);
+            utilidadProyectada += ((precioVenta - costo) * stock);
+        });
+        document.getElementById('valor-invertido').innerText = `$${totalCostoBodega.toFixed(2)}`;
+        document.getElementById('utilidad-proyectada').innerText = `$${utilidadProyectada.toFixed(2)}`;
+
+        // 2. VENTAS DEL DÍA Y NOTIF. RUTA
+        let utilidadHoy = 0;
+        let porRecaudar = 0;
+        let pendsHoy = [];
+        ventas.forEach(v => {
+            const fV = new Date(v.Fecha).toISOString().split('T')[0];
+            if(fV === fechaSel) {
+                const totalVenta = parseFloat(String(v["Precio Total"] || 0).replace(',','.')) || 0;
+                const cantidad = parseFloat(v.Cantidad) || 0;
+                utilidadHoy += (totalVenta - ((costosMap[v.Producto] || 0) * cantidad));
+                if(String(v.Estado).toUpperCase() === "PENDIENTE") {
+                    porRecaudar += totalVenta;
+                    pendsHoy.push(v);
+                }
+            }
+        });
+        document.getElementById('ganancia-real').innerText = `$${utilidadHoy.toFixed(2)}`;
+        document.getElementById('por-recaudar').innerText = `$${porRecaudar.toFixed(2)}`;
+
+        const badgeRuta = document.getElementById('badge-ruta');
+        if(pendsHoy.length > 0) {
+            badgeRuta.innerText = pendsHoy.length;
+            badgeRuta.classList.remove('hidden');
+            document.getElementById('btn-ruta').classList.add('pulse-success');
+        } else {
+            badgeRuta.classList.add('hidden');
+            document.getElementById('btn-ruta').classList.remove('pulse-success');
+        }
+
+        // 3. NOTIFICACIÓN COMPRAS (RECIBIR)
+        const badgeRec = document.getElementById('badge-recepcion');
+        const btnRec = document.getElementById('btn-recepcion');
+        const comprasPends = compras.filter(c => String(c.Estado_Entrega).toUpperCase() === "PENDIENTE");
+        if(comprasPends.length > 0) {
+            const facturas = [...new Set(comprasPends.map(p => p.ID_Compra))];
+            badgeRec.innerText = facturas.length;
+            badgeRec.classList.remove('hidden');
+            btnRec.classList.add('pulse-notif');
+        } else {
+            badgeRec.classList.add('hidden');
+            btnRec.classList.remove('pulse-notif');
+        }
+
+        // 4. RENDER LISTADOS
+        const listaPed = document.getElementById('lista-pedidos');
+        listaPed.innerHTML = pendsHoy.length > 0 ? "" : '<p class="text-center text-slate-300 italic">Sin pendientes</p>';
+        pendsHoy.forEach(p => {
+            listaPed.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl flex justify-between items-center"><div class="text-[11px] font-black uppercase text-slate-700">${p.Cliente}</div><span class="text-amber-600 font-black italic">$${parseFloat(String(p["Precio Total"]).replace(',','.')).toFixed(2)}</span></div>`;
+        });
+
+        const contCrit = document.getElementById('cont-criticos');
+        const criticos = inventario.filter(p => (parseFloat(p.Stock) || 0) <= 5);
+        contCrit.innerHTML = criticos.length > 0 ? "" : '<p class="text-center text-slate-300 italic">Stock OK</p>';
+        criticos.forEach(p => {
+            contCrit.innerHTML += `<div class="flex justify-between p-2 bg-red-50 rounded-lg"><span class="font-black uppercase text-red-900">${p.Producto}</span><span class="text-red-500 font-bold">${p.Stock}</span></div>`;
+        });
+
     } catch (e) { console.error(e); }
     finally { icon?.classList.remove('rotate-animation'); }
 }
 window.onload = cargarDatos;
 </script>
-
 </body>
 </html>

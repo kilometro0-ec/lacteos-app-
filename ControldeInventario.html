@@ -15,105 +15,116 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-      body { background-color: #faf5ff; padding-bottom: 100px; }
+      body { background-color: #faf5ff; padding-bottom: 110px; }
       
+      /* ANIMACIONES */
+      @keyframes pulse-skeleton { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+      .skeleton-anim { animation: pulse-skeleton 1.5s infinite ease-in-out; background: #f3e8ff; }
+      
+      .btn-click-anim:active { transform: scale(0.85); transition: 0.2s; color: #a21caf; }
+      
+      @keyframes slide-down { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      .sync-text { animation: slide-down 0.3s ease-out; }
+
       /* ID CARDS SUPERIORES */
       .id-card {
         background: white; border-radius: 1.5rem; padding: 12px 8px;
         display: flex; flex-direction: column; align-items: center;
-        border: 2px solid #f3e8ff; box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        border: 2px solid #f3e8ff;
       }
-      .id-card .value { font-size: 18px; font-weight: 900; color: #1f012a; }
-      .id-card .label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #94a3b8; }
 
-      /* BUSCADOR MEJORADO */
-      .search-container {
-        position: relative; margin-bottom: 20px;
-      }
-      .search-input {
-        width: 100%; background: white; border: 2px solid #e9d5ff;
-        border-radius: 1.2rem; padding: 14px 14px 14px 45px;
-        font-weight: 600; color: #a21caf; outline: none;
-      }
-      .search-icon { position: absolute; left: 15px; top: 14px; color: #a21caf; }
-
-      /* PRODUCT CARDS (TEXTO GRANDE Y BOTÓN STOCK) */
+      /* PRODUCT CARDS */
       .card-prod { 
-        background: white; border-radius: 1.8rem; border: 1px solid #e9d5ff; 
-        padding: 15px; display: flex; flex-direction: column; gap: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative;
+        background: white; border-radius: 2rem; border: 1px solid #e9d5ff; 
+        padding: 18px; display: flex; flex-direction: column; gap: 4px;
+        position: relative; transition: all 0.2s;
+        -webkit-tap-highlight-color: transparent;
       }
-      .prod-title { 
-        font-size: 14px; font-weight: 800; color: #1f012a; 
-        line-height: 1.2; text-transform: uppercase;
-        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-      }
-      .btn-add-stock {
-        background: #fdf4ff; color: #a21caf; border: 1px solid #f5d0fe;
-        border-radius: 12px; padding: 6px; display: flex; align-items: center; justify-content: center;
-      }
+      .card-prod:active { transform: scale(0.97); background: #fdf4ff; }
 
-      /* MODALES */
-      .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
-      .modal.active { display: flex; }
+      /* MODAL STYLE */
+      .modal-custom { display: none; position: fixed; inset: 0; background: rgba(31, 1, 42, 0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
+      .modal-custom.active { display: flex; }
+      .modal-content { background: white; width: 100%; max-width: 320px; border-radius: 2.5rem; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
 
-<!-- HEADER CON ELIMINAR Y AGREGAR -->
+<!-- HEADER -->
 <header class="fixed top-0 w-full h-16 bg-white border-b border-purple-100 flex justify-between items-center px-4 z-50">
-    <div class="flex items-center gap-2">
-        <button id="btn-borrar" class="hidden text-red-500" onclick="eliminarSeleccion()"><span class="material-symbols-outlined text-3xl">delete_forever</span></button>
-        <h1 id="header-title" class="text-xl font-black text-[#a21caf] italic uppercase">STOCK</h1>
+    <div class="flex flex-col">
+        <h1 class="text-xl font-black text-[#a21caf] italic uppercase leading-none">STOCK</h1>
+        <span id="sync-indicator" class="sync-text text-[9px] font-black text-orange-500">SINCRONIZANDO...</span>
     </div>
-    <div class="flex gap-2">
-        <button onclick="abrirModal('modal-nuevo')" class="text-green-600"><span class="material-symbols-outlined text-3xl">add_circle</span></button>
-        <button onclick="descargarPDF()" class="text-[#a21caf]"><span class="material-symbols-outlined text-3xl">picture_as_pdf</span></button>
+    <div class="flex gap-4">
+        <button onclick="descargarPDF()" class="btn-click-anim text-[#a21caf]"><span class="material-symbols-outlined text-3xl">picture_as_pdf</span></button>
+        <button onclick="window.location.reload()" class="btn-click-anim text-gray-400"><span class="material-symbols-outlined text-3xl">sync</span></button>
     </div>
 </header>
 
 <main class="pt-20 px-4">
-    <!-- INDICADORES SUPERIORES -->
-    <section class="grid grid-cols-3 gap-2 mb-6">
-        <div class="id-card"><div class="label">Bodega</div><div id="valor-bodega" class="value">$0</div></div>
-        <div class="id-card border-red-100"><div class="label text-red-500">Críticos</div><div id="count-critico" class="value">0</div></div>
-        <div class="id-card border-green-100"><div class="label text-green-500">Stock</div><div id="total-sku" class="value">0</div></div>
+    <!-- INDICADORES SUPERIORES CON CARGA -->
+    <section id="stats-header" class="grid grid-cols-3 gap-2 mb-6 text-center">
+        <div class="id-card skeleton-anim h-16"></div>
+        <div class="id-card skeleton-anim h-16"></div>
+        <div class="id-card skeleton-anim h-16"></div>
     </section>
 
     <!-- BUSCADOR -->
-    <div class="search-container">
-        <span class="material-symbols-outlined search-icon">search</span>
-        <input type="text" id="filtro" oninput="filtrar()" placeholder="Buscar producto..." class="search-input">
+    <div class="relative mb-6">
+        <span class="material-symbols-outlined absolute left-4 top-3.5 text-[#a21caf]">search</span>
+        <input type="text" id="filtro" oninput="filtrar()" placeholder="Buscar producto..." class="w-full bg-white border-2 border-purple-100 rounded-2xl py-3.5 pl-12 pr-4 font-bold text-[#a21caf] outline-none">
     </div>
 
-    <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-20"></div>
+    <div id="grid-productos" class="grid grid-cols-1 gap-4 mb-24"></div>
 </main>
+
+<!-- BOTÓN FLOTANTE AGREGAR (SOBRE EL MENÚ) -->
+<button onclick="abrirModal('modal-nuevo-prod')" class="fixed bottom-24 right-6 w-14 h-14 bg-[#a21caf] text-white rounded-full shadow-2xl flex items-center justify-center z-[60] btn-click-anim">
+    <span class="material-symbols-outlined text-3xl">add</span>
+</button>
 
 <div id="menu-container"></div>
 
-<!-- MODAL NUEVO PRODUCTO -->
-<div id="modal-nuevo" class="modal">
-    <div class="card-sutil w-full max-w-sm space-y-4">
-        <h2 class="text-titulo text-center text-[#a21caf]">Nuevo Producto</h2>
-        <input type="text" id="n-nombre" placeholder="Nombre del producto" class="input-sutil">
-        <div class="grid grid-cols-2 gap-2">
-            <input type="number" id="n-pvp" placeholder="PVP $" class="input-sutil">
-            <input type="number" id="n-stock" placeholder="Stock Inicial" class="input-sutil">
+<!-- MODAL: AGREGAR STOCK (SOLO SUMA) -->
+<div id="modal-stock" class="modal-custom">
+    <div class="modal-content text-center">
+        <p id="stk-prod-name" class="text-[10px] font-black text-gray-400 uppercase mb-2"></p>
+        <h2 class="text-xl font-black text-[#a21caf] mb-6">SUMAR AL STOCK</h2>
+        <input type="number" id="input-sumar" value="1" class="w-full text-center text-4xl font-black text-[#a21caf] mb-8 outline-none">
+        <button onclick="confirmarStock()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black shadow-lg mb-4">ACTUALIZAR</button>
+        <button onclick="cerrarModal('modal-stock')" class="text-gray-400 font-bold text-[10px] uppercase">Cerrar</button>
+    </div>
+</div>
+
+<!-- MODAL: NUEVO PRODUCTO (COMPLETO) -->
+<div id="modal-nuevo-prod" class="modal-custom">
+    <div class="modal-content">
+        <h2 class="text-center font-black text-[#a21caf] mb-4 uppercase">Nuevo Producto</h2>
+        <div class="space-y-3">
+            <input type="text" id="n-nombre" placeholder="NOMBRE" class="w-full bg-gray-50 p-3 rounded-xl font-bold uppercase border border-gray-100 outline-none">
+            <input type="number" id="n-dist" placeholder="VALOR DISTRIBUIDOR $" class="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 outline-none">
+            <input type="number" id="n-pvp" placeholder="VALOR PVP $" class="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 outline-none">
+            <input type="number" id="n-stock" placeholder="STOCK INICIAL" class="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100 outline-none">
         </div>
-        <button onclick="guardarNuevo()" class="btn-magenta w-full py-4">Guardar Producto</button>
-        <button onclick="cerrarModal('modal-nuevo')" class="w-full text-gray-400 font-bold uppercase text-[10px]">Cerrar</button>
+        <button onclick="guardarNuevo()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-black mt-6 shadow-lg">GUARDAR</button>
+        <button onclick="cerrarModal('modal-nuevo-prod')" class="w-full text-gray-400 font-bold text-[10px] uppercase mt-4">Cancelar</button>
     </div>
 </div>
 
 <script>
 let inventarioLocal = [];
-let seleccionados = new Set();
+let productoActivo = null;
+let timerHold;
 
 async function cargarInventario() {
     try {
         const res = await DairyAPI.obtenerDatos("Inventario");
         if (Array.isArray(res)) {
             inventarioLocal = res;
+            document.getElementById('sync-indicator').innerText = "CONECTADO ✓";
+            document.getElementById('sync-indicator').classList.replace('text-orange-500', 'text-green-500');
+            setTimeout(() => { document.getElementById('sync-indicator').style.opacity = '0'; }, 3000);
             renderizar(inventarioLocal);
         }
     } catch (e) { console.error(e); }
@@ -121,80 +132,100 @@ async function cargarInventario() {
 
 function renderizar(lista) {
     const container = document.getElementById('grid-productos');
+    const stats = document.getElementById('stats-header');
     container.innerHTML = "";
+    
     let totalBodega = 0, criticos = 0, stockTotal = 0;
 
     lista.forEach(p => {
         const stock = Number(p.Stock) || 0;
+        const ventas = Number(p.Ventas) || 0;
         if(stock <= 5) criticos++;
         stockTotal += stock;
-        totalBodega += (Number(p.Precio_Distribuidor || 0) * stock);
+        totalBodega += (Number(p.Precio_Venta || 0) * stock);
 
         const card = document.createElement('div');
-        card.className = `card-prod ${seleccionados.has(p.ID) ? 'border-2 border-[#a21caf] bg-purple-50' : ''}`;
+        card.className = `card-prod`;
         card.innerHTML = `
             <div class="flex justify-between items-start">
-                <span class="text-[9px] font-bold text-gray-400">#${p.ID}</span>
-                <span class="font-black text-green-600 text-lg">$${Number(p.Precio_Venta || 0).toFixed(2)}</span>
-            </div>
-            <h3 class="prod-title">${p.Producto}</h3>
-            <div class="flex justify-between items-center mt-2">
-                <div class="flex flex-col">
-                    <span class="text-[9px] font-bold text-gray-400 uppercase">En Stock</span>
-                    <span class="font-black text-xl ${stock <= 5 ? 'text-red-500' : 'text-[#a21caf]'}">${stock}</span>
+                <span class="text-[9px] font-black text-gray-300 tracking-tighter">ID: ${p.ID}</span>
+                <div class="flex gap-2">
+                    <span class="text-[9px] font-black text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full uppercase">Vendidos: ${ventas}</span>
                 </div>
-                <button onclick="event.stopPropagation(); sumarStock('${p.ID}', ${stock})" class="btn-add-stock">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
+            </div>
+            <h3 class="font-black text-[15px] uppercase leading-tight text-slate-800 my-1">${p.Producto}</h3>
+            <div class="flex justify-between items-end mt-2">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-400 uppercase">En Stock</span>
+                    <span class="font-black text-2xl ${stock <= 5 ? 'text-red-500' : 'text-[#a21caf]'}">${stock} <small class="text-[10px]">uds</small></span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[9px] font-bold text-gray-400 block">PVP</span>
+                    <span class="font-black text-green-600 text-xl">$${Number(p.Precio_Venta || 0).toFixed(2)}</span>
+                </div>
             </div>
         `;
 
-        card.onclick = () => toggleSeleccion(p.ID);
+        // GESTIÓN DE EVENTOS
+        card.addEventListener('mousedown', () => iniciarPresion(p.ID, p.Producto));
+        card.addEventListener('touchstart', () => iniciarPresion(p.ID, p.Producto));
+        card.addEventListener('mouseup', limpiarPresion);
+        card.addEventListener('touchend', limpiarPresion);
+        
+        card.onclick = () => abrirGestionStock(p);
+
         container.appendChild(card);
     });
 
-    document.getElementById('valor-bodega').innerText = `$${totalBodega.toFixed(0)}`;
-    document.getElementById('count-critico').innerText = criticos;
-    document.getElementById('total-sku').innerText = stockTotal; // Cambiado a Stock total de unidades
+    stats.innerHTML = `
+        <div class="id-card"><div class="label">Bodega</div><div class="value font-black text-[#a21caf]">$${totalBodega.toFixed(0)}</div></div>
+        <div class="id-card border-red-100"><div class="label text-red-500">Críticos</div><div class="value font-black text-red-600">${criticos}</div></div>
+        <div class="id-card border-green-100"><div class="label text-green-500">Stock</div><div class="value font-black text-green-600">${stockTotal}</div></div>
+    `;
 }
 
-async function sumarStock(id, actual) {
-    const cant = prompt("¿Cuánto stock vas a sumar?", "1");
-    if (cant && !isNaN(cant)) {
-        const nuevoTotal = actual + parseInt(cant);
-        await DairyAPI.actualizarDato("Inventario", id, { Stock: nuevoTotal });
-        cargarInventario();
-    }
-}
-
-function toggleSeleccion(id) {
-    seleccionados.has(id) ? seleccionados.delete(id) : seleccionados.add(id);
-    document.getElementById('btn-borrar').classList.toggle('hidden', seleccionados.size === 0);
-    document.getElementById('header-title').innerText = seleccionados.size > 0 ? `${seleccionados.size} SELEC.` : "STOCK";
-    renderizar(inventarioLocal);
-}
-
-async function eliminarSeleccion() {
-    if (confirm(`¿Eliminar ${seleccionados.size} productos?`)) {
-        for (let id of seleccionados) {
+// LÓGICA DE PRESIÓN LARGA PARA BORRAR
+function iniciarPresion(id, nombre) {
+    timerHold = setTimeout(async () => {
+        if(confirm(`¿ELIMINAR PRODUCTO: ${nombre}?`)) {
             await DairyAPI.eliminarDato("Inventario", id);
+            cargarInventario();
         }
-        seleccionados.clear();
-        cargarInventario();
-    }
+    }, 1000);
+}
+function limpiarPresion() { clearTimeout(timerHold); }
+
+// GESTIÓN DE STOCK (MODAL RÁPIDO)
+function abrirGestionStock(p) {
+    productoActivo = p;
+    document.getElementById('stk-prod-name').innerText = p.Producto;
+    document.getElementById('input-sumar').value = 1;
+    abrirModal('modal-stock');
 }
 
+async function confirmarStock() {
+    const suma = parseInt(document.getElementById('input-sumar').value);
+    const nuevoTotal = (Number(productoActivo.Stock) || 0) + suma;
+    await DairyAPI.actualizarDato("Inventario", productoActivo.ID, { Stock: nuevoTotal });
+    cerrarModal('modal-stock');
+    cargarInventario();
+}
+
+// NUEVO PRODUCTO (COMPLETO)
 async function guardarNuevo() {
     const data = {
         Producto: document.getElementById('n-nombre').value.toUpperCase(),
+        Precio_Distribuidor: document.getElementById('n-dist').value,
         Precio_Venta: document.getElementById('n-pvp').value,
         Stock: document.getElementById('n-stock').value,
         Ventas: 0
     };
-    if(data.Producto) {
+    if(data.Producto && data.Precio_Venta) {
         await DairyAPI.crearDato("Inventario", data);
-        cerrarModal('modal-nuevo');
+        cerrarModal('modal-nuevo-prod');
         cargarInventario();
+    } else {
+        alert("Llena el nombre y el PVP");
     }
 }
 

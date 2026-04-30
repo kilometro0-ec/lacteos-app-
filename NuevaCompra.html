@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Lógica Láctea - Nueva Compra</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+</head>
+<body class="bg-slate-50 pb-20">
+
+<header class="p-4 bg-white border-b flex items-center gap-4">
+    <span class="material-symbols-outlined text-primary" onclick="history.back()">arrow_back</span>
+    <h1 class="font-black uppercase text-sm italic">Registrar Compra</h1>
+</header>
+
+<main class="p-4 max-w-lg mx-auto space-y-6">
+    <section class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200">
+        <!-- Nombre del proveedor (se llena automático) -->
+        <div class="mb-4">
+            <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Proveedor Seleccionado</label>
+            <input type="text" id="prov-nombre" readonly class="w-full border-none bg-slate-100 rounded-2xl p-4 font-bold text-primary">
+        </div>
+
+        <!-- Selector de Insumo/Producto -->
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Producto / Insumo</label>
+                <select id="producto" class="w-full border-none bg-slate-100 rounded-2xl p-4 font-semibold">
+                    <option value="">Cargando catálogo...</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Cantidad</label>
+                    <input type="number" id="cantidad" oninput="calcularTotal()" placeholder="0.00" class="w-full border-none bg-slate-100 rounded-2xl p-4 font-bold">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Precio Unit.</label>
+                    <input type="number" id="precio" oninput="calcularTotal()" placeholder="0.00" class="w-full border-none bg-slate-100 rounded-2xl p-4 font-bold">
+                </div>
+            </div>
+
+            <!-- Total Visual -->
+            <div class="bg-primary/5 p-4 rounded-2xl border border-dashed border-primary/20 text-center">
+                <p class="text-[10px] font-bold text-primary uppercase">Total a Pagar</p>
+                <p class="text-2xl font-black text-primary" id="total-display">$0.00</p>
+            </div>
+
+            <button onclick="procesarCompra()" id="btn-compra" class="w-full bg-slate-900 text-white font-black py-5 rounded-[2rem] shadow-lg flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined">shopping_cart_checkout</span> CONFIRMAR COMPRA
+            </button>
+        </div>
+    </section>
+</main>
+
+<script>
+    // 1. Obtener el proveedor de la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const provParam = urlParams.get('prov');
+    if(provParam) document.getElementById('prov-nombre').value = decodeURIComponent(provParam);
+
+    // 2. Cargar productos del Inventario al iniciar
+    async function cargarCatalogo() {
+        const productos = await DairyAPI.obtenerDatos("Inventario");
+        const select = document.getElementById('producto');
+        select.innerHTML = productos.map(p => `<option value="${p.Producto}">${p.Producto}</option>`).join('');
+    }
+
+    function calcularTotal() {
+        const cant = parseFloat(document.getElementById('cantidad').value) || 0;
+        const precio = parseFloat(document.getElementById('precio').value) || 0;
+        document.getElementById('total-display').innerText = `$${(cant * precio).toFixed(2)}`;
+    }
+
+    async function procesarCompra() {
+        const btn = document.getElementById('btn-compra');
+        const datos = {
+            Fecha: new Date().toLocaleDateString(),
+            Proveedor: document.getElementById('prov-nombre').value,
+            Producto: document.getElementById('producto').value,
+            Cantidad: document.getElementById('cantidad').value,
+            Precio: document.getElementById('precio').value,
+            Total: (parseFloat(document.getElementById('cantidad').value) * parseFloat(document.getElementById('precio').value)).toFixed(2)
+        };
+
+        btn.disabled = true;
+        btn.innerText = "PROCESANDO...";
+
+        try {
+            await DairyAPI.guardarDatos("Compras", datos);
+            alert("¡Compra registrada y stock actualizado!");
+            window.location.href = "Proveedores.html";
+        } catch(e) {
+            alert("Error al registrar");
+            btn.disabled = false;
+        }
+    }
+
+    window.onload = cargarCatalogo;
+</script>
+</body>
+</html>

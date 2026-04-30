@@ -17,36 +17,31 @@
             box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05); overflow: hidden;
         }
 
+        /* GOTA DE UBICACIÓN AZUL */
+        .btn-mapa-azul {
+            background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;
+            border-radius: 1.2rem; width: 48px; height: 48px; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .btn-mapa-azul:active { background-color: #2563eb; color: white; }
+
         .btn-verde {
             background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
             color: white; font-weight: 900; text-transform: uppercase;
-            border-radius: 1.2rem; transition: all 0.2s;
+            border-radius: 1.2rem;
         }
 
-        /* NAVEGACIÓN ESTILO ULTRA-FINO */
-        .nav-fija { 
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
-            border-top: 1px solid #f3e8ff; padding: 10px 0 14px 0; z-index: 9999;
-        }
+        /* NAVEGACIÓN ESTILO FINO */
+        .nav-fija { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-top: 1px solid #f3e8ff; padding: 10px 0 14px 0; z-index: 9999; }
         .menu-grid { max-width: 500px; margin: 0 auto; display: flex; justify-content: space-around; }
         .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #94a3b8; background: none; border: none; }
         .nav-btn .material-symbols-outlined { font-size: 22px !important; font-variation-settings: 'wght' 300; }
         .nav-btn span:last-child { font-size: 8px !important; font-weight: 800; text-transform: uppercase; }
         .active-btn { color: #a21caf !important; }
-        .active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; }
 
-        /* MODAL DE CONFIRMACIÓN PERSONALIZADO (Para Celular) */
-        .modal-custom {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(4px); z-index: 10001; display: none;
-            align-items: center; justify-content: center; padding: 25px;
-        }
-        .modal-box {
-            background: white; width: 100%; max-width: 300px; 
-            border-radius: 2.5rem; padding: 30px; text-align: center;
-            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
+        /* MODALES */
+        .modal-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 25px; }
+        .modal-box { background: white; width: 100%; max-width: 300px; border-radius: 2.5rem; padding: 30px; text-align: center; animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
@@ -78,15 +73,29 @@
     <div id="contenedor-pedidos" class="space-y-6 pb-20"></div>
 </main>
 
-<!-- MODAL DE CONFIRMACIÓN (Reemplaza al alert feo) -->
+<!-- MODAL SELECTOR DE MAPAS -->
+<div id="modal-mapas" class="modal-custom" onclick="cerrarModal('modal-mapas')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+            <span class="material-symbols-outlined text-3xl">map</span>
+        </div>
+        <h3 class="font-black text-slate-800 text-lg mb-6">¿Qué navegador prefieres?</h3>
+        <div class="grid gap-3">
+            <button id="btn-gmaps" class="w-full py-4 bg-[#4285F4] text-white rounded-2xl font-black uppercase text-xs">Google Maps</button>
+            <button id="btn-waze" class="w-full py-4 bg-[#33CCFF] text-white rounded-2xl font-black uppercase text-xs">Waze</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CONFIRMACIÓN ACCIONES -->
 <div id="modal-confirm" class="modal-custom">
     <div class="modal-box">
         <div id="confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
         <h3 id="confirm-title" class="font-black text-slate-800 text-lg leading-tight mb-2"></h3>
-        <p id="confirm-text" class="text-slate-500 text-xs font-medium mb-6"></p>
+        <p id="confirm-text" class="text-slate-500 text-[11px] mb-6"></p>
         <div class="flex gap-3">
-            <button onclick="cerrarConfirm(false)" class="flex-1 py-3 font-black text-slate-400 text-xs uppercase">No, cancelar</button>
-            <button id="confirm-ok" class="flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase shadow-lg shadow-purple-100">Sí, continuar</button>
+            <button onclick="cerrarModal('modal-confirm')" class="flex-1 py-3 font-black text-slate-400 text-xs uppercase">No</button>
+            <button id="confirm-ok" class="flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase shadow-lg">Confirmar</button>
         </div>
     </div>
 </div>
@@ -96,7 +105,6 @@
 <script>
 let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, dinero: 0 };
 let pedidosLocal = [];
-let pendingAction = null;
 
 async function cargarDatos() {
     const icon = document.getElementById('refresh-icon');
@@ -116,7 +124,8 @@ async function cargarDatos() {
                 };
             }
             const precio = parseFloat(String(v["Precio Total"] || 0).replace(',', '.')) || 0;
-            agrupados[idV].items.push({ producto: v.Producto, cant: v.Cantidad, precio: precio });
+            // Guardamos el ID_Fila o el identificador único que use tu API para poder borrar luego
+            agrupados[idV].items.push({ idFila: v.ID_Venta, producto: v.Producto, cant: v.Cantidad, precio: precio });
             agrupados[idV].total += precio;
         });
         pedidosLocal = Object.values(agrupados).reverse();
@@ -137,10 +146,10 @@ function renderizar() {
             <div class="card-pro p-6 space-y-5">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
-                        <span class="bg-purple-50 text-[#a21caf] text-[10px] font-black px-2 py-1 rounded-lg">ORDEN #${ped.id}</span>
+                        <span class="bg-purple-50 text-[#a21caf] text-[10px] font-black px-2 py-1 rounded-lg">ID: ${ped.id}</span>
                         <h2 class="text-xl font-black text-slate-800 uppercase mt-2">${ped.cliente}</h2>
                     </div>
-                    <button onclick="abrirSelectorMapas('${ped.direccion}')" class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center border border-slate-100">
+                    <button onclick="abrirSelectorMapas('${ped.direccion}')" class="btn-mapa-azul">
                         <span class="material-symbols-outlined text-2xl">location_on</span>
                     </button>
                 </div>
@@ -148,7 +157,7 @@ function renderizar() {
                     ${ped.items.map((it, iIdx) => `
                         <div class="flex justify-between items-center py-2.5 px-2 border-b border-white last:border-0">
                             <span class="text-xs font-bold text-slate-600 uppercase">${it.producto} <span class="text-purple-400 ml-1">x${it.cant}</span></span>
-                            <button onclick="askDelete(${idx}, ${iIdx})" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-400 rounded-xl active:bg-red-500 active:text-white transition-all">
+                            <button onclick="askDelete(${idx}, ${iIdx})" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-400 rounded-xl">
                                 <span class="material-symbols-outlined text-sm">delete</span>
                             </button>
                         </div>
@@ -162,49 +171,55 @@ function renderizar() {
     });
 }
 
-// FUNCIONES DE MODAL PERSONALIZADO
+function abrirSelectorMapas(dir) {
+    if(!dir) return alert("Sin dirección");
+    document.getElementById('modal-mapas').style.display = 'flex';
+    document.getElementById('btn-gmaps').onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`);
+    document.getElementById('btn-waze').onclick = () => window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`);
+}
+
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+
 function showConfirm(title, text, type, onOk) {
     const modal = document.getElementById('modal-confirm');
     const iconBox = document.getElementById('confirm-icon');
     const okBtn = document.getElementById('confirm-ok');
-    
     document.getElementById('confirm-title').innerText = title;
     document.getElementById('confirm-text').innerText = text;
     modal.style.display = 'flex';
 
     if(type === 'delete') {
         iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-50 text-red-500";
-        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">delete_forever</span>';
+        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">delete</span>';
         okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-red-500";
     } else {
         iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-50 text-green-500";
-        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">check_circle</span>';
-        okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-green-500";
+        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">check</span>';
+        okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-green-600";
     }
-
-    okBtn.onclick = () => { onOk(); cerrarConfirm(); };
+    okBtn.onclick = () => { onOk(); cerrarModal('modal-confirm'); };
 }
 
-function cerrarConfirm() { document.getElementById('modal-confirm').style.display = 'none'; }
-
 function askDelete(pIdx, iIdx) {
-    showConfirm("¿Eliminar producto?", "Se quitará de la lista y se recalculará el total.", "delete", () => {
-        const item = pedidosLocal[pIdx].items[iIdx];
-        pedidosLocal[pIdx].total -= item.precio;
-        pedidosLocal[pIdx].items.splice(iIdx, 1);
-        if(pedidosLocal[pIdx].items.length === 0) pedidosLocal.splice(pIdx, 1);
-        renderizar();
+    const it = pedidosLocal[pIdx].items[iIdx];
+    showConfirm("¿Eliminar producto?", "Se borrará permanentemente de la base de datos.", "delete", async () => {
+        try {
+            // AQUÍ LA LÓGICA DE ELIMINACIÓN REAL EN SHEETS
+            // Dependiendo de tu API, puede ser "eliminar_fila" o cambiar estado a "ELIMINADO"
+            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "eliminar_item", ID_Venta: it.idFila });
+            cargarDatos(); // Recargamos para que el total se actualice desde la nube
+        } catch (e) { alert("Error al borrar"); }
     });
 }
 
 function askEntrega(id, idx) {
-    showConfirm("¡Pedido Entregado!", "¿Confirmas la recepción del pago y entrega de productos?", "success", async () => {
+    showConfirm("¿Entregado?", "Se registrará como cobrado.", "success", async () => {
         try {
             await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: id, Estado: "ENTREGADO" });
             statsSesion.pedidos++;
             localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
             cargarDatos();
-        } catch (e) { alert("Error de red"); }
+        } catch (e) { alert("Error"); }
     });
 }
 
@@ -224,11 +239,6 @@ function renderMenu() {
         html += `<button onclick="location.href='${opt.link}'" class="nav-btn ${esActivo}"><span class="material-symbols-outlined">${opt.icon}</span><span>${opt.nombre}</span></button>`;
     });
     container.innerHTML = html + '</div></nav>';
-}
-
-function abrirSelectorMapas(dir) {
-    if(!dir) return alert("Sin dirección");
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`);
 }
 
 window.onload = () => { cargarDatos(); renderMenu(); };

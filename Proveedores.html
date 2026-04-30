@@ -29,14 +29,14 @@
         .collapse-content { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0, 1, 0, 1); }
         .expanded .collapse-content { max-height: 2000px; transition: all 0.4s ease-in-out; }
         .expanded .arrow-icon { transform: rotate(180deg); color: #a21caf; }
-        input, select { font-size: 16px !important; } /* Evita zoom en iPhone */
+        input, select { font-size: 16px !important; } 
     </style>
 </head>
 <body class="bg-background text-dark antialiased pb-32">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
     <div class="flex items-center gap-3" onclick="window.location.href='DashboardLacteo.html'">
-        <span class="material-symbols-outlined text-primary font-bold">arrow_back_ios</span>
+        <span class="material-symbols-outlined text-primary font-bold cursor-pointer">arrow_back_ios</span>
         <h1 class="text-sm font-black text-primary uppercase tracking-tighter italic">Lógica Láctea / Proveedores</h1>
     </div>
 </header>
@@ -58,7 +58,7 @@
             
             <div class="relative">
                 <span class="material-symbols-outlined absolute left-4 top-4 text-slate-300 text-xl">badge</span>
-                <input type="number" id="ruc" placeholder="RUC / Cédula" 
+                <input type="text" id="ruc" inputmode="numeric" placeholder="RUC / Cédula" 
                     class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-12 focus:ring-2 focus:ring-primary shadow-inner">
             </div>
 
@@ -67,7 +67,8 @@
                     <option value="Pichincha">Pichincha</option>
                     <option value="Guayas">Guayas</option>
                     <option value="Azuay">Azuay</option>
-                    <!-- Las demás provincias se pueden autocompletar si deseas -->
+                    <option value="Manabí">Manabí</option>
+                    <option value="Carchi">Carchi</option>
                 </select>
                 <input type="text" id="ciudad" placeholder="Ciudad" 
                     class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-bold">
@@ -96,7 +97,7 @@
         </div>
     </section>
 
-    <!-- LISTADO DE PROVEEDORES -->
+    <!-- LISTADO -->
     <div class="flex justify-between items-center px-2">
         <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 italic">Directorio Activo</h3>
         <span id="count-prov" class="bg-primary/10 text-primary text-[10px] px-3 py-1 rounded-full font-black italic">0 PROV</span>
@@ -115,6 +116,7 @@
 <script>
     async function cargarData() {
         try {
+            // Se asume que DairyAPI.obtenerDatos existe en api-config.js
             const [proveedores, compras] = await Promise.all([
                 DairyAPI.obtenerDatos("Proveedores"),
                 DairyAPI.obtenerDatos("Compras")
@@ -125,7 +127,7 @@
             document.getElementById('count-prov').innerText = `${proveedores.length} PROV`;
 
             if (!proveedores || proveedores.length === 0) {
-                contenedor.innerHTML = `<div class="text-center py-10 bg-white rounded-[2rem] border border-dashed border-outline text-slate-300 italic">No hay proveedores en la base</div>`;
+                contenedor.innerHTML = `<div class="text-center py-10 bg-white rounded-[2rem] border border-dashed border-outline text-slate-300 italic">No hay proveedores registrados.</div>`;
                 return;
             }
 
@@ -158,7 +160,6 @@
                     
                     <div class="collapse-content bg-slate-50/50 border-t border-dashed border-outline">
                         <div class="p-6 space-y-5">
-                            <!-- INFO TÉCNICA -->
                             <div class="grid grid-cols-2 gap-3 text-[10px]">
                                 <div class="bg-white p-3 rounded-2xl border border-outline shadow-sm">
                                     <p class="font-black text-slate-400 uppercase mb-1">RUC/ID</p>
@@ -175,7 +176,6 @@
                                 <p class="font-semibold text-dark">${p.Direccion || 'Dirección no especificada'}</p>
                             </div>
                             
-                            <!-- HISTORIAL DE COMPRAS -->
                             <div class="space-y-3">
                                 <h4 class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] italic px-1">Últimos Pedidos</h4>
                                 ${historial.length > 0 ? historial.reverse().slice(0, 3).map(h => `
@@ -191,7 +191,7 @@
                                             <p class="font-black text-primary">$${parseFloat(h.Total).toFixed(2)}</p>
                                         </div>
                                     </div>
-                                `).join('') : '<p class="text-[9px] italic text-slate-400 py-2 text-center">No hay compras registradas aún.</p>'}
+                                `).join('') : '<p class="text-[9px] italic text-slate-400 py-2 text-center">Sin historial de compras.</p>'}
                             </div>
 
                             <button onclick="window.location.href='NuevaCompra.html?prov=${encodeURIComponent(nombreP)}'" 
@@ -203,18 +203,18 @@
                 `;
                 contenedor.appendChild(card);
             });
-        } catch (e) { console.error("Error al cargar:", e); }
+        } catch (e) { console.error("Error al cargar data:", e); }
     }
 
     async function guardarProveedor() {
         const btn = document.getElementById('btn-guardar');
-        const nombre = document.getElementById('nombre').value;
+        const nombre = document.getElementById('nombre').value.trim();
         
         if(!nombre) return alert("¡El nombre de la empresa es obligatorio!");
 
         const nuevo = {
             "Nombre del Proveedor": nombre,
-            "RUC": document.getElementById('ruc').value,
+            "RUC": document.getElementById('ruc').value.toString(),
             "Provincia": document.getElementById('provincia').value,
             "Ciudad": document.getElementById('ciudad').value,
             "Direccion": document.getElementById('direccion').value,
@@ -227,12 +227,18 @@
         btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> REGISTRANDO...`;
         
         try {
+            // Usamos guardarDatos para coincidir con la API v3.4
             await DairyAPI.guardarDatos("Proveedores", nuevo);
-            location.reload();
+            
+            // Pausa estética para confirmar registro
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } catch(e) {
+            console.error("Error al guardar:", e);
             alert("Error al conectar con la base de datos");
             btn.disabled = false;
-            btn.innerHTML = "REGISTRAR PROVEEDOR";
+            btn.innerHTML = `<span class="material-symbols-outlined">add_business</span> REGISTRAR PROVEEDOR`;
         }
     }
 

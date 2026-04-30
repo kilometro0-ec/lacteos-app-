@@ -5,93 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Inventario | Lógica Láctea</title>
 
-    <!-- Tailwind y Fuentes -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="estilos-lacteos.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-
-    <!-- LIBRERÍAS PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     
-    <!-- Config y Lógica del Menú -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-      /* Ajuste específico para las tarjetas de producto en el grid */
-      .card-prod { 
-        background: white; border-radius: 2rem; border: 1px solid var(--outline); 
-        transition: all 0.2s ease; position: relative; 
-      }
-      .card-prod.selected { border: 3px solid var(--primary); background-color: #f5d0fe; transform: scale(0.96); }
-      .selection-check { position: absolute; top: 10px; right: 10px; display: none; color: var(--primary); font-size: 20px; }
-      .selected .selection-check { display: block; }
+      body { background-color: #faf5ff; padding-bottom: 90px; }
       
-      /* Modales estilo Lógica Láctea */
-      .modal { display: none; position: fixed; inset: 0; background: rgba(31, 1, 42, 0.4); z-index: 200; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
-      .modal.active { display: flex; }
+      /* ID CARDS SUPERIORES MEJORADAS */
+      .id-card {
+        background: white;
+        border-radius: 1.8rem;
+        padding: 1rem 0.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #f3e8ff;
+        box-shadow: 0 4px 12px rgba(162, 28, 175, 0.03);
+      }
+      .id-card span.material-symbols-outlined { font-size: 20px; margin-bottom: 4px; }
+      .id-card .label { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; }
+      .id-card .value { font-size: 15px; font-weight: 900; line-height: 1; margin-top: 2px; }
+
+      /* TARJETAS DE PRODUCTO */
+      .card-prod { 
+        background: white; border-radius: 2rem; border: 1px solid #e9d5ff; 
+        transition: all 0.2s ease; position: relative; overflow: hidden;
+      }
+      .card-prod.selected { border: 3px solid #a21caf; background-color: #f5d0fe; }
     </style>
 </head>
-
 <body>
 
-<!-- HEADER -->
-<header class="fixed top-0 w-full h-14 bg-white border-b border-purple-100 flex justify-between items-center px-4 z-50">
-  <div class="flex items-center gap-2">
-    <div id="btn-cancelar" class="hidden bg-red-100 text-red-600 px-3 py-1 rounded-full font-black text-[9px] uppercase" onclick="cancelarSeleccion()">Cancelar</div>
-    <h1 id="header-title" class="text-lg font-black text-[#a21caf] italic uppercase tracking-tighter">Stock</h1>
-  </div>
-  <div class="flex gap-1">
-      <button onclick="descargarPDF()" class="header-btn p-2 text-[#a21caf]"><span class="material-symbols-outlined">picture_as_pdf</span></button>
-      <button id="btn-eliminar-multi" class="hidden bg-red-500 text-white p-2 rounded-xl" onclick="eliminarSeleccionados()"><span class="material-symbols-outlined">delete</span></button>
-      <button onclick="window.location.reload()" class="header-btn p-2 text-gray-400"><span class="material-symbols-outlined">sync</span></button>
-  </div>
+<header class="fixed top-0 w-full h-16 bg-white border-b border-purple-100 flex justify-between items-center px-4 z-50">
+    <div class="flex items-center gap-2">
+        <div id="btn-cancelar" class="hidden bg-red-500 text-white px-3 py-1 rounded-full font-black text-[10px]" onclick="cancelarSeleccion()">X</div>
+        <h1 id="header-title" class="text-xl font-black text-[#a21caf] italic uppercase">STOCK</h1>
+    </div>
+    <div class="flex gap-2">
+        <button onclick="descargarPDF()" class="text-[#a21caf]"><span class="material-symbols-outlined text-3xl">picture_as_pdf</span></button>
+        <button onclick="window.location.reload()" class="text-gray-400"><span class="material-symbols-outlined text-3xl">sync</span></button>
+    </div>
 </header>
 
-<main class="pt-16 px-4">
-  <!-- INDICADORES DASHBOARD -->
-  <section class="grid grid-cols-3 gap-2 mb-6">
-    <div class="card-sutil !p-3 text-center shadow-sm">
-        <p class="text-[8px] font-black uppercase text-gray-400">Bodega</p>
-        <p id="valor-bodega" class="text-xs font-black text-[#a21caf]">$0</p>
-    </div>
-    <div class="card-sutil !p-3 text-center shadow-sm border-red-100">
-        <p class="text-[8px] font-black uppercase text-red-400">Críticos</p>
-        <p id="count-critico" class="text-xs font-black text-red-500">0</p>
-    </div>
-    <div class="card-sutil !p-3 text-center shadow-sm border-green-100">
-        <p class="text-[8px] font-black uppercase text-green-400">Items</p>
-        <p id="total-sku" class="text-xs font-black text-green-600">0</p>
-    </div>
-  </section>
+<main class="pt-20 px-4">
+    <section class="grid grid-cols-3 gap-3 mb-6">
+        <div class="id-card">
+            <span class="material-symbols-outlined text-purple-500">payments</span>
+            <div class="label">Bodega</div>
+            <div id="valor-bodega" class="value text-[#a21caf]">$0</div>
+        </div>
+        <div class="id-card border-red-100">
+            <span class="material-symbols-outlined text-red-500">warning</span>
+            <div class="label text-red-400">Críticos</div>
+            <div id="count-critico" class="value text-red-600">0</div>
+        </div>
+        <div class="id-card border-green-100">
+            <span class="material-symbols-outlined text-green-500">inventory_2</span>
+            <div class="label text-green-500">Items</div>
+            <div id="total-sku" class="value text-green-700">0</div>
+        </div>
+    </section>
 
-  <input type="text" id="filtro" oninput="filtrar()" placeholder="Buscar producto..." class="input-sutil mb-6 shadow-sm">
+    <input type="text" id="filtro" oninput="filtrar()" placeholder="Buscar producto..." class="input-sutil mb-6">
 
-  <div id="grid-productos" class="grid grid-cols-2 gap-3 mb-24"></div>
-
-  <!-- BOTÓN FLOTANTE (ESTILO MAGENTA) -->
-  <div class="fixed bottom-24 right-4 z-40">
-      <button onclick="abrirModal('modal-nuevo')" class="btn-magenta w-14 h-14 rounded-full flex items-center justify-center shadow-2xl">
-          <span class="material-symbols-outlined text-2xl">add</span>
-      </button>
-  </div>
+    <div id="grid-productos" class="grid grid-cols-2 gap-4 mb-20"></div>
 </main>
 
-<!-- CONTENEDOR PARA EL MENÚ DINÁMICO (menu-logic.js lo llena) -->
 <div id="menu-container"></div>
-
-<!-- MODAL NUEVO -->
-<div id="modal-nuevo" class="modal">
-    <div class="card-sutil w-full max-w-xs space-y-4 shadow-2xl scale-in-center">
-        <h2 class="text-titulo text-center text-sm text-[#a21caf]">Nuevo Registro</h2>
-        <input type="text" id="n-nombre" placeholder="Nombre" class="input-sutil uppercase text-sm">
-        <input type="number" id="n-pvp" placeholder="PVP $" class="input-sutil text-sm">
-        <input type="number" id="n-stock" placeholder="Stock" class="input-sutil text-sm">
-        <button onclick="guardarNuevo()" class="btn-magenta w-full py-4 text-sm">Guardar Item</button>
-        <button onclick="cerrarModal('modal-nuevo')" class="w-full text-gray-400 font-bold uppercase text-[9px]">Cancelar</button>
-    </div>
-</div>
 
 <script>
 let inventarioLocal = [];
@@ -102,11 +89,10 @@ async function cargarInventario() {
     try {
         const res = await DairyAPI.obtenerDatos("Inventario");
         if (Array.isArray(res)) {
-            // ORDEN POR VENTAS (MAYOR A MENOR)
             inventarioLocal = res.sort((a, b) => (Number(b.Ventas) || 0) - (Number(a.Ventas) || 0));
             renderizar(inventarioLocal);
         }
-    } catch (e) { console.error("Error:", e); }
+    } catch (e) { console.error(e); }
 }
 
 function renderizar(lista) {
@@ -120,17 +106,19 @@ function renderizar(lista) {
         totalBodega += (Number(p.Precio_Distribuidor || 0) * stock);
 
         const card = document.createElement('div');
-        card.className = `card-prod p-3 h-40 flex flex-col justify-between ${stock <= 5 ? 'border-red-200' : ''}`;
+        card.className = `card-prod p-4 h-44 flex flex-col justify-between shadow-sm ${stock <= 5 ? 'border-red-200 bg-red-50' : ''}`;
         card.dataset.id = p.ID;
         card.innerHTML = `
-            <span class="selection-check material-symbols-outlined">check_circle</span>
             <div>
-                <p class="text-[7px] font-black text-gray-400 uppercase tracking-widest">ID: ${p.ID}</p>
-                <h3 class="font-bold text-[10px] uppercase leading-tight line-clamp-2 mt-1">${p.Producto}</h3>
+                <div class="flex justify-between items-start">
+                    <span class="text-[8px] font-black text-gray-300">ID: ${p.ID}</span>
+                    <span class="text-[9px] font-black text-orange-500 uppercase">🔥 ${p.Ventas || 0}</span>
+                </div>
+                <h3 class="font-bold text-[11px] uppercase leading-tight mt-1 text-slate-700">${p.Producto}</h3>
             </div>
-            <div class="flex justify-between items-end">
-                <span class="text-[#a21caf] font-black text-lg">$${Number(p.Precio_Venta || 0).toFixed(2)}</span>
-                <span class="px-2 py-0.5 rounded-lg ${stock <= 5 ? 'bg-red-500 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black text-[10px]">${stock}</span>
+            <div class="flex justify-between items-end border-t border-purple-50 pt-2">
+                <span class="text-green-600 font-black text-xl">$${Number(p.Precio_Venta || 0).toFixed(2)}</span>
+                <span class="px-2 py-1 rounded-lg ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black text-xs">${stock}</span>
             </div>`;
 
         card.oncontextmenu = (e) => { e.preventDefault(); activarModo(p.ID); };
@@ -147,54 +135,43 @@ function descargarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const ahora = new Date();
-    const fechaStr = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString();
-
-    // Encabezado
-    doc.setFontSize(16);
-    doc.setTextColor(162, 28, 175);
-    doc.text("REPORTE DE INVENTARIO", 14, 20);
     
-    doc.setFontSize(9);
-    doc.setTextColor(100);
-    doc.text(`CIUDAD: QUITO - ECUADOR`, 14, 27);
-    doc.text(`FECHA/HORA: ${fechaStr}`, 14, 32);
-
-    const data = inventarioLocal.map(p => [p.ID, p.Producto.substring(0,40), p.Ventas || 0, p.Stock]);
     doc.autoTable({
         head: [['ID', 'PRODUCTO', 'VENTAS', 'STOCK']],
-        body: data,
-        startY: 38,
-        theme: 'grid',
-        headStyles: { fillColor: [162, 28, 175], fontSize: 8 },
-        styles: { fontSize: 7 }
+        body: inventarioLocal.map(p => [p.ID, p.Producto.toUpperCase(), p.Ventas || 0, p.Stock]),
+        startY: 40,
+        margin: { bottom: 25 },
+        didDrawPage: (data) => {
+            doc.setFontSize(16);
+            doc.setTextColor(162, 28, 175);
+            doc.text("REPORTE DE INVENTARIO", 14, 20);
+            doc.setFontSize(9);
+            doc.setTextColor(100);
+            doc.text(`QUITO - ECUADOR | ${ahora.toLocaleDateString()} ${ahora.toLocaleTimeString()}`, 14, 27);
+            
+            // Numeración de páginas
+            const pagenum = doc.internal.getNumberOfPages();
+            doc.text("Página " + pagenum, 180, 285);
+        }
     });
 
-    // SELLO FINAL SOLICITADO
-    const finalY = doc.lastAutoTable.finalY + 20;
-    doc.setFontSize(30);
-    doc.text("🐄", 14, finalY + 5);
-    
+    const finalY = doc.lastAutoTable.finalY + 15;
     doc.setFontSize(10);
     doc.setTextColor(0);
-    doc.text("muuuu... DOCUMENTO OFICIAL - LOGICA LACTEA", 28, finalY);
-    
+    doc.text("DOCUMENTO OFICIAL - LOGICA LACTEA", 14, finalY);
     doc.setFontSize(8);
-    doc.setTextColor(120);
-    doc.text("by Corporación 360 | Quito - Ecuador", 28, finalY + 6);
+    doc.text("by Corporación 360 | muuuu...", 14, finalY + 5);
 
-    doc.save(`Inventario_Quito_${ahora.getTime()}.pdf`);
+    doc.save(`Inventario_${ahora.getTime()}.pdf`);
 }
 
-function activarModo(id) { modoSeleccion = true; document.getElementById('btn-cancelar').classList.remove('hidden'); document.getElementById('btn-eliminar-multi').classList.remove('hidden'); toggleSeleccion(id); }
-function cancelarSeleccion() { modoSeleccion = false; seleccionados.clear(); document.querySelectorAll('.card-prod').forEach(c => c.classList.remove('selected')); document.getElementById('btn-cancelar').classList.add('hidden'); document.getElementById('btn-eliminar-multi').classList.add('hidden'); document.getElementById('header-title').innerText = "STOCK"; }
+function activarModo(id) { modoSeleccion = true; document.getElementById('btn-cancelar').classList.remove('hidden'); toggleSeleccion(id); }
+function cancelarSeleccion() { modoSeleccion = false; seleccionados.clear(); document.querySelectorAll('.card-prod').forEach(c => c.classList.remove('selected')); document.getElementById('btn-cancelar').classList.add('hidden'); }
 function toggleSeleccion(id) { 
     const el = document.querySelector(`[data-id="${id}"]`);
     seleccionados.has(id) ? seleccionados.delete(id) : seleccionados.add(id);
     el.classList.toggle('selected');
-    document.getElementById('header-title').innerText = seleccionados.size > 0 ? `${seleccionados.size} SELEC.` : "STOCK";
 }
-function abrirModal(id) { document.getElementById(id).classList.add('active'); }
-function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 function filtrar() { const b = document.getElementById('filtro').value.toLowerCase(); renderizar(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b))); }
 
 window.onload = cargarInventario;

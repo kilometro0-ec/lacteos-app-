@@ -43,57 +43,67 @@
 
 <main class="pt-20 px-4 max-w-lg mx-auto space-y-6">
     
-    <!-- SECCIÓN REGISTRO -->
-    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm space-y-4">
-        <h2 class="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-2 italic">
-            <span class="material-symbols-outlined text-sm">factory</span> Nuevo Registro
-        </h2>
-
-        <div class="space-y-3">
-            <div class="relative">
-                <span class="material-symbols-outlined absolute left-4 top-4 text-slate-300 text-xl">store</span>
-                <input type="text" id="nombre" placeholder="Nombre de la Empresa" 
-                    class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-12 focus:ring-2 focus:ring-primary shadow-inner font-semibold">
+    <!-- SECCIÓN REGISTRO (MINIMIZADA POR DEFECTO) -->
+    <section id="seccion-registro" class="bg-white rounded-[2.5rem] border border-outline shadow-sm overflow-hidden transition-all duration-300">
+        <!-- Barra de activación -->
+        <div onclick="toggleFormulario()" class="p-6 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors">
+            <h2 class="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2 italic">
+                <span class="material-symbols-outlined text-sm">factory</span> Nuevo Registro
+            </h2>
+            <div class="flex items-center gap-2">
+                <span id="txt-estado" class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Agregar</span>
+                <span id="icono-registro" class="material-symbols-outlined text-primary transition-transform">add_circle</span>
             </div>
-            
-            <div class="relative">
-                <span class="material-symbols-outlined absolute left-4 top-4 text-slate-300 text-xl">badge</span>
-                <input type="text" id="ruc" inputmode="numeric" placeholder="RUC / Cédula" 
-                    class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-12 focus:ring-2 focus:ring-primary shadow-inner">
-            </div>
+        </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <select id="provincia" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm font-bold italic">
-                    <option value="Pichincha">Pichincha</option>
-                    <option value="Guayas">Guayas</option>
-                    <option value="Azuay">Azuay</option>
-                    <option value="Manabí">Manabí</option>
-                    <option value="Carchi">Carchi</option>
-                </select>
-                <input type="text" id="ciudad" placeholder="Ciudad" 
-                    class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-bold">
-            </div>
-
-            <input type="text" id="direccion" placeholder="Dirección / Localización" 
-                class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-xs italic">
-
-            <div class="grid grid-cols-2 gap-3">
+        <!-- Contenido Oculto -->
+        <div id="contenido-registro" class="px-6 pb-6 space-y-4 hidden border-t border-dashed border-outline/50 pt-4">
+            <div class="space-y-3">
                 <div class="relative">
-                    <span class="material-symbols-outlined absolute left-3 top-4 text-slate-300 text-lg">call</span>
-                    <input type="tel" id="telefono" placeholder="WhatsApp" 
-                        class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-10 focus:ring-2 focus:ring-primary shadow-inner">
+                    <span class="material-symbols-outlined absolute left-4 top-4 text-slate-300 text-xl">store</span>
+                    <input type="text" id="nombre" placeholder="Nombre de la Empresa" 
+                        class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-12 focus:ring-2 focus:ring-primary shadow-inner font-semibold text-sm">
                 </div>
-                <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-xs font-black uppercase tracking-tighter">
-                    <option value="Lácteos">Lácteos</option>
-                    <option value="Insumos">Insumos</option>
-                    <option value="Servicios">Servicios</option>
-                </select>
-            </div>
+                
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-4 text-slate-300 text-xl">badge</span>
+                    <input type="text" id="ruc" inputmode="numeric" placeholder="RUC / Cédula" 
+                        class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-12 focus:ring-2 focus:ring-primary shadow-inner text-sm">
+                </div>
 
-            <button onclick="guardarProveedor()" id="btn-guardar" 
-                class="w-full bg-slate-800 text-white font-black py-5 rounded-[2rem] shadow-xl active:scale-95 transition-all flex justify-center items-center gap-3 tracking-widest text-xs">
-                <span class="material-symbols-outlined">add_business</span> REGISTRAR PROVEEDOR
-            </button>
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="provincia" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm font-bold italic">
+                        <option value="Pichincha">Pichincha</option>
+                        <option value="Guayas">Guayas</option>
+                        <option value="Azuay">Azuay</option>
+                        <option value="Manabí">Manabí</option>
+                        <option value="Carchi">Carchi</option>
+                    </select>
+                    <input type="text" id="ciudad" placeholder="Ciudad" 
+                        class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-bold text-sm">
+                </div>
+
+                <input type="text" id="direccion" placeholder="Dirección / Localización" 
+                    class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-xs italic">
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-4 text-slate-300 text-lg">call</span>
+                        <input type="tel" id="telefono" placeholder="WhatsApp" 
+                            class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-10 focus:ring-2 focus:ring-primary shadow-inner text-sm">
+                    </div>
+                    <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-[10px] font-black uppercase tracking-tighter">
+                        <option value="Lácteos">Lácteos</option>
+                        <option value="Insumos">Insumos</option>
+                        <option value="Servicios">Servicios</option>
+                    </select>
+                </div>
+
+                <button onclick="guardarProveedor()" id="btn-guardar" 
+                    class="w-full bg-dark text-white font-black py-5 rounded-[2rem] shadow-xl active:scale-95 transition-all flex justify-center items-center gap-3 tracking-widest text-xs">
+                    <span class="material-symbols-outlined">add_business</span> REGISTRAR PROVEEDOR
+                </button>
+            </div>
         </div>
     </section>
 
@@ -104,6 +114,7 @@
     </div>
 
     <div id="contenedor-maestro" class="space-y-4">
+        <!-- Esqueleto de carga -->
         <div class="flex flex-col items-center py-10 text-slate-300 animate-pulse">
             <span class="material-symbols-outlined text-4xl mb-2">sync</span>
             <p class="text-[10px] font-bold uppercase tracking-widest">Sincronizando Base de Datos...</p>
@@ -114,9 +125,30 @@
 <div id="menu-container"></div>
 
 <script>
+    // Lógica para Expandir/Minimizar el formulario de registro
+    function toggleFormulario() {
+        const contenido = document.getElementById('contenido-registro');
+        const icono = document.getElementById('icono-registro');
+        const seccion = document.getElementById('seccion-registro');
+        const txt = document.getElementById('txt-estado');
+
+        if (contenido.classList.contains('hidden')) {
+            contenido.classList.remove('hidden');
+            icono.innerText = "do_not_disturb_on";
+            icono.style.transform = "rotate(180deg)";
+            txt.innerText = "Cerrar";
+            seccion.classList.add('ring-2', 'ring-primary/20');
+        } else {
+            contenido.classList.add('hidden');
+            icono.innerText = "add_circle";
+            icono.style.transform = "rotate(0deg)";
+            txt.innerText = "Agregar";
+            seccion.classList.remove('ring-2', 'ring-primary/20');
+        }
+    }
+
     async function cargarData() {
         try {
-            // Se asume que DairyAPI.obtenerDatos existe en api-config.js
             const [proveedores, compras] = await Promise.all([
                 DairyAPI.obtenerDatos("Proveedores"),
                 DairyAPI.obtenerDatos("Compras")
@@ -127,13 +159,13 @@
             document.getElementById('count-prov').innerText = `${proveedores.length} PROV`;
 
             if (!proveedores || proveedores.length === 0) {
-                contenedor.innerHTML = `<div class="text-center py-10 bg-white rounded-[2rem] border border-dashed border-outline text-slate-300 italic">No hay proveedores registrados.</div>`;
+                contenedor.innerHTML = `<div class="text-center py-10 bg-white rounded-[2rem] border border-dashed border-outline text-slate-300 italic text-xs uppercase">No hay proveedores en la red.</div>`;
                 return;
             }
 
             proveedores.reverse().forEach(p => {
                 const nombreP = p["Nombre del Proveedor"];
-                const historial = compras.filter(c => c.Proveedor === nombreP);
+                const historial = (compras || []).filter(c => c.Proveedor === nombreP);
                 const totalInvertido = historial.reduce((acc, curr) => acc + (parseFloat(curr.Total) || 0), 0);
 
                 const card = document.createElement('div');
@@ -183,12 +215,12 @@
                                         <div class="flex items-center gap-2">
                                             <div class="w-1.5 h-1.5 rounded-full bg-success"></div>
                                             <div>
-                                                <p class="font-black text-dark uppercase text-[10px]">${h.Producto}</p>
-                                                <p class="text-[8px] text-slate-400 font-bold">${h.Fecha}</p>
+                                                <p class="font-black text-dark uppercase text-[10px]">${h.Producto || 'Varios'}</p>
+                                                <p class="text-[8px] text-slate-400 font-bold">${h.Fecha || '--/--'}</p>
                                             </div>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-black text-primary">$${parseFloat(h.Total).toFixed(2)}</p>
+                                            <p class="font-black text-primary">$${parseFloat(h.Total || 0).toFixed(2)}</p>
                                         </div>
                                     </div>
                                 `).join('') : '<p class="text-[9px] italic text-slate-400 py-2 text-center">Sin historial de compras.</p>'}
@@ -227,15 +259,13 @@
         btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> REGISTRANDO...`;
         
         try {
-            // Usamos guardarDatos para coincidir con la API v3.4
             await DairyAPI.guardarDatos("Proveedores", nuevo);
             
-            // Pausa estética para confirmar registro
+            // Refresco de pantalla después de éxito
             setTimeout(() => {
                 location.reload();
             }, 1000);
         } catch(e) {
-            console.error("Error al guardar:", e);
             alert("Error al conectar con la base de datos");
             btn.disabled = false;
             btn.innerHTML = `<span class="material-symbols-outlined">add_business</span> REGISTRAR PROVEEDOR`;

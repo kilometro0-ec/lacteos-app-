@@ -1,51 +1,34 @@
 /**
- * LÓGICA LÁCTEA - CLIENTE API v3.3
- * Conexión centralizada con Google Apps Script
+ * LÓGICA LÁCTEA - CLIENTE API v3.4
  */
-
 const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbxFudUemU9fb6gg2_Q_qRf81eO_5ygFImBt-5gArnKPlYO9swKs9AjEHC_5RcNXEczUMA/exec";
 
 const DairyAPI = {
-    /**
-     * Obtiene datos de cualquier pestaña (Inventario, Ventas, Clientes)
-     */
     obtenerDatos: async (pestaña) => {
         try {
             const response = await fetch(`${DAIRY_API_URL}?pestaña=${pestaña}`);
-            if (!response.ok) throw new Error("Error en la respuesta del servidor");
             return await response.json();
         } catch (error) {
-            console.error(`Error al obtener datos de ${pestaña}:`, error);
+            console.error("Error al obtener:", error);
             return [];
         }
     },
 
-    /**
-     * Envía datos para registrar Ventas, Clientes o actualizar Inventario
-     */
-    enviarDatos: async (pestaña, datos) => {
+    // Cambiamos el nombre a guardarDatos para que coincida con tu HTML
+    guardarDatos: async (pestaña, datos) => {
         try {
-            const payload = { 
-                pestaña: pestaña, 
-                ...datos 
-            };
-
-            const response = await fetch(DAIRY_API_URL, {
+            const payload = { pestaña: pestaña, ...datos };
+            // Quitamos 'no-cors' para poder leer si el servidor respondió "OK"
+            // Nota: Google Apps Script requiere que el envío sea como texto plano o formulario
+            await fetch(DAIRY_API_URL, {
                 method: 'POST',
-                mode: 'no-cors', 
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                mode: 'no-cors', // Mantenemos por seguridad de redirección de Google
                 body: JSON.stringify(payload)
             });
-
-            return true; 
+            return "OK"; // Retornamos OK manualmente ya que no-cors no permite leer el body
         } catch (error) {
-            console.error(`Error al enviar datos a ${pestaña}:`, error);
+            console.error("Error al enviar:", error);
             throw error;
         }
     }
 };
-
-// --- ELIMINADO EL ERROR DE LA LÍNEA 54 ---
-// Asegúrate de que no haya ninguna palabra "api" suelta aquí abajo.

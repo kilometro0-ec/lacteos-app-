@@ -10,13 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <style>
-        body { background-color: #f8fafc; padding-bottom: 80px; font-family: 'sans-serif'; }
+        body { background-color: #f8fafc; padding-bottom: 90px; font-family: sans-serif; }
         
-        /* Animaciones */
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Estilos de Tarjeta */
         .card-pro {
             background: white; border-radius: 2rem; border: 1px solid #f1f5f9;
             box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05); overflow: hidden;
@@ -27,93 +22,81 @@
             color: white; font-weight: 900; text-transform: uppercase;
             border-radius: 1.2rem; transition: all 0.2s;
         }
-        .btn-verde:active { transform: scale(0.96); opacity: 0.9; }
 
-        /* NAVEGACIÓN (Ajustada para ser más fina como las otras páginas) */
+        /* NAVEGACIÓN ESTILO ULTRA-FINO */
         .nav-fija { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(8px);
-            border-top: 1px solid #f3e8ff; padding: 8px 0 12px 0; z-index: 9999;
+            background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px);
+            border-top: 1px solid #f3e8ff; padding: 10px 0 14px 0; z-index: 9999;
         }
-        .menu-grid { max-width: 500px; margin: 0 auto; display: flex; justify-content: space-around; align-items: center; }
-        .nav-btn { 
-            flex: 1; display: flex; flex-direction: column; align-items: center; 
-            gap: 2px; color: #94a3b8; background: none; border: none; outline: none;
-        }
-        .nav-btn .material-symbols-outlined { 
-            font-size: 22px !important; 
-            font-variation-settings: 'wght' 300; 
-        }
-        .nav-btn span:last-child { 
-            font-size: 8px !important; font-weight: 800; 
-            text-transform: uppercase; letter-spacing: 0.5px; 
-        }
+        .menu-grid { max-width: 500px; margin: 0 auto; display: flex; justify-content: space-around; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #94a3b8; background: none; border: none; }
+        .nav-btn .material-symbols-outlined { font-size: 22px !important; font-variation-settings: 'wght' 300; }
+        .nav-btn span:last-child { font-size: 8px !important; font-weight: 800; text-transform: uppercase; }
         .active-btn { color: #a21caf !important; }
         .active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400; }
 
-        /* Modales */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 24px; }
-        .modal-content { background: white; width: 100%; max-width: 320px; border-radius: 2.5rem; p-6; text-align: center; }
+        /* MODAL DE CONFIRMACIÓN PERSONALIZADO (Para Celular) */
+        .modal-custom {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(4px); z-index: 10001; display: none;
+            align-items: center; justify-content: center; padding: 25px;
+        }
+        .modal-box {
+            background: white; width: 100%; max-width: 300px; 
+            border-radius: 2.5rem; padding: 30px; text-align: center;
+            animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-20 bg-white/80 backdrop-blur-sm border-b border-purple-50">
     <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#a21caf] to-[#db2777] flex items-center justify-center text-white shadow-md shadow-purple-100">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#a21caf] to-[#db2777] flex items-center justify-center text-white shadow-md">
             <span class="material-symbols-outlined font-black">local_shipping</span>
         </div>
-        <div>
-            <h1 class="font-black text-slate-800 leading-none">DESPACHOS</h1>
-            <p class="text-[9px] font-bold text-slate-400 tracking-widest uppercase">Hoja de ruta</p>
-        </div>
+        <h1 class="font-black text-slate-800 tracking-tight">DESPACHOS</h1>
     </div>
-    <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:rotate-180 transition-all duration-500">
+    <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
         <span id="refresh-icon" class="material-symbols-outlined text-slate-500">sync</span>
     </button>
 </header>
 
 <main class="pt-24 px-5 max-w-lg mx-auto space-y-6">
-    <!-- CONTADORES -->
     <div class="grid grid-cols-2 gap-4">
-        <div class="bg-white p-5 rounded-[2rem] border border-orange-50 shadow-sm text-center">
+        <div class="bg-white p-5 rounded-[2rem] border border-orange-50 text-center">
             <p id="cont-pend" class="text-3xl font-black text-orange-500">0</p>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Por Entregar</p>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Pendientes</p>
         </div>
-        <div class="bg-white p-5 rounded-[2rem] border border-green-50 shadow-sm text-center">
+        <div class="bg-white p-5 rounded-[2rem] border border-green-50 text-center">
             <p id="cont-ent" class="text-3xl font-black text-green-500">0</p>
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Entregados</p>
         </div>
     </div>
-
     <div id="contenedor-pedidos" class="space-y-6 pb-20"></div>
 </main>
 
-<!-- SELECTOR DE MAPAS -->
-<div id="modal-mapas" class="modal-overlay" onclick="cerrarModal()">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 space-y-4 shadow-2xl scale-up" onclick="event.stopPropagation()">
-        <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-2 text-purple-600">
-            <span class="material-symbols-outlined text-3xl">explore</span>
+<!-- MODAL DE CONFIRMACIÓN (Reemplaza al alert feo) -->
+<div id="modal-confirm" class="modal-custom">
+    <div class="modal-box">
+        <div id="confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
+        <h3 id="confirm-title" class="font-black text-slate-800 text-lg leading-tight mb-2"></h3>
+        <p id="confirm-text" class="text-slate-500 text-xs font-medium mb-6"></p>
+        <div class="flex gap-3">
+            <button onclick="cerrarConfirm(false)" class="flex-1 py-3 font-black text-slate-400 text-xs uppercase">No, cancelar</button>
+            <button id="confirm-ok" class="flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase shadow-lg shadow-purple-100">Sí, continuar</button>
         </div>
-        <h3 class="font-black text-slate-800 text-lg">¿Cómo deseas llegar?</h3>
-        <div class="grid gap-3 pt-2">
-            <button id="btn-gmaps" class="w-full py-4 bg-[#4285F4] text-white rounded-2xl font-black flex items-center justify-center gap-2">
-                GOOGLE MAPS
-            </button>
-            <button id="btn-waze" class="w-full py-4 bg-[#33CCFF] text-white rounded-2xl font-black flex items-center justify-center gap-2">
-                WAZE
-            </button>
-        </div>
-        <button onclick="cerrarModal()" class="text-slate-400 font-bold text-xs uppercase tracking-widest pt-2">Cerrar</button>
     </div>
 </div>
 
 <div id="menu-container"></div>
 
 <script>
-// Corregimos el contador: Si no hay datos en el storage para "hoy", empezamos en 0
 let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, dinero: 0 };
 let pedidosLocal = [];
+let pendingAction = null;
 
 async function cargarDatos() {
     const icon = document.getElementById('refresh-icon');
@@ -123,9 +106,7 @@ async function cargarDatos() {
             DairyAPI.obtenerDatos("Ventas"),
             DairyAPI.obtenerDatos("Clientes")
         ]);
-
         const agrupados = {};
-        // Filtramos solo pendientes
         ventas.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE").forEach(v => {
             const idV = v.ID_Venta || "S/N";
             if (!agrupados[idV]) {
@@ -138,7 +119,6 @@ async function cargarDatos() {
             agrupados[idV].items.push({ producto: v.Producto, cant: v.Cantidad, precio: precio });
             agrupados[idV].total += precio;
         });
-
         pedidosLocal = Object.values(agrupados).reverse();
         renderizar();
     } catch (e) { console.error(e); }
@@ -150,82 +130,82 @@ function renderizar() {
     document.getElementById('cont-pend').innerText = pedidosLocal.length;
     document.getElementById('cont-ent').innerText = statsSesion.pedidos;
     
-    container.innerHTML = pedidosLocal.length ? "" : `
-        <div class="text-center py-20 fade-in">
-            <span class="material-symbols-outlined text-6xl text-green-200">task_alt</span>
-            <p class="text-slate-400 font-black mt-4 uppercase text-xs">¡Excelente trabajo!<br>Ruta finalizada</p>
-        </div>`;
+    container.innerHTML = pedidosLocal.length ? "" : '<div class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">Ruta Finalizada</div>';
     
     pedidosLocal.forEach((ped, idx) => {
         container.innerHTML += `
-            <div class="card-pro p-6 space-y-5 fade-in">
+            <div class="card-pro p-6 space-y-5">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
-                        <span class="bg-purple-100 text-[#a21caf] text-[10px] font-black px-2 py-1 rounded-lg">ORDEN #${ped.id}</span>
-                        <h2 class="text-xl font-black text-slate-800 uppercase mt-2 leading-tight">${ped.cliente}</h2>
+                        <span class="bg-purple-50 text-[#a21caf] text-[10px] font-black px-2 py-1 rounded-lg">ORDEN #${ped.id}</span>
+                        <h2 class="text-xl font-black text-slate-800 uppercase mt-2">${ped.cliente}</h2>
                     </div>
-                    <button onclick="abrirSelectorMapas('${ped.direccion}')" class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center border border-slate-100 active:bg-purple-600 active:text-white transition-all">
+                    <button onclick="abrirSelectorMapas('${ped.direccion}')" class="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center border border-slate-100">
                         <span class="material-symbols-outlined text-2xl">location_on</span>
                     </button>
                 </div>
-
-                <div class="bg-slate-50/50 rounded-2xl p-3 border border-slate-50">
+                <div class="bg-slate-50/50 rounded-2xl p-3">
                     ${ped.items.map((it, iIdx) => `
                         <div class="flex justify-between items-center py-2.5 px-2 border-b border-white last:border-0">
-                            <span class="text-xs font-bold text-slate-600 uppercase">${it.producto} <span class="text-purple-400 ml-2">x${it.cant}</span></span>
-                            <button onclick="eliminarProducto(${idx}, ${iIdx})" class="w-8 h-8 flex items-center justify-center text-slate-300 active:text-red-500 transition-colors">
-                                <span class="material-symbols-outlined text-lg">close</span>
+                            <span class="text-xs font-bold text-slate-600 uppercase">${it.producto} <span class="text-purple-400 ml-1">x${it.cant}</span></span>
+                            <button onclick="askDelete(${idx}, ${iIdx})" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-400 rounded-xl active:bg-red-500 active:text-white transition-all">
+                                <span class="material-symbols-outlined text-sm">delete</span>
                             </button>
                         </div>
                     `).join('')}
                 </div>
-
                 <div class="flex justify-between items-center pt-2">
-                    <div>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Total a cobrar</p>
-                        <p class="text-3xl font-black text-slate-900 leading-none">$${ped.total.toFixed(2)}</p>
-                    </div>
-                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="btn-verde px-8 h-14 shadow-lg shadow-green-100">ENTREGADO</button>
+                    <p class="text-3xl font-black text-slate-900">$${ped.total.toFixed(2)}</p>
+                    <button onclick="askEntrega('${ped.id}', ${idx})" class="btn-verde px-8 h-14 shadow-lg shadow-green-100">ENTREGADO</button>
                 </div>
             </div>`;
     });
 }
 
-function eliminarProducto(pedidoIdx, itemIdx) {
-    if(!confirm("¿Deseas quitar este producto del pedido?")) return;
-    const item = pedidosLocal[pedidoIdx].items[itemIdx];
-    pedidosLocal[pedidoIdx].total -= item.precio;
-    pedidosLocal[pedidoIdx].items.splice(itemIdx, 1);
+// FUNCIONES DE MODAL PERSONALIZADO
+function showConfirm(title, text, type, onOk) {
+    const modal = document.getElementById('modal-confirm');
+    const iconBox = document.getElementById('confirm-icon');
+    const okBtn = document.getElementById('confirm-ok');
     
-    if(pedidosLocal[pedidoIdx].items.length === 0) {
-        pedidosLocal.splice(pedidoIdx, 1);
-    }
-    renderizar();
-}
-
-function abrirSelectorMapas(dir) {
-    if(!dir) {
-        alert("El cliente no tiene dirección registrada 📍");
-        return;
-    }
-    const modal = document.getElementById('modal-mapas');
+    document.getElementById('confirm-title').innerText = title;
+    document.getElementById('confirm-text').innerText = text;
     modal.style.display = 'flex';
-    document.getElementById('btn-gmaps').onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`);
-    document.getElementById('btn-waze').onclick = () => window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`);
+
+    if(type === 'delete') {
+        iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-50 text-red-500";
+        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">delete_forever</span>';
+        okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-red-500";
+    } else {
+        iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-50 text-green-500";
+        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">check_circle</span>';
+        okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-green-500";
+    }
+
+    okBtn.onclick = () => { onOk(); cerrarConfirm(); };
 }
 
-function cerrarModal() { document.getElementById('modal-mapas').style.display = 'none'; }
+function cerrarConfirm() { document.getElementById('modal-confirm').style.display = 'none'; }
 
-async function confirmarEntrega(idVenta, idx) {
-    // Mensaje más amigable
-    if(!confirm("¿Confirmas que el pedido de " + pedidosLocal[idx].cliente + " ha sido entregado? 🥛")) return;
-    
-    try {
-        await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: idVenta, Estado: "ENTREGADO" });
-        statsSesion.pedidos++;
-        localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
-        cargarDatos(); // Recargar lista
-    } catch (e) { alert("Hubo un problema de conexión. Intenta de nuevo."); }
+function askDelete(pIdx, iIdx) {
+    showConfirm("¿Eliminar producto?", "Se quitará de la lista y se recalculará el total.", "delete", () => {
+        const item = pedidosLocal[pIdx].items[iIdx];
+        pedidosLocal[pIdx].total -= item.precio;
+        pedidosLocal[pIdx].items.splice(iIdx, 1);
+        if(pedidosLocal[pIdx].items.length === 0) pedidosLocal.splice(pIdx, 1);
+        renderizar();
+    });
+}
+
+function askEntrega(id, idx) {
+    showConfirm("¡Pedido Entregado!", "¿Confirmas la recepción del pago y entrega de productos?", "success", async () => {
+        try {
+            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: id, Estado: "ENTREGADO" });
+            statsSesion.pedidos++;
+            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
+            cargarDatos();
+        } catch (e) { alert("Error de red"); }
+    });
 }
 
 function renderMenu() {
@@ -237,18 +217,18 @@ function renderMenu() {
         { nombre: 'Clientes', icon: 'group', link: 'GestiondeClientes.html' },
         { nombre: 'Rutas', icon: 'local_shipping', link: 'GestióndeDespachos.html' }
     ];
-    
     const pathActual = decodeURIComponent(window.location.pathname);
     let html = '<nav class="nav-fija"><div class="menu-grid">';
     opciones.forEach(opt => {
         const esActivo = pathActual.includes(opt.link) ? 'active-btn' : '';
-        html += `
-            <button onclick="location.href='${opt.link}'" class="nav-btn ${esActivo}">
-                <span class="material-symbols-outlined">${opt.icon}</span>
-                <span>${opt.nombre}</span>
-            </button>`;
+        html += `<button onclick="location.href='${opt.link}'" class="nav-btn ${esActivo}"><span class="material-symbols-outlined">${opt.icon}</span><span>${opt.nombre}</span></button>`;
     });
     container.innerHTML = html + '</div></nav>';
+}
+
+function abrirSelectorMapas(dir) {
+    if(!dir) return alert("Sin dirección");
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`);
 }
 
 window.onload = () => { cargarDatos(); renderMenu(); };

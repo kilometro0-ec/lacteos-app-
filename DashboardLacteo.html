@@ -28,6 +28,10 @@
         70% { box-shadow: 0 0 0 10px rgba(22, 163, 74, 0); }
         100% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0); }
     }
+    /* Sombra especial para el botón de clientes */
+    .btn-cliente-especial {
+        box-shadow: 0 10px 15px -3px rgba(162, 28, 175, 0.3), 0 4px 6px -4px rgba(162, 28, 175, 0.3);
+    }
     </style>
 </head>
 
@@ -50,78 +54,80 @@
 
 <main class="pt-24 px-4 max-w-7xl mx-auto space-y-4">
 
-    <!-- 1. BLOQUE DE DINERO -->
+    <!-- 1. BLOQUE DE MÉTRICAS -->
     <div class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm space-y-6">
         <div class="flex justify-between items-start">
             <div>
-                <h3 class="text-[10px] font-black text-success uppercase tracking-widest italic mb-1">Ganancia Real Hoy</h3>
+                <h3 class="text-[10px] font-black text-success uppercase tracking-widest italic mb-1">Utilidad Real Hoy</h3>
                 <span id="ganancia-real" class="text-5xl font-black tracking-tighter text-success">$0.00</span>
             </div>
             <div class="text-right">
-                <h3 class="text-[10px] font-black text-amber-600 uppercase tracking-widest italic mb-1">Por Recaudar</h3>
+                <h3 class="text-[10px] font-black text-amber-600 uppercase tracking-widest italic mb-1 italic">Por Cobrar</h3>
                 <span id="por-recaudar" class="text-xl font-black text-amber-600">$0.00</span>
             </div>
         </div>
-
         <div class="grid grid-cols-2 gap-4 pt-6 border-t border-slate-100">
             <div>
-                <h3 class="text-[9px] font-black text-slate-400 uppercase mb-1">Inversión Bodega</h3>
+                <h3 class="text-[9px] font-black text-slate-400 uppercase mb-1">Inversión Actual</h3>
                 <span id="valor-invertido" class="text-lg font-black text-slate-800">$0.00</span>
             </div>
             <div class="text-right">
-                <h3 class="text-[9px] font-black text-primary uppercase mb-1">Ganancia Proyectada</h3>
+                <h3 class="text-[9px] font-black text-primary uppercase mb-1 italic">Potencial de Ganancia</h3>
                 <span id="utilidad-proyectada" class="text-lg font-black text-primary">$0.00</span>
             </div>
         </div>
     </div>
 
-    <!-- 2. BOTONES DE ACCIÓN (TODOS IGUALES) -->
+    <!-- 2. BOTONES DE ACCIÓN -->
     <div class="grid grid-cols-2 gap-3">
         <button onclick="location.href='RegistrodeVentas.html'" class="bg-primary text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
           <span class="material-symbols-outlined text-3xl">add_shopping_cart</span>
-          <span class="text-[10px] font-black uppercase tracking-tighter">Vender</span>
-          <span class="text-[7px] opacity-70 italic">Nueva salida</span>
+          <span class="text-[10px] font-black uppercase">Vender</span>
         </button>
         
         <button id="btn-ruta" onclick="location.href='GestióndeDespachos.html'" class="relative bg-success text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
           <span id="badge-ruta" class="absolute top-2 right-4 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
           <span class="material-symbols-outlined text-3xl">local_shipping</span>
-          <span class="text-[10px] font-black uppercase tracking-tighter">En Ruta</span>
-          <span class="text-[7px] opacity-70 italic">Entregas hoy</span>
+          <span class="text-[10px] font-black uppercase">En Ruta</span>
         </button>
 
-        <button onclick="location.href='ControldeInventario.html'" class="relative bg-secondary text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
-          <span id="badge-stock" class="absolute top-2 right-4 bg-white text-secondary text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-secondary hidden">0</span>
+        <button onclick="location.href='ControldeInventario.html'" class="bg-secondary text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
           <span class="material-symbols-outlined text-3xl">inventory</span>
-          <span class="text-[10px] font-black uppercase tracking-tighter">Stock</span>
-          <span class="text-[7px] opacity-70 italic">Cargar productos</span>
+          <span class="text-[10px] font-black uppercase">Stock</span>
         </button>
 
         <button onclick="location.href='GestiondeProveedores.html'" class="bg-slate-800 text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
           <span class="material-symbols-outlined text-3xl">factory</span>
-          <span class="text-[10px] font-black uppercase tracking-tighter">Proveedor</span>
-          <span class="text-[7px] opacity-70 italic">Gestión compras</span>
+          <span class="text-[10px] font-black uppercase">Proveedor</span>
         </button>
 
-        <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 active:bg-slate-50 transition-all col-span-2">
-          <span class="material-symbols-outlined text-primary text-3xl">group</span>
-          <span class="text-[10px] font-black uppercase text-slate-600 tracking-tighter">Clientes</span>
-          <span class="text-[7px] text-slate-400 italic">Base de datos</span>
+        <!-- BOTÓN CLIENTES CON SOMBRA DIFERENTE -->
+        <button onclick="location.href='GestiondeClientes.html'" class="btn-cliente-especial bg-white border-2 border-primary/20 p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 active:bg-slate-50 transition-all col-span-2">
+          <span class="material-symbols-outlined text-primary text-3xl">person_search</span>
+          <span class="text-[11px] font-black uppercase text-primary tracking-widest">Base de Clientes</span>
         </button>
     </div>
 
-    <!-- 3. PEDIDOS POR ENTREGAR -->
+    <!-- 3. LISTADO DE PEDIDOS PENDIENTES (6 PEDIDOS) -->
     <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
         <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
-            <span class="material-symbols-outlined text-sm">pending_actions</span> Por entregar / Cobrar
+            <span class="material-symbols-outlined text-sm font-bold">pending_actions</span> Pedidos Pendientes
         </h3>
-        <div id="lista-pedidos" class="space-y-2 text-[11px]"></div>
+        <div id="lista-pedidos" class="space-y-2"></div>
     </section>
 
-    <!-- 4. RANKING AMPLIADO -->
+    <!-- 4. LISTADO DE STOCK CRÍTICO (RESCATADO) -->
+    <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
+        <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
+            <span class="material-symbols-outlined text-sm font-bold">warning</span> Alerta: Por agotarse
+        </h3>
+        <div id="cont-criticos" class="space-y-2 text-[11px]"></div>
+    </section>
+
+    <!-- 5. RANKING -->
     <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
         <h3 class="text-[10px] font-black text-primary mb-5 uppercase tracking-widest flex items-center gap-2 italic">
-            <span class="material-symbols-outlined text-sm">bar_chart</span> Ranking de Productos
+            <span class="material-symbols-outlined text-sm font-bold">analytics</span> Tendencia de Ventas
         </h3>
         <div id="grafico-vendidos" class="space-y-5"></div>
     </section>
@@ -150,6 +156,7 @@ async function cargarDatos() {
         const inventario = Array.isArray(resInv) ? resInv : [];
         const ventas = Array.isArray(resVentas) ? resVentas : [];
 
+        // MAPEO Y DINERO
         const costosMap = {};
         let totalCostoBodega = 0;
         let utilidadProyectada = 0;
@@ -166,6 +173,7 @@ async function cargarDatos() {
         document.getElementById('valor-invertido').innerText = `$${totalCostoBodega.toFixed(2)}`;
         document.getElementById('utilidad-proyectada').innerText = `$${utilidadProyectada.toFixed(2)}`;
 
+        // VENTAS Y GANANCIA DEL DÍA
         let utilidadHoy = 0;
         let porRecaudar = 0;
         let pendsHoy = [];
@@ -188,46 +196,55 @@ async function cargarDatos() {
         document.getElementById('ganancia-real').innerText = `$${utilidadHoy.toFixed(2)}`;
         document.getElementById('por-recaudar').innerText = `$${porRecaudar.toFixed(2)}`;
 
-        // STOCK CRÍTICO
-        const badgeStock = document.getElementById('badge-stock');
+        // STOCK CRÍTICO (LISTADO REAL)
+        const contCriticos = document.getElementById('cont-criticos');
         const criticos = inventario.filter(p => {
             const s = parseFloat(p.Stock) || 0;
             return s > 0 && s <= 5;
-        });
+        }).sort((a,b) => parseFloat(a.Stock) - parseFloat(b.Stock));
+
         if(criticos.length > 0) {
-            badgeStock.innerText = criticos.length;
-            badgeStock.classList.remove('hidden');
+            contCriticos.innerHTML = "";
+            criticos.forEach(p => {
+                contCriticos.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100">
+                        <span class="font-black uppercase text-red-900 italic">${p.Producto}</span>
+                        <span class="bg-red-500 text-white px-2 py-0.5 rounded-full font-bold">${p.Stock} un.</span>
+                    </div>`;
+            });
         } else {
-            badgeStock.classList.add('hidden');
+            contCriticos.innerHTML = '<p class="text-center text-slate-300 italic">Inventario saludable</p>';
         }
 
-        // RUTA (CLIENTES ÚNICOS)
+        // RUTA (CONTEO CORREGIDO DE PEDIDOS)
         const badgeRuta = document.getElementById('badge-ruta');
         const listaPed = document.getElementById('lista-pedidos');
-        const clientesUnicos = [...new Set(pendsHoy.map(p => p.Cliente))];
         
-        if(clientesUnicos.length > 0) {
-            badgeRuta.innerText = clientesUnicos.length;
+        // Aquí contamos el total de pedidos pendientes (no solo clientes únicos)
+        if(pendsHoy.length > 0) {
+            badgeRuta.innerText = pendsHoy.length;
             badgeRuta.classList.remove('hidden');
             document.getElementById('btn-ruta').classList.add('pulse-notif');
             listaPed.innerHTML = "";
-            clientesUnicos.forEach(c => {
+            pendsHoy.forEach(p => {
                 listaPed.innerHTML += `
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between font-bold">
-                        <span class="uppercase text-slate-700">${c}</span>
-                        <span class="text-amber-500 italic">Cobro Pendiente</span>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
+                        <div>
+                            <p class="font-black uppercase text-slate-700 leading-none">${p.Cliente}</p>
+                            <p class="text-[9px] text-slate-400 mt-1 uppercase font-bold">${p.Producto}</p>
+                        </div>
+                        <span class="text-amber-600 font-black italic">$${parseFloat(String(p["Precio Total"]).replace(',','.')).toFixed(2)}</span>
                     </div>`;
             });
         } else {
             badgeRuta.classList.add('hidden');
-            document.getElementById('btn-ruta').classList.remove('pulse-notif');
-            listaPed.innerHTML = '<p class="text-center text-slate-300 italic">Todo al día</p>';
+            listaPed.innerHTML = '<p class="text-center text-slate-300 italic">No hay pedidos pendientes</p>';
         }
 
-        // RANKING (Muestra los 6 principales)
+        // RANKING
         const rank = {};
         ventas.forEach(v => { rank[v.Producto] = (rank[v.Producto] || 0) + (parseFloat(v.Cantidad) || 0); });
-        const top = Object.entries(rank).sort((a,b) => b[1]-a[1]).slice(0, 6);
+        const top = Object.entries(rank).sort((a,b) => b[1]-a[1]).slice(0, 5);
         const grafico = document.getElementById('grafico-vendidos');
         grafico.innerHTML = "";
         const max = top[0] ? top[0][1] : 1;

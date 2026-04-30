@@ -3,84 +3,67 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Despachos Pro - Lógica Láctea</title>
+    <title>Despachos - Lógica Láctea</title>
     
-    <!-- Scripts de Configuración -->
+    <!-- Scripts Base -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
-    <!-- Estilos y Fuentes -->
+    <!-- Tu Archivo de Estilos (Donde mandan tus colores) -->
     <link rel="stylesheet" href="estilos-lacteos.css">
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <style>
-        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        /* Animación de salida al entregar */
+        /* Ajustes específicos para funcionamiento móvil */
         .anim-slide-out { animation: slideRight 0.6s forwards; pointer-events: none; }
         @keyframes slideRight { to { transform: translateX(150%); opacity: 0; } }
-        
-        .rotate-anim { animation: rotate 1s linear infinite; }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        ::-webkit-scrollbar { display: none; }
-        .modal-blur { backdrop-filter: blur(8px); background: rgba(31, 1, 42, 0.6); }
-        
-        /* Color distintivo de la tienda */
-        .bg-azul-electrico { background-color: #0047FF; }
-        .text-azul-electrico { color: #0047FF; }
+        .modal-blur { backdrop-filter: blur(8px); background: rgba(31, 1, 42, 0.4); }
     </style>
 </head>
-<body class="bg-[#faf5ff] text-gray-900 pb-32">
+<body class="pb-32">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-[#e9d5ff] shadow-sm">
-    <div class="flex items-center gap-2" onclick="navegarA('DashboardLacteo.html')">
-        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-azul-electrico font-black">
-            <span class="material-symbols-outlined">local_shipping</span>
+    <div class="flex items-center gap-2" onclick="location.href='DashboardLacteo.html'">
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#a21caf]">
+            <span class="material-symbols-outlined font-black">local_shipping</span>
         </div>
-        <h1 class="text-xl font-black text-azul-electrico tracking-tight uppercase">Despachos</h1>
+        <h1 class="brand-logo text-xl uppercase tracking-tighter">Despachos</h1>
     </div>
-    <button onclick="cargarDatos()" class="p-2 text-azul-electrico">
-        <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
+    <button onclick="cargarDatos()" class="header-btn p-2 rounded-full transition-all">
+        <span id="refresh-icon" class="material-symbols-outlined text-[#a21caf]">refresh</span>
     </button>
 </header>
 
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-4">
-    <!-- RECAUDACIÓN TEMPORAL -->
+    <!-- RECAUDACIÓN USANDO TUS VARIABLES -->
     <div class="grid grid-cols-2 gap-3">
-        <div class="bg-white p-5 rounded-[2.5rem] border-2 border-orange-100 text-center">
+        <div class="card-sutil text-center !p-5 border-orange-100">
             <p class="text-[10px] font-black text-orange-400 uppercase tracking-widest">Por Recaudar</p>
             <h2 id="dinero-pend" class="text-2xl font-black text-orange-600">$0.00</h2>
         </div>
-        <div class="bg-azul-electrico p-5 rounded-[2.5rem] text-center shadow-xl">
-            <p class="text-[10px] font-black text-blue-100 uppercase tracking-widest">Cobrado Hoy</p>
+        <div class="card-sutil text-center !p-5 !bg-[#a21caf] border-transparent shadow-lg">
+            <p class="text-[10px] font-black text-purple-100 uppercase tracking-widest">Cobrado Hoy</p>
             <h2 id="dinero-ent" class="text-2xl font-black text-white">$0.00</h2>
         </div>
     </div>
 
-    <!-- BUSCADOR -->
+    <!-- BUSCADOR CON TU CLASE input-sutil -->
     <input type="text" id="filtroDespacho" oninput="filtrar()" placeholder="🔍 Buscar cliente o sector..." 
-           class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold outline-none text-sm shadow-sm focus:border-blue-400 transition-all">
+           class="input-sutil shadow-sm font-bold">
 
     <!-- LISTA DE PEDIDOS -->
-    <div id="contenedor-pedidos" class="space-y-5 pt-2">
-        <div class="flex flex-col items-center justify-center py-20 text-gray-400">
-            <span class="material-symbols-outlined text-4xl mb-2">sync</span>
-            <p class="font-bold uppercase text-xs">Cargando ruta del día...</p>
-        </div>
-    </div>
+    <div id="contenedor-pedidos" class="space-y-4 pt-2"></div>
 </main>
 
 <!-- MODAL MAPAS -->
 <div id="modal-mapas" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 modal-blur">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 text-center space-y-4 shadow-2xl">
-        <h3 class="font-black text-azul-electrico uppercase text-sm">¿Cómo deseas llegar?</h3>
-        <button id="btn-gmaps" class="w-full py-4 bg-blue-500 text-white rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
+    <div class="card-sutil w-full max-w-xs text-center space-y-4 shadow-2xl">
+        <h3 class="text-titulo text-sm text-[#a21caf]">¿Cómo llegar?</h3>
+        <button id="btn-gmaps" class="w-full py-4 bg-blue-500 text-white rounded-2xl font-black flex items-center justify-center gap-2">
             <span class="material-symbols-outlined">map</span> GOOGLE MAPS
         </button>
-        <button id="btn-waze" class="w-full py-4 bg-cyan-400 text-white rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
+        <button id="btn-waze" class="w-full py-4 bg-cyan-400 text-white rounded-2xl font-black flex items-center justify-center gap-2">
             <span class="material-symbols-outlined">navigation</span> WAZE
         </button>
         <button onclick="cerrarModal('modal-mapas')" class="text-gray-400 font-bold text-[10px] uppercase pt-2 tracking-widest">Cerrar</button>
@@ -89,18 +72,18 @@
 
 <!-- MODAL EDICIÓN RÁPIDA -->
 <div id="modal-editar-item" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 modal-blur">
-    <div class="bg-white w-full max-w-xs rounded-[3rem] p-8 text-center shadow-2xl border-2 border-blue-50">
-        <h3 id="edit-item-name" class="font-black text-gray-400 uppercase mb-2 text-[10px]"></h3>
+    <div class="card-sutil w-full max-w-xs text-center shadow-2xl">
+        <h3 id="edit-item-name" class="text-[10px] font-black text-gray-400 uppercase mb-4"></h3>
         <div class="flex items-center justify-between mb-8">
-            <button onclick="ajustarCant(-1)" class="w-14 h-14 bg-gray-100 rounded-2xl font-black text-2xl text-gray-600 active:bg-blue-100">-</button>
+            <button onclick="ajustarCant(-1)" class="w-14 h-14 bg-gray-100 rounded-2xl font-black text-2xl text-gray-600">-</button>
             <input type="number" id="edit-item-qty" class="w-20 text-center text-4xl font-black outline-none bg-transparent" value="1">
-            <button onclick="ajustarCant(1)" class="w-14 h-14 bg-gray-100 rounded-2xl font-black text-2xl text-gray-600 active:bg-blue-100">+</button>
+            <button onclick="ajustarCant(1)" class="w-14 h-14 bg-gray-100 rounded-2xl font-black text-2xl text-gray-600">+</button>
         </div>
-        <button onclick="guardarCambioItem()" class="w-full bg-azul-electrico text-white py-4 rounded-2xl font-black shadow-lg uppercase text-xs tracking-widest">Actualizar</button>
+        <button onclick="guardarCambioItem()" class="btn-magenta w-full py-4 !text-sm">Actualizar Lista</button>
     </div>
 </div>
 
-<!-- EL MENÚ QUE FALTABA -->
+<!-- CONTENEDOR PARA menu-logic.js -->
 <div id="menu-container"></div>
 
 <script>
@@ -110,7 +93,7 @@ let itemEditando = null;
 
 async function cargarDatos() {
     const icon = document.getElementById('refresh-icon');
-    icon?.classList.add('rotate-anim');
+    icon?.classList.add('rotate-animation');
     try {
         const [ventas, clientes] = await Promise.all([
             DairyAPI.obtenerDatos("Ventas"),
@@ -128,55 +111,47 @@ async function cargarDatos() {
             }
             const precio = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
             const cant = parseFloat(v.Cantidad) || 0;
-            agrupados[idV].items.push({ 
-                producto: v.Producto, 
-                cant: cant, 
-                precioUnit: cant > 0 ? precio / cant : 0 
-            });
+            agrupados[idV].items.push({ producto: v.Producto, cant: cant, precioUnit: cant > 0 ? precio / cant : 0 });
             agrupados[idV].total += precio;
         });
 
         pedidosLocal = Object.values(agrupados).reverse();
         renderizar();
         actualizarResumen();
-    } catch (e) { 
-        console.error("Error al cargar:", e);
-        document.getElementById('contenedor-pedidos').innerHTML = `<p class="text-center text-red-500 font-bold p-10">Error al conectar con el servidor</p>`;
-    } finally { 
-        icon?.classList.remove('rotate-anim'); 
-    }
+    } catch (e) { console.error(e); }
+    finally { icon?.classList.remove('rotate-animation'); }
 }
 
 function renderizar() {
     const container = document.getElementById('contenedor-pedidos');
-    container.innerHTML = pedidosLocal.length ? "" : '<p class="text-center py-20 text-gray-400 font-bold uppercase text-[10px] tracking-widest">Ruta completada</p>';
+    container.innerHTML = pedidosLocal.length ? "" : '<p class="text-center py-20 text-gray-400 font-bold uppercase text-[10px]">Ruta completada</p>';
     
     pedidosLocal.forEach((ped, idx) => {
         const itemsHTML = ped.items.map((it, iIdx) => `
-            <div onclick="abrirEditorItem(${idx}, ${iIdx})" class="flex justify-between items-center py-3 border-b border-gray-50 last:border-0 active:bg-blue-50 px-2 transition-colors rounded-lg">
+            <div onclick="abrirEditorItem(${idx}, ${iIdx})" class="flex justify-between items-center py-3 border-b border-gray-50 last:border-0 active:bg-purple-50 px-2 rounded-lg">
                 <span class="text-[11px] font-bold uppercase text-gray-700">${it.producto}</span>
-                <span class="text-sm font-black text-azul-electrico bg-blue-50 px-2 py-1 rounded-lg">x${it.cant}</span>
+                <span class="text-sm font-black text-[#a21caf]">x${it.cant}</span>
             </div>
         `).join('');
 
         container.innerHTML += `
-            <div id="card-${idx}" class="bg-white p-6 rounded-[2.5rem] border-2 border-[#e9d5ff] shadow-sm space-y-4">
+            <div id="card-${idx}" class="card-sutil space-y-4">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
-                        <span class="text-[9px] font-black bg-blue-100 text-azul-electrico px-2 py-0.5 rounded uppercase">ID: ${ped.id}</span>
+                        <span class="text-[9px] font-black bg-purple-100 text-[#a21caf] px-2 py-0.5 rounded uppercase">ID: ${ped.id}</span>
                         <h2 class="text-lg font-black uppercase text-gray-800 leading-tight mt-1 truncate">${ped.cliente}</h2>
                     </div>
-                    <button onclick="elegirMapa('${ped.direccion}')" class="w-12 h-12 rounded-2xl bg-blue-50 text-azul-electrico flex items-center justify-center active:scale-90 transition-transform">
+                    <button onclick="elegirMapa('${ped.direccion}')" class="w-12 h-12 rounded-2xl bg-purple-50 text-[#a21caf] flex items-center justify-center active:scale-90 transition-transform">
                         <span class="material-symbols-outlined">directions</span>
                     </button>
                 </div>
-                <div class="bg-gray-50 rounded-[1.5rem] p-2">${itemsHTML}</div>
+                <div class="bg-[#fdfaff] rounded-[1.5rem] p-2 border border-purple-50">${itemsHTML}</div>
                 <div class="flex justify-between items-end pt-2 border-t border-dashed border-gray-100">
                     <div>
-                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Total Cobro</p>
-                        <p class="text-3xl font-black text-gray-900 leading-none">$${ped.total.toFixed(2)}</p>
+                        <p class="text-[9px] font-black text-gray-400 uppercase">Total Cobro</p>
+                        <p class="text-2xl font-black text-gray-900 leading-none">$${ped.total.toFixed(2)}</p>
                     </div>
-                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="h-14 bg-azul-electrico text-white px-8 rounded-2xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition-transform">Entregado</button>
+                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="btn-magenta h-14 px-8">Entregado</button>
                 </div>
             </div>`;
     });
@@ -185,14 +160,8 @@ function renderizar() {
 function elegirMapa(dir) {
     if(!dir) return alert("El cliente no tiene dirección registrada.");
     document.getElementById('modal-mapas').classList.remove('hidden');
-    document.getElementById('btn-gmaps').onclick = () => {
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
-        cerrarModal('modal-mapas');
-    };
-    document.getElementById('btn-waze').onclick = () => {
-        window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`, '_blank');
-        cerrarModal('modal-mapas');
-    };
+    document.getElementById('btn-gmaps').onclick = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank'); cerrarModal('modal-mapas'); };
+    document.getElementById('btn-waze').onclick = () => { window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`, '_blank'); cerrarModal('modal-mapas'); };
 }
 
 function abrirEditorItem(pedIdx, itemIdx) {
@@ -219,26 +188,17 @@ function guardarCambioItem() {
 }
 
 async function confirmarEntrega(idVenta, idx) {
-    if(!confirm("¿Confirmar cobro y entrega en el sistema?")) return;
+    if(!confirm("¿Confirmar entrega y cobro?")) return;
     const card = document.getElementById(`card-${idx}`);
     card.classList.add('anim-slide-out');
-
     try {
-        // CONEXIÓN CON BACKEND v17.0
-        await DairyAPI.enviarDatos("Ventas", { 
-            pestaña: "Ventas", 
-            accion: "editar_estado", 
-            ID_Venta: idVenta, 
-            Estado: "ENTREGADO" 
-        });
-
+        await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: idVenta, Estado: "ENTREGADO" });
         statsSesion.pedidos++;
         statsSesion.dinero += pedidosLocal[idx].total;
         localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
-        
         setTimeout(() => { cargarDatos(); }, 600);
     } catch (e) {
-        alert("Error al sincronizar con Google Sheets.");
+        alert("Error de conexión");
         card.classList.remove('anim-slide-out');
     }
 }
@@ -250,16 +210,13 @@ function actualizarResumen() {
 }
 
 function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
-
 function filtrar() {
     const q = document.getElementById('filtroDespacho').value.toLowerCase();
     pedidosLocal.forEach((p, idx) => {
         const card = document.getElementById(`card-${idx}`);
-        const match = p.cliente.toLowerCase().includes(q) || p.direccion.toLowerCase().includes(q);
-        if(card) card.style.display = match ? 'block' : 'none';
+        if(card) card.style.display = (p.cliente.toLowerCase().includes(q) || p.direccion.toLowerCase().includes(q)) ? 'block' : 'none';
     });
 }
-
 window.onload = cargarDatos;
 </script>
 </body>

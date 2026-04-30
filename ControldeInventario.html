@@ -8,27 +8,22 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <style>
-      body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #faf5ff; overflow-x: hidden; }
+      body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #faf5ff; }
       .rotate-animation { animation: spin 1s linear infinite; }
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-      
-      .card-prod { 
-        background: white; border-radius: 2rem; border: 2px solid #e9d5ff; 
-        transition: all 0.2s ease; position: relative; overflow: hidden; cursor: pointer;
-      }
-      .card-prod.selected { border-color: #a21caf; background-color: #f5d0fe; transform: scale(0.95); z-index: 10; }
-      .selection-check { position: absolute; top: 12px; right: 12px; display: none; color: #a21caf; font-size: 24px; font-weight: bold; }
+      .card-prod { background: white; border-radius: 2rem; border: 2px solid #e9d5ff; transition: all 0.2s ease; position: relative; cursor: pointer; }
+      .card-prod.selected { border-color: #a21caf; background-color: #f5d0fe; transform: scale(0.95); }
+      .selection-check { position: absolute; top: 12px; right: 12px; display: none; color: #a21caf; font-size: 24px; }
       .selected .selection-check { display: block; }
-
       .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
       .modal.active { display: flex; }
-      
-      ::-webkit-scrollbar { display: none; }
     </style>
 </head>
 
@@ -40,10 +35,13 @@
     <h1 id="header-title" class="text-xl font-black text-[#a21caf] tracking-tight uppercase italic">Inventario</h1>
   </div>
   <div class="flex items-center gap-2">
-      <button id="btn-eliminar-multi" class="hidden bg-red-500 text-white p-2 rounded-xl shadow-lg" onclick="eliminarSeleccionados()">
+      <button onclick="generarPDF()" class="p-2 text-green-600 active:scale-90 transition-transform">
+          <span class="material-symbols-outlined text-3xl">picture_as_pdf</span>
+      </button>
+      <button id="btn-eliminar-multi" class="hidden bg-red-500 text-white p-2 rounded-xl" onclick="eliminarSeleccionados()">
           <span class="material-symbols-outlined">delete_sweep</span>
       </button>
-      <button onclick="window.location.reload()" class="p-2 text-[#a21caf] active:rotate-180 transition-transform duration-500">
+      <button onclick="window.location.reload()" class="p-2 text-[#a21caf]">
           <span id="refresh-icon" class="material-symbols-outlined text-3xl">refresh</span>
       </button>
   </div>
@@ -52,8 +50,8 @@
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
   <section class="grid grid-cols-3 gap-3">
     <div class="bg-white p-5 rounded-[2rem] border-2 border-purple-100 text-center shadow-sm">
-        <p class="text-[10px] font-black uppercase text-gray-400 mb-1">Bodega</p>
-        <p id="valor-bodega" class="text-lg font-black text-[#a21caf] leading-none">$0.00</p>
+        <p class="text-[10px] font-black uppercase text-gray-400 mb-1">Valor Neto</p>
+        <p id="valor-bodega" class="text-lg font-black text-[#a21caf]">$0.00</p>
     </div>
     <div class="bg-white p-5 rounded-[2rem] border-2 border-red-100 text-center shadow-sm">
         <p class="text-[10px] font-black uppercase text-red-400 mb-1">Críticos</p>
@@ -65,16 +63,14 @@
     </div>
   </section>
 
-  <div class="px-1">
-    <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar producto..." class="w-full bg-white border-2 border-purple-100 rounded-3xl p-4 font-bold outline-none shadow-sm focus:border-[#a21caf] transition-all">
-  </div>
+  <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar producto..." class="w-full bg-white border-2 border-purple-100 rounded-3xl p-4 font-bold outline-none shadow-sm focus:border-[#a21caf]">
 
   <div id="grid-productos" class="grid grid-cols-2 gap-4">
-      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando con Sheets...</div>
+      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Cargando inventario...</div>
   </div>
 
   <div class="fixed bottom-24 left-0 w-full px-4 z-40">
-    <button onclick="abrirModal('modal-nuevo')" class="w-full bg-[#a21caf] text-white py-5 rounded-[2rem] font-black shadow-2xl uppercase active:scale-95 transition-all flex items-center justify-center gap-3 border-b-4 border-purple-900">
+    <button onclick="abrirModal('modal-nuevo')" class="w-full bg-[#a21caf] text-white py-5 rounded-[2rem] font-black shadow-2xl flex items-center justify-center gap-3 border-b-4 border-purple-900">
         <span class="material-symbols-outlined text-2xl">add_circle</span> 
         <span class="text-base">Nuevo Producto</span>
     </button>
@@ -82,17 +78,16 @@
 </main>
 
 <div id="modal-nuevo" class="modal">
-    <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-5 shadow-2xl">
-        <h2 class="font-black text-[#a21caf] uppercase text-center text-xl">Registrar Nuevo</h2>
-        <input type="text" id="n-nombre" placeholder="Nombre" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold uppercase focus:border-[#a21caf] outline-none">
-        <div class="grid grid-cols-2 gap-3">
-            <input type="number" id="n-costo" placeholder="Costo $" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold focus:border-[#a21caf] outline-none">
-            <input type="number" id="n-pvp" placeholder="PVP $" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold focus:border-[#a21caf] outline-none">
+    <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-4 shadow-2xl">
+        <h2 class="font-black text-[#a21caf] uppercase text-center text-xl">Registrar Producto</h2>
+        <input type="text" id="n-nombre" placeholder="Nombre" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold uppercase outline-none focus:border-[#a21caf]">
+        <div class="grid grid-cols-2 gap-2">
+            <input type="number" id="n-costo" placeholder="Costo $" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold outline-none focus:border-[#a21caf]">
+            <input type="number" id="n-pvp" placeholder="PVP $" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold outline-none focus:border-[#a21caf]">
         </div>
-        <input type="number" id="n-stock" placeholder="Stock Inicial" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold focus:border-[#a21caf] outline-none">
-        
-        <div class="flex flex-col gap-3 pt-2">
-            <button onclick="guardarNuevo()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg hover:bg-purple-700">GUARDAR PRODUCTO</button>
+        <input type="number" id="n-stock" placeholder="Stock" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold outline-none focus:border-[#a21caf]">
+        <div class="flex flex-col gap-2 pt-2">
+            <button onclick="guardarNuevo()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg">ACEPTAR Y GUARDAR</button>
             <button onclick="cerrarModal('modal-nuevo')" class="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase">CANCELAR</button>
         </div>
     </div>
@@ -106,8 +101,8 @@
             <input type="number" id="edit-cantidad" value="0" class="w-24 text-center border-none text-5xl font-black text-[#a21caf] focus:ring-0">
             <button onclick="ajustarStockNum(1)" class="w-16 h-16 bg-purple-100 rounded-2xl text-[#a21caf] font-black text-3xl">+</button>
         </div>
-        <div class="flex flex-col gap-3">
-            <button id="btn-confirmar-stock" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg">ACEPTAR / ACTUALIZAR</button>
+        <div class="flex flex-col gap-2">
+            <button id="btn-confirmar-stock" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg font-bold">ACEPTAR / ACTUALIZAR</button>
             <button onclick="cerrarModal('modal-stock')" class="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase">CANCELAR</button>
         </div>
     </div>
@@ -127,7 +122,12 @@ async function cargarInventario() {
     try {
         const res = await DairyAPI.obtenerDatos("Inventario");
         if (Array.isArray(res)) {
-            inventarioLocal = res.sort((a, b) => aNum(b.Ventas || 0) - aNum(a.Ventas || 0));
+            // ORDENAR POR VENTAS (O STOCK SI NO HAY VENTAS)
+            inventarioLocal = res.sort((a, b) => {
+                let valB = aNum(b.Ventas || b.Stock);
+                let valA = aNum(a.Ventas || a.Stock);
+                return valB - valA;
+            });
             renderizar(inventarioLocal);
         }
     } catch (e) { console.error(e); }
@@ -151,7 +151,7 @@ function renderizar(lista) {
         card.innerHTML = `
             <span class="selection-check material-symbols-outlined">check_circle</span>
             <div class="mb-2">
-                <p class="text-[9px] font-black text-purple-300 uppercase">ID: ${p.ID}</p>
+                <p class="text-[9px] font-black text-purple-300 uppercase leading-none mb-1">ID: ${p.ID}</p>
                 <h3 class="font-bold text-sm uppercase text-slate-800 leading-tight line-clamp-2">${p.Producto}</h3>
             </div>
             <div class="flex justify-between items-end border-t-2 border-purple-50 pt-4 mt-auto">
@@ -165,26 +165,16 @@ function renderizar(lista) {
                 </div>
             </div>`;
 
-        // SOPORTE PC: CLIC DERECHO PARA SELECCIONAR
-        card.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            activarModoSeleccion(p.ID);
-        });
-
-        // SOPORTE MÓVIL: LONG PRESS
-        card.addEventListener('touchstart', (e) => {
-            pressTimer = setTimeout(() => {
-                if (window.navigator.vibrate) window.navigator.vibrate(50);
-                activarModoSeleccion(p.ID);
-            }, 600);
-        });
+        // SOPORTE PC (Clic Derecho)
+        card.addEventListener('contextmenu', (e) => { e.preventDefault(); activarModoSeleccion(p.ID); });
+        // SOPORTE MOVIL
+        card.addEventListener('touchstart', (e) => { pressTimer = setTimeout(() => activarModoSeleccion(p.ID), 600); });
         card.addEventListener('touchend', () => clearTimeout(pressTimer));
         
         card.addEventListener('click', () => {
             if(modoSeleccion) toggleSeleccion(p.ID);
             else abrirEditorStock(p);
         });
-
         container.appendChild(card);
     });
 
@@ -210,7 +200,7 @@ function toggleSeleccion(id) {
         el.classList.add('selected');
     }
     if(seleccionados.size === 0) cancelarSeleccion();
-    else document.getElementById('header-title').innerText = `${seleccionados.size} Items`;
+    else document.getElementById('header-title').innerText = `${seleccionados.size} Seleccionados`;
 }
 
 function cancelarSeleccion() {
@@ -223,12 +213,30 @@ function cancelarSeleccion() {
 }
 
 async function eliminarSeleccionados() {
-    if(!confirm(`¿Eliminar ${seleccionados.size} productos?`)) return;
+    if(!confirm(`¿Eliminar ${seleccionados.size} items?`)) return;
     for(let id of seleccionados) {
         await DairyAPI.enviarDatos("Inventario", { ID: id, ELIMINAR: true, pestaña: "Inventario" });
     }
-    cancelarSeleccion();
     window.location.reload();
+}
+
+function generarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("REPORTE DE INVENTARIO - LÓGICA LÁCTEA", 14, 20);
+    
+    const head = [['ID', 'Producto', 'Stock', 'PVP', 'Valor Total']];
+    const data = inventarioLocal.map(p => [
+        p.ID, 
+        p.Producto, 
+        p.Stock, 
+        `$${aNum(p.Precio_Venta).toFixed(2)}`,
+        `$${(aNum(p.Stock) * aNum(p.Precio_Venta)).toFixed(2)}`
+    ]);
+
+    doc.autoTable({ head, body, startY: 30, theme: 'striped' });
+    doc.save("Inventario_Logica_Lactea.pdf");
 }
 
 function abrirEditorStock(p) {
@@ -238,7 +246,6 @@ function abrirEditorStock(p) {
     document.getElementById('btn-confirmar-stock').onclick = async () => {
         const suma = parseFloat(document.getElementById('edit-cantidad').value);
         const nuevoStock = aNum(p.Stock) + suma;
-        cerrarModal('modal-stock');
         await DairyAPI.enviarDatos("Inventario", { ID: p.ID, Stock: nuevoStock, pestaña: "Inventario" });
         window.location.reload();
     };
@@ -246,16 +253,14 @@ function abrirEditorStock(p) {
 
 async function guardarNuevo() {
     const data = {
-        ID: "P-" + Math.floor(1000 + Math.random() * 9000),
+        ID: "P-" + Math.floor(1000 + Math.random()*9000),
         Producto: document.getElementById('n-nombre').value.toUpperCase(),
         Precio_Distribuidor: aNum(document.getElementById('n-costo').value),
         Precio_Venta: aNum(document.getElementById('n-pvp').value),
         Stock: aNum(document.getElementById('n-stock').value),
-        Fecha: new Date().toLocaleDateString(),
         pestaña: "Inventario"
     };
     if(!data.Producto) return alert("Nombre obligatorio");
-    cerrarModal('modal-nuevo');
     await DairyAPI.enviarDatos("Inventario", data);
     window.location.reload();
 }
@@ -263,7 +268,6 @@ async function guardarNuevo() {
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 function ajustarStockNum(v) { document.getElementById('edit-cantidad').value = parseInt(document.getElementById('edit-cantidad').value) + v; }
-
 function filtrar() {
     const b = document.getElementById('filtroProd').value.toLowerCase();
     renderizar(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b)));

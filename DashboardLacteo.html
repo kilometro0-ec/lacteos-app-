@@ -28,48 +28,63 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
     .rotate-animation { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .pulse-notif { animation: shadow-pulse 1.5s infinite; }
-    @keyframes shadow-pulse {
-        0% { box-shadow: 0 0 0 0px rgba(0, 85, 255, 0.5); }
-        70% { box-shadow: 0 0 0 10px rgba(0, 85, 255, 0); }
-        100% { box-shadow: 0 0 0 0px rgba(0, 85, 255, 0); }
+    
+    /* Overlay de carga */
+    #loading-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(2px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.3s;
     }
-    .pulse-success { animation: shadow-success 1.5s infinite; }
-    @keyframes shadow-success {
-        0% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0.5); }
-        70% { box-shadow: 0 0 0 10px rgba(22, 163, 74, 0); }
-        100% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0); }
-    }
+
     .glass-card { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
     </style>
 </head>
 
 <body class="bg-background text-[#1f012a] font-[Work_Sans] antialiased pb-10">
 
-<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-20 bg-white border-b border-outline shadow-sm">
+<!-- Overlay de Carga -->
+<div id="loading-overlay">
+    <div class="bg-white p-4 rounded-2xl flex flex-col items-center gap-3 shadow-2xl">
+        <span class="material-symbols-outlined text-4xl text-primary rotate-animation">sync</span>
+        <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">Actualizando...</span>
+    </div>
+</div>
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-24 bg-white border-b border-outline shadow-sm">
   <div class="flex items-center gap-2">
     <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary border border-purple-200">
       <span class="material-symbols-outlined text-3xl">analytics</span>
     </div>
-    <div>
-        <h1 class="text-sm font-black text-primary tracking-tight uppercase italic leading-none">Lógica Láctea</h1>
-        <input type="date" id="filtro-fecha" onchange="cargarDatos()" class="mt-1 text-[10px] font-bold border-none p-0 bg-transparent text-gray-500 focus:ring-0 uppercase">
+    <div class="flex flex-col">
+        <h1 class="text-xs font-black text-primary tracking-tight uppercase italic leading-none mb-1">Lógica Láctea</h1>
+        <select id="periodo-filtro" onchange="cargarDatos()" class="text-[10px] font-black border-none p-0 bg-transparent text-slate-600 focus:ring-0 uppercase">
+            <option value="hoy">Hoy</option>
+            <option value="semana">Esta Semana</option>
+            <option value="mes">Este Mes</option>
+            <option value="personalizado">Fecha Específica</option>
+        </select>
+        <input type="date" id="filtro-fecha" onchange="cargarDatos()" class="hidden text-[10px] font-bold border-none p-0 bg-transparent text-gray-500 focus:ring-0">
     </div>
   </div>
   <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
-    <span id="icon-refresh" class="material-symbols-outlined text-slate-500">sync</span>
+    <span class="material-symbols-outlined text-slate-500">sync</span>
   </button>
 </header>
 
-<main class="pt-24 px-4 max-w-7xl mx-auto space-y-5">
+<main class="pt-28 px-4 max-w-7xl mx-auto space-y-5">
 
     <!-- 1. CARD DE DINERO -->
     <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
-        <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
         <div class="relative z-10 space-y-4">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-200 italic">Ventas Totales Hoy</p>
+                    <p id="label-dinero" class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-200 italic">Ventas Totales</p>
                     <h2 id="ventas-total-hoy" class="text-5xl font-black tracking-tighter">$0.00</h2>
                 </div>
                 <div class="bg-white/20 p-2 rounded-xl backdrop-blur-md border border-white/30">
@@ -87,104 +102,80 @@
                     <p id="por-recaudar" class="text-xl font-black text-amber-300">$0.00</p>
                 </div>
             </div>
-
-            <div class="bg-black/20 p-3 rounded-2xl flex justify-between items-center border border-white/10">
-                <span class="text-[9px] font-bold uppercase tracking-widest text-white/70">Capital en Stock (Costo)</span>
-                <span id="valor-invertido" class="font-black text-sm">$0.00</span>
-            </div>
         </div>
     </div>
 
-    <!-- 2. BOTONES DE ACCIÓN -->
-    <div class="grid grid-cols-2 gap-3">
-        <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
-          <div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1">
-            <span class="material-symbols-outlined text-3xl">add_shopping_cart</span>
-          </div>
-          <span class="text-[11px] font-black uppercase text-slate-800">Vender</span>
-          <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Registrar salida</span>
+    <!-- 2. BOTONES DE ACCIÓN (Resumidos para scannability) -->
+    <div class="grid grid-cols-3 gap-2">
+        <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-3 rounded-3xl flex flex-col items-center shadow-sm">
+          <span class="material-symbols-outlined text-primary mb-1 text-2xl">add_shopping_cart</span>
+          <span class="text-[8px] font-black uppercase">Vender</span>
         </button>
-        
-        <button id="btn-ruta" onclick="location.href='GestióndeDespachos.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
-          <span id="badge-ruta" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
-          <div class="w-12 h-12 rounded-2xl bg-green-100 text-success flex items-center justify-center mb-1">
-            <span class="material-symbols-outlined text-3xl font-bold">local_shipping</span>
-          </div>
-          <span class="text-[11px] font-black uppercase text-slate-800">En Ruta</span>
-          <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Gestión envíos</span>
+        <button id="btn-ruta" onclick="location.href='GestióndeDespachos.html'" class="relative bg-white border border-outline p-3 rounded-3xl flex flex-col items-center shadow-sm">
+          <span id="badge-ruta" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+          <span class="material-symbols-outlined text-success mb-1 text-2xl">local_shipping</span>
+          <span class="text-[8px] font-black uppercase">Ruta</span>
         </button>
-
-        <button onclick="location.href='ControldeInventario.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
-          <div class="w-12 h-12 rounded-2xl bg-pink-100 text-secondary flex items-center justify-center mb-1">
-            <span class="material-symbols-outlined text-3xl">inventory</span>
-          </div>
-          <span class="text-[11px] font-black uppercase text-slate-800">Stock</span>
-          <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Ver existencias</span>
-        </button>
-
-        <button onclick="location.href='Proveedores.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
-          <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-1">
-            <span class="material-symbols-outlined text-3xl">factory</span>
-          </div>
-          <span class="text-[11px] font-black uppercase text-slate-800">Proveedores</span>
-          <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Contacto compra</span>
-        </button>
-
-        <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-white border-2 border-electric/30 p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-md active:scale-95 transition-all">
-            <span id="badge-recepcion" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
-            <div class="w-12 h-12 rounded-2xl bg-blue-100 text-electric flex items-center justify-center mb-1">
-              <span class="material-symbols-outlined text-3xl font-bold">inventory_2</span>
-            </div>
-            <span class="text-[11px] font-black uppercase text-electric">Recibir</span>
-            <span class="text-[8px] font-bold text-blue-400 uppercase leading-none">Ingreso mercadería</span>
-        </button>
-
-        <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
-          <div class="w-12 h-12 rounded-2xl bg-purple-50 text-primary flex items-center justify-center mb-1">
-            <span class="material-symbols-outlined text-3xl">groups</span>
-          </div>
-          <span class="text-[11px] font-black uppercase text-slate-800">Clientes</span>
-          <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Base de datos</span>
+        <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-white border border-outline p-3 rounded-3xl flex flex-col items-center shadow-sm">
+            <span id="badge-recepcion" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+            <span class="material-symbols-outlined text-electric mb-1 text-2xl">inventory_2</span>
+            <span class="text-[8px] font-black uppercase">Recibir</span>
         </button>
     </div>
 
-    <!-- 3. RANKING Y PENDIENTES -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-            <h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.1em] flex items-center gap-2 italic">
-                <span class="material-symbols-outlined text-sm font-bold">stars</span> Lo más vendido (Mes)
-            </h3>
-            <div id="ranking-productos" class="space-y-2"></div>
-        </section>
-
-        <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-            <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center gap-2 italic">
-                <span class="material-symbols-outlined text-sm font-bold">timer</span> Despachos Pendientes
-            </h3>
-            <div id="lista-pedidos" class="space-y-2"></div>
-        </section>
-    </div>
-
-    <!-- 4. STOCK CRÍTICO -->
-    <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
-        <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
-            <span class="material-symbols-outlined text-sm font-bold">trending_down</span> Por agotarse (Stock Bajo)
+    <!-- 3. SECCIÓN DE DESPACHOS CON TIEMPO -->
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+        <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center justify-between italic">
+            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">timer</span> Despachos en Espera</span>
+            <span class="text-[8px] text-slate-400 font-bold">ORDENADO POR ANTIGÜEDAD</span>
         </h3>
-        <div id="cont-criticos" class="grid grid-cols-1 gap-2 text-[11px]"></div>
+        <div id="lista-pedidos" class="space-y-3"></div>
+    </section>
+
+    <!-- 4. RANKING -->
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+        <h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.1em] flex items-center gap-2 italic">
+            <span class="material-symbols-outlined text-sm font-bold">stars</span> Top Ventas
+        </h3>
+        <div id="ranking-productos" class="grid grid-cols-1 gap-2"></div>
     </section>
 
 </main>
 
 <script>
+// Inicializar fechas
+const fInput = document.getElementById('filtro-fecha');
 const hoy = new Date();
-const offset = hoy.getTimezoneOffset() * 60000;
-const fechaLocal = new Date(hoy - offset).toISOString().split('T')[0];
-document.getElementById('filtro-fecha').value = fechaLocal;
+fInput.value = new Date(hoy - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+
+function mostrarCargando(show) {
+    document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+}
+
+function filtrarPorPeriodo(fechaVenta, periodo, fechaSeleccionada) {
+    const fV = new Date(fechaVenta);
+    const fS = new Date(fechaSeleccionada);
+    
+    if (periodo === 'hoy') return fV.toDateString() === hoy.toDateString();
+    
+    if (periodo === 'semana') {
+        const inicioSemana = new Date(hoy);
+        inicioSemana.setDate(hoy.getDate() - hoy.getDay()); // Domingo
+        return fV >= inicioSemana;
+    }
+    
+    if (periodo === 'mes') return fV.getMonth() === hoy.getMonth() && fV.getFullYear() === hoy.getFullYear();
+    
+    return fV.toDateString() === fS.toDateString(); // Personalizado
+}
 
 async function cargarDatos() {
-    const icon = document.getElementById('icon-refresh');
-    icon?.classList.add('rotate-animation');
-    const fechaSel = document.getElementById('filtro-fecha').value;
+    mostrarCargando(true);
+    const periodo = document.getElementById('periodo-filtro').value;
+    const fSel = document.getElementById('filtro-fecha').value;
+    
+    // Mostrar/ocultar input fecha si es personalizado
+    fInput.classList.toggle('hidden', periodo !== 'personalizado');
 
     try {
         const [resInv, resVentas, resCompras] = await Promise.all([
@@ -197,123 +188,90 @@ async function cargarDatos() {
         const ventas = Array.isArray(resVentas) ? resVentas : [];
         const compras = Array.isArray(resCompras) ? resCompras : [];
 
+        // Costos
         const costosMap = {};
-        let totalCostoBodega = 0;
-        inventario.forEach(p => {
-            const costo = parseFloat(String(p.Precio_Distribuidor || 0).replace(',','.')) || 0;
-            const stock = parseFloat(p.Stock) || 0;
-            costosMap[p.Producto] = costo;
-            totalCostoBodega += (costo * stock);
-        });
-        document.getElementById('valor-invertido').innerText = `$${totalCostoBodega.toFixed(2)}`;
+        inventario.forEach(p => costosMap[p.Producto] = parseFloat(String(p.Precio_Distribuidor || 0).replace(',','.').trim()));
 
-        let utilidadHoy = 0;
-        let ventaTotalHoy = 0;
+        let utilidadVentas = 0;
+        let totalVentas = 0;
         let porRecaudarTotal = 0;
         let rankingMap = {};
-        let pedidosPendientesMap = {}; // Mapa para agrupar por ID_Venta
+        let pedidosPendientesMap = {};
 
         ventas.forEach(v => {
-            const fV = new Date(v.Fecha).toISOString().split('T')[0];
-            const cantidad = parseFloat(v.Cantidad) || 0;
-            const totalFila = parseFloat(String(v["Precio Total"] || 0).replace(',','.')) || 0;
+            const totalFila = parseFloat(String(v["Precio Total"] || 0).replace(',','.').trim()) || 0;
             const esPendiente = String(v.Estado).toUpperCase() === "PENDIENTE";
-            const idVenta = v.ID_Venta; // CLAVE PRINCIPAL
+            const idVenta = v.ID_Venta;
 
-            // Ranking mensual
-            if(new Date(v.Fecha).getMonth() === hoy.getMonth()){
-                rankingMap[v.Producto] = (rankingMap[v.Producto] || 0) + cantidad;
+            // 1. Filtro de Tiempo para Métricas
+            if(filtrarPorPeriodo(v.Fecha, periodo, fSel)) {
+                totalVentas += totalFila;
+                const costoProd = costosMap[v.Producto] || 0;
+                utilidadVentas += (totalFila - (costoProd * (parseFloat(v.Cantidad) || 0)));
+                rankingMap[v.Producto] = (rankingMap[v.Producto] || 0) + (parseFloat(v.Cantidad) || 0);
             }
 
-            // Datos del día (Caja)
-            if(fV === fechaSel) {
-                ventaTotalHoy += totalFila;
-                utilidadHoy += (totalFila - ((costosMap[v.Producto] || 0) * cantidad));
-            }
-
-            // AGRUPACIÓN DE PENDIENTES POR ID_VENTA
+            // 2. Despachos Pendientes (Siempre GLOBAL y agrupado por ID_Venta)
             if(esPendiente && idVenta) {
                 porRecaudarTotal += totalFila;
-                
                 if(!pedidosPendientesMap[idVenta]) {
+                    const fechaPedido = new Date(v.Fecha);
+                    const diffDias = Math.floor((hoy - fechaPedido) / (1000 * 60 * 60 * 24));
                     pedidosPendientesMap[idVenta] = {
                         cliente: v.Cliente,
-                        fecha: v.Fecha,
-                        totalAcumulado: 0
+                        fecha: fechaPedido,
+                        dias: diffDias,
+                        total: 0
                     };
                 }
-                pedidosPendientesMap[idVenta].totalAcumulado += totalFila;
+                pedidosPendientesMap[idVenta].total += totalFila;
             }
         });
 
-        document.getElementById('ventas-total-hoy').innerText = `$${ventaTotalHoy.toFixed(2)}`;
-        document.getElementById('ganancia-real').innerText = `$${utilidadHoy.toFixed(2)}`;
+        // Actualizar Card Dinero
+        document.getElementById('ventas-total-hoy').innerText = `$${totalVentas.toFixed(2)}`;
+        document.getElementById('ganancia-real').innerText = `$${utilidadVentas.toFixed(2)}`;
         document.getElementById('por-recaudar').innerText = `$${porRecaudarTotal.toFixed(2)}`;
+        document.getElementById('label-dinero').innerText = `Ventas ${periodo === 'personalizado' ? 'Día' : periodo}`;
 
-        // Badge En Ruta (Número de IDs únicos)
-        const totalPedidosUnicos = Object.keys(pedidosPendientesMap).length;
-        const bRuta = document.getElementById('badge-ruta');
-        if(totalPedidosUnicos > 0){
-            bRuta.innerText = totalPedidosUnicos;
-            bRuta.classList.remove('hidden');
-            document.getElementById('btn-ruta').classList.add('pulse-success');
-        } else {
-            bRuta.classList.add('hidden');
-            document.getElementById('btn-ruta').classList.remove('pulse-success');
-        }
-
-        // Badge Recibir (Compras)
-        const bRec = document.getElementById('badge-recepcion');
-        const cPends = compras.filter(c => String(c.Estado_Entrega).toUpperCase() === "PENDIENTE");
-        if(cPends.length > 0){
-            const facts = [...new Set(cPends.map(p => p.ID_Compra))];
-            bRec.innerText = facts.length;
-            bRec.classList.remove('hidden');
-            document.getElementById('btn-recepcion').classList.add('pulse-notif');
-        } else {
-            bRec.classList.add('hidden');
-            document.getElementById('btn-recepcion').classList.remove('pulse-notif');
-        }
-
-        // Render Ranking
-        const rankingDiv = document.getElementById('ranking-productos');
-        const sortedRanking = Object.entries(rankingMap).sort((a,b) => b[1] - a[1]).slice(0,5);
-        rankingDiv.innerHTML = sortedRanking.map(([prod, cant], i) => `
-            <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-100">
-                <span class="text-[11px] font-black uppercase text-slate-700">${i+1}. ${prod}</span>
-                <span class="text-primary font-black text-xs">${cant} <span class="text-[9px]">unid.</span></span>
-            </div>
-        `).join('') || '<p class="text-center text-slate-300 italic">Sin ventas aún</p>';
-
-        // Render Pendientes Agrupados
+        // Render Pendientes (Ordenados por Días de forma descendente)
         const listaPed = document.getElementById('lista-pedidos');
-        const itemsPendientes = Object.entries(pedidosPendientesMap);
-        listaPed.innerHTML = itemsPendientes.map(([id, p]) => `
-            <div class="p-3 bg-amber-50/50 rounded-2xl flex justify-between items-center border border-amber-100">
+        const sortedPendientes = Object.entries(pedidosPendientesMap)
+            .sort((a, b) => b[1].dias - a[1].dias);
+
+        listaPed.innerHTML = sortedPendientes.map(([id, p]) => `
+            <div class="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex justify-between items-center ${p.dias > 2 ? 'border-l-4 border-l-red-500' : ''}">
                 <div class="flex flex-col">
                     <span class="text-[11px] font-black uppercase text-slate-700">${p.cliente}</span>
-                    <span class="text-[8px] font-bold text-slate-400 italic">ID: ${id} • ${new Date(p.fecha).toLocaleDateString()}</span>
+                    <div class="flex gap-2 items-center">
+                        <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${p.dias > 2 ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}">
+                            Hace ${p.dias} días
+                        </span>
+                        <span class="text-[8px] text-slate-400 font-bold uppercase">ID: ${id}</span>
+                    </div>
                 </div>
-                <span class="text-amber-600 font-black italic">$${p.totalAcumulado.toFixed(2)}</span>
+                <span class="text-amber-600 font-black italic">$${p.total.toFixed(2)}</span>
             </div>
-        `).join('') || '<p class="text-center text-slate-300 italic">Todo al día</p>';
+        `).join('') || '<p class="text-center py-4 text-slate-300 italic text-xs">¡Todo entregado!</p>';
 
-        // Stock Crítico
-        const contCrit = document.getElementById('cont-criticos');
-        const criticos = inventario.filter(p => {
-            const s = parseFloat(p.Stock) || 0;
-            return s > 0 && s <= 5;
-        });
-        contCrit.innerHTML = criticos.map(p => `
-            <div class="flex justify-between p-3 bg-red-50 rounded-2xl border border-red-100">
-                <span class="font-black uppercase text-red-900">${p.Producto}</span>
-                <span class="font-black text-red-600 uppercase">${p.Stock} UNIDADES</span>
+        // Badges
+        document.getElementById('badge-ruta').innerText = sortedPendientes.length;
+        document.getElementById('badge-ruta').classList.toggle('hidden', sortedPendientes.length === 0);
+
+        // Ranking
+        const rankingDiv = document.getElementById('ranking-productos');
+        const top5 = Object.entries(rankingMap).sort((a,b) => b[1] - a[1]).slice(0,5);
+        rankingDiv.innerHTML = top5.map(([prod, cant], i) => `
+            <div class="flex items-center justify-between p-3 bg-purple-50/50 rounded-2xl">
+                <span class="text-[10px] font-black uppercase text-slate-600">${i+1}. ${prod}</span>
+                <span class="text-primary font-black text-xs">${cant} ud.</span>
             </div>
-        `).join('') || '<p class="text-center text-slate-300 italic">Stock suficiente</p>';
+        `).join('') || '<p class="text-center text-slate-300 text-xs italic">Sin datos</p>';
 
-    } catch (e) { console.error("Error API:", e); }
-    finally { icon?.classList.remove('rotate-animation'); }
+    } catch (e) { console.error(e); }
+    finally { setTimeout(() => mostrarCargando(false), 500); }
 }
+
 window.onload = cargarDatos;
 </script>
 </body>

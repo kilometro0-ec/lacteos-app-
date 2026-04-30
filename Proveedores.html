@@ -14,7 +14,7 @@
             theme: { 
                 extend: { 
                     colors: { 
-                        primary: "#a21caf", 
+                        primary: "#a21caf", // TU FUCSIA/MAGENTA
                         background: "#faf5ff", 
                         outline: "#e9d5ff", 
                         success: "#16a34a",
@@ -30,6 +30,8 @@
         .expanded .collapse-content { max-height: 2000px; transition: all 0.4s ease-in-out; }
         .expanded .arrow-icon { transform: rotate(180deg); color: #a21caf; }
         input, select { font-size: 16px !important; } 
+        /* Feedback para presión larga */
+        .card-active { transform: scale(0.98); background-color: #fdf4ff; }
     </style>
 </head>
 <body class="bg-background text-dark antialiased pb-32">
@@ -43,9 +45,8 @@
 
 <main class="pt-20 px-4 max-w-lg mx-auto space-y-6">
     
-    <!-- SECCIÓN REGISTRO (MINIMIZADA POR DEFECTO) -->
+    <!-- SECCIÓN REGISTRO -->
     <section id="seccion-registro" class="bg-white rounded-[2.5rem] border border-outline shadow-sm overflow-hidden transition-all duration-300">
-        <!-- Barra de activación -->
         <div onclick="toggleFormulario()" class="p-6 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors">
             <h2 class="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2 italic">
                 <span class="material-symbols-outlined text-sm">factory</span> Nuevo Registro
@@ -56,52 +57,30 @@
             </div>
         </div>
 
-        <!-- Contenido Oculto -->
         <div id="contenido-registro" class="px-6 pb-6 space-y-4 hidden border-t border-dashed border-outline/50 pt-4">
             <div class="space-y-3">
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-4 top-4 text-slate-300 text-xl">store</span>
-                    <input type="text" id="nombre" placeholder="Nombre de la Empresa" 
-                        class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-12 focus:ring-2 focus:ring-primary shadow-inner font-semibold text-sm">
-                </div>
-                
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-4 top-4 text-slate-300 text-xl">badge</span>
-                    <input type="text" id="ruc" inputmode="numeric" placeholder="RUC / Cédula" 
-                        class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-12 focus:ring-2 focus:ring-primary shadow-inner text-sm">
-                </div>
-
+                <input type="text" id="nombre" placeholder="Nombre de la Empresa" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-semibold text-sm">
+                <input type="text" id="ruc" inputmode="numeric" placeholder="RUC / Cédula" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm">
                 <div class="grid grid-cols-2 gap-3">
-                    <select id="provincia" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm font-bold italic">
+                    <select id="provincia" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary text-sm font-bold italic">
                         <option value="Pichincha">Pichincha</option>
                         <option value="Guayas">Guayas</option>
                         <option value="Azuay">Azuay</option>
                         <option value="Manabí">Manabí</option>
-                        <option value="Carchi">Carchi</option>
                     </select>
-                    <input type="text" id="ciudad" placeholder="Ciudad" 
-                        class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-bold text-sm">
+                    <input type="text" id="ciudad" placeholder="Ciudad" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-bold text-sm">
                 </div>
-
-                <input type="text" id="direccion" placeholder="Dirección / Localización" 
-                    class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-xs italic">
-
+                <input type="text" id="direccion" placeholder="Dirección Exacta" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary text-xs italic">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-3 top-4 text-slate-300 text-lg">call</span>
-                        <input type="tel" id="telefono" placeholder="WhatsApp" 
-                            class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-10 focus:ring-2 focus:ring-primary shadow-inner text-sm">
-                    </div>
-                    <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-[10px] font-black uppercase tracking-tighter">
+                    <input type="tel" id="telefono" placeholder="WhatsApp" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary text-sm">
+                    <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary text-[10px] font-black uppercase tracking-tighter">
                         <option value="Lácteos">Lácteos</option>
                         <option value="Insumos">Insumos</option>
                         <option value="Servicios">Servicios</option>
                     </select>
                 </div>
-
-                <button onclick="guardarProveedor()" id="btn-guardar" 
-                    class="w-full bg-dark text-white font-black py-5 rounded-[2rem] shadow-xl active:scale-95 transition-all flex justify-center items-center gap-3 tracking-widest text-xs">
-                    <span class="material-symbols-outlined">add_business</span> REGISTRAR PROVEEDOR
+                <button onclick="guardarProveedor()" id="btn-guardar" class="w-full bg-dark text-white font-black py-5 rounded-[2rem] shadow-xl active:scale-95 transition-all tracking-widest text-xs uppercase">
+                    Registrar Proveedor
                 </button>
             </div>
         </div>
@@ -110,14 +89,13 @@
     <!-- LISTADO -->
     <div class="flex justify-between items-center px-2">
         <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 italic">Directorio Activo</h3>
-        <span id="count-prov" class="bg-primary/10 text-primary text-[10px] px-3 py-1 rounded-full font-black italic">0 PROV</span>
+        <span id="count-prov" class="bg-primary/10 text-primary text-[10px] px-3 py-1 rounded-full font-black italic">...</span>
     </div>
 
     <div id="contenedor-maestro" class="space-y-4">
-        <!-- Esqueleto de carga -->
         <div class="flex flex-col items-center py-10 text-slate-300 animate-pulse">
             <span class="material-symbols-outlined text-4xl mb-2">sync</span>
-            <p class="text-[10px] font-bold uppercase tracking-widest">Sincronizando Base de Datos...</p>
+            <p class="text-[10px] font-bold uppercase tracking-widest">Cargando datos fucsia...</p>
         </div>
     </div>
 </main>
@@ -125,26 +103,17 @@
 <div id="menu-container"></div>
 
 <script>
-    // Lógica para Expandir/Minimizar el formulario de registro
+    let timer;
+
     function toggleFormulario() {
         const contenido = document.getElementById('contenido-registro');
         const icono = document.getElementById('icono-registro');
-        const seccion = document.getElementById('seccion-registro');
         const txt = document.getElementById('txt-estado');
-
-        if (contenido.classList.contains('hidden')) {
-            contenido.classList.remove('hidden');
-            icono.innerText = "do_not_disturb_on";
-            icono.style.transform = "rotate(180deg)";
-            txt.innerText = "Cerrar";
-            seccion.classList.add('ring-2', 'ring-primary/20');
-        } else {
-            contenido.classList.add('hidden');
-            icono.innerText = "add_circle";
-            icono.style.transform = "rotate(0deg)";
-            txt.innerText = "Agregar";
-            seccion.classList.remove('ring-2', 'ring-primary/20');
-        }
+        const isHidden = contenido.classList.contains('hidden');
+        
+        contenido.classList.toggle('hidden');
+        icono.innerText = isHidden ? "do_not_disturb_on" : "add_circle";
+        txt.innerText = isHidden ? "Cerrar" : "Agregar";
     }
 
     async function cargarData() {
@@ -158,95 +127,98 @@
             contenedor.innerHTML = "";
             document.getElementById('count-prov').innerText = `${proveedores.length} PROV`;
 
-            if (!proveedores || proveedores.length === 0) {
-                contenedor.innerHTML = `<div class="text-center py-10 bg-white rounded-[2rem] border border-dashed border-outline text-slate-300 italic text-xs uppercase">No hay proveedores en la red.</div>`;
-                return;
-            }
-
             proveedores.reverse().forEach(p => {
                 const nombreP = p["Nombre del Proveedor"];
                 const historial = (compras || []).filter(c => c.Proveedor === nombreP);
                 const totalInvertido = historial.reduce((acc, curr) => acc + (parseFloat(curr.Total) || 0), 0);
+                const totalUnd = historial.reduce((acc, curr) => acc + (parseFloat(curr.Cantidad) || 0), 0);
 
                 const card = document.createElement('div');
-                card.className = "bg-white rounded-[2.5rem] border border-outline shadow-sm overflow-hidden transition-all";
+                card.className = "bg-white rounded-[2.5rem] border border-outline shadow-sm overflow-hidden transition-all relative";
+                
+                // Lógica de borrado (Long Press)
+                const startPress = () => {
+                    card.classList.add('card-active');
+                    timer = setTimeout(() => {
+                        card.classList.remove('card-active');
+                        if(confirm(`¿Eliminar permanentemente a ${nombreP}?`)) eliminarProv(nombreP);
+                    }, 800);
+                };
+                const endPress = () => {
+                    card.classList.remove('card-active');
+                    clearTimeout(timer);
+                };
+
+                card.onmousedown = startPress; card.onmouseup = endPress;
+                card.ontouchstart = startPress; card.ontouchend = endPress;
+
                 card.innerHTML = `
                     <div class="p-6 flex justify-between items-center cursor-pointer active:bg-slate-50" onclick="this.parentElement.classList.toggle('expanded')">
                         <div class="flex items-center gap-4">
-                            <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-lg">
+                            <div class="w-14 h-14 rounded-2xl bg-dark text-white flex items-center justify-center shadow-lg relative">
                                 <span class="material-symbols-outlined text-2xl">factory</span>
+                                <span class="absolute -top-2 -right-2 bg-primary text-[9px] px-2 py-1 rounded-full font-black border border-white">${totalUnd}</span>
                             </div>
                             <div>
                                 <p class="font-black text-dark uppercase text-xs tracking-tight">${nombreP}</p>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="text-[9px] font-black text-primary bg-primary/5 px-2 py-0.5 rounded-full uppercase">${p.Categoría || 'General'}</span>
-                                    <span class="text-[9px] font-bold text-slate-400 italic">${p.Ciudad || 'Ecuador'}</span>
-                                </div>
+                                <p class="text-[9px] font-bold text-slate-400 italic uppercase">${p.Categoría || 'General'} • ${p.Ciudad || 'EC'}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                             <p class="text-[10px] font-black text-dark">$${totalInvertido.toFixed(2)}</p>
-                             <span class="material-symbols-outlined text-slate-300 arrow-icon transition-transform">expand_more</span>
+                             <p class="text-[10px] font-black text-primary">$${totalInvertido.toFixed(2)}</p>
+                             <span class="material-symbols-outlined text-slate-300 arrow-icon">expand_more</span>
                         </div>
                     </div>
                     
-                    <div class="collapse-content bg-slate-50/50 border-t border-dashed border-outline">
-                        <div class="p-6 space-y-5">
-                            <div class="grid grid-cols-2 gap-3 text-[10px]">
-                                <div class="bg-white p-3 rounded-2xl border border-outline shadow-sm">
-                                    <p class="font-black text-slate-400 uppercase mb-1">RUC/ID</p>
-                                    <p class="font-bold text-dark tracking-widest">${p.RUC || 'N/A'}</p>
+                    <div class="collapse-content bg-fuchsia-50/30 border-t border-dashed border-outline">
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-outline">
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase">Contacto Directo</p>
+                                    <p class="text-[10px] font-bold text-dark">${p["Contacto / Teléfono"] || 'N/A'}</p>
                                 </div>
-                                <div class="bg-white p-3 rounded-2xl border border-outline shadow-sm" onclick="window.location.href='tel:${p["Contacto / Teléfono"]}'">
-                                    <p class="font-black text-slate-400 uppercase mb-1 text-right">Contacto</p>
-                                    <p class="font-bold text-primary text-right">${p["Contacto / Teléfono"] || 'N/A'}</p>
-                                </div>
+                                <a href="tel:${p["Contacto / Teléfono"]}" class="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-lg">call</span>
+                                </a>
                             </div>
 
-                            <div class="bg-white p-4 rounded-2xl border border-outline shadow-sm text-[10px]">
-                                <p class="font-black text-slate-400 uppercase mb-1">Dirección Registrada</p>
-                                <p class="font-semibold text-dark">${p.Direccion || 'Dirección no especificada'}</p>
-                            </div>
-                            
-                            <div class="space-y-3">
-                                <h4 class="text-[9px] font-black uppercase text-slate-400 tracking-[0.2em] italic px-1">Últimos Pedidos</h4>
+                            <div class="space-y-2">
+                                <h4 class="text-[9px] font-black uppercase text-slate-400 italic">Historial Reciente</h4>
                                 ${historial.length > 0 ? historial.reverse().slice(0, 3).map(h => `
-                                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-outline/30">
-                                        <div class="flex items-center gap-2">
-                                            <div class="w-1.5 h-1.5 rounded-full bg-success"></div>
-                                            <div>
-                                                <p class="font-black text-dark uppercase text-[10px]">${h.Producto || 'Varios'}</p>
-                                                <p class="text-[8px] text-slate-400 font-bold">${h.Fecha || '--/--'}</p>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="font-black text-primary">$${parseFloat(h.Total || 0).toFixed(2)}</p>
-                                        </div>
+                                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-outline/50">
+                                        <p class="font-black text-dark uppercase text-[9px]">${h.Producto || 'Variante'}</p>
+                                        <p class="font-black text-primary text-[10px]">$${parseFloat(h.Total).toFixed(2)}</p>
                                     </div>
-                                `).join('') : '<p class="text-[9px] italic text-slate-400 py-2 text-center">Sin historial de compras.</p>'}
+                                `).join('') : '<p class="text-[9px] italic text-slate-400 text-center">Sin registros.</p>'}
                             </div>
 
                             <button onclick="window.location.href='NuevaCompra.html?prov=${encodeURIComponent(nombreP)}'" 
-                                class="w-full bg-primary/10 text-primary font-black py-3 rounded-xl text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all italic">
-                                + Solicitar Nuevo Pedido
+                                class="w-full bg-primary text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all italic">
+                                + Generar Orden
                             </button>
                         </div>
                     </div>
                 `;
                 contenedor.appendChild(card);
             });
-        } catch (e) { console.error("Error al cargar data:", e); }
+        } catch (e) { console.error(e); }
+    }
+
+    async function eliminarProv(nombre) {
+        try {
+            await DairyAPI.guardarDatos("Proveedores", { accion: "eliminar_proveedor", nombre: nombre });
+            location.reload();
+        } catch (e) { alert("Error al borrar"); }
     }
 
     async function guardarProveedor() {
         const btn = document.getElementById('btn-guardar');
         const nombre = document.getElementById('nombre').value.trim();
-        
-        if(!nombre) return alert("¡El nombre de la empresa es obligatorio!");
+        if(!nombre) return alert("Nombre obligatorio");
 
         const nuevo = {
             "Nombre del Proveedor": nombre,
-            "RUC": document.getElementById('ruc').value.toString(),
+            "RUC": document.getElementById('ruc').value,
             "Provincia": document.getElementById('provincia').value,
             "Ciudad": document.getElementById('ciudad').value,
             "Direccion": document.getElementById('direccion').value,
@@ -256,20 +228,12 @@
         };
 
         btn.disabled = true;
-        btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> REGISTRANDO...`;
+        btn.innerHTML = "REGISTRANDO...";
         
         try {
             await DairyAPI.guardarDatos("Proveedores", nuevo);
-            
-            // Refresco de pantalla después de éxito
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-        } catch(e) {
-            alert("Error al conectar con la base de datos");
-            btn.disabled = false;
-            btn.innerHTML = `<span class="material-symbols-outlined">add_business</span> REGISTRAR PROVEEDOR`;
-        }
+            location.reload();
+        } catch(e) { btn.disabled = false; btn.innerHTML = "REINTENTAR"; }
     }
 
     window.onload = cargarData;

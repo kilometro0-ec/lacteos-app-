@@ -63,7 +63,7 @@
 
 <main class="pt-24 px-4 max-w-7xl mx-auto space-y-5">
 
-    <!-- 1. CARD DE DINERO (REDISEÑADA PARA INSPIRAR) -->
+    <!-- 1. CARD DE DINERO -->
     <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
         <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
         <div class="relative z-10 space-y-4">
@@ -83,7 +83,7 @@
                     <p id="ganancia-real" class="text-xl font-black text-green-300">$0.00</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-[9px] font-bold uppercase text-purple-200">Por Cobrar</p>
+                    <p class="text-[9px] font-bold uppercase text-purple-200">Por Cobrar Total</p>
                     <p id="por-recaudar" class="text-xl font-black text-amber-300">$0.00</p>
                 </div>
             </div>
@@ -95,9 +95,8 @@
         </div>
     </div>
 
-    <!-- 2. BOTONES DE ACCIÓN CON DESCRIPCIÓN -->
+    <!-- 2. BOTONES DE ACCIÓN -->
     <div class="grid grid-cols-2 gap-3">
-        <!-- VENDER -->
         <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
           <div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1">
             <span class="material-symbols-outlined text-3xl">add_shopping_cart</span>
@@ -106,7 +105,6 @@
           <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Registrar salida</span>
         </button>
         
-        <!-- EN RUTA -->
         <button id="btn-ruta" onclick="location.href='GestióndeDespachos.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
           <span id="badge-ruta" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
           <div class="w-12 h-12 rounded-2xl bg-green-100 text-success flex items-center justify-center mb-1">
@@ -116,7 +114,6 @@
           <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Gestión envíos</span>
         </button>
 
-        <!-- STOCK -->
         <button onclick="location.href='ControldeInventario.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
           <div class="w-12 h-12 rounded-2xl bg-pink-100 text-secondary flex items-center justify-center mb-1">
             <span class="material-symbols-outlined text-3xl">inventory</span>
@@ -125,7 +122,6 @@
           <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Ver existencias</span>
         </button>
 
-        <!-- PROVEEDORES -->
         <button onclick="location.href='Proveedores.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
           <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-1">
             <span class="material-symbols-outlined text-3xl">factory</span>
@@ -134,7 +130,6 @@
           <span class="text-[8px] font-bold text-slate-400 uppercase leading-none">Contacto compra</span>
         </button>
 
-        <!-- RECIBIR PRODUCTOS -->
         <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-white border-2 border-electric/30 p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-md active:scale-95 transition-all">
             <span id="badge-recepcion" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
             <div class="w-12 h-12 rounded-2xl bg-blue-100 text-electric flex items-center justify-center mb-1">
@@ -144,7 +139,6 @@
             <span class="text-[8px] font-bold text-blue-400 uppercase leading-none">Ingreso mercadería</span>
         </button>
 
-        <!-- CLIENTES -->
         <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-sm active:scale-95 transition-all">
           <div class="w-12 h-12 rounded-2xl bg-purple-50 text-primary flex items-center justify-center mb-1">
             <span class="material-symbols-outlined text-3xl">groups</span>
@@ -165,13 +159,13 @@
 
         <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
             <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center gap-2 italic">
-                <span class="material-symbols-outlined text-sm font-bold">timer</span> Despachos Pendientes
+                <span class="material-symbols-outlined text-sm font-bold">timer</span> Todos los Despachos Pendientes
             </h3>
             <div id="lista-pedidos" class="space-y-2"></div>
         </section>
     </div>
 
-    <!-- 4. STOCK CRÍTICO (SIN AGOTADOS 0) -->
+    <!-- 4. STOCK CRÍTICO -->
     <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
         <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
             <span class="material-symbols-outlined text-sm font-bold">trending_down</span> Por agotarse (Stock Bajo)
@@ -203,53 +197,56 @@ async function cargarDatos() {
         const ventas = Array.isArray(resVentas) ? resVentas : [];
         const compras = Array.isArray(resCompras) ? resCompras : [];
 
-        // 1. INVENTARIO
+        // 1. COSTOS MAP E INVENTARIO
         const costosMap = {};
         let totalCostoBodega = 0;
-        let utilidadProyectada = 0;
         inventario.forEach(p => {
             const costo = parseFloat(String(p.Precio_Distribuidor || 0).replace(',','.')) || 0;
-            const precioV = parseFloat(String(p.Precio_Venta || 0).replace(',','.')) || 0;
             const stock = parseFloat(p.Stock) || 0;
             costosMap[p.Producto] = costo;
             totalCostoBodega += (costo * stock);
-            utilidadProyectada += ((precioV - costo) * stock);
         });
         document.getElementById('valor-invertido').innerText = `$${totalCostoBodega.toFixed(2)}`;
 
-        // 2. VENTAS Y RANKING
+        // 2. LÓGICA DE VENTAS (POR FECHA) Y PENDIENTES (GENERAL)
         let utilidadHoy = 0;
-        let porRecaudar = 0;
         let ventaTotalHoy = 0;
-        let pendsHoy = [];
+        let porRecaudarTotal = 0;
+        let despachosPendientesGeneral = [];
         let rankingMap = {};
 
         ventas.forEach(v => {
             const fV = new Date(v.Fecha).toISOString().split('T')[0];
             const cantidad = parseFloat(v.Cantidad) || 0;
             const totalVenta = parseFloat(String(v["Precio Total"] || 0).replace(',','.')) || 0;
-            
+            const esPendiente = String(v.Estado).toUpperCase() === "PENDIENTE";
+
+            // Ranking del mes
             if(new Date(v.Fecha).getMonth() === hoy.getMonth()){
                 rankingMap[v.Producto] = (rankingMap[v.Producto] || 0) + cantidad;
             }
 
+            // Datos filtrados por el día seleccionado
             if(fV === fechaSel) {
                 ventaTotalHoy += totalVenta;
                 utilidadHoy += (totalVenta - ((costosMap[v.Producto] || 0) * cantidad));
-                if(String(v.Estado).toUpperCase() === "PENDIENTE") {
-                    porRecaudar += totalVenta;
-                    pendsHoy.push(v);
-                }
+            }
+
+            // DESPACHOS PENDIENTES: Sin filtro de fecha
+            if(esPendiente) {
+                porRecaudarTotal += totalVenta;
+                despachosPendientesGeneral.push(v);
             }
         });
+
         document.getElementById('ventas-total-hoy').innerText = `$${ventaTotalHoy.toFixed(2)}`;
         document.getElementById('ganancia-real').innerText = `$${utilidadHoy.toFixed(2)}`;
-        document.getElementById('por-recaudar').innerText = `$${porRecaudar.toFixed(2)}`;
+        document.getElementById('por-recaudar').innerText = `$${porRecaudarTotal.toFixed(2)}`;
 
-        // 3. BADGES
+        // 3. BADGES DE ACCIÓN
         const bRuta = document.getElementById('badge-ruta');
-        if(pendsHoy.length > 0){
-            bRuta.innerText = pendsHoy.length;
+        if(despachosPendientesGeneral.length > 0){
+            bRuta.innerText = despachosPendientesGeneral.length;
             bRuta.classList.remove('hidden');
             document.getElementById('btn-ruta').classList.add('pulse-success');
         } else {
@@ -279,11 +276,14 @@ async function cargarDatos() {
             </div>
         `).join('') || '<p class="text-center text-slate-300 italic">Sin ventas aún</p>';
 
-        // 5. RENDER PENDIENTES
+        // 5. RENDER PENDIENTES (Muestra TODO lo pendiente de la historia)
         const listaPed = document.getElementById('lista-pedidos');
-        listaPed.innerHTML = pendsHoy.map(p => `
+        listaPed.innerHTML = despachosPendientesGeneral.map(p => `
             <div class="p-3 bg-amber-50/50 rounded-2xl flex justify-between items-center border border-amber-100">
-                <div class="text-[11px] font-black uppercase text-slate-700">${p.Cliente}</div>
+                <div class="flex flex-col">
+                    <span class="text-[11px] font-black uppercase text-slate-700">${p.Cliente}</span>
+                    <span class="text-[8px] font-bold text-slate-400">${new Date(p.Fecha).toLocaleDateString()}</span>
+                </div>
                 <span class="text-amber-600 font-black italic">$${parseFloat(String(p["Precio Total"]).replace(',','.')).toFixed(2)}</span>
             </div>
         `).join('') || '<p class="text-center text-slate-300 italic">Todo al día</p>';
@@ -292,7 +292,7 @@ async function cargarDatos() {
         const contCrit = document.getElementById('cont-criticos');
         const criticos = inventario.filter(p => {
             const s = parseFloat(p.Stock) || 0;
-            return s > 0 && s <= 5; // Filtro: Mayor que 0 y menor/igual a 5
+            return s > 0 && s <= 5;
         });
         contCrit.innerHTML = criticos.map(p => `
             <div class="flex justify-between p-3 bg-red-50 rounded-2xl border border-red-100">

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Lógica Láctea - Dashboard Principal</title>
+    <title>Lógica Láctea - Dashboard</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -28,14 +28,12 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
     .rotate-animation { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    
     .pulse-notif { animation: shadow-pulse 1.5s infinite; }
     @keyframes shadow-pulse {
         0% { box-shadow: 0 0 0 0px rgba(0, 85, 255, 0.5); }
         70% { box-shadow: 0 0 0 10px rgba(0, 85, 255, 0); }
         100% { box-shadow: 0 0 0 0px rgba(0, 85, 255, 0); }
     }
-    
     .pulse-success { animation: shadow-success 1.5s infinite; }
     @keyframes shadow-success {
         0% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0.5); }
@@ -64,25 +62,26 @@
 
 <main class="pt-24 px-4 max-w-7xl mx-auto space-y-4">
 
-    <!-- 1. MÉTRICAS -->
+    <!-- 1. MÉTRICAS DE DINERO (INFORMACIÓN COMPLETA) -->
     <div class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm space-y-6">
         <div class="flex justify-between items-start">
             <div>
-                <h3 class="text-[10px] font-black text-success uppercase tracking-widest italic mb-1">Utilidad Real Hoy</h3>
-                <span id="ganancia-real" class="text-5xl font-black tracking-tighter text-success">$0.00</span>
+                <h3 class="text-[10px] font-black text-success uppercase tracking-widest italic mb-1">Ventas Netas (Hoy)</h3>
+                <span id="ventas-total-hoy" class="text-5xl font-black tracking-tighter text-success">$0.00</span>
+                <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase">Utilidad: <span id="ganancia-real" class="text-success font-black">$0.00</span></p>
             </div>
             <div class="text-right">
-                <h3 class="text-[10px] font-black text-amber-600 uppercase tracking-widest italic mb-1">Por Cobrar</h3>
+                <h3 class="text-[10px] font-black text-amber-600 uppercase tracking-widest italic mb-1">Por Recaudar</h3>
                 <span id="por-recaudar" class="text-xl font-black text-amber-600">$0.00</span>
             </div>
         </div>
         <div class="grid grid-cols-2 gap-4 pt-6 border-t border-slate-100">
             <div>
-                <h3 class="text-[9px] font-black text-slate-400 uppercase mb-1">Inversión Actual</h3>
+                <h3 class="text-[9px] font-black text-slate-400 uppercase mb-1">Valor Inventario (Costo)</h3>
                 <span id="valor-invertido" class="text-lg font-black text-slate-800">$0.00</span>
             </div>
             <div class="text-right">
-                <h3 class="text-[9px] font-black text-primary uppercase mb-1 italic">Potencial de Ganancia</h3>
+                <h3 class="text-[9px] font-black text-primary uppercase mb-1 italic">Utilidad Proyectada</h3>
                 <span id="utilidad-proyectada" class="text-lg font-black text-primary">$0.00</span>
             </div>
         </div>
@@ -111,7 +110,6 @@
           <span class="text-[10px] font-black uppercase">Proveedores</span>
         </button>
 
-        <!-- BOTÓN RECIBIR (AZUL ELÉCTRICO) -->
         <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-electric text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
             <span id="badge-recepcion" class="absolute top-2 right-4 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
             <span class="material-symbols-outlined text-3xl">inventory_2</span>
@@ -124,20 +122,29 @@
         </button>
     </div>
 
-    <!-- 3. LISTADO PENDIENTES -->
-    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-        <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
-            <span class="material-symbols-outlined text-sm font-bold">pending_actions</span> Pedidos de Clientes
-        </h3>
-        <div id="lista-pedidos" class="space-y-2"></div>
-    </section>
+    <!-- 3. RANKING Y PENDIENTES -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+            <h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-widest flex items-center gap-2 italic">
+                <span class="material-symbols-outlined text-sm font-bold">trending_up</span> Top 5 Productos (Mes)
+            </h3>
+            <div id="ranking-productos" class="space-y-2"></div>
+        </section>
 
-    <!-- 4. STOCK CRÍTICO -->
+        <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+            <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
+                <span class="material-symbols-outlined text-sm font-bold">pending_actions</span> Pedidos de Clientes (Hoy)
+            </h3>
+            <div id="lista-pedidos" class="space-y-2"></div>
+        </section>
+    </div>
+
+    <!-- 4. STOCK CRÍTICO (INCLUYE AGOTADOS 0) -->
     <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
         <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
-            <span class="material-symbols-outlined text-sm font-bold">warning</span> Por agotarse
+            <span class="material-symbols-outlined text-sm font-bold">warning</span> Stock Crítico / Agotado
         </h3>
-        <div id="cont-criticos" class="space-y-2 text-[11px]"></div>
+        <div id="cont-criticos" class="grid grid-cols-1 gap-2 text-[11px]"></div>
     </section>
 
 </main>
@@ -164,30 +171,41 @@ async function cargarDatos() {
         const ventas = Array.isArray(resVentas) ? resVentas : [];
         const compras = Array.isArray(resCompras) ? resCompras : [];
 
-        // 1. LÓGICA DE INVENTARIO Y UTILIDAD
+        // 1. INVENTARIO
         const costosMap = {};
         let totalCostoBodega = 0;
         let utilidadProyectada = 0;
         inventario.forEach(p => {
             const costo = parseFloat(String(p.Precio_Distribuidor || 0).replace(',','.')) || 0;
-            const precioVenta = parseFloat(String(p.Precio_Venta || 0).replace(',','.')) || 0;
+            const precioV = parseFloat(String(p.Precio_Venta || 0).replace(',','.')) || 0;
             const stock = parseFloat(p.Stock) || 0;
             costosMap[p.Producto] = costo;
             totalCostoBodega += (costo * stock);
-            utilidadProyectada += ((precioVenta - costo) * stock);
+            utilidadProyectada += ((precioV - costo) * stock);
         });
         document.getElementById('valor-invertido').innerText = `$${totalCostoBodega.toFixed(2)}`;
         document.getElementById('utilidad-proyectada').innerText = `$${utilidadProyectada.toFixed(2)}`;
 
-        // 2. VENTAS DEL DÍA Y NOTIF. RUTA
+        // 2. VENTAS Y RANKING
         let utilidadHoy = 0;
         let porRecaudar = 0;
+        let ventaTotalHoy = 0;
         let pendsHoy = [];
+        let rankingMap = {};
+
         ventas.forEach(v => {
             const fV = new Date(v.Fecha).toISOString().split('T')[0];
+            const cantidad = parseFloat(v.Cantidad) || 0;
+            const totalVenta = parseFloat(String(v["Precio Total"] || 0).replace(',','.')) || 0;
+            
+            // Solo para el Ranking (Todo el mes actual)
+            if(new Date(v.Fecha).getMonth() === hoy.getMonth()){
+                rankingMap[v.Producto] = (rankingMap[v.Producto] || 0) + cantidad;
+            }
+
+            // Datos de HOY
             if(fV === fechaSel) {
-                const totalVenta = parseFloat(String(v["Precio Total"] || 0).replace(',','.')) || 0;
-                const cantidad = parseFloat(v.Cantidad) || 0;
+                ventaTotalHoy += totalVenta;
                 utilidadHoy += (totalVenta - ((costosMap[v.Producto] || 0) * cantidad));
                 if(String(v.Estado).toUpperCase() === "PENDIENTE") {
                     porRecaudar += totalVenta;
@@ -195,48 +213,65 @@ async function cargarDatos() {
                 }
             }
         });
+        document.getElementById('ventas-total-hoy').innerText = `$${ventaTotalHoy.toFixed(2)}`;
         document.getElementById('ganancia-real').innerText = `$${utilidadHoy.toFixed(2)}`;
         document.getElementById('por-recaudar').innerText = `$${porRecaudar.toFixed(2)}`;
 
-        const badgeRuta = document.getElementById('badge-ruta');
-        if(pendsHoy.length > 0) {
-            badgeRuta.innerText = pendsHoy.length;
-            badgeRuta.classList.remove('hidden');
+        // 3. BADGES
+        const bRuta = document.getElementById('badge-ruta');
+        if(pendsHoy.length > 0){
+            bRuta.innerText = pendsHoy.length;
+            bRuta.classList.remove('hidden');
             document.getElementById('btn-ruta').classList.add('pulse-success');
         } else {
-            badgeRuta.classList.add('hidden');
+            bRuta.classList.add('hidden');
             document.getElementById('btn-ruta').classList.remove('pulse-success');
         }
 
-        // 3. NOTIFICACIÓN COMPRAS (RECIBIR)
-        const badgeRec = document.getElementById('badge-recepcion');
-        const btnRec = document.getElementById('btn-recepcion');
-        const comprasPends = compras.filter(c => String(c.Estado_Entrega).toUpperCase() === "PENDIENTE");
-        if(comprasPends.length > 0) {
-            const facturas = [...new Set(comprasPends.map(p => p.ID_Compra))];
-            badgeRec.innerText = facturas.length;
-            badgeRec.classList.remove('hidden');
-            btnRec.classList.add('pulse-notif');
+        const bRec = document.getElementById('badge-recepcion');
+        const cPends = compras.filter(c => String(c.Estado_Entrega).toUpperCase() === "PENDIENTE");
+        if(cPends.length > 0){
+            const facts = [...new Set(cPends.map(p => p.ID_Compra))];
+            bRec.innerText = facts.length;
+            bRec.classList.remove('hidden');
+            document.getElementById('btn-recepcion').classList.add('pulse-notif');
         } else {
-            badgeRec.classList.add('hidden');
-            btnRec.classList.remove('pulse-notif');
+            bRec.classList.add('hidden');
+            document.getElementById('btn-recepcion').classList.remove('pulse-notif');
         }
 
-        // 4. RENDER LISTADOS
-        const listaPed = document.getElementById('lista-pedidos');
-        listaPed.innerHTML = pendsHoy.length > 0 ? "" : '<p class="text-center text-slate-300 italic">Sin pendientes</p>';
-        pendsHoy.forEach(p => {
-            listaPed.innerHTML += `<div class="p-3 bg-slate-50 rounded-xl flex justify-between items-center"><div class="text-[11px] font-black uppercase text-slate-700">${p.Cliente}</div><span class="text-amber-600 font-black italic">$${parseFloat(String(p["Precio Total"]).replace(',','.')).toFixed(2)}</span></div>`;
-        });
+        // 4. RENDER RANKING
+        const rankingDiv = document.getElementById('ranking-productos');
+        const sortedRanking = Object.entries(rankingMap).sort((a,b) => b[1] - a[1]).slice(0,5);
+        rankingDiv.innerHTML = sortedRanking.map(([prod, cant], i) => `
+            <div class="flex items-center justify-between p-2 bg-purple-50 rounded-lg">
+                <span class="text-[11px] font-black uppercase text-slate-700">${i+1}. ${prod}</span>
+                <span class="bg-primary text-white text-[10px] px-2 py-1 rounded-full font-bold">${cant} ud.</span>
+            </div>
+        `).join('') || '<p class="text-center text-slate-300 italic">Sin ventas aún</p>';
 
+        // 5. RENDER PENDIENTES
+        const listaPed = document.getElementById('lista-pedidos');
+        listaPed.innerHTML = pendsHoy.map(p => `
+            <div class="p-3 bg-slate-50 rounded-xl flex justify-between items-center">
+                <div class="text-[11px] font-black uppercase text-slate-700">${p.Cliente}</div>
+                <span class="text-amber-600 font-black italic">$${parseFloat(String(p["Precio Total"]).replace(',','.')).toFixed(2)}</span>
+            </div>
+        `).join('') || '<p class="text-center text-slate-300 italic">Sin pendientes</p>';
+
+        // 6. STOCK CRÍTICO (Incluye Cero)
         const contCrit = document.getElementById('cont-criticos');
         const criticos = inventario.filter(p => (parseFloat(p.Stock) || 0) <= 5);
-        contCrit.innerHTML = criticos.length > 0 ? "" : '<p class="text-center text-slate-300 italic">Stock OK</p>';
-        criticos.forEach(p => {
-            contCrit.innerHTML += `<div class="flex justify-between p-2 bg-red-50 rounded-lg"><span class="font-black uppercase text-red-900">${p.Producto}</span><span class="text-red-500 font-bold">${p.Stock}</span></div>`;
-        });
+        contCrit.innerHTML = criticos.map(p => {
+            const s = parseFloat(p.Stock) || 0;
+            const color = s === 0 ? 'bg-red-500 text-white' : 'bg-red-50 text-red-900';
+            return `<div class="flex justify-between p-2 rounded-lg ${color}">
+                <span class="font-black uppercase">${p.Producto}</span>
+                <span class="font-bold uppercase">${s === 0 ? 'AGOTADO' : s + ' ud.'}</span>
+            </div>`;
+        }).join('') || '<p class="text-center text-slate-300 italic">Stock suficiente</p>';
 
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Error API:", e); }
     finally { icon?.classList.remove('rotate-animation'); }
 }
 window.onload = cargarDatos;

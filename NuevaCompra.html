@@ -1,101 +1,189 @@
 <!DOCTYPE html>
-<html lang="es">
+<html class="light" lang="es">
 <head>
     <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Lógica Láctea - Nueva Compra</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>Lógica Láctea - Registrar Compra</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            theme: { 
+                extend: { 
+                    colors: { 
+                        primary: "#a21caf", 
+                        background: "#faf5ff", 
+                        outline: "#e9d5ff", 
+                        success: "#16a34a",
+                        dark: "#1f012a"
+                    } 
+                } 
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        input, select { font-size: 16px !important; }
+    </style>
 </head>
-<body class="bg-slate-50 pb-20">
+<body class="bg-background text-dark antialiased pb-20">
 
-<header class="p-4 bg-white border-b flex items-center gap-4">
-    <span class="material-symbols-outlined text-primary" onclick="history.back()">arrow_back</span>
-    <h1 class="font-black uppercase text-sm italic">Registrar Compra</h1>
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
+    <div class="flex items-center gap-3" onclick="history.back()">
+        <span class="material-symbols-outlined text-primary font-bold cursor-pointer">arrow_back_ios</span>
+        <h1 class="text-sm font-black text-primary uppercase tracking-tighter italic">Nueva Compra</h1>
+    </div>
 </header>
 
-<main class="p-4 max-w-lg mx-auto space-y-6">
-    <section class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-200">
-        <!-- Nombre del proveedor (se llena automático) -->
-        <div class="mb-4">
-            <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Proveedor Seleccionado</label>
-            <input type="text" id="prov-nombre" readonly class="w-full border-none bg-slate-100 rounded-2xl p-4 font-bold text-primary">
+<main class="pt-20 px-4 max-w-lg mx-auto space-y-6">
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm space-y-5">
+        
+        <!-- Info del Proveedor -->
+        <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-outline">
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Proveedor Habitual</p>
+            <input type="text" id="prov-nombre" readonly 
+                class="w-full bg-transparent border-none p-0 font-black text-primary text-lg focus:ring-0">
         </div>
 
-        <!-- Selector de Insumo/Producto -->
+        <!-- Formulario de Compra -->
         <div class="space-y-4">
             <div>
-                <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Producto / Insumo</label>
-                <select id="producto" class="w-full border-none bg-slate-100 rounded-2xl p-4 font-semibold">
-                    <option value="">Cargando catálogo...</option>
-                </select>
+                <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block">Producto / Insumo</label>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-4 text-slate-300">inventory_2</span>
+                    <select id="producto" onchange="actualizarPrecioSugerido()" 
+                        class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-12 focus:ring-2 focus:ring-primary shadow-inner font-bold text-sm">
+                        <option value="">Cargando catálogo filtrado...</option>
+                    </select>
+                </div>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Cantidad</label>
-                    <input type="number" id="cantidad" oninput="calcularTotal()" placeholder="0.00" class="w-full border-none bg-slate-100 rounded-2xl p-4 font-bold">
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block">Cantidad</label>
+                    <input type="number" id="cantidad" oninput="calcularTotal()" placeholder="0.00" 
+                        class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-black text-center text-lg">
                 </div>
                 <div>
-                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Precio Unit.</label>
-                    <input type="number" id="precio" oninput="calcularTotal()" placeholder="0.00" class="w-full border-none bg-slate-100 rounded-2xl p-4 font-bold">
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2 mb-1 block">Costo Unit.</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-4 text-slate-400 font-bold">$</span>
+                        <input type="number" id="precio" oninput="calcularTotal()" placeholder="0.00" 
+                            class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-8 focus:ring-2 focus:ring-primary shadow-inner font-black text-center text-lg">
+                    </div>
                 </div>
             </div>
 
-            <!-- Total Visual -->
-            <div class="bg-primary/5 p-4 rounded-2xl border border-dashed border-primary/20 text-center">
-                <p class="text-[10px] font-bold text-primary uppercase">Total a Pagar</p>
-                <p class="text-2xl font-black text-primary" id="total-display">$0.00</p>
+            <!-- Total Card -->
+            <div class="bg-dark p-6 rounded-[2rem] text-center shadow-xl">
+                <p class="text-[10px] font-black text-primary uppercase tracking-[0.3em] mb-1">Total del Pedido</p>
+                <h2 id="total-display" class="text-3xl font-black text-white">$0.00</h2>
             </div>
 
-            <button onclick="procesarCompra()" id="btn-compra" class="w-full bg-slate-900 text-white font-black py-5 rounded-[2rem] shadow-lg flex justify-center items-center gap-2">
-                <span class="material-symbols-outlined">shopping_cart_checkout</span> CONFIRMAR COMPRA
+            <button onclick="procesarCompra()" id="btn-compra" 
+                class="w-full bg-primary text-white font-black py-5 rounded-[2rem] shadow-lg active:scale-95 transition-all flex justify-center items-center gap-3 tracking-widest text-xs uppercase">
+                <span class="material-symbols-outlined">receipt_long</span> Confirmar y Recibir
             </button>
         </div>
     </section>
 </main>
 
 <script>
-    // 1. Obtener el proveedor de la URL
+    // 1. Obtener Proveedor de la URL
     const urlParams = new URLSearchParams(window.location.search);
     const provParam = urlParams.get('prov');
-    if(provParam) document.getElementById('prov-nombre').value = decodeURIComponent(provParam);
+    const provInput = document.getElementById('prov-nombre');
+    
+    if(provParam) {
+        provInput.value = decodeURIComponent(provParam);
+    } else {
+        alert("No se detectó un proveedor. Regresando...");
+        history.back();
+    }
 
-    // 2. Cargar productos del Inventario al iniciar
+    // 2. Cargar Catálogo Filtrado (Columna H: Proveedor Habitual)
     async function cargarCatalogo() {
-        const productos = await DairyAPI.obtenerDatos("Inventario");
         const select = document.getElementById('producto');
-        select.innerHTML = productos.map(p => `<option value="${p.Producto}">${p.Producto}</option>`).join('');
+        const provActual = provInput.value.trim();
+
+        try {
+            const inventario = await DairyAPI.obtenerDatos("Inventario");
+            
+            // Filtramos productos donde el "Proveedor Habitual" coincida
+            const productosFiltrados = inventario.filter(p => 
+                p["Proveedor Habitual"] && p["Proveedor Habitual"].trim() === provActual
+            );
+
+            if (productosFiltrados.length > 0) {
+                select.innerHTML = `<option value="" disabled selected>Selecciona un producto</option>` + 
+                productosFiltrados.map(p => `
+                    <option value="${p.Producto}" data-precio="${p.Costo_Unitario || 0}">
+                        ${p.Producto} (Stock: ${p.Stock})
+                    </option>
+                `).join('');
+            } else {
+                select.innerHTML = `<option value="">Sin productos vinculados a ${provActual}</option>`;
+            }
+        } catch (e) {
+            console.error("Error al cargar inventario:", e);
+            select.innerHTML = `<option value="">Error al conectar con Inventario</option>`;
+        }
+    }
+
+    // 3. Lógica de Cálculos
+    function actualizarPrecioSugerido() {
+        const select = document.getElementById('producto');
+        const precioInput = document.getElementById('precio');
+        const selectedOption = select.options[select.selectedIndex];
+        
+        if (selectedOption && selectedOption.dataset.precio) {
+            precioInput.value = parseFloat(selectedOption.dataset.precio).toFixed(2);
+            calcularTotal();
+        }
     }
 
     function calcularTotal() {
         const cant = parseFloat(document.getElementById('cantidad').value) || 0;
-        const precio = parseFloat(document.getElementById('precio').value) || 0;
-        document.getElementById('total-display').innerText = `$${(cant * precio).toFixed(2)}`;
+        const prec = parseFloat(document.getElementById('precio').value) || 0;
+        const total = cant * prec;
+        document.getElementById('total-display').innerText = `$${total.toFixed(2)}`;
+        return total;
     }
 
+    // 4. Enviar a Google Sheets
     async function procesarCompra() {
         const btn = document.getElementById('btn-compra');
-        const datos = {
-            Fecha: new Date().toLocaleDateString(),
-            Proveedor: document.getElementById('prov-nombre').value,
-            Producto: document.getElementById('producto').value,
-            Cantidad: document.getElementById('cantidad').value,
-            Precio: document.getElementById('precio').value,
-            Total: (parseFloat(document.getElementById('cantidad').value) * parseFloat(document.getElementById('precio').value)).toFixed(2)
-        };
+        const producto = document.getElementById('producto').value;
+        const cantidad = document.getElementById('cantidad').value;
+        const total = calcularTotal();
+
+        if (!producto || !cantidad || cantidad <= 0) {
+            return alert("Por favor completa producto y cantidad.");
+        }
 
         btn.disabled = true;
-        btn.innerText = "PROCESANDO...";
+        btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span> PROCESANDO...`;
+
+        const payload = {
+            Fecha: new Date().toLocaleDateString(),
+            Proveedor: provInput.value,
+            Producto: producto,
+            Cantidad: cantidad,
+            Precio: document.getElementById('precio').value,
+            Total: total.toFixed(2)
+        };
 
         try {
-            await DairyAPI.guardarDatos("Compras", datos);
-            alert("¡Compra registrada y stock actualizado!");
+            // Guardamos en la pestaña "Compras"
+            await DairyAPI.guardarDatos("Compras", payload);
+            alert("¡Compra registrada! El stock se actualizará automáticamente.");
             window.location.href = "Proveedores.html";
-        } catch(e) {
-            alert("Error al registrar");
+        } catch (e) {
+            alert("Error al registrar la compra. Revisa tu conexión.");
             btn.disabled = false;
+            btn.innerHTML = `<span class="material-symbols-outlined">receipt_long</span> Confirmar y Recibir`;
         }
     }
 

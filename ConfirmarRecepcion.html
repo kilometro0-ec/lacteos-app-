@@ -7,15 +7,14 @@
     
     <!-- Scripts Base -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
+    <script src="api-config.js?v=1.2"></script>
+    <script src="menu-logic.js?v=1.2"></script>
     
     <!-- Estilos Externos -->
-    <link rel="stylesheet" href="estilos-lacteos.css">
+    <link rel="stylesheet" href="estilos-lacteos.css?v=1.2">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <style>
-        /* Estilos específicos para esta página que complementan estilos-lacteos.css */
         #loading-overlay { 
             display: flex; 
             position: fixed; 
@@ -34,12 +33,27 @@
             border: 1px solid var(--outline);
             border-left: 6px solid var(--primary);
             transition: transform 0.2s;
+            position: relative;
+            overflow: hidden;
         }
         
         .card-recepcion:active { transform: scale(0.96); }
 
-        /* Gradiente para el header */
         .glass-card-header { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
+
+        /* Badge de retraso para pedidos antiguos */
+        .badge-retraso {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #ef4444;
+            color: white;
+            font-size: 8px;
+            font-weight: 900;
+            padding: 4px 12px;
+            border-bottom-left-radius: 12px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body class="pb-32">
@@ -50,7 +64,7 @@
         <div class="absolute w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full rotate-animation"></div>
         <span class="material-symbols-outlined text-2xl text-primary font-bold">conveyor_belt</span>
     </div>
-    <p class="text-[10px] font-black uppercase tracking-widest text-primary mt-6 animate-pulse">Sincronizando...</p>
+    <p class="text-[10px] font-black uppercase tracking-widest text-primary mt-6 animate-pulse">Sincronizando Inventario...</p>
 </div>
 
 <!-- Header Fijo -->
@@ -70,17 +84,17 @@
     <!-- Buscador -->
     <div class="relative">
         <span class="material-symbols-outlined absolute left-5 top-4 text-primary">search</span>
-        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar Lote o Proveedor..." 
+        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar por ID o Proveedor..." 
             class="input-sutil pl-14 font-bold text-xs">
     </div>
 
-    <!-- Lista de Lotes -->
+    <!-- Lista de Lotes Ordenados -->
     <div id="lista-pedidos" class="grid gap-4">
-        <p class="text-center py-20 text-slate-300 font-black text-[10px] uppercase italic">Cargando base de datos...</p>
+        <p class="text-center py-20 text-slate-300 font-black text-[10px] uppercase italic">Actualizando registros...</p>
     </div>
 </main>
 
-<!-- MODAL DE VALIDACIÓN (Corregido según image_0d3c77.jpg) -->
+<!-- MODAL DE VALIDACIÓN -->
 <div id="modal-confirmar" class="fixed inset-0 bg-purple-900/60 backdrop-blur-sm hidden flex items-end justify-center">
     <div class="bg-white w-full max-w-lg rounded-t-[3rem] border-t-4 border-primary shadow-2xl animate-in slide-in-from-bottom duration-500 flex flex-col relative" style="height: 85vh;">
         
@@ -95,12 +109,12 @@
             </button>
         </div>
         
-        <!-- Lista de Productos (Scrollable) -->
-        <div id="detalle-recepcion" class="flex-1 overflow-y-auto px-8 pb-52 space-y-3">
-            <!-- Los productos se inyectan aquí -->
+        <!-- Cuerpo con Scroll y Gestión de Faltantes -->
+        <div id="detalle-recepcion" class="flex-1 overflow-y-auto px-8 pb-56 space-y-3">
+            <!-- Items se cargan aquí -->
         </div>
 
-        <!-- FOOTER FIJO: Aquí usamos la clase corregida en el CSS -->
+        <!-- Footer Ajustado para Móvil -->
         <div class="footer-modal-fijo">
             <button id="btn-confirmar" onclick="confirmarIngreso()" 
                 class="w-full glass-card-header text-white font-black py-5 rounded-[2rem] shadow-xl uppercase text-xs tracking-widest active:scale-95 flex items-center justify-center gap-3">
@@ -111,7 +125,6 @@
     </div>
 </div>
 
-<!-- Menú de Navegación Inferior -->
 <nav id="menu-container"></nav>
 
 <script>
@@ -122,7 +135,13 @@
     async function cargarDatos() {
         try {
             const datos = await DairyAPI.obtenerDatos("Compras");
+            
+            // Filtrar pendientes
             todosLosPedidos = (datos || []).filter(f => String(f.Estado_Entrega).trim() === "PENDIENTE");
+
+            // ORDENAR: Los que tienen más días (más antiguos) primero
+            todosLosPedidos.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+
             renderizar(todosLosPedidos);
         } catch (e) { console.error(e); }
         finally { document.getElementById('loading-overlay').style.display = "none"; }
@@ -137,15 +156,27 @@
             return acc;
         }, {});
 
-        contenedor.innerHTML = Object.keys(grupos).map(id => `
+        contenedor.innerHTML = Object.keys(grupos).map(id => {
+            const principal = grupos[id][0];
+            const fechaRef = new Date(principal.Fecha);
+            const hoy = new Date();
+            const diffDias = Math.floor((hoy - fechaRef) / (1000 * 60 * 60 * 24));
+
+            return `
             <div onclick="abrirModal('${id}')" class="card-recepcion p-6 flex justify-between items-center">
+                ${diffDias > 2 ? `<div class="badge-retraso animate-pulse">${diffDias} DÍAS</div>` : ''}
                 <div>
-                    <p class="text-[10px] font-black text-primary uppercase">${id}</p>
-                    <p class="font-black text-slate-800 text-sm uppercase">${grupos[id][0].Proveedor}</p>
+                    <div class="flex items-center gap-2 mb-1">
+                         <p class="text-[10px] font-black text-primary uppercase tracking-tighter">${id}</p>
+                         <span class="text-[9px] text-slate-400 font-bold tracking-widest">${principal.Fecha}</span>
+                    </div>
+                    <p class="font-black text-slate-800 text-sm uppercase leading-tight">${principal.Proveedor}</p>
+                    <p class="text-[10px] text-slate-400 font-bold italic mt-1">${grupos[id].length} productos pendientes</p>
                 </div>
-                <span class="material-symbols-outlined text-primary font-bold">arrow_forward</span>
+                <span class="material-symbols-outlined text-primary font-bold">arrow_forward_ios</span>
             </div>
-        `).join('');
+            `;
+        }).join('');
     }
 
     function abrirModal(id) {
@@ -160,15 +191,24 @@
         const contenedor = document.getElementById('detalle-recepcion');
         contenedor.innerHTML = itemsEnEdicion.map((item, index) => `
             <div class="bg-slate-50 p-4 rounded-2xl border border-outline flex items-center gap-3">
-                <button onclick="eliminarItem(${index})" class="text-red-400 p-2"><span class="material-symbols-outlined">delete</span></button>
+                <button onclick="eliminarItem(${index})" class="text-red-400 p-2 active:scale-75 transition-transform">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
                 <div class="flex-1">
-                    <p class="text-[11px] font-black uppercase text-slate-700">${item.Producto}</p>
-                    <p class="text-[9px] text-slate-400 font-bold italic">Pedido: ${item.Cantidad} ud.</p>
+                    <p class="text-[11px] font-black uppercase text-slate-700 leading-none mb-1">${item.Producto}</p>
+                    <p class="text-[9px] text-slate-400 font-bold">Pedido Original: ${item.Cantidad} ud.</p>
                 </div>
-                <input type="number" onchange="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" 
-                    class="w-16 text-center font-black text-primary border-2 border-primary rounded-xl py-1 text-sm">
+                <div class="text-right">
+                    <span class="block text-[8px] font-black text-primary uppercase mb-1">Llegó:</span>
+                    <input type="number" oninput="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" 
+                        class="w-16 text-center font-black text-primary border-2 border-primary rounded-xl py-1 text-sm bg-white">
+                </div>
             </div>
         `).join('');
+    }
+
+    function actualizarCantidad(index, val) { 
+        itemsEnEdicion[index].Cantidad = parseFloat(val) || 0; 
     }
 
     function eliminarItem(index) {
@@ -176,13 +216,12 @@
         renderizarItemsModal();
     }
 
-    function actualizarCantidad(index, val) { itemsEnEdicion[index].Cantidad = val; }
-
     function cerrarModal() { document.getElementById('modal-confirmar').classList.add('hidden'); }
 
     async function confirmarIngreso() {
         const btn = document.getElementById('btn-confirmar');
         btn.disabled = true;
+        btn.innerHTML = `<span class="material-symbols-outlined rotate-animation">sync</span> PROCESANDO...`;
         
         const payload = {
             pestaña: "Compras",
@@ -196,9 +235,24 @@
             if (res === "OK") {
                 cerrarModal();
                 location.reload();
+            } else {
+                alert("Error del servidor: " + res);
             }
-        } catch (e) { alert("Error al guardar"); }
-        finally { btn.disabled = false; }
+        } catch (e) { 
+            alert("Error de conexión. Intente nuevamente."); 
+        } finally { 
+            btn.disabled = false; 
+            btn.innerHTML = `<span class="material-symbols-outlined text-xl">verified</span> Confirmar e Ingresar`;
+        }
+    }
+
+    function filtrarPedidos() {
+        const busqueda = document.getElementById('buscador').value.toLowerCase();
+        const filtrados = todosLosPedidos.filter(p => 
+            p.ID_Compra.toLowerCase().includes(busqueda) || 
+            p.Proveedor.toLowerCase().includes(busqueda)
+        );
+        renderizar(filtrados);
     }
 
     window.onload = cargarDatos;

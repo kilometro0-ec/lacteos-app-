@@ -41,32 +41,39 @@
 
 <body class="bg-background text-on-surface font-[Work_Sans] antialiased pb-24">
 
-<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
-  <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-20 bg-white border-b border-outline shadow-sm">
+  <div class="flex items-center gap-2">
     <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
       <span class="material-symbols-outlined text-3xl active-icon">opacity</span>
     </div>
-    <h1 class="text-xl font-black text-primary tracking-tight uppercase italic">Lógica Láctea</h1>
+    <div>
+        <h1 class="text-sm font-black text-primary tracking-tight uppercase italic leading-none">Lógica Láctea</h1>
+        <input type="date" id="filtro-fecha" onchange="cargarDatos()" class="mt-1 text-[10px] font-bold border-none p-0 bg-transparent text-gray-500 focus:ring-0">
+    </div>
   </div>
+  <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:scale-90">
+    <span id="icon-refresh" class="material-symbols-outlined text-slate-500">sync</span>
+  </button>
 </header>
 
-<main class="pt-20 px-4 max-w-7xl mx-auto space-y-4">
+<main class="pt-24 px-4 max-w-7xl mx-auto space-y-4">
 
+    <!-- MÉTRICAS PRINCIPALES -->
     <div class="grid grid-cols-2 gap-3">
       <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
-        <span class="text-secondary text-[10px] uppercase font-black tracking-widest block mb-1">Ventas Totales</span>
+        <span class="text-secondary text-[10px] uppercase font-black tracking-widest block mb-1">Ventas Período</span>
         <span id="ventas-hoy" class="text-2xl font-black tracking-tighter text-gray-900">$0.00</span>
       </div>
 
       <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm">
-        <span class="text-primary text-[10px] uppercase font-black tracking-widest block mb-1">Valor Invertido</span>
+        <span class="text-primary text-[10px] uppercase font-black tracking-widest block mb-1">Inversión Stock</span>
         <span id="valor-invertido" class="text-2xl font-black tracking-tighter text-gray-900">$0.00</span>
       </div>
     </div>
 
     <div class="bg-white p-6 rounded-[2.5rem] border-2 border-success/20 shadow-md flex justify-between items-center bg-gradient-to-br from-white to-green-50/30">
       <div>
-        <span class="text-success text-xs uppercase font-black tracking-widest block mb-1">Ganancia Bruta Estimada</span>
+        <span class="text-success text-xs uppercase font-black tracking-widest block mb-1">Margen Estimado</span>
         <span id="ganancia-total" class="text-4xl font-black tracking-tighter text-success">$0.00</span>
       </div>
       <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-success">
@@ -74,41 +81,54 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-4 gap-2 py-2">
-        <button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
-          <span class="material-symbols-outlined">add_shopping_cart</span>
-          <span class="text-[9px] font-black uppercase">Vender</span>
+    <!-- ACCESOS RÁPIDOS -->
+    <div class="grid grid-cols-5 gap-2 py-2">
+        <button onclick="window.location.href='RegistrodeVentas.html'" class="bg-primary text-white p-3 rounded-2xl flex flex-col items-center gap-1 transition-all active:scale-95 shadow-md">
+          <span class="material-symbols-outlined text-xl">add_shopping_cart</span>
+          <span class="text-[8px] font-black uppercase">Vender</span>
         </button>
-        <button onclick="window.location.href='ControldeInventario.html'" class="bg-secondary text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-md">
-          <span class="material-symbols-outlined">inventory</span>
-          <span class="text-[9px] font-black uppercase">Stock</span>
+        <button onclick="window.location.href='ControldeInventario.html'" class="bg-secondary text-white p-3 rounded-2xl flex flex-col items-center gap-1 transition-all active:scale-95 shadow-md">
+          <span class="material-symbols-outlined text-xl">inventory</span>
+          <span class="text-[8px] font-black uppercase">Stock</span>
         </button>
-        <button onclick="window.location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95">
-          <span class="material-symbols-outlined text-primary">group</span>
-          <span class="text-[9px] font-black uppercase text-primary">Clientes</span>
+        <button onclick="window.location.href='GestiondeClientes.html'" class="bg-white border border-outline p-3 rounded-2xl flex flex-col items-center gap-1 transition-all active:scale-95">
+          <span class="material-symbols-outlined text-primary text-xl">group</span>
+          <span class="text-[8px] font-black uppercase text-primary">Clientes</span>
         </button>
-        <button onclick="window.location.href='GestióndeDespachos.html'" class="bg-success text-white p-4 rounded-3xl flex flex-col items-center gap-2 transition-all active:scale-95 shadow-lg shadow-green-100">
-          <span class="material-symbols-outlined">local_shipping</span>
-          <span class="text-[9px] font-black uppercase">Ruta</span>
+        <button onclick="window.location.href='Proveedores.html'" class="bg-amber-500 text-white p-3 rounded-2xl flex flex-col items-center gap-1 transition-all active:scale-95 shadow-md">
+          <span class="material-symbols-outlined text-xl">factory</span>
+          <span class="text-[8px] font-black uppercase">Prov.</span>
+        </button>
+        <button onclick="window.location.href='GestióndeDespachos.html'" class="relative bg-success text-white p-3 rounded-2xl flex flex-col items-center gap-1 transition-all active:scale-95 shadow-lg shadow-green-100">
+          <span id="badge-ruta" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+          <span class="material-symbols-outlined text-xl">local_shipping</span>
+          <span class="text-[8px] font-black uppercase">Ruta</span>
         </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- GRÁFICO DE MÁS VENDIDOS -->
+    <section class="bg-white p-5 rounded-[2.5rem] border border-outline shadow-sm">
+        <h3 class="text-[10px] font-black text-primary flex items-center gap-2 mb-4 uppercase tracking-widest">
+            <span class="material-symbols-outlined text-sm">leaderboard</span> Top Productos (Cant.)
+        </h3>
+        <div id="grafico-vendidos" class="space-y-4">
+            <!-- Barras generadas por JS -->
+        </div>
+    </section>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- PRÓXIMAS ENTREGAS -->
         <section class="bg-white p-5 rounded-[2.5rem] border border-outline shadow-sm">
-          <h3 class="text-xs font-black text-success flex items-center gap-2 mb-4 uppercase tracking-widest">
-            <span class="material-symbols-outlined text-sm">route</span> Próximas Entregas
+          <h3 class="text-[10px] font-black text-success flex items-center gap-2 mb-4 uppercase tracking-widest">
+            <span class="material-symbols-outlined text-sm">route</span> Pendientes de hoy
           </h3>
-          <div id="lista-entregas" class="space-y-3">
-            <p class="text-center py-4 text-gray-400 text-sm font-bold italic">Cargando...</p>
-          </div>
+          <div id="lista-entregas" class="space-y-3"></div>
         </section>
 
+        <!-- STOCK CRÍTICO -->
         <section class="space-y-4">
           <div class="flex justify-between items-center px-2">
             <h3 class="text-lg font-black tracking-tight">Stock Crítico</h3>
-            <button onclick="cargarDatos()" class="text-primary text-[10px] font-black flex items-center gap-1 bg-white px-3 py-2 rounded-xl border border-outline active:bg-purple-50 transition-all">
-                <span id="icon-refresh" class="material-symbols-outlined text-sm">refresh</span> RECARGAR
-            </button>
           </div>
 
           <div class="overflow-hidden border border-outline rounded-[2rem] bg-white shadow-sm">
@@ -120,9 +140,7 @@
                   <th class="p-4 text-center">Estado</th>
                 </tr>
               </thead>
-              <tbody id="tabla-inventario" class="text-sm font-bold">
-                <tr><td colspan="3" class="p-10 text-center text-gray-400">Sincronizando...</td></tr>
-              </tbody>
+              <tbody id="tabla-inventario" class="text-sm font-bold"></tbody>
             </table>
           </div>
         </section>
@@ -132,9 +150,13 @@
 <div id="menu-container"></div>
 
 <script>
+// Establecer fecha de hoy por defecto en el filtro
+document.getElementById('filtro-fecha').valueAsDate = new Date();
+
 async function cargarDatos() {
     const icon = document.getElementById('icon-refresh');
     if (icon) icon.classList.add('rotate-animation');
+    const fechaFiltro = document.getElementById('filtro-fecha').value;
 
     try {
         const [resInventario, resVentas] = await Promise.all([
@@ -145,76 +167,107 @@ async function cargarDatos() {
         const inventario = Array.isArray(resInventario) ? resInventario : [];
         const ventas = Array.isArray(resVentas) ? resVentas : [];
 
-        // 1. GESTIÓN DE INVENTARIO
-        const tabla = document.getElementById('tabla-inventario');
-        tabla.innerHTML = "";
-        
-        // Ordenar por stock más bajo primero
-        const invOrdenado = [...inventario].sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0));
-
-        invOrdenado.forEach(p => {
-            const stock = parseFloat(p.Stock) || 0;
-            let statusHTML = "";
-            
-            if (stock <= 5) {
-                statusHTML = `<span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg border border-red-100 uppercase">Crítico</span>`;
-            } else if (stock > 10) {
-                statusHTML = `<span class="bg-green-50 text-green-600 text-[8px] font-black px-2 py-1 rounded-lg border border-green-100 uppercase">Óptimo</span>`;
-            } else {
-                statusHTML = `<span class="bg-amber-50 text-amber-600 text-[8px] font-black px-2 py-1 rounded-lg border border-amber-100 uppercase">Bajo</span>`;
-            }
-
-            tabla.innerHTML += `
-                <tr class="border-t border-purple-50">
-                    <td class="p-4 text-gray-700 leading-tight uppercase text-xs">${p.Producto || '---'}</td>
-                    <td class="p-4 text-center font-black text-base ${stock <= 5 ? 'text-red-500' : ''}">${stock}</td>
-                    <td class="p-4 text-center">${statusHTML}</td>
-                </tr>`;
+        // 1. FILTRAR VENTAS POR FECHA
+        const ventasFiltradas = ventas.filter(v => {
+            if(!v.Fecha) return false;
+            const fechaVenta = new Date(v.Fecha).toISOString().split('T')[0];
+            return fechaVenta === fechaFiltro;
         });
 
-        // 2. CÁLCULOS FINANCIEROS (Limpieza de datos estricta)
+        // 2. CÁLCULOS FINANCIEROS
         let totalVendido = 0; 
         let totalInvertido = 0;
         
+        // Inversión: Precio_Distribuidor * Stock
         inventario.forEach(p => {
-            const costo = parseFloat(String(p.Costo_Unitario || 0).replace(',', '.')) || 0;
+            const inversion = parseFloat(String(p.Precio_Distribuidor || 0).replace(',', '.')) || 0;
             const cant = parseFloat(p.Stock) || 0;
-            totalInvertido += (costo * cant);
+            totalInvertido += (inversion * cant);
         });
 
-        ventas.forEach(v => {
+        ventasFiltradas.forEach(v => {
             const totalFila = parseFloat(String(v.Precio_Total || v["Precio Total"] || 0).replace(',', '.')) || 0;
             totalVendido += totalFila;
         });
 
         document.getElementById('ventas-hoy').innerText = `$${totalVendido.toFixed(2)}`;
         document.getElementById('valor-invertido').innerText = `$${totalInvertido.toFixed(2)}`;
-        document.getElementById('ganancia-total').innerText = `$${(totalVendido - totalInvertido).toFixed(2)}`;
+        document.getElementById('ganancia-total').innerText = `$${(totalVendido).toFixed(2)}`; // Ganancia del día bruta
 
-        // 3. SECCIÓN DE ENTREGAS
-        const listaEntregas = document.getElementById('lista-entregas');
+        // 3. STOCK CRÍTICO (Filtra los que tienen 0)
+        const tabla = document.getElementById('tabla-inventario');
+        tabla.innerHTML = "";
+        const invCritico = inventario
+            .filter(p => (parseFloat(p.Stock) || 0) > 0) // <--- Filtro Stock 0
+            .sort((a, b) => (parseFloat(a.Stock) || 0) - (parseFloat(b.Stock) || 0))
+            .slice(0, 5);
+
+        invCritico.forEach(p => {
+            const stock = parseFloat(p.Stock) || 0;
+            let badge = stock <= 5 ? 
+                `<span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg border border-red-100 uppercase">Crítico</span>` :
+                `<span class="bg-amber-50 text-amber-600 text-[8px] font-black px-2 py-1 rounded-lg border border-amber-100 uppercase">Bajo</span>`;
+
+            tabla.innerHTML += `
+                <tr class="border-t border-purple-50">
+                    <td class="p-4 text-gray-700 uppercase text-[11px] leading-tight">${p.Producto}</td>
+                    <td class="p-4 text-center font-black text-base ${stock <= 5 ? 'text-red-500' : ''}">${stock}</td>
+                    <td class="p-4 text-center">${badge}</td>
+                </tr>`;
+        });
+
+        // 4. TOP VENDIDOS (Gráfico de barras)
+        const ranking = {};
+        ventas.forEach(v => {
+            const p = v.Producto;
+            const c = parseFloat(v.Cantidad) || 0;
+            ranking[p] = (ranking[p] || 0) + c;
+        });
+        
+        const top5 = Object.entries(ranking)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 4);
+
+        const grafico = document.getElementById('grafico-vendidos');
+        grafico.innerHTML = "";
+        const maxVenta = top5[0] ? top5[0][1] : 1;
+
+        top5.forEach(([prod, cant]) => {
+            const porcentaje = (cant / maxVenta) * 100;
+            grafico.innerHTML += `
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[10px] font-black uppercase">
+                        <span class="truncate w-40">${prod}</span>
+                        <span class="text-primary">${cant} un.</span>
+                    </div>
+                    <div class="w-full bg-purple-50 h-3 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full rounded-full" style="width: ${porcentaje}%"></div>
+                    </div>
+                </div>`;
+        });
+
+        // 5. RUTA Y ENTREGAS
         const pendientes = ventas.filter(v => String(v.Estado || "").trim().toUpperCase() === "PENDIENTE");
-        const clientesUnicos = [...new Set(pendientes.map(v => v.Cliente))].slice(0, 3);
-
-        listaEntregas.innerHTML = "";
-        if (clientesUnicos.length === 0) {
-            listaEntregas.innerHTML = `<p class="text-center py-4 text-gray-400 font-bold italic">Sin rutas pendientes</p>`;
-        } else {
-            clientesUnicos.forEach(c => {
-                listaEntregas.innerHTML += `
-                    <div class="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
-                        <div class="truncate mr-2">
-                            <p class="text-xs font-black text-green-900 uppercase truncate">${c}</p>
-                            <p class="text-[9px] font-bold text-green-600 uppercase">Por despachar</p>
-                        </div>
-                        <span class="material-symbols-outlined text-green-500">local_shipping</span>
-                    </div>`;
-            });
+        const badgeRuta = document.getElementById('badge-ruta');
+        if(pendientes.length > 0) {
+            badgeRuta.innerText = pendientes.length;
+            badgeRuta.classList.remove('hidden');
         }
 
+        const listaEntregas = document.getElementById('lista-entregas');
+        const clientesUnicos = [...new Set(pendientes.map(v => v.Cliente))].slice(0, 5);
+        listaEntregas.innerHTML = clientesUnicos.length ? "" : `<p class="text-center py-4 text-gray-300 font-bold italic text-xs">Todo despachado</p>`;
+        
+        clientesUnicos.forEach(c => {
+            listaEntregas.innerHTML += `
+                <div class="flex justify-between items-center bg-green-50/50 p-4 rounded-2xl border border-green-100">
+                    <p class="text-[10px] font-black text-green-900 uppercase truncate">${c}</p>
+                    <span class="material-symbols-outlined text-green-500 text-sm">check_circle</span>
+                </div>`;
+        });
+
     } catch (e) {
-        console.error("Dashboard Error:", e);
-        document.getElementById('tabla-inventario').innerHTML = `<tr><td colspan="3" class="p-10 text-center text-red-500 font-black">Error al sincronizar datos</td></tr>`;
+        console.error(e);
     } finally {
         if (icon) icon.classList.remove('rotate-animation');
     }

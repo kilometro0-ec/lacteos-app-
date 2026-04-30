@@ -5,80 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Despachos Pro - Lógica Láctea</title>
     
+    <!-- Scripts de Configuración -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
+    <!-- Estilos y Fuentes -->
+    <link rel="stylesheet" href="estilos-lacteos.css">
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <style>
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Animación de salida al entregar */
         .anim-slide-out { animation: slideRight 0.6s forwards; pointer-events: none; }
         @keyframes slideRight { to { transform: translateX(150%); opacity: 0; } }
+        
         .rotate-anim { animation: rotate 1s linear infinite; }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { display: none; }
         
+        ::-webkit-scrollbar { display: none; }
         .modal-blur { backdrop-filter: blur(8px); background: rgba(31, 1, 42, 0.6); }
+        
+        /* Color distintivo de la tienda */
+        .bg-azul-electrico { background-color: #0047FF; }
+        .text-azul-electrico { color: #0047FF; }
     </style>
 </head>
-<body class="bg-[#faf5ff] text-gray-900 pb-44">
+<body class="bg-[#faf5ff] text-gray-900 pb-32">
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-[#e9d5ff] shadow-sm">
-    <div class="flex items-center gap-2" onclick="window.location.href='DashboardLacteo.html'">
-        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#a21caf] font-black">
+    <div class="flex items-center gap-2" onclick="navegarA('DashboardLacteo.html')">
+        <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-azul-electrico font-black">
             <span class="material-symbols-outlined">local_shipping</span>
         </div>
-        <h1 class="text-xl font-black text-[#a21caf] tracking-tight uppercase">Despachos</h1>
+        <h1 class="text-xl font-black text-azul-electrico tracking-tight uppercase">Despachos</h1>
     </div>
-    <button onclick="cargarDatos()" class="p-2 text-[#a21caf]"><span id="refresh-icon" class="material-symbols-outlined">refresh</span></button>
+    <button onclick="cargarDatos()" class="p-2 text-azul-electrico">
+        <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
+    </button>
 </header>
 
 <main class="pt-20 px-4 max-w-4xl mx-auto space-y-4">
-    <!-- RECAUDACIÓN -->
+    <!-- RECAUDACIÓN TEMPORAL -->
     <div class="grid grid-cols-2 gap-3">
         <div class="bg-white p-5 rounded-[2.5rem] border-2 border-orange-100 text-center">
             <p class="text-[10px] font-black text-orange-400 uppercase tracking-widest">Por Recaudar</p>
             <h2 id="dinero-pend" class="text-2xl font-black text-orange-600">$0.00</h2>
         </div>
-        <div class="bg-[#a21caf] p-5 rounded-[2.5rem] text-center shadow-xl">
-            <p class="text-[10px] font-black text-purple-200 uppercase tracking-widest">Recaudado Hoy</p>
+        <div class="bg-azul-electrico p-5 rounded-[2.5rem] text-center shadow-xl">
+            <p class="text-[10px] font-black text-blue-100 uppercase tracking-widest">Cobrado Hoy</p>
             <h2 id="dinero-ent" class="text-2xl font-black text-white">$0.00</h2>
         </div>
     </div>
 
-    <input type="text" id="filtroDespacho" oninput="filtrar()" placeholder="🔍 Buscar cliente..." class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold outline-none text-sm shadow-sm">
+    <!-- BUSCADOR -->
+    <input type="text" id="filtroDespacho" oninput="filtrar()" placeholder="🔍 Buscar cliente o sector..." 
+           class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold outline-none text-sm shadow-sm focus:border-blue-400 transition-all">
 
-    <div id="contenedor-pedidos" class="space-y-5 pt-2"></div>
+    <!-- LISTA DE PEDIDOS -->
+    <div id="contenedor-pedidos" class="space-y-5 pt-2">
+        <div class="flex flex-col items-center justify-center py-20 text-gray-400">
+            <span class="material-symbols-outlined text-4xl mb-2">sync</span>
+            <p class="font-bold uppercase text-xs">Cargando ruta del día...</p>
+        </div>
+    </div>
 </main>
 
-<!-- MODAL PARA SELECCIONAR MAPA -->
+<!-- MODAL MAPAS -->
 <div id="modal-mapas" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 modal-blur">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 text-center space-y-4">
-        <h3 class="font-black text-[#a21caf] uppercase">Elegir Navegador</h3>
-        <button id="btn-gmaps" class="w-full py-4 bg-blue-500 text-white rounded-2xl font-bold flex items-center justify-center gap-2">
+    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 text-center space-y-4 shadow-2xl">
+        <h3 class="font-black text-azul-electrico uppercase text-sm">¿Cómo deseas llegar?</h3>
+        <button id="btn-gmaps" class="w-full py-4 bg-blue-500 text-white rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
             <span class="material-symbols-outlined">map</span> GOOGLE MAPS
         </button>
-        <button id="btn-waze" class="w-full py-4 bg-cyan-400 text-white rounded-2xl font-bold flex items-center justify-center gap-2">
+        <button id="btn-waze" class="w-full py-4 bg-cyan-400 text-white rounded-2xl font-black flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform">
             <span class="material-symbols-outlined">navigation</span> WAZE
         </button>
-        <button onclick="cerrarModal('modal-mapas')" class="text-gray-400 font-bold text-xs uppercase pt-2">Cancelar</button>
+        <button onclick="cerrarModal('modal-mapas')" class="text-gray-400 font-bold text-[10px] uppercase pt-2 tracking-widest">Cerrar</button>
     </div>
 </div>
 
-<!-- MODAL PARA EDITAR ÍTEM -->
+<!-- MODAL EDICIÓN RÁPIDA -->
 <div id="modal-editar-item" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 modal-blur">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center">
-        <h3 id="edit-item-name" class="font-black text-[#a21caf] uppercase mb-4 text-sm"></h3>
-        <div class="flex items-center justify-between mb-6">
-            <button onclick="ajustarCant(-1)" class="w-12 h-12 bg-gray-100 rounded-xl font-black text-2xl">-</button>
-            <input type="number" id="edit-item-qty" class="w-20 text-center text-3xl font-black outline-none" value="1">
-            <button onclick="ajustarCant(1)" class="w-12 h-12 bg-gray-100 rounded-xl font-black text-2xl">+</button>
+    <div class="bg-white w-full max-w-xs rounded-[3rem] p-8 text-center shadow-2xl border-2 border-blue-50">
+        <h3 id="edit-item-name" class="font-black text-gray-400 uppercase mb-2 text-[10px]"></h3>
+        <div class="flex items-center justify-between mb-8">
+            <button onclick="ajustarCant(-1)" class="w-14 h-14 bg-gray-100 rounded-2xl font-black text-2xl text-gray-600 active:bg-blue-100">-</button>
+            <input type="number" id="edit-item-qty" class="w-20 text-center text-4xl font-black outline-none bg-transparent" value="1">
+            <button onclick="ajustarCant(1)" class="w-14 h-14 bg-gray-100 rounded-2xl font-black text-2xl text-gray-600 active:bg-blue-100">+</button>
         </div>
-        <button onclick="guardarCambioItem()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black shadow-lg">GUARDAR</button>
+        <button onclick="guardarCambioItem()" class="w-full bg-azul-electrico text-white py-4 rounded-2xl font-black shadow-lg uppercase text-xs tracking-widest">Actualizar</button>
     </div>
 </div>
+
+<!-- EL MENÚ QUE FALTABA -->
+<div id="menu-container"></div>
 
 <script>
 let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, dinero: 0 };
@@ -104,52 +127,63 @@ async function cargarDatos() {
                 };
             }
             const precio = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
-            agrupados[idV].items.push({ producto: v.Producto, cant: parseFloat(v.Cantidad), precioUnit: precio / parseFloat(v.Cantidad) });
+            const cant = parseFloat(v.Cantidad) || 0;
+            agrupados[idV].items.push({ 
+                producto: v.Producto, 
+                cant: cant, 
+                precioUnit: cant > 0 ? precio / cant : 0 
+            });
             agrupados[idV].total += precio;
         });
 
         pedidosLocal = Object.values(agrupados).reverse();
         renderizar();
         actualizarResumen();
-    } catch (e) { console.error(e); }
-    finally { icon?.classList.remove('rotate-anim'); }
+    } catch (e) { 
+        console.error("Error al cargar:", e);
+        document.getElementById('contenedor-pedidos').innerHTML = `<p class="text-center text-red-500 font-bold p-10">Error al conectar con el servidor</p>`;
+    } finally { 
+        icon?.classList.remove('rotate-anim'); 
+    }
 }
 
 function renderizar() {
     const container = document.getElementById('contenedor-pedidos');
-    container.innerHTML = pedidosLocal.length ? "" : '<p class="text-center py-10 text-gray-400">Sin pedidos.</p>';
+    container.innerHTML = pedidosLocal.length ? "" : '<p class="text-center py-20 text-gray-400 font-bold uppercase text-[10px] tracking-widest">Ruta completada</p>';
     
     pedidosLocal.forEach((ped, idx) => {
         const itemsHTML = ped.items.map((it, iIdx) => `
-            <div onclick="abrirEditorItem(${idx}, ${iIdx})" class="flex justify-between py-2 border-b border-purple-50 active:bg-purple-50 rounded-lg px-2">
-                <span class="text-xs font-bold uppercase text-gray-600">${it.producto}</span>
-                <span class="text-sm font-black text-[#a21caf]">x${it.cant}</span>
+            <div onclick="abrirEditorItem(${idx}, ${iIdx})" class="flex justify-between items-center py-3 border-b border-gray-50 last:border-0 active:bg-blue-50 px-2 transition-colors rounded-lg">
+                <span class="text-[11px] font-bold uppercase text-gray-700">${it.producto}</span>
+                <span class="text-sm font-black text-azul-electrico bg-blue-50 px-2 py-1 rounded-lg">x${it.cant}</span>
             </div>
         `).join('');
 
         container.innerHTML += `
-            <div id="card-${idx}" class="bg-white p-6 rounded-[2.5rem] border-2 border-[#e9d5ff] shadow-md space-y-4">
+            <div id="card-${idx}" class="bg-white p-6 rounded-[2.5rem] border-2 border-[#e9d5ff] shadow-sm space-y-4">
                 <div class="flex justify-between items-start">
-                    <h2 class="text-lg font-black uppercase truncate w-40">${ped.cliente}</h2>
-                    <button onclick="elegirMapa('${ped.direccion}')" class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <div class="flex-1">
+                        <span class="text-[9px] font-black bg-blue-100 text-azul-electrico px-2 py-0.5 rounded uppercase">ID: ${ped.id}</span>
+                        <h2 class="text-lg font-black uppercase text-gray-800 leading-tight mt-1 truncate">${ped.cliente}</h2>
+                    </div>
+                    <button onclick="elegirMapa('${ped.direccion}')" class="w-12 h-12 rounded-2xl bg-blue-50 text-azul-electrico flex items-center justify-center active:scale-90 transition-transform">
                         <span class="material-symbols-outlined">directions</span>
                     </button>
                 </div>
-                <div class="bg-gray-50 rounded-2xl p-2">${itemsHTML}</div>
-                <div class="flex justify-between items-end pt-2">
+                <div class="bg-gray-50 rounded-[1.5rem] p-2">${itemsHTML}</div>
+                <div class="flex justify-between items-end pt-2 border-t border-dashed border-gray-100">
                     <div>
-                        <p class="text-[9px] font-black text-gray-400 uppercase">Total a Cobrar</p>
-                        <p class="text-2xl font-black">$${ped.total.toFixed(2)}</p>
+                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Total Cobro</p>
+                        <p class="text-3xl font-black text-gray-900 leading-none">$${ped.total.toFixed(2)}</p>
                     </div>
-                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="h-12 bg-[#a21caf] text-white px-6 rounded-2xl font-black text-[10px] uppercase">Entregado</button>
+                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="h-14 bg-azul-electrico text-white px-8 rounded-2xl font-black text-[10px] uppercase shadow-lg active:scale-95 transition-transform">Entregado</button>
                 </div>
             </div>`;
     });
 }
 
-// LÓGICA DE MAPAS
 function elegirMapa(dir) {
-    if(!dir) return alert("No hay dirección");
+    if(!dir) return alert("El cliente no tiene dirección registrada.");
     document.getElementById('modal-mapas').classList.remove('hidden');
     document.getElementById('btn-gmaps').onclick = () => {
         window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
@@ -161,7 +195,6 @@ function elegirMapa(dir) {
     };
 }
 
-// EDITAR ÍTEMS
 function abrirEditorItem(pedIdx, itemIdx) {
     itemEditando = { pedIdx, itemIdx };
     const it = pedidosLocal[pedIdx].items[itemIdx];
@@ -178,26 +211,21 @@ function ajustarCant(val) {
 function guardarCambioItem() {
     const nuevaCant = parseInt(document.getElementById('edit-item-qty').value);
     const ped = pedidosLocal[itemEditando.pedIdx];
-    const item = ped.items[itemEditando.itemIdx];
-    
-    item.cant = nuevaCant;
-    // Recalcular total del pedido
+    ped.items[itemEditando.itemIdx].cant = nuevaCant;
     ped.total = ped.items.reduce((acc, curr) => acc + (curr.cant * curr.precioUnit), 0);
-    
     cerrarModal('modal-editar-item');
     renderizar();
     actualizarResumen();
 }
 
-// ACTUALIZAR A GOOGLE
 async function confirmarEntrega(idVenta, idx) {
-    if(!confirm("¿Confirmar entrega en Google Sheets?")) return;
+    if(!confirm("¿Confirmar cobro y entrega en el sistema?")) return;
     const card = document.getElementById(`card-${idx}`);
     card.classList.add('anim-slide-out');
 
     try {
-        // IMPORTANTE: El objeto debe coincidir con lo que tu Apps Script espera
-        const respuesta = await DairyAPI.enviarDatos("Ventas", { 
+        // CONEXIÓN CON BACKEND v17.0
+        await DairyAPI.enviarDatos("Ventas", { 
             pestaña: "Ventas", 
             accion: "editar_estado", 
             ID_Venta: idVenta, 
@@ -210,7 +238,7 @@ async function confirmarEntrega(idVenta, idx) {
         
         setTimeout(() => { cargarDatos(); }, 600);
     } catch (e) {
-        alert("Error al conectar con Google");
+        alert("Error al sincronizar con Google Sheets.");
         card.classList.remove('anim-slide-out');
     }
 }
@@ -222,6 +250,16 @@ function actualizarResumen() {
 }
 
 function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function filtrar() {
+    const q = document.getElementById('filtroDespacho').value.toLowerCase();
+    pedidosLocal.forEach((p, idx) => {
+        const card = document.getElementById(`card-${idx}`);
+        const match = p.cliente.toLowerCase().includes(q) || p.direccion.toLowerCase().includes(q);
+        if(card) card.style.display = match ? 'block' : 'none';
+    });
+}
+
 window.onload = cargarDatos;
 </script>
 </body>

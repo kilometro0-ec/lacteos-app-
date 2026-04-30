@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Lógica Láctea - Panel Principal</title>
+    <title>Lógica Láctea - Dashboard</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
@@ -16,8 +16,7 @@
     tailwind.config = {
       theme: {
         extend: {
-          colors: { primary: "#a21caf", secondary: "#db2777", success: "#16a34a", background: "#faf5ff", outline: "#e9d5ff" },
-          animation: { 'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+          colors: { primary: "#a21caf", secondary: "#db2777", success: "#16a34a", background: "#faf5ff", outline: "#e9d5ff" }
         }
       }
     }
@@ -27,13 +26,9 @@
     .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
     .rotate-animation { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    ::-webkit-scrollbar { display: none; }
-    body { -webkit-tap-highlight-color: transparent; }
-    
-    /* Animación para que el botón de Ruta palpite si hay pedidos */
     .pulse-notif { animation: shadow-pulse 1.5s infinite; }
     @keyframes shadow-pulse {
-        0% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0.7); }
+        0% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0.5); }
         70% { box-shadow: 0 0 0 10px rgba(22, 163, 74, 0); }
         100% { box-shadow: 0 0 0 0px rgba(22, 163, 74, 0); }
     }
@@ -44,7 +39,7 @@
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-20 bg-white border-b border-outline shadow-sm">
   <div class="flex items-center gap-2">
-    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
+    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary">
       <span class="material-symbols-outlined text-3xl">opacity</span>
     </div>
     <div>
@@ -59,88 +54,78 @@
 
 <main class="pt-24 px-4 max-w-7xl mx-auto space-y-4">
 
-    <!-- MÉTRICAS -->
+    <!-- FILA 1: VENDER Y RUTA -->
     <div class="grid grid-cols-2 gap-3">
-      <div class="bg-white p-5 rounded-[2rem] border border-outline">
-        <span class="text-secondary text-[10px] uppercase font-black tracking-widest block mb-1">Ventas Hoy</span>
-        <span id="ventas-hoy" class="text-2xl font-black tracking-tighter text-gray-900">$0.00</span>
-      </div>
-
-      <div class="bg-white p-5 rounded-[2rem] border border-outline relative overflow-hidden">
-        <span id="critico-count" class="absolute top-3 right-3 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded hidden">0 CRÍTICO</span>
-        <span class="text-primary text-[10px] uppercase font-black tracking-widest block mb-1">Inversión Stock</span>
-        <span id="valor-invertido" class="text-2xl font-black tracking-tighter text-gray-900">$0.00</span>
-      </div>
+        <button onclick="location.href='RegistrodeVentas.html'" class="bg-primary text-white p-5 rounded-[2rem] flex flex-col items-center gap-2 shadow-lg active:scale-95 transition-transform">
+          <span class="material-symbols-outlined text-3xl">add_shopping_cart</span>
+          <span class="text-xs font-black uppercase tracking-widest">Vender</span>
+        </button>
+        
+        <button id="btn-ruta" onclick="location.href='GestióndeDespachos.html'" class="relative bg-success text-white p-5 rounded-[2rem] flex flex-col items-center gap-2 shadow-lg active:scale-95 transition-transform">
+          <span id="badge-ruta" class="absolute top-2 right-4 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+          <span class="material-symbols-outlined text-3xl">local_shipping</span>
+          <span class="text-xs font-black uppercase tracking-widest">En Ruta</span>
+        </button>
     </div>
 
-    <!-- MARGEN CON COMPARATIVA -->
-    <div class="bg-white p-6 rounded-[2.5rem] border-2 border-success/20 shadow-md flex justify-between items-center bg-gradient-to-br from-white to-green-50/20">
-      <div>
-        <span class="text-success text-xs uppercase font-black tracking-widest block mb-1">Margen del Período</span>
-        <span id="ganancia-total" class="text-4xl font-black tracking-tighter text-success block">$0.00</span>
-        <div id="comparativa-ayer" class="flex items-center gap-1 mt-1 text-[10px] font-bold text-slate-400">
-            <!-- Cargado por JS -->
+    <!-- FILA 2: STOCK (TARJETA GRANDE) -->
+    <div class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm relative overflow-hidden">
+        <div id="critico-label" class="absolute top-4 right-6 bg-red-100 text-red-600 text-[9px] font-black px-3 py-1 rounded-full border border-red-200 hidden">0 PRODUCTOS CRÍTICOS</div>
+        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Inversión en Bodega</h3>
+        <div class="flex items-baseline gap-2">
+            <span id="valor-invertido" class="text-4xl font-black tracking-tighter text-gray-900">$0.00</span>
         </div>
-      </div>
-      <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-success">
-        <span class="material-symbols-outlined text-3xl">payments</span>
+        <button onclick="location.href='ControldeInventario.html'" class="mt-4 w-full py-3 bg-slate-50 rounded-2xl text-[10px] font-black text-primary uppercase border border-slate-100 flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">inventory</span> Ver Inventario Completo
+        </button>
+    </div>
+
+    <!-- MARGEN DE GANANCIA (Fórmula: Recaudado - Invertido) -->
+    <div class="bg-white p-6 rounded-[2.5rem] border-2 border-success/20 shadow-md bg-gradient-to-br from-white to-green-50/20">
+      <span class="text-success text-xs uppercase font-black tracking-widest block mb-1">Balance (Recaudo - Inversión)</span>
+      <div class="flex justify-between items-end">
+          <div>
+            <span id="ganancia-total" class="text-4xl font-black tracking-tighter text-success">$0.00</span>
+            <div id="comparativa-ayer" class="flex items-center gap-1 mt-1 text-[10px] font-bold text-slate-400"></div>
+          </div>
+          <div class="text-right">
+              <span class="text-[10px] text-slate-400 block uppercase font-bold">Ventas Brutas</span>
+              <span id="ventas-hoy" class="text-lg font-black text-slate-700">$0.00</span>
+          </div>
       </div>
     </div>
 
-    <!-- BOTONES -->
-    <div class="grid grid-cols-5 gap-2 py-2">
-        <button onclick="location.href='RegistrodeVentas.html'" class="bg-primary text-white p-3 rounded-2xl flex flex-col items-center gap-1">
-          <span class="material-symbols-outlined text-xl">add_shopping_cart</span>
-          <span class="text-[8px] font-black uppercase">Vender</span>
+    <!-- FILA 3: CLIENTES Y PROVEEDORES -->
+    <div class="grid grid-cols-2 gap-3">
+        <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex items-center gap-3 active:scale-95 transition-transform">
+          <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-primary">
+              <span class="material-symbols-outlined">group</span>
+          </div>
+          <span class="text-[10px] font-black uppercase text-slate-600">Clientes</span>
         </button>
-        <button onclick="location.href='ControldeInventario.html'" class="bg-secondary text-white p-3 rounded-2xl flex flex-col items-center gap-1">
-          <span class="material-symbols-outlined text-xl">inventory</span>
-          <span class="text-[8px] font-black uppercase">Stock</span>
-        </button>
-        <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-3 rounded-2xl flex flex-col items-center gap-1">
-          <span class="material-symbols-outlined text-primary text-xl">group</span>
-          <span class="text-[8px] font-black uppercase text-primary">Clientes</span>
-        </button>
-        <button onclick="location.href='Proveedores.html'" class="bg-amber-500 text-white p-3 rounded-2xl flex flex-col items-center gap-1">
-          <span class="material-symbols-outlined text-xl">factory</span>
-          <span class="text-[8px] font-black uppercase text-amber-100">Prov.</span>
-        </button>
-        <button id="btn-ruta" onclick="location.href='GestióndeDespachos.html'" class="relative bg-success text-white p-3 rounded-2xl flex flex-col items-center gap-1 transition-all">
-          <span id="badge-ruta" class="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
-          <span class="material-symbols-outlined text-xl">local_shipping</span>
-          <span class="text-[8px] font-black uppercase">Ruta</span>
+
+        <button onclick="location.href='Proveedores.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex items-center gap-3 active:scale-95 transition-transform">
+          <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+              <span class="material-symbols-outlined">factory</span>
+          </div>
+          <span class="text-[10px] font-black uppercase text-slate-600">Proveedores</span>
         </button>
     </div>
 
     <!-- TOP PRODUCTOS -->
-    <section class="bg-white p-5 rounded-[2.5rem] border border-outline">
-        <h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-widest flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm">trending_up</span> Top Productos Vendidos
+    <section class="bg-white p-6 rounded-[2.5rem] border border-outline">
+        <h3 class="text-[10px] font-black text-primary mb-5 uppercase tracking-widest flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">trending_up</span> Ranking de Salida
         </h3>
-        <div id="grafico-vendidos" class="space-y-4"></div>
+        <div id="grafico-vendidos" class="space-y-5"></div>
     </section>
 
-    <!-- ENTREGAS -->
-    <section class="bg-white p-5 rounded-[2.5rem] border border-outline">
-        <h3 class="text-[10px] font-black text-success mb-4 uppercase tracking-widest">Entregas Pendientes</h3>
-        <div id="lista-entregas" class="space-y-3"></div>
-    </section>
-
-    <!-- TABLA STOCK CRÍTICO -->
-    <div class="overflow-hidden border border-outline rounded-[2rem] bg-white">
-        <table class="w-full text-left">
-            <thead class="bg-gray-50 text-[9px] uppercase font-black text-gray-400 border-b border-outline">
-                <tr><th class="p-4">Producto</th><th class="p-4 text-center">Cant.</th><th class="p-4 text-center">Estado</th></tr>
-            </thead>
-            <tbody id="tabla-inventario" class="text-sm font-bold"></tbody>
-        </table>
-    </div>
 </main>
 
 <div id="menu-container"></div>
 
 <script>
-// Corregir fecha para que no salte al día siguiente (Uso local)
+// Ajuste de fecha local
 const hoy = new Date();
 const offset = hoy.getTimezoneOffset() * 60000;
 const fechaLocal = new Date(hoy - offset).toISOString().split('T')[0];
@@ -160,31 +145,20 @@ async function cargarDatos() {
         const inventario = Array.isArray(resInv) ? resInv : [];
         const ventas = Array.isArray(resVentas) ? resVentas : [];
 
-        // 1. CÁLCULO DE STOCK Y CRÍTICO
+        // 1. LÓGICA DE STOCK Y CRÍTICOS
         let totalInv = 0;
-        let countCriticos = 0;
-        const tabla = document.getElementById('tabla-inventario');
-        tabla.innerHTML = "";
-
-        const criticos = inventario.filter(p => {
+        const pCriticos = inventario.filter(p => {
             const s = parseFloat(p.Stock) || 0;
             return s > 0 && s <= 5;
-        }).sort((a,b) => a.Stock - b.Stock);
-
-        countCriticos = criticos.length;
-        if(countCriticos > 0) {
-            document.getElementById('critico-count').innerText = `${countCriticos} CRÍTICO`;
-            document.getElementById('critico-count').classList.remove('hidden');
-        }
-
-        criticos.forEach(p => {
-            tabla.innerHTML += `
-                <tr class="border-t border-purple-50">
-                    <td class="p-4 text-xs uppercase truncate max-w-[150px]">${p.Producto}</td>
-                    <td class="p-4 text-center text-red-500 font-black">${p.Stock}</td>
-                    <td class="p-4 text-center"><span class="bg-red-50 text-red-500 text-[8px] font-black px-2 py-1 rounded-lg">AGOTANDO</span></td>
-                </tr>`;
         });
+
+        const lblCritico = document.getElementById('critico-label');
+        if(pCriticos.length > 0) {
+            lblCritico.innerText = `${pCriticos.length} CRÍTICOS EN STOCK`;
+            lblCritico.classList.remove('hidden');
+        } else {
+            lblCritico.classList.add('hidden');
+        }
 
         inventario.forEach(p => {
             const cost = parseFloat(String(p.Precio_Distribuidor || 0).replace(',','.')) || 0;
@@ -192,29 +166,32 @@ async function cargarDatos() {
         });
         document.getElementById('valor-invertido').innerText = `$${totalInv.toFixed(2)}`;
 
-        // 2. VENTAS Y COMPARATIVA AYER
+        // 2. VENTAS Y MARGEN (Recaudado - Inversión)
         const ayer = new Date(new Date(fechaSel) - 86400000).toISOString().split('T')[0];
-        let totalHoy = 0;
-        let totalAyer = 0;
+        let recaudadoHoy = 0;
+        let recaudadoAyer = 0;
 
         ventas.forEach(v => {
             const fV = new Date(v.Fecha).toISOString().split('T')[0];
             const val = parseFloat(String(v["Precio Total"] || 0).replace(',','.')) || 0;
-            if(fV === fechaSel) totalHoy += val;
-            if(fV === ayer) totalAyer += val;
+            if(fV === fechaSel) recaudadoHoy += val;
+            if(fV === ayer) recaudadoAyer += val;
         });
 
-        document.getElementById('ventas-hoy').innerText = `$${totalHoy.toFixed(2)}`;
-        document.getElementById('ganancia-total').innerText = `$${totalHoy.toFixed(2)}`;
+        // Fórmula pedida: Recaudado - Valor Invertido
+        // Nota: Para que el margen sea coherente al día, usamos el Recaudo del periodo filtrado.
+        const margenReal = recaudadoHoy - totalInv;
+
+        document.getElementById('ventas-hoy').innerText = `$${recaudadoHoy.toFixed(2)}`;
+        document.getElementById('ganancia-total').innerText = `$${margenReal.toFixed(2)}`;
 
         const compDiv = document.getElementById('comparativa-ayer');
-        const subio = totalHoy >= totalAyer;
+        const subio = recaudadoHoy >= recaudadoAyer;
         compDiv.innerHTML = `
             <span class="material-symbols-outlined text-sm ${subio?'text-success':'text-red-500'}">${subio?'bolt':'south'}</span>
-            Ayer: $${totalAyer.toFixed(2)} 
-            <span class="${subio?'text-success':'text-red-500'}">(${subio?'+':''}${(totalHoy-totalAyer).toFixed(2)})</span>`;
+            Recaudo ayer: $${recaudadoAyer.toFixed(2)}`;
 
-        // 3. TOP PRODUCTOS (Detalle completo)
+        // 3. TOP PRODUCTOS
         const rank = {};
         ventas.forEach(v => { rank[v.Producto] = (rank[v.Producto] || 0) + (parseFloat(v.Cantidad) || 0); });
         const top = Object.entries(rank).sort((a,b) => b[1]-a[1]).slice(0, 4);
@@ -225,16 +202,16 @@ async function cargarDatos() {
             grafico.innerHTML += `
                 <div class="space-y-1">
                     <div class="flex justify-between text-[10px] font-black uppercase italic">
-                        <span class="text-slate-700">${name}</span> <!-- NOMBRE COMPLETO -->
-                        <span>${qty} UN.</span>
+                        <span class="text-slate-700 truncate pr-4">${name}</span>
+                        <span class="text-primary">${qty} UN.</span>
                     </div>
                     <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div class="bg-primary h-full" style="width:${(qty/max)*100}%"></div>
+                        <div class="bg-primary h-full rounded-full" style="width:${(qty/max)*100}%"></div>
                     </div>
                 </div>`;
         });
 
-        // 4. RUTA (Conteo por clientes/entregas, no productos)
+        // 4. RUTA (Por clientes únicos)
         const pends = ventas.filter(v => String(v.Estado).toUpperCase() === "PENDIENTE");
         const clientesPends = [...new Set(pends.map(v => v.Cliente))];
         const badge = document.getElementById('badge-ruta');
@@ -248,16 +225,6 @@ async function cargarDatos() {
             badge.classList.add('hidden');
             btnRuta.classList.remove('pulse-notif');
         }
-
-        const lista = document.getElementById('lista-entregas');
-        lista.innerHTML = clientesPends.length ? "" : `<p class="text-center py-4 text-slate-300 italic text-xs">Sin entregas para hoy</p>`;
-        clientesPends.slice(0, 5).forEach(c => {
-            lista.innerHTML += `
-                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    <p class="text-[10px] font-black uppercase text-slate-800">${c}</p>
-                    <span class="material-symbols-outlined text-success text-lg">local_shipping</span>
-                </div>`;
-        });
 
     } catch (e) { console.error(e); }
     finally { icon?.classList.remove('rotate-animation'); }

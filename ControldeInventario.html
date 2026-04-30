@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Inventario | Lógica Láctea</title>
+    <title>Inventario Pro | Lógica Láctea</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="estilos-lacteos.css">
@@ -15,96 +15,132 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-      body { background-color: #faf5ff; padding-bottom: 110px; -webkit-user-select: none; user-select: none; }
+      body { 
+        background-color: #faf5ff; 
+        padding-bottom: 110px; 
+        -webkit-user-select: none; 
+        user-select: none; /* Evita selección de texto al mantener presionado */
+      }
       
-      /* ID CARDS SUPERIORES CON FORMATO */
+      /* ID CARDS SUPERIORES CON FORMATO PROFESIONAL */
       .id-card-top {
-        background: white; border-radius: 1.2rem; padding: 10px 5px;
+        background: white; border-radius: 1.2rem; padding: 12px 5px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         border: 2px solid #f3e8ff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
       }
       .id-card-top .label { font-size: 9px; font-weight: 800; text-transform: uppercase; color: #a21caf; margin-bottom: 2px; }
-      .id-card-top .value { font-size: 14px; font-weight: 900; color: #1f012a; }
+      .id-card-top .value { font-size: 15px; font-weight: 900; color: #1f012a; }
 
-      /* PRODUCT CARDS */
+      /* PRODUCT CARDS EN 2 COLUMNAS */
       .card-prod { 
         background: white; border-radius: 1.5rem; border: 1px solid #e9d5ff; 
         padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
-        min-height: 140px; position: relative; transition: all 0.2s;
+        min-height: 145px; position: relative; transition: all 0.2s;
+        cursor: pointer;
       }
       .card-prod.selected { border: 3px solid #ef4444; background: #fef2f2; transform: scale(0.95); }
-      .select-badge { position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; display: none; align-items: center; justify-content: center; font-size: 12px; }
-      .selected .select-badge { display: flex; }
+      
+      /* BADGE DE SELECCIÓN */
+      .select-check { 
+        position: absolute; top: -5px; right: -5px; background: #ef4444; 
+        color: white; border-radius: 50%; width: 22px; height: 22px; 
+        display: none; align-items: center; justify-content: center; 
+        font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+      .selected .select-check { display: flex; }
 
-      .prod-title { font-size: 11px; font-weight: 800; color: #1f012a; line-height: 1.2; text-transform: uppercase; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+      .prod-title { 
+        font-size: 11px; font-weight: 800; color: #1f012a; 
+        line-height: 1.2; text-transform: uppercase; 
+        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; 
+      }
 
       /* MODALES */
-      .modal-custom { display: none; position: fixed; inset: 0; background: rgba(31, 1, 42, 0.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
+      .modal-custom { 
+        display: none; position: fixed; inset: 0; 
+        background: rgba(31, 1, 42, 0.7); z-index: 1000; 
+        align-items: center; justify-content: center; 
+        padding: 20px; backdrop-filter: blur(8px); 
+      }
       .modal-custom.active { display: flex; }
+      
+      /* ANIMACIÓN SKELETON */
+      @keyframes skeleton-pulse { 0% { background-color: #f3e8ff; } 50% { background-color: #e9d5ff; } 100% { background-color: #f3e8ff; } }
+      .loading-skeleton { animation: skeleton-pulse 1.5s infinite; }
     </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <header class="fixed top-0 w-full h-16 bg-white border-b border-purple-100 flex justify-between items-center px-4 z-50">
     <div class="flex flex-col">
         <h1 id="header-title" class="text-xl font-black text-[#a21caf] italic uppercase leading-none">STOCK</h1>
         <span id="sync-indicator" class="text-[9px] font-black text-orange-500">SINCRONIZANDO...</span>
     </div>
     <div class="flex gap-3">
-        <button id="btn-bulk-delete" class="hidden text-red-600 animate-bounce" onclick="eliminarVarios()"><span class="material-symbols-outlined text-3xl">delete_sweep</span></button>
-        <button onclick="descargarPDF()" class="text-[#a21caf] active:scale-90 transition-transform"><span class="material-symbols-outlined text-3xl">picture_as_pdf</span></button>
-        <button onclick="window.location.reload()" class="text-gray-400 active:rotate-180 transition-transform"><span class="material-symbols-outlined text-3xl">sync</span></button>
+        <!-- BOTÓN ELIMINAR SELECCIÓN -->
+        <button id="btn-bulk-delete" class="hidden text-red-600 animate-pulse" onclick="eliminarVarios()">
+            <span class="material-symbols-outlined text-3xl">delete_sweep</span>
+        </button>
+        <button onclick="descargarPDF()" class="text-[#a21caf] active:scale-90 transition-transform">
+            <span class="material-symbols-outlined text-3xl">picture_as_pdf</span>
+        </button>
+        <button onclick="window.location.reload()" class="text-gray-400 active:rotate-180 transition-transform">
+            <span class="material-symbols-outlined text-3xl">sync</span>
+        </button>
     </div>
 </header>
 
 <main class="pt-20 px-4">
-    <!-- INDICADORES SUPERIORES FORMATEADOS -->
+    <!-- INDICADORES SUPERIORES -->
     <section id="stats-header" class="grid grid-cols-3 gap-2 mb-6">
-        <div class="id-card-top"> <span class="label">Bodega</span> <span id="val-bodega" class="value">$0</span> </div>
-        <div class="id-card-top border-red-100"> <span class="label text-red-500">Críticos</span> <span id="val-criticos" class="value text-red-600">0</span> </div>
-        <div class="id-card-top border-green-100"> <span class="label text-green-600">Stock</span> <span id="val-stock" class="value text-green-700">0</span> </div>
+        <div class="id-card-top loading-skeleton h-16"></div>
+        <div class="id-card-top loading-skeleton h-16"></div>
+        <div class="id-card-top loading-skeleton h-16"></div>
     </section>
 
+    <!-- BUSCADOR -->
     <div class="relative mb-6">
         <span class="material-symbols-outlined absolute left-4 top-3.5 text-[#a21caf]">search</span>
         <input type="text" id="filtro" oninput="filtrar()" placeholder="Buscar producto..." class="w-full bg-white border-2 border-purple-100 rounded-2xl py-3 pl-12 pr-4 font-bold text-[#a21caf] outline-none shadow-sm">
     </div>
 
+    <!-- GRID DE PRODUCTOS (2 COLUMNAS) -->
     <div id="grid-productos" class="grid grid-cols-2 gap-3 mb-24"></div>
 </main>
 
-<!-- BOTÓN AGREGAR -->
+<!-- BOTÓN FLOTANTE AGREGAR -->
 <button onclick="abrirModal('modal-nuevo-prod')" class="fixed bottom-24 right-6 w-14 h-14 bg-[#a21caf] text-white rounded-full shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform">
     <span class="material-symbols-outlined text-3xl">add</span>
 </button>
 
 <div id="menu-container"></div>
 
-<!-- MODAL STOCK -->
+<!-- MODAL: GESTIÓN DE STOCK (CON +/-) -->
 <div id="modal-stock" class="modal-custom">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center">
+    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center shadow-2xl">
         <p id="stk-prod-name" class="text-[10px] font-black text-gray-400 uppercase mb-2"></p>
-        <h2 class="text-xl font-black text-[#a21caf] mb-6 uppercase">Añadir Stock</h2>
+        <h2 class="text-xl font-black text-[#a21caf] mb-6 uppercase tracking-tight">Sumar Stock</h2>
         <div class="flex items-center justify-between mb-8 px-2">
-            <button onclick="cambiarQty(-1)" class="w-12 h-12 rounded-xl bg-purple-100 text-[#a21caf] font-black text-2xl">-</button>
+            <button onclick="cambiarQty(-1)" class="w-14 h-14 rounded-2xl bg-purple-50 text-[#a21caf] font-black text-3xl shadow-sm">-</button>
             <input type="number" id="input-sumar" value="1" class="w-20 text-center text-4xl font-black text-[#a21caf] outline-none bg-transparent">
-            <button onclick="cambiarQty(1)" class="w-12 h-12 rounded-xl bg-purple-100 text-[#a21caf] font-black text-2xl">+</button>
+            <button onclick="cambiarQty(1)" class="w-14 h-14 rounded-2xl bg-purple-50 text-[#a21caf] font-black text-3xl shadow-sm">+</button>
         </div>
         <button onclick="confirmarStock()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black shadow-lg mb-4">ACTUALIZAR</button>
         <button onclick="cerrarModal('modal-stock')" class="text-gray-400 font-bold text-[10px] uppercase">Cancelar</button>
     </div>
 </div>
 
-<!-- MODAL NUEVO -->
+<!-- MODAL: NUEVO PRODUCTO COMPLETO -->
 <div id="modal-nuevo-prod" class="modal-custom">
     <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 space-y-3">
-        <h2 class="text-center font-black text-[#a21caf] uppercase">Nuevo Item</h2>
-        <input type="text" id="n-nombre" placeholder="NOMBRE" class="w-full bg-gray-50 p-3 rounded-xl font-bold uppercase outline-none border border-gray-100">
-        <input type="number" id="n-dist" placeholder="COSTO DISTRIBUIDOR $" class="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100">
-        <input type="number" id="n-pvp" placeholder="PVP $" class="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100">
-        <input type="number" id="n-stock" placeholder="STOCK INICIAL" class="w-full bg-gray-50 p-3 rounded-xl font-bold border border-gray-100">
-        <button onclick="guardarNuevo()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-black mt-4">GUARDAR PRODUCTO</button>
+        <h2 class="text-center font-black text-[#a21caf] uppercase mb-2">Crear Producto</h2>
+        <input type="text" id="n-nombre" placeholder="NOMBRE DEL PRODUCTO" class="w-full bg-gray-50 p-4 rounded-xl font-bold uppercase border-none outline-none text-sm">
+        <input type="number" id="n-dist" placeholder="COSTO DISTRIBUIDOR $" class="w-full bg-gray-50 p-4 rounded-xl font-bold border-none outline-none text-sm">
+        <input type="number" id="n-pvp" placeholder="PRECIO VENTA (PVP) $" class="w-full bg-gray-50 p-4 rounded-xl font-bold border-none outline-none text-sm">
+        <input type="number" id="n-stock" placeholder="STOCK INICIAL" class="w-full bg-gray-50 p-4 rounded-xl font-bold border-none outline-none text-sm">
+        <button onclick="guardarNuevo()" class="w-full bg-green-600 text-white py-4 rounded-2xl font-black mt-4 shadow-md">GUARDAR ITEM</button>
         <button onclick="cerrarModal('modal-nuevo-prod')" class="w-full text-gray-400 font-bold text-[10px] uppercase text-center mt-2">Cerrar</button>
     </div>
 </div>
@@ -121,8 +157,9 @@ async function cargarInventario() {
         const res = await DairyAPI.obtenerDatos("Inventario");
         if (Array.isArray(res)) {
             inventarioLocal = res;
-            document.getElementById('sync-indicator').innerText = "CONECTADO ✓";
-            document.getElementById('sync-indicator').className = "text-[9px] font-black text-green-500";
+            const sync = document.getElementById('sync-indicator');
+            sync.innerText = "CONECTADO ✓";
+            sync.className = "text-[9px] font-black text-green-500";
             renderizar(inventarioLocal);
         }
     } catch (e) { console.error(e); }
@@ -130,11 +167,13 @@ async function cargarInventario() {
 
 function renderizar(lista) {
     const container = document.getElementById('grid-productos');
+    const stats = document.getElementById('stats-header');
     container.innerHTML = "";
     let bodega = 0, criticos = 0, stockTotal = 0;
 
     lista.forEach(p => {
         const stock = Number(p.Stock) || 0;
+        const ventas = Number(p.Ventas) || 0;
         if(stock <= 5) criticos++;
         stockTotal += stock;
         bodega += (Number(p.Precio_Venta || 0) * stock);
@@ -142,27 +181,35 @@ function renderizar(lista) {
         const card = document.createElement('div');
         card.className = `card-prod ${seleccionados.has(p.ID) ? 'selected' : ''}`;
         card.innerHTML = `
-            <div class="select-badge"><span class="material-symbols-outlined text-[14px]">done</span></div>
+            <div class="select-check"><span class="material-symbols-outlined text-[14px]">done</span></div>
             <div class="flex justify-between items-start mb-1">
-                <span class="text-[8px] font-black text-gray-300">#${p.ID}</span>
-                <span class="text-[8px] font-black text-blue-500 uppercase">V: ${p.Ventas || 0}</span>
+                <span class="text-[8px] font-black text-gray-300">ID: ${p.ID}</span>
+                <span class="text-[8px] font-black text-blue-500 bg-blue-50 px-1.5 rounded-full uppercase">V: ${ventas}</span>
             </div>
             <h3 class="prod-title">${p.Producto}</h3>
-            <div class="flex justify-between items-end mt-2">
-                <span class="font-black text-lg ${stock <= 5 ? 'text-red-500' : 'text-[#a21caf]'}">${stock}u</span>
+            <div class="flex justify-between items-end mt-auto pt-2">
+                <span class="font-black text-xl ${stock <= 5 ? 'text-red-500' : 'text-[#a21caf]'}">${stock}<small class="text-[9px] ml-0.5">u</small></span>
                 <span class="font-black text-green-600 text-sm">$${Number(p.Precio_Venta || 0).toFixed(2)}</span>
             </div>
         `;
 
-        // LOGICA DE PRESION LARGA
-        card.onmousedown = card.ontouchstart = (e) => {
+        // EVENTOS COMPUTADORA (CLIC DERECHO)
+        card.oncontextmenu = (e) => {
+            e.preventDefault();
+            modoSeleccion = true;
+            toggleSeleccion(p.ID);
+        };
+
+        // EVENTOS CELULAR (PRESIÓN LARGA)
+        card.ontouchstart = card.onmousedown = () => {
             timerHold = setTimeout(() => {
                 modoSeleccion = true;
                 toggleSeleccion(p.ID);
-            }, 700);
+            }, 800);
         };
-        card.onmouseup = card.ontouchend = () => clearTimeout(timerHold);
+        card.ontouchend = card.onmouseup = () => clearTimeout(timerHold);
 
+        // CLIC NORMAL
         card.onclick = () => {
             if (modoSeleccion) {
                 toggleSeleccion(p.ID);
@@ -174,28 +221,32 @@ function renderizar(lista) {
         container.appendChild(card);
     });
 
-    document.getElementById('val-bodega').innerText = `$${bodega.toFixed(0)}`;
-    document.getElementById('val-criticos').innerText = criticos;
-    document.getElementById('val-stock').innerText = stockTotal;
+    // ACTUALIZAR INDICADORES SUPERIORES
+    stats.innerHTML = `
+        <div class="id-card-top"> <span class="label">Bodega</span> <span class="value">$${bodega.toFixed(0)}</span> </div>
+        <div class="id-card-top border-red-100"> <span class="label text-red-500">Críticos</span> <span class="value text-red-600">${criticos}</span> </div>
+        <div class="id-card-top border-green-100"> <span class="label text-green-500">Stock</span> <span class="value text-green-700">${stockTotal}</span> </div>
+    `;
 }
 
 function toggleSeleccion(id) {
     seleccionados.has(id) ? seleccionados.delete(id) : seleccionados.add(id);
-    
     const btnDel = document.getElementById('btn-bulk-delete');
+    const title = document.getElementById('header-title');
+
     if (seleccionados.size > 0) {
         btnDel.classList.remove('hidden');
-        document.getElementById('header-title').innerText = `${seleccionados.size} SELEC.`;
+        title.innerText = `${seleccionados.size} SELECCIONADOS`;
     } else {
         btnDel.classList.add('hidden');
         modoSeleccion = false;
-        document.getElementById('header-title').innerText = "STOCK";
+        title.innerText = "STOCK";
     }
     renderizar(inventarioLocal);
 }
 
 async function eliminarVarios() {
-    if (confirm(`¿Eliminar los ${seleccionados.size} productos seleccionados?`)) {
+    if (confirm(`¿Estás seguro de eliminar estos ${seleccionados.size} productos?`)) {
         for (let id of seleccionados) {
             await DairyAPI.eliminarDato("Inventario", id);
         }
@@ -207,6 +258,7 @@ async function eliminarVarios() {
     }
 }
 
+// GESTIÓN DE STOCK
 function abrirGestionStock(p) {
     productoActivo = p;
     document.getElementById('stk-prod-name').innerText = p.Producto;
@@ -215,18 +267,20 @@ function abrirGestionStock(p) {
 }
 
 function cambiarQty(val) {
-    let inp = document.getElementById('input-sumar');
-    let n = parseInt(inp.value) + val;
-    inp.value = n < 1 ? 1 : n;
+    const input = document.getElementById('input-sumar');
+    let v = parseInt(input.value) + val;
+    input.value = v < 1 ? 1 : v;
 }
 
 async function confirmarStock() {
     const suma = parseInt(document.getElementById('input-sumar').value);
-    await DairyAPI.actualizarDato("Inventario", productoActivo.ID, { Stock: (Number(productoActivo.Stock) || 0) + suma });
+    const nuevoTotal = (Number(productoActivo.Stock) || 0) + suma;
+    await DairyAPI.actualizarDato("Inventario", productoActivo.ID, { Stock: nuevoTotal });
     cerrarModal('modal-stock');
     cargarInventario();
 }
 
+// GUARDAR PRODUCTO
 async function guardarNuevo() {
     const data = {
         Producto: document.getElementById('n-nombre').value.toUpperCase(),
@@ -235,7 +289,7 @@ async function guardarNuevo() {
         Stock: document.getElementById('n-stock').value,
         Ventas: 0
     };
-    if(data.Producto && data.Precio_Venta) {
+    if (data.Producto && data.Precio_Venta) {
         await DairyAPI.crearDato("Inventario", data);
         cerrarModal('modal-nuevo-prod');
         cargarInventario();

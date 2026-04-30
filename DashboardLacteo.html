@@ -56,7 +56,7 @@
         <input type="date" id="filtro-fecha" onchange="cargarDatos()" class="mt-1 text-[10px] font-bold border-none p-0 bg-transparent text-gray-500 focus:ring-0 uppercase">
     </div>
   </div>
-  <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:scale-90 transition-transform">
+  <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
     <span id="icon-refresh" class="material-symbols-outlined text-slate-500">sync</span>
   </button>
 </header>
@@ -159,7 +159,7 @@
 
         <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
             <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center gap-2 italic">
-                <span class="material-symbols-outlined text-sm font-bold">timer</span> Todos los Despachos Pendientes
+                <span class="material-symbols-outlined text-sm font-bold">timer</span> Despachos Pendientes
             </h3>
             <div id="lista-pedidos" class="space-y-2"></div>
         </section>
@@ -197,7 +197,6 @@ async function cargarDatos() {
         const ventas = Array.isArray(resVentas) ? resVentas : [];
         const compras = Array.isArray(resCompras) ? resCompras : [];
 
-        // 1. COSTOS MAP E INVENTARIO
         const costosMap = {};
         let totalCostoBodega = 0;
         inventario.forEach(p => {
@@ -208,34 +207,42 @@ async function cargarDatos() {
         });
         document.getElementById('valor-invertido').innerText = `$${totalCostoBodega.toFixed(2)}`;
 
-        // 2. LÓGICA DE VENTAS (POR FECHA) Y PENDIENTES (GENERAL)
         let utilidadHoy = 0;
         let ventaTotalHoy = 0;
         let porRecaudarTotal = 0;
-        let despachosPendientesGeneral = [];
         let rankingMap = {};
+        let pedidosPendientesMap = {}; // Mapa para agrupar por ID_Venta
 
         ventas.forEach(v => {
             const fV = new Date(v.Fecha).toISOString().split('T')[0];
             const cantidad = parseFloat(v.Cantidad) || 0;
-            const totalVenta = parseFloat(String(v["Precio Total"] || 0).replace(',','.')) || 0;
+            const totalFila = parseFloat(String(v["Precio Total"] || 0).replace(',','.')) || 0;
             const esPendiente = String(v.Estado).toUpperCase() === "PENDIENTE";
+            const idVenta = v.ID_Venta; // CLAVE PRINCIPAL
 
-            // Ranking del mes
+            // Ranking mensual
             if(new Date(v.Fecha).getMonth() === hoy.getMonth()){
                 rankingMap[v.Producto] = (rankingMap[v.Producto] || 0) + cantidad;
             }
 
-            // Datos filtrados por el día seleccionado
+            // Datos del día (Caja)
             if(fV === fechaSel) {
-                ventaTotalHoy += totalVenta;
-                utilidadHoy += (totalVenta - ((costosMap[v.Producto] || 0) * cantidad));
+                ventaTotalHoy += totalFila;
+                utilidadHoy += (totalFila - ((costosMap[v.Producto] || 0) * cantidad));
             }
 
-            // DESPACHOS PENDIENTES: Sin filtro de fecha
-            if(esPendiente) {
-                porRecaudarTotal += totalVenta;
-                despachosPendientesGeneral.push(v);
+            // AGRUPACIÓN DE PENDIENTES POR ID_VENTA
+            if(esPendiente && idVenta) {
+                porRecaudarTotal += totalFila;
+                
+                if(!pedidosPendientesMap[idVenta]) {
+                    pedidosPendientesMap[idVenta] = {
+                        cliente: v.Cliente,
+                        fecha: v.Fecha,
+                        totalAcumulado: 0
+                    };
+                }
+                pedidosPendientesMap[idVenta].totalAcumulado += totalFila;
             }
         });
 
@@ -243,10 +250,11 @@ async function cargarDatos() {
         document.getElementById('ganancia-real').innerText = `$${utilidadHoy.toFixed(2)}`;
         document.getElementById('por-recaudar').innerText = `$${porRecaudarTotal.toFixed(2)}`;
 
-        // 3. BADGES DE ACCIÓN
+        // Badge En Ruta (Número de IDs únicos)
+        const totalPedidosUnicos = Object.keys(pedidosPendientesMap).length;
         const bRuta = document.getElementById('badge-ruta');
-        if(despachosPendientesGeneral.length > 0){
-            bRuta.innerText = despachosPendientesGeneral.length;
+        if(totalPedidosUnicos > 0){
+            bRuta.innerText = totalPedidosUnicos;
             bRuta.classList.remove('hidden');
             document.getElementById('btn-ruta').classList.add('pulse-success');
         } else {
@@ -254,6 +262,7 @@ async function cargarDatos() {
             document.getElementById('btn-ruta').classList.remove('pulse-success');
         }
 
+        // Badge Recibir (Compras)
         const bRec = document.getElementById('badge-recepcion');
         const cPends = compras.filter(c => String(c.Estado_Entrega).toUpperCase() === "PENDIENTE");
         if(cPends.length > 0){
@@ -266,7 +275,7 @@ async function cargarDatos() {
             document.getElementById('btn-recepcion').classList.remove('pulse-notif');
         }
 
-        // 4. RENDER RANKING
+        // Render Ranking
         const rankingDiv = document.getElementById('ranking-productos');
         const sortedRanking = Object.entries(rankingMap).sort((a,b) => b[1] - a[1]).slice(0,5);
         rankingDiv.innerHTML = sortedRanking.map(([prod, cant], i) => `
@@ -276,19 +285,20 @@ async function cargarDatos() {
             </div>
         `).join('') || '<p class="text-center text-slate-300 italic">Sin ventas aún</p>';
 
-        // 5. RENDER PENDIENTES (Muestra TODO lo pendiente de la historia)
+        // Render Pendientes Agrupados
         const listaPed = document.getElementById('lista-pedidos');
-        listaPed.innerHTML = despachosPendientesGeneral.map(p => `
+        const itemsPendientes = Object.entries(pedidosPendientesMap);
+        listaPed.innerHTML = itemsPendientes.map(([id, p]) => `
             <div class="p-3 bg-amber-50/50 rounded-2xl flex justify-between items-center border border-amber-100">
                 <div class="flex flex-col">
-                    <span class="text-[11px] font-black uppercase text-slate-700">${p.Cliente}</span>
-                    <span class="text-[8px] font-bold text-slate-400">${new Date(p.Fecha).toLocaleDateString()}</span>
+                    <span class="text-[11px] font-black uppercase text-slate-700">${p.cliente}</span>
+                    <span class="text-[8px] font-bold text-slate-400 italic">ID: ${id} • ${new Date(p.fecha).toLocaleDateString()}</span>
                 </div>
-                <span class="text-amber-600 font-black italic">$${parseFloat(String(p["Precio Total"]).replace(',','.')).toFixed(2)}</span>
+                <span class="text-amber-600 font-black italic">$${p.totalAcumulado.toFixed(2)}</span>
             </div>
         `).join('') || '<p class="text-center text-slate-300 italic">Todo al día</p>';
 
-        // 6. STOCK CRÍTICO (Solo mayores a 0 y menores o iguales a 5)
+        // Stock Crítico
         const contCrit = document.getElementById('cont-criticos');
         const criticos = inventario.filter(p => {
             const s = parseFloat(p.Stock) || 0;

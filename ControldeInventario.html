@@ -18,8 +18,6 @@
 
     <style>
       body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #faf5ff; overflow-x: hidden; }
-      .rotate-animation { animation: spin 1s linear infinite; }
-      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       
       .card-prod { 
         background: white; border-radius: 2rem; border: 2px solid #e9d5ff; 
@@ -32,6 +30,17 @@
       .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
       .modal.active { display: flex; }
       
+      /* MENÚ INFERIOR */
+      .nav-menu { 
+        position: fixed; bottom: 0; left: 0; width: 100%; height: 80px; 
+        background: white; border-top: 2px solid #e9d5ff; 
+        display: flex; justify-content: space-around; align-items: center; z-index: 100;
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .nav-item { display: flex; flex-direction: column; align-items: center; color: #9ca3af; font-size: 10px; font-weight: 800; text-transform: uppercase; text-decoration: none; }
+      .nav-item.active { color: #a21caf; }
+      .nav-item .material-symbols-outlined { font-size: 28px; margin-bottom: 2px; }
+
       ::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -44,16 +53,14 @@
     <h1 id="header-title" class="text-xl font-black text-[#a21caf] tracking-tight uppercase italic">Inventario</h1>
   </div>
   <div class="flex items-center gap-2">
-      <!-- BOTÓN PDF -->
       <button onclick="descargarPDF()" class="p-2 text-[#a21caf] active:scale-90 transition-transform">
           <span class="material-symbols-outlined text-3xl">picture_as_pdf</span>
       </button>
-
       <button id="btn-eliminar-multi" class="hidden bg-red-500 text-white p-2 rounded-xl shadow-lg" onclick="eliminarSeleccionados()">
           <span class="material-symbols-outlined">delete_sweep</span>
       </button>
-      <button onclick="window.location.reload()" class="p-2 text-[#a21caf] active:rotate-180 transition-transform duration-500">
-          <span id="refresh-icon" class="material-symbols-outlined text-3xl">refresh</span>
+      <button onclick="window.location.reload()" class="p-2 text-[#a21caf]">
+          <span class="material-symbols-outlined text-3xl">refresh</span>
       </button>
   </div>
 </header>
@@ -79,7 +86,7 @@
   </div>
 
   <div id="grid-productos" class="grid grid-cols-2 gap-4">
-      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando con Sheets...</div>
+      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando...</div>
   </div>
 
   <div class="fixed bottom-24 left-0 w-full px-4 z-40">
@@ -89,6 +96,22 @@
     </button>
   </div>
 </main>
+
+<!-- MENÚ DE NAVEGACIÓN -->
+<nav class="nav-menu">
+    <a href="panel-operativo-tienda.html" class="nav-item">
+        <span class="material-symbols-outlined">dashboard</span>Panel
+    </a>
+    <a href="ventas.html" class="nav-item">
+        <span class="material-symbols-outlined">shopping_cart</span>Ventas
+    </a>
+    <a href="inventario.html" class="nav-item active">
+        <span class="material-symbols-outlined">inventory_2</span>Stock
+    </a>
+    <a href="clientes.html" class="nav-item">
+        <span class="material-symbols-outlined">group</span>Clientes
+    </a>
+</nav>
 
 <!-- MODALES -->
 <div id="modal-nuevo" class="modal">
@@ -100,16 +123,15 @@
             <input type="number" id="n-pvp" placeholder="PVP $" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold focus:border-[#a21caf] outline-none">
         </div>
         <input type="number" id="n-stock" placeholder="Stock Inicial" class="w-full border-2 border-purple-50 rounded-2xl p-4 font-bold focus:border-[#a21caf] outline-none">
-        
         <div class="flex flex-col gap-3 pt-2">
-            <button onclick="guardarNuevo()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg hover:bg-purple-700">GUARDAR PRODUCTO</button>
+            <button onclick="guardarNuevo()" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg">GUARDAR PRODUCTO</button>
             <button onclick="cerrarModal('modal-nuevo')" class="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase">CANCELAR</button>
         </div>
     </div>
 </div>
 
 <div id="modal-stock" class="modal">
-    <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 shadow-2xl text-center border-4 border-purple-50">
+    <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-6 text-center shadow-2xl border-4 border-purple-50">
         <h2 id="edit-nombre" class="font-black text-slate-800 uppercase text-lg">PRODUCTO</h2>
         <div class="flex items-center justify-center gap-6 py-4">
             <button onclick="ajustarStockNum(-1)" class="w-16 h-16 bg-purple-100 rounded-2xl text-[#a21caf] font-black text-3xl">-</button>
@@ -117,13 +139,11 @@
             <button onclick="ajustarStockNum(1)" class="w-16 h-16 bg-purple-100 rounded-2xl text-[#a21caf] font-black text-3xl">+</button>
         </div>
         <div class="flex flex-col gap-3">
-            <button id="btn-confirmar-stock" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg">ACEPTAR / ACTUALIZAR</button>
+            <button id="btn-confirmar-stock" class="w-full bg-[#a21caf] text-white py-4 rounded-2xl font-black uppercase shadow-lg">ACTUALIZAR</button>
             <button onclick="cerrarModal('modal-stock')" class="w-full bg-gray-100 text-gray-500 py-4 rounded-2xl font-black uppercase">CANCELAR</button>
         </div>
     </div>
 </div>
-
-<div id="menu-container"></div>
 
 <script>
 let inventarioLocal = [];
@@ -137,41 +157,11 @@ async function cargarInventario() {
     try {
         const res = await DairyAPI.obtenerDatos("Inventario");
         if (Array.isArray(res)) {
+            // AQUÍ SE ORDENA POR VENTAS DE MAYOR A MENOR
             inventarioLocal = res.sort((a, b) => aNum(b.Ventas || 0) - aNum(a.Ventas || 0));
             renderizar(inventarioLocal);
         }
     } catch (e) { console.error(e); }
-}
-
-async function descargarPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.setTextColor(162, 28, 175);
-    doc.text("LÓGICA LÁCTEA - REPORTE DE STOCK", 14, 20);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 28);
-
-    const filas = inventarioLocal.map(p => [
-        p.ID,
-        p.Producto,
-        `$${aNum(p.Precio_Venta).toFixed(2)}`,
-        aNum(p.Stock),
-        `$${(aNum(p.Costo_Unitario || p.Precio_Distribuidor) * aNum(p.Stock)).toFixed(2)}`
-    ]);
-
-    doc.autoTable({
-        head: [['ID', 'PRODUCTO', 'PVP', 'STOCK', 'VALOR TOTAL']],
-        body: filas,
-        startY: 35,
-        theme: 'grid',
-        headStyles: { fillColor: [162, 28, 175] },
-        styles: { fontSize: 8 }
-    });
-
-    doc.save(`Stock_Logica_Lactea.pdf`);
 }
 
 function renderizar(lista) {
@@ -181,10 +171,9 @@ function renderizar(lista) {
 
     lista.forEach((p) => {
         const stock = aNum(p.Stock);
-        const pvp = aNum(p.Precio_Venta);
-        const costo = aNum(p.Costo_Unitario || p.Precio_Distribuidor);
+        const ventas = aNum(p.Ventas || 0);
         if(stock <= 5) criticos++;
-        totalCosto += (costo * stock);
+        totalCosto += (aNum(p.Costo_Unitario || p.Precio_Distribuidor) * stock);
 
         const card = document.createElement('div');
         card.className = `card-prod p-5 h-52 shadow-sm ${stock <= 5 ? 'border-red-300 bg-red-50' : 'bg-white'}`;
@@ -192,20 +181,23 @@ function renderizar(lista) {
         card.innerHTML = `
             <span class="selection-check material-symbols-outlined">check_circle</span>
             <div class="mb-2">
-                <p class="text-[9px] font-black text-purple-300 uppercase">ID: ${p.ID}</p>
+                <div class="flex justify-between">
+                    <p class="text-[9px] font-black text-purple-300 uppercase">ID: ${p.ID}</p>
+                    <p class="text-[9px] font-black text-orange-500 uppercase">🔥 ${ventas} VENTAS</p>
+                </div>
                 <h3 class="font-bold text-sm uppercase text-slate-800 leading-tight line-clamp-2">${p.Producto}</h3>
             </div>
             <div class="flex justify-between items-end border-t-2 border-purple-50 pt-4 mt-auto">
                 <div>
                     <p class="text-[9px] text-gray-400 font-black uppercase mb-1">PVP</p>
-                    <p class="text-green-600 font-black text-2xl tracking-tighter">$${pvp.toFixed(2)}</p>
+                    <p class="text-green-600 font-black text-2xl tracking-tighter">$${aNum(p.Precio_Venta).toFixed(2)}</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-[9px] text-gray-400 font-black uppercase mb-1">Stock</p>
                     <span class="inline-block text-xs px-3 py-1.5 rounded-xl ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black">${stock}</span>
                 </div>
             </div>`;
 
+        // Eventos para selección múltiple
         card.addEventListener('contextmenu', (e) => { e.preventDefault(); activarModoSeleccion(p.ID); });
         card.addEventListener('touchstart', (e) => {
             pressTimer = setTimeout(() => {
@@ -226,6 +218,7 @@ function renderizar(lista) {
     document.getElementById('total-sku').innerText = lista.length;
 }
 
+// Lógica de Selección y Modales (Se mantiene igual a la que te funcionó)
 function activarModoSeleccion(id) {
     modoSeleccion = true;
     document.getElementById('btn-cancelar-seleccion').classList.remove('hidden');
@@ -235,6 +228,7 @@ function activarModoSeleccion(id) {
 
 function toggleSeleccion(id) {
     const el = document.querySelector(`[data-id="${id}"]`);
+    if(!el) return;
     if(seleccionados.has(id)) {
         seleccionados.delete(id);
         el.classList.remove('selected');
@@ -262,6 +256,15 @@ async function eliminarSeleccionados() {
     }
     cancelarSeleccion();
     window.location.reload();
+}
+
+async function descargarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.text("REPORTE DE STOCK POR VENTAS", 14, 20);
+    const filas = inventarioLocal.map(p => [p.ID, p.Producto, aNum(p.Ventas), aNum(p.Stock)]);
+    doc.autoTable({ head: [['ID', 'PRODUCTO', 'VENTAS', 'STOCK']], body: filas, startY: 30 });
+    doc.save(`Reporte_Inventario.pdf`);
 }
 
 function abrirEditorStock(p) {
@@ -296,7 +299,6 @@ async function guardarNuevo() {
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }
 function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 function ajustarStockNum(v) { document.getElementById('edit-cantidad').value = parseInt(document.getElementById('edit-cantidad').value) + v; }
-
 function filtrar() {
     const b = document.getElementById('filtroProd').value.toLowerCase();
     renderizar(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b)));

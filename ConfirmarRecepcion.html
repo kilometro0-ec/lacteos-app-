@@ -10,41 +10,49 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <style>
         body { font-family: 'Work Sans', sans-serif; }
-        .card-pendiente { border-left: 4px solid #a21caf; }
+        .card-pendiente { border-left: 4px solid #0055ff; }
+        #loading-overlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,0.8); z-index:100; justify-content:center; align-items:center; }
     </style>
 </head>
 <body class="bg-[#faf5ff] pb-20">
 
+<div id="loading-overlay">
+    <div class="flex flex-col items-center gap-2">
+        <span class="material-symbols-outlined animate-spin text-4xl text-blue-600">sync</span>
+        <p class="text-[10px] font-black uppercase italic">Actualizando Inventario...</p>
+    </div>
+</div>
+
 <header class="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-[#e9d5ff] shadow-sm">
     <div class="flex items-center gap-3" onclick="history.back()">
-        <span class="material-symbols-outlined text-[#a21caf] font-bold cursor-pointer">arrow_back_ios</span>
-        <h1 class="text-sm font-black text-[#a21caf] uppercase italic">Confirmar Llegada</h1>
+        <span class="material-symbols-outlined text-blue-600 font-bold cursor-pointer">arrow_back_ios</span>
+        <h1 class="text-sm font-black text-blue-600 uppercase italic">Confirmar Llegada</h1>
     </div>
 </header>
 
 <main class="pt-20 px-4 max-w-lg mx-auto space-y-4">
     <div class="relative">
         <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-300">search</span>
-        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar por ID de Factura o Proveedor..." 
-            class="w-full border-none bg-white rounded-2xl p-4 pl-12 shadow-sm focus:ring-2 focus:ring-[#a21caf] font-bold text-xs">
+        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar factura o proveedor..." 
+            class="w-full border-none bg-white rounded-2xl p-4 pl-12 shadow-sm focus:ring-2 focus:ring-blue-600 font-bold text-xs">
     </div>
 
     <div id="lista-pedidos" class="space-y-3">
-        <p class="text-center py-10 text-slate-400 text-[10px] font-bold uppercase animate-pulse">Buscando pedidos pendientes...</p>
+        <p class="text-center py-10 text-slate-400 text-[10px] font-bold uppercase">Buscando pendientes...</p>
     </div>
 </main>
 
-<div id="modal-confirmar" class="fixed inset-0 bg-dark/50 backdrop-blur-sm z-[60] hidden flex items-end">
+<!-- Modal de Verificación -->
+<div id="modal-confirmar" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] hidden flex items-end">
     <div class="bg-white w-full rounded-t-[3rem] p-8 space-y-6 shadow-2xl border-t border-[#e9d5ff]">
         <div class="flex justify-between items-center">
-            <h2 class="text-lg font-black text-[#a21caf] italic uppercase">Verificar Mercancía</h2>
+            <h2 class="text-lg font-black text-blue-600 italic uppercase leading-none">Verificar Factura <br><span id="id-factura-modal" class="text-slate-400 text-xs"></span></h2>
             <button onclick="cerrarModal()" class="text-slate-300"><span class="material-symbols-outlined">cancel</span></button>
         </div>
         
-        <div id="detalle-recepcion" class="space-y-4">
-            </div>
+        <div id="detalle-recepcion" class="max-h-60 overflow-y-auto space-y-3"></div>
 
-        <button onclick="ejecutarConfirmacionFinal()" class="w-full bg-[#a21caf] text-white font-black py-4 rounded-2xl shadow-lg uppercase text-xs">
+        <button id="btn-final" onclick="ejecutarConfirmacionFinal()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg uppercase text-xs active:scale-95 transition-all">
             Confirmar Ingreso a Inventario
         </button>
     </div>
@@ -57,15 +65,14 @@
     async function cargarPedidosPendientes() {
         try {
             const compras = await DairyAPI.obtenerDatos("Compras");
-            // Filtramos solo los que están como "Pendiente" en el Estado de Entrega
-            todosLosPedidos = compras.filter(c => c.Estado_Entrega === "Pendiente");
+            // Filtramos exacto por el nombre de tu columna
+            todosLosPedidos = compras.filter(c => String(c.Estado_Entrega).trim() === "Pendiente");
             renderizarPedidos(todosLosPedidos);
         } catch (e) { console.error(e); }
     }
 
     function renderizarPedidos(lista) {
         const contenedor = document.getElementById('lista-pedidos');
-        // Agrupamos por ID_Compra para mostrar una tarjeta por factura
         const agrupados = lista.reduce((acc, curr) => {
             if (!acc[curr.ID_Compra]) acc[curr.ID_Compra] = [];
             acc[curr.ID_Compra].push(curr);
@@ -73,19 +80,22 @@
         }, {});
 
         contenedor.innerHTML = "";
-        Object.keys(agrupados).forEach(id => {
+        const ids = Object.keys(agrupados);
+        if(ids.length === 0) {
+            contenedor.innerHTML = '<p class="text-center py-10 text-slate-300 text-xs italic">No hay camiones pendientes</p>';
+            return;
+        }
+
+        ids.forEach(id => {
             const items = agrupados[id];
-            const prov = items[0].Proveedor;
-            const fecha = items[0].Fecha;
-            
             contenedor.innerHTML += `
                 <div onclick="abrirConfirmacion('${id}')" class="bg-white p-5 rounded-[2rem] shadow-sm border border-[#e9d5ff] card-pendiente flex justify-between items-center active:scale-95 transition-all">
                     <div>
-                        <p class="text-[10px] font-black text-[#a21caf]">${id}</p>
-                        <p class="font-black text-dark uppercase text-xs">${prov}</p>
-                        <p class="text-[9px] font-bold text-slate-400">${fecha} • ${items.length} productos</p>
+                        <p class="text-[10px] font-black text-blue-600 italic">ID: ${id}</p>
+                        <p class="font-black text-slate-800 uppercase text-xs">${items[0].Proveedor}</p>
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">${items[0].Fecha} • ${items.length} ITEMS</p>
                     </div>
-                    <span class="material-symbols-outlined text-[#a21caf]">input_circle</span>
+                    <span class="material-symbols-outlined text-blue-600">local_shipping</span>
                 </div>
             `;
         });
@@ -93,39 +103,55 @@
 
     function abrirConfirmacion(id) {
         facturaSeleccionada = id;
+        document.getElementById('id-factura-modal').innerText = id;
         const items = todosLosPedidos.filter(p => p.ID_Compra === id);
         const detalle = document.getElementById('detalle-recepcion');
-        detalle.innerHTML = "";
-
-        items.forEach((item, idx) => {
-            detalle.innerHTML += `
-                <div class="bg-slate-50 p-4 rounded-2xl border border-dashed border-[#e9d5ff]">
-                    <p class="text-[10px] font-black uppercase text-dark mb-2">${item.Producto}</p>
-                    <div class="flex items-center gap-4">
-                        <div class="flex-1">
-                            <label class="text-[8px] font-black text-slate-400 uppercase">Cant. Pedida</label>
-                            <input type="number" readonly value="${item.Cantidad}" class="w-full bg-transparent border-none p-0 font-bold text-slate-400">
-                        </div>
-                        <div class="w-1/2">
-                            <label class="text-[8px] font-black text-[#a21caf] uppercase">Cant. Recibida</label>
-                            <input type="number" id="real-${idx}" value="${item.Cantidad}" class="w-full bg-white border border-[#e9d5ff] rounded-lg px-2 py-1 font-black text-center text-sm focus:ring-1 focus:ring-[#a21caf]">
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
+        detalle.innerHTML = items.map(item => `
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex justify-between items-center">
+                <span class="text-[10px] font-black uppercase text-slate-700">${item.Producto}</span>
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg font-black text-xs">${item.Cantidad} UNID.</span>
+            </div>
+        `).join('');
 
         document.getElementById('modal-confirmar').classList.remove('hidden');
     }
 
     async function ejecutarConfirmacionFinal() {
-        // Aquí enviarías la actualización a Google Sheets
-        // Cambiando el Estado_Entrega de "Pendiente" a "Recibido Completo" (o lo que pongas en el input)
-        alert("Actualizando inventario con las cantidades reales...");
-        location.reload();
+        const btn = document.getElementById('btn-final');
+        const loader = document.getElementById('loading-overlay');
+        
+        btn.disabled = true;
+        loader.style.display = "flex";
+
+        try {
+            const res = await DairyAPI.guardarDatos("Compras", {
+                accion: "marcar_recibido",
+                ID_Compra: facturaSeleccionada,
+                pestaña: "Compras"
+            });
+
+            if (res === "OK") {
+                alert("¡Éxito! Stock actualizado en el sistema.");
+                cerrarModal();
+                await cargarPedidosPendientes();
+            }
+        } catch (e) {
+            alert("Error al conectar con el servidor.");
+        } finally {
+            loader.style.display = "none";
+            btn.disabled = false;
+        }
     }
 
     function cerrarModal() { document.getElementById('modal-confirmar').classList.add('hidden'); }
+    function filtrarPedidos() {
+        const busqueda = document.getElementById('buscador').value.toLowerCase();
+        const filtrados = todosLosPedidos.filter(p => 
+            p.ID_Compra.toLowerCase().includes(busqueda) || 
+            p.Proveedor.toLowerCase().includes(busqueda)
+        );
+        renderizarPedidos(filtrados);
+    }
 
     window.onload = cargarPedidosPendientes;
 </script>

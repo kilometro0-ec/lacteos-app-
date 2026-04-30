@@ -3,7 +3,7 @@
  * Conexión centralizada con Google Apps Script
  */
 
-const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbyJ4j6NCUFwcPmqSAhQHEz78t9s4X-hK4knxCR6fTNxaOvlacfGpeDC7YqOBAKbakugcg/exec";
+const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbwJCuYWJWf9W6SsECUzsRSPGeNzOF2NVwtt2Kb_Lt7EIZ_DCreeKebarkbgyv-xUBrLXQ/exec";
 
 const DairyAPI = {
     /**

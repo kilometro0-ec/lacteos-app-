@@ -3,9 +3,10 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Gestión Proveedores | Lógica Láctea</title>
+    <title>Lógica Láctea - Gestión de Proveedores</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
@@ -13,9 +14,10 @@
             theme: { 
                 extend: { 
                     colors: { 
-                        primary: "#a21caf", 
+                        primary: "#a21caf", // TU FUCSIA/MAGENTA
                         background: "#faf5ff", 
                         outline: "#e9d5ff", 
+                        success: "#16a34a",
                         dark: "#1f012a"
                     } 
                 } 
@@ -24,122 +26,176 @@
     </script>
     <style>
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .collapse-content { max-height: 0; overflow: hidden; transition: all 0.4s ease; }
-        .expanded .collapse-content { max-height: 1000px; }
-        .expanded .arrow-icon { transform: rotate(180deg); }
-        
-        /* Checkbox Personalizado Fucsia */
-        .check-custom {
-            width: 24px; height: 24px;
-            border: 2px solid #e9d5ff;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-        }
-        .selected .check-custom {
-            background-color: #a21caf;
-            border-color: #a21caf;
-        }
-        .selected .check-custom::after {
-            content: 'check';
-            font-family: 'Material Symbols Outlined';
-            color: white; font-size: 16px;
-        }
-        
-        #btn-borrar-multiple { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .collapse-content { max-height: 0; overflow: hidden; transition: all 0.4s cubic-bezier(0, 1, 0, 1); }
+        .expanded .collapse-content { max-height: 2000px; transition: all 0.4s ease-in-out; }
+        .expanded .arrow-icon { transform: rotate(180deg); color: #a21caf; }
+        input, select { font-size: 16px !important; } 
+        /* Feedback para presión larga */
+        .card-active { transform: scale(0.98); background-color: #fdf4ff; }
     </style>
 </head>
 <body class="bg-background text-dark antialiased pb-32">
 
-<!-- Header con Botón de Eliminación Superior Derecha -->
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
-    <div class="flex items-center gap-3">
-        <span class="material-symbols-outlined text-primary font-bold cursor-pointer" onclick="location.reload()">arrow_back_ios</span>
-        <h1 class="text-sm font-black text-primary uppercase italic">Proveedores</h1>
+    <div class="flex items-center gap-3" onclick="window.location.href='DashboardLacteo.html'">
+        <span class="material-symbols-outlined text-primary font-bold cursor-pointer">arrow_back_ios</span>
+        <h1 class="text-sm font-black text-primary uppercase tracking-tighter italic">Lógica Láctea / Proveedores</h1>
     </div>
-
-    <!-- BOTÓN ELIMINAR (Invisible por defecto) -->
-    <button id="btn-borrar-multiple" onclick="confirmarEliminacionMasiva()" 
-        class="hidden bg-red-500 text-white px-4 py-2 rounded-2xl flex items-center gap-2 shadow-lg active:scale-90">
-        <span class="material-symbols-outlined text-sm">delete_sweep</span>
-        <span id="count-delete" class="text-[10px] font-black">0</span>
-    </button>
 </header>
 
 <main class="pt-20 px-4 max-w-lg mx-auto space-y-6">
     
     <!-- SECCIÓN REGISTRO -->
-    <section id="seccion-registro" class="bg-white rounded-[2.5rem] border border-outline shadow-sm overflow-hidden">
-        <div onclick="toggleFormulario()" class="p-6 flex justify-between items-center cursor-pointer">
+    <section id="seccion-registro" class="bg-white rounded-[2.5rem] border border-outline shadow-sm overflow-hidden transition-all duration-300">
+        <div onclick="toggleFormulario()" class="p-6 flex justify-between items-center cursor-pointer hover:bg-slate-50 transition-colors">
             <h2 class="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2 italic">
-                <span class="material-symbols-outlined text-sm">add_business</span> Nuevo Registro
+                <span class="material-symbols-outlined text-sm">factory</span> Nuevo Registro
             </h2>
-            <span id="icono-registro" class="material-symbols-outlined text-primary">add_circle</span>
+            <div class="flex items-center gap-2">
+                <span id="txt-estado" class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Agregar</span>
+                <span id="icono-registro" class="material-symbols-outlined text-primary transition-transform">add_circle</span>
+            </div>
         </div>
-        <div id="contenido-registro" class="px-6 pb-6 space-y-4 hidden border-t border-dashed border-outline pt-4">
-            <input type="text" id="nombre" placeholder="Nombre de la Empresa" class="w-full border-none bg-slate-50 rounded-2xl p-4 text-sm font-bold shadow-inner focus:ring-2 focus:ring-primary">
-            <input type="tel" id="telefono" placeholder="WhatsApp / Teléfono" class="w-full border-none bg-slate-50 rounded-2xl p-4 text-sm shadow-inner focus:ring-2 focus:ring-primary">
-            <button onclick="guardarProveedor()" id="btn-guardar" class="w-full bg-dark text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all text-xs">
-                GUARDAR PROVEEDOR
-            </button>
+
+        <div id="contenido-registro" class="px-6 pb-6 space-y-4 hidden border-t border-dashed border-outline/50 pt-4">
+            <div class="space-y-3">
+                <input type="text" id="nombre" placeholder="Nombre de la Empresa" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-semibold text-sm">
+                <input type="text" id="ruc" inputmode="numeric" placeholder="RUC / Cédula" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner text-sm">
+                <div class="grid grid-cols-2 gap-3">
+                    <select id="provincia" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary text-sm font-bold italic">
+                        <option value="Pichincha">Pichincha</option>
+                        <option value="Guayas">Guayas</option>
+                        <option value="Azuay">Azuay</option>
+                        <option value="Manabí">Manabí</option>
+                    </select>
+                    <input type="text" id="ciudad" placeholder="Ciudad" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-bold text-sm">
+                </div>
+                <input type="text" id="direccion" placeholder="Dirección Exacta" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary text-xs italic">
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="tel" id="telefono" placeholder="WhatsApp" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary text-sm">
+                    <select id="categoria" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary text-[10px] font-black uppercase tracking-tighter">
+                        <option value="Lácteos">Lácteos</option>
+                        <option value="Insumos">Insumos</option>
+                        <option value="Servicios">Servicios</option>
+                    </select>
+                </div>
+                <button onclick="guardarProveedor()" id="btn-guardar" class="w-full bg-dark text-white font-black py-5 rounded-[2rem] shadow-xl active:scale-95 transition-all tracking-widest text-xs uppercase">
+                    Registrar Proveedor
+                </button>
+            </div>
         </div>
     </section>
 
     <!-- LISTADO -->
-    <div id="contenedor-maestro" class="space-y-3">
-        <p class="text-center py-10 text-slate-300 animate-pulse font-bold text-[10px] uppercase">Sincronizando...</p>
+    <div class="flex justify-between items-center px-2">
+        <h3 class="text-xs font-black uppercase tracking-[0.2em] text-slate-400 italic">Directorio Activo</h3>
+        <span id="count-prov" class="bg-primary/10 text-primary text-[10px] px-3 py-1 rounded-full font-black italic">...</span>
+    </div>
+
+    <div id="contenedor-maestro" class="space-y-4">
+        <div class="flex flex-col items-center py-10 text-slate-300 animate-pulse">
+            <span class="material-symbols-outlined text-4xl mb-2">sync</span>
+            <p class="text-[10px] font-bold uppercase tracking-widest">Cargando datos fucsia...</p>
+        </div>
     </div>
 </main>
 
+<div id="menu-container"></div>
+
 <script>
-    let seleccionados = [];
+    let timer;
 
     function toggleFormulario() {
-        const c = document.getElementById('contenido-registro');
-        const i = document.getElementById('icono-registro');
-        c.classList.toggle('hidden');
-        i.innerText = c.classList.contains('hidden') ? "add_circle" : "do_not_disturb_on";
+        const contenido = document.getElementById('contenido-registro');
+        const icono = document.getElementById('icono-registro');
+        const txt = document.getElementById('txt-estado');
+        const isHidden = contenido.classList.contains('hidden');
+        
+        contenido.classList.toggle('hidden');
+        icono.innerText = isHidden ? "do_not_disturb_on" : "add_circle";
+        txt.innerText = isHidden ? "Cerrar" : "Agregar";
     }
 
     async function cargarData() {
         try {
-            const proveedores = await DairyAPI.obtenerDatos("Proveedores");
+            const [proveedores, compras] = await Promise.all([
+                DairyAPI.obtenerDatos("Proveedores"),
+                DairyAPI.obtenerDatos("Compras")
+            ]);
+
             const contenedor = document.getElementById('contenedor-maestro');
             contenedor.innerHTML = "";
+            document.getElementById('count-prov').innerText = `${proveedores.length} PROV`;
 
-            proveedores.reverse().forEach((p, index) => {
+            proveedores.reverse().forEach(p => {
                 const nombreP = p["Nombre del Proveedor"];
-                const card = document.createElement('div');
-                card.id = `card-${index}`;
-                card.className = "bg-white rounded-[2.2rem] border border-outline shadow-sm overflow-hidden transition-all select-none";
-                
-                card.innerHTML = `
-                    <div class="p-5 flex items-center gap-4">
-                        <!-- Checkbox para Selección Múltiple -->
-                        <div class="check-box-container cursor-pointer" onclick="toggleSeleccion('${nombreP}', ${index})">
-                            <div class="check-custom"></div>
-                        </div>
+                const historial = (compras || []).filter(c => c.Proveedor === nombreP);
+                const totalInvertido = historial.reduce((acc, curr) => acc + (parseFloat(curr.Total) || 0), 0);
+                const totalUnd = historial.reduce((acc, curr) => acc + (parseFloat(curr.Cantidad) || 0), 0);
 
-                        <div class="flex-1 flex justify-between items-center cursor-pointer" onclick="this.parentElement.parentElement.classList.toggle('expanded')">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-2xl bg-fuchsia-100 text-primary flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-xl">factory</span>
-                                </div>
-                                <div>
-                                    <p class="font-black text-dark uppercase text-[11px] leading-none">${nombreP}</p>
-                                    <p class="text-[9px] font-bold text-slate-400 mt-1">${p.Ciudad || 'Ecuador'}</p>
-                                </div>
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-[2.5rem] border border-outline shadow-sm overflow-hidden transition-all relative";
+                
+                // Lógica de borrado (Long Press)
+                const startPress = () => {
+                    card.classList.add('card-active');
+                    timer = setTimeout(() => {
+                        card.classList.remove('card-active');
+                        if(confirm(`¿Eliminar permanentemente a ${nombreP}?`)) eliminarProv(nombreP);
+                    }, 800);
+                };
+                const endPress = () => {
+                    card.classList.remove('card-active');
+                    clearTimeout(timer);
+                };
+
+                card.onmousedown = startPress; card.onmouseup = endPress;
+                card.ontouchstart = startPress; card.ontouchend = endPress;
+
+                card.innerHTML = `
+                    <div class="p-6 flex justify-between items-center cursor-pointer active:bg-slate-50" onclick="this.parentElement.classList.toggle('expanded')">
+                        <div class="flex items-center gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-dark text-white flex items-center justify-center shadow-lg relative">
+                                <span class="material-symbols-outlined text-2xl">factory</span>
+                                <span class="absolute -top-2 -right-2 bg-primary text-[9px] px-2 py-1 rounded-full font-black border border-white">${totalUnd}</span>
                             </div>
-                            <span class="material-symbols-outlined text-slate-200 arrow-icon">expand_more</span>
+                            <div>
+                                <p class="font-black text-dark uppercase text-xs tracking-tight">${nombreP}</p>
+                                <p class="text-[9px] font-bold text-slate-400 italic uppercase">${p.Categoría || 'General'} • ${p.Ciudad || 'EC'}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                             <p class="text-[10px] font-black text-primary">$${totalInvertido.toFixed(2)}</p>
+                             <span class="material-symbols-outlined text-slate-300 arrow-icon">expand_more</span>
                         </div>
                     </div>
                     
-                    <div class="collapse-content bg-slate-50/50 border-t border-dashed border-outline">
-                        <div class="p-5 space-y-3">
-                            <div class="bg-white p-3 rounded-xl border border-outline flex justify-between items-center">
-                                <span class="text-[10px] font-black text-slate-400 uppercase">WhatsApp</span>
-                                <a href="https://wa.me/${p["Contacto / Teléfono"]}" class="text-primary font-bold text-[10px]">${p["Contacto / Teléfono"] || 'N/A'}</a>
+                    <div class="collapse-content bg-fuchsia-50/30 border-t border-dashed border-outline">
+                        <div class="p-6 space-y-4">
+                            <div class="flex justify-between items-center bg-white p-3 rounded-2xl border border-outline">
+                                <div>
+                                    <p class="text-[8px] font-black text-slate-400 uppercase">Contacto Directo</p>
+                                    <p class="text-[10px] font-bold text-dark">${p["Contacto / Teléfono"] || 'N/A'}</p>
+                                </div>
+                                <a href="tel:${p["Contacto / Teléfono"]}" class="w-10 h-10 bg-primary/10 text-primary rounded-full flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-lg">call</span>
+                                </a>
                             </div>
+
+                            <div class="space-y-2">
+                                <h4 class="text-[9px] font-black uppercase text-slate-400 italic">Historial Reciente</h4>
+                                ${historial.length > 0 ? historial.reverse().slice(0, 3).map(h => `
+                                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border border-outline/50">
+                                        <p class="font-black text-dark uppercase text-[9px]">${h.Producto || 'Variante'}</p>
+                                        <p class="font-black text-primary text-[10px]">$${parseFloat(h.Total).toFixed(2)}</p>
+                                    </div>
+                                `).join('') : '<p class="text-[9px] italic text-slate-400 text-center">Sin registros.</p>'}
+                            </div>
+
+                            <button onclick="window.location.href='NuevaCompra.html?prov=${encodeURIComponent(nombreP)}'" 
+                                class="w-full bg-primary text-white font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all italic">
+                                + Generar Orden
+                            </button>
                         </div>
                     </div>
                 `;
@@ -148,62 +204,36 @@
         } catch (e) { console.error(e); }
     }
 
-    function toggleSeleccion(nombre, index) {
-        const card = document.getElementById(`card-${index}`);
-        const btnBorrar = document.getElementById('btn-borrar-multiple');
-        const countLabel = document.getElementById('count-delete');
-
-        if (seleccionados.includes(nombre)) {
-            seleccionados = seleccionados.filter(n => n !== nombre);
-            card.classList.remove('selected');
-        } else {
-            seleccionados.push(nombre);
-            card.classList.add('selected');
-        }
-
-        // Mostrar/Ocultar botón de borrado superior
-        if (seleccionados.length > 0) {
-            btnBorrar.classList.remove('hidden');
-            countLabel.innerText = `ELIMINAR (${seleccionados.length})`;
-        } else {
-            btnBorrar.classList.add('hidden');
-        }
-    }
-
-    async function confirmarEliminacionMasiva() {
-        if (confirm(`¿Estás seguro de eliminar ${seleccionados.length} proveedores de la lista?`)) {
-            const btn = document.getElementById('btn-borrar-multiple');
-            btn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span>`;
-            btn.disabled = true;
-
-            try {
-                // Enviamos el array completo de nombres para borrar
-                await DairyAPI.guardarDatos("Proveedores", { 
-                    accion: "eliminar_multiple", 
-                    nombres: seleccionados 
-                });
-                location.reload();
-            } catch (e) {
-                alert("Error al eliminar múltiples registros");
-                btn.disabled = false;
-            }
-        }
+    async function eliminarProv(nombre) {
+        try {
+            await DairyAPI.guardarDatos("Proveedores", { accion: "eliminar_proveedor", nombre: nombre });
+            location.reload();
+        } catch (e) { alert("Error al borrar"); }
     }
 
     async function guardarProveedor() {
+        const btn = document.getElementById('btn-guardar');
         const nombre = document.getElementById('nombre').value.trim();
         if(!nombre) return alert("Nombre obligatorio");
 
         const nuevo = {
             "Nombre del Proveedor": nombre,
+            "RUC": document.getElementById('ruc').value,
+            "Provincia": document.getElementById('provincia').value,
+            "Ciudad": document.getElementById('ciudad').value,
+            "Direccion": document.getElementById('direccion').value,
             "Contacto / Teléfono": document.getElementById('telefono').value,
+            "Categoría": document.getElementById('categoria').value,
             "Fecha Registro": new Date().toLocaleDateString()
         };
 
+        btn.disabled = true;
+        btn.innerHTML = "REGISTRANDO...";
+        
         try {
             await DairyAPI.guardarDatos("Proveedores", nuevo);
             location.reload();
-        } catch(e) { alert("Error al guardar"); }
+        } catch(e) { btn.disabled = false; btn.innerHTML = "REINTENTAR"; }
     }
 
     window.onload = cargarData;

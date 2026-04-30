@@ -3,96 +3,151 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Confirmar Recepción - Lógica Láctea</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Recibir Mercancía | Lógica Láctea</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
+    <!-- El script del menú que solicitaste -->
+    <script src="menu-logic.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { 
+            primary: "#a21caf", 
+            secondary: "#db2777", 
+            background: "#faf5ff", 
+            outline: "#e9d5ff" 
+          }
+        }
+      }
+    }
+    </script>
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #f0f7ff; }
-        .azul-electrico { color: #0055ff; }
-        .bg-azul-electrico { background-color: #0055ff; }
-        .border-azul-electrico { border-color: #0055ff; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; }
+        .glass-card-header { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
+        
+        /* Animación de pantalla borrosa */
+        #loading-overlay { 
+            display: flex; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(255, 255, 255, 0.7); 
+            backdrop-filter: blur(12px); /* Pantalla borrosa */
+            z-index: 9999; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            transition: opacity 0.3s ease;
+        }
+
+        .card-recepcion {
+            background: white;
+            border-radius: 2rem;
+            border: 1px solid #e9d5ff;
+            border-left: 6px solid #a21caf;
+        }
+        
+        .rotate-animation { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
     </style>
 </head>
-<body class="pb-20">
+<body class="pb-32 antialiased">
 
-<!-- Pantalla de carga -->
-<div id="loading-overlay" class="fixed inset-0 bg-white/90 z-[100] hidden flex-col items-center justify-center">
-    <div class="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-    <p class="text-[10px] font-black uppercase tracking-widest text-blue-600">Actualizando Stock...</p>
+<!-- Overlay de Carga (Pantalla Borrosa Inicial) -->
+<div id="loading-overlay">
+    <div class="flex flex-col items-center">
+        <span class="material-symbols-outlined text-6xl text-primary rotate-animation">sync</span>
+        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary mt-4 italic">Cargando Inventarios...</p>
+    </div>
 </div>
 
-<header class="fixed top-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-blue-100 shadow-sm">
-    <div class="flex items-center gap-3" onclick="history.back()">
-        <span class="material-symbols-outlined azul-electrico font-bold cursor-pointer">arrow_back_ios</span>
-        <h1 class="text-sm font-black azul-electrico uppercase italic tracking-tighter">Confirmar Llegada</h1>
-    </div>
-    <span class="material-symbols-outlined text-blue-600">local_shipping</span>
-</header>
-
-<main class="pt-20 px-4 max-w-lg mx-auto space-y-4">
-    <!-- Buscador -->
-    <div class="relative">
-        <span class="material-symbols-outlined absolute left-4 top-3.5 text-blue-300">search</span>
-        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar por ID de Compra o Proveedor..." 
-            class="w-full border-2 border-blue-50 bg-white rounded-2xl p-4 pl-12 shadow-sm focus:ring-2 focus:ring-blue-600 outline-none font-bold text-xs">
-    </div>
-
-    <!-- Lista de Pedidos -->
-    <div id="lista-pedidos" class="space-y-3">
-        <div class="text-center py-20 text-slate-400">
-            <p class="text-[10px] font-black uppercase animate-pulse">Cargando pedidos pendientes...</p>
+<!-- Header -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-24 glass-card-header shadow-lg">
+    <div class="flex items-center gap-4">
+        <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/20 backdrop-blur-md border border-white/30 text-white" onclick="history.back()">
+            <span class="material-symbols-outlined font-bold">chevron_left</span>
+        </div>
+        <div>
+            <h1 class="text-[10px] font-black text-purple-200 uppercase tracking-widest leading-none">Logística</h1>
+            <h2 class="text-lg font-black text-white italic uppercase tracking-tighter">Verificar Mercadería</h2>
         </div>
     </div>
+</header>
+
+<main class="pt-32 px-4 max-w-xl mx-auto space-y-6">
+    <!-- Buscador -->
+    <div class="relative">
+        <span class="material-symbols-outlined absolute left-5 top-4 text-primary">search</span>
+        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Filtrar por proveedor o ID..." 
+            class="w-full bg-white border border-outline rounded-3xl py-4 pl-14 pr-6 text-slate-800 focus:ring-2 focus:ring-primary focus:border-primary outline-none font-bold text-xs shadow-sm">
+    </div>
+
+    <!-- Contenedor de Lotes -->
+    <div id="lista-pedidos" class="grid gap-4"></div>
 </main>
 
-<!-- Modal de Detalle -->
-<div id="modal-confirmar" class="fixed inset-0 bg-blue-900/40 backdrop-blur-sm z-[60] hidden flex items-end">
-    <div class="bg-white w-full rounded-t-[2.5rem] p-8 space-y-6 shadow-2xl border-t-4 border-azul-electrico">
+<!-- Modal de Validación de Cantidades Reales -->
+<div id="modal-confirmar" class="fixed inset-0 bg-purple-900/40 backdrop-blur-md z-[60] hidden flex items-end">
+    <div class="bg-white w-full rounded-t-[3rem] p-8 space-y-6 border-t-4 border-primary shadow-2xl animate-in slide-in-from-bottom duration-300">
         <div class="flex justify-between items-start">
             <div>
-                <h2 class="text-lg font-black azul-electrico uppercase italic">Verificar Mercancía</h2>
-                <p id="id-factura-modal" class="text-[10px] font-bold text-slate-400 tracking-widest"></p>
+                <span class="text-[10px] font-black bg-primary text-white px-4 py-1 rounded-full uppercase italic">Checklist Real</span>
+                <h2 id="id-factura-modal" class="text-3xl font-black text-slate-800 tracking-tighter mt-2"></h2>
             </div>
-            <button onclick="cerrarModal()" class="bg-slate-100 p-2 rounded-full text-slate-400">
+            <button onclick="cerrarModal()" class="bg-purple-50 p-3 rounded-full text-primary">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
         
-        <div id="detalle-recepcion" class="max-h-60 overflow-y-auto space-y-3"></div>
+        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Ajusta las cantidades si el camión trajo menos de lo pedido:</p>
+        
+        <div id="detalle-recepcion" class="max-h-[40vh] overflow-y-auto space-y-3 pr-2"></div>
 
-        <button id="btn-confirmar" onclick="confirmarIngreso()" class="w-full bg-azul-electrico text-white font-black py-5 rounded-2xl shadow-lg uppercase text-xs tracking-widest active:scale-95 transition-all">
-            Confirmar e Ingresar a Inventario
-        </button>
+        <div class="pt-4">
+            <button id="btn-confirmar" onclick="confirmarIngreso()" 
+                class="w-full glass-card-header text-white font-black py-6 rounded-[2rem] shadow-xl shadow-primary/30 uppercase text-xs tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3">
+                <span class="material-symbols-outlined">inventory_2</span>
+                Finalizar Recepción
+            </button>
+        </div>
     </div>
 </div>
+
+<!-- Contenedor para el Menú de Navegación (inyectado por menu-logic.js) -->
+<nav id="menu-container"></nav>
 
 <script>
     let todosLosPedidos = [];
     let idSeleccionado = "";
 
     async function cargarDatos() {
-        try {
-            // "Compras" debe ser el nombre exacto de la pestaña en tu Sheets
-            const datos = await DairyAPI.obtenerDatos("Compras");
-            
-            // FILTRO: Según tu código GAS, la columna se llama Estado_Entrega
-            todosLosPedidos = datos.filter(f => 
-                f.Estado_Entrega && f.Estado_Entrega.toString().trim().toUpperCase() === "PENDIENTE"
-            );
+        const loader = document.getElementById('loading-overlay');
+        loader.style.opacity = "1";
+        loader.style.display = "flex";
 
+        try {
+            const datos = await DairyAPI.obtenerDatos("Compras");
+            todosLosPedidos = (datos || []).filter(f => 
+                String(f.Estado_Entrega).trim().toUpperCase() === "PENDIENTE"
+            );
             renderizar(todosLosPedidos);
         } catch (e) {
             console.error(e);
-            document.getElementById('lista-pedidos').innerHTML = "<p class='text-center text-red-500 font-black text-[10px] uppercase'>Error al conectar con la base de datos</p>";
+        } finally {
+            // Quitamos el efecto borroso cuando ya hay info
+            setTimeout(() => {
+                loader.style.opacity = "0";
+                setTimeout(() => loader.style.display = "none", 300);
+            }, 500);
         }
     }
 
     function renderizar(lista) {
         const contenedor = document.getElementById('lista-pedidos');
-        
-        // Agrupamos por ID_Compra
         const grupos = lista.reduce((acc, curr) => {
             const id = curr.ID_Compra || "SIN-ID";
             if (!acc[id]) acc[id] = [];
@@ -102,20 +157,20 @@
 
         const ids = Object.keys(grupos);
         if (ids.length === 0) {
-            contenedor.innerHTML = `<div class="text-center py-20 text-slate-400 font-black text-[10px] uppercase">No hay pedidos pendientes</div>`;
+            contenedor.innerHTML = `<p class="text-center py-20 font-black text-[10px] uppercase text-slate-400">No hay mercadería pendiente</p>`;
             return;
         }
 
         contenedor.innerHTML = ids.map(id => {
-            const pedido = grupos[id][0];
+            const p = grupos[id][0];
             return `
-                <div onclick="abrirModal('${id}')" class="bg-white p-5 rounded-[1.5rem] shadow-sm border-l-[6px] border-azul-electrico flex justify-between items-center active:scale-95 transition-all cursor-pointer">
-                    <div class="space-y-1">
-                        <p class="text-[10px] font-black azul-electrico uppercase italic">ID: ${id}</p>
-                        <p class="font-black text-slate-800 uppercase text-xs">${pedido.Proveedor}</p>
-                        <p class="text-[9px] font-bold text-slate-400">${pedido.Fecha} • ${grupos[id].length} Items</p>
+                <div onclick="abrirModal('${id}')" class="card-recepcion p-6 flex justify-between items-center shadow-sm active:bg-purple-50 transition-colors">
+                    <div>
+                        <p class="text-[10px] font-black text-primary italic uppercase">${id}</p>
+                        <p class="font-black text-slate-800 text-sm">${p.Proveedor}</p>
+                        <p class="text-[9px] font-bold text-slate-400">${p.Fecha} • ${grupos[id].length} SKUs</p>
                     </div>
-                    <span class="material-symbols-outlined azul-electrico bg-blue-50 p-3 rounded-2xl">fact_check</span>
+                    <span class="material-symbols-outlined text-primary bg-purple-50 p-3 rounded-2xl">local_shipping</span>
                 </div>
             `;
         }).join('');
@@ -123,17 +178,20 @@
 
     function abrirModal(id) {
         idSeleccionado = id;
-        document.getElementById('id-factura-modal').innerText = "REFERENCIA: " + id;
+        document.getElementById('id-factura-modal').innerText = id;
         const items = todosLosPedidos.filter(p => p.ID_Compra === id);
         
-        document.getElementById('detalle-recepcion').innerHTML = items.map(item => `
-            <div class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 flex justify-between items-center">
-                <div>
-                    <p class="text-[10px] font-black uppercase text-blue-900">${item.Producto}</p>
-                    <p class="text-[9px] text-blue-400 font-bold">Costo: $${item.Precio_Distribuidor}</p>
+        document.getElementById('detalle-recepcion').innerHTML = items.map((item, index) => `
+            <div class="bg-slate-50 p-4 rounded-2xl border border-outline flex justify-between items-center gap-4">
+                <div class="flex-1">
+                    <p class="text-[11px] font-black uppercase text-slate-700 leading-tight">${item.Producto}</p>
+                    <p class="text-[9px] text-primary font-bold">Pedido: ${item.Cantidad} ud.</p>
                 </div>
-                <div class="text-right">
-                    <p class="text-[12px] font-black text-blue-600">${item.Cantidad} UNID.</p>
+                <div class="w-24">
+                    <input type="number" data-index="${index}" value="${item.Cantidad}" 
+                        class="input-real w-full text-center font-black text-primary bg-white border-2 border-primary rounded-xl py-2 focus:ring-0"
+                        min="0">
+                    <p class="text-[7px] font-black text-center text-slate-400 uppercase mt-1">Llegó Real</p>
                 </div>
             </div>
         `).join('');
@@ -142,44 +200,44 @@
     }
 
     async function confirmarIngreso() {
-        const btn = document.getElementById('btn-confirmar');
-        const loader = document.getElementById('loading-overlay');
+        const inputs = document.querySelectorAll('.input-real');
+        const itemsSeleccionados = todosLosPedidos.filter(p => p.ID_Compra === idSeleccionado);
         
+        // Mapeamos lo que el usuario escribió como cantidad real
+        const datosParaEnviar = itemsSeleccionados.map((item, idx) => ({
+            ...item,
+            Cantidad_Real: inputs[idx].value // Aquí capturamos lo que "en realidad llegó"
+        }));
+
+        const btn = document.getElementById('btn-confirmar');
         btn.disabled = true;
-        loader.style.display = "flex";
+        document.getElementById('loading-overlay').style.display = "flex";
 
         try {
-            // Enviamos la acción "marcar_recibido" que definiste en tu GAS
             const respuesta = await DairyAPI.guardarDatos("Compras", {
-                accion: "marcar_recibido",
+                accion: "marcar_recibido_ajustado",
                 ID_Compra: idSeleccionado,
-                pestaña: "Compras"
+                items: datosParaEnviar
             });
 
             if (respuesta === "OK") {
-                alert("¡Excelente! Stock actualizado e ingreso registrado.");
                 cerrarModal();
                 await cargarDatos();
-            } else {
-                alert("Aviso: " + respuesta);
-            }
+            } else { alert(respuesta); }
         } catch (e) {
-            alert("Error de red. Intenta de nuevo.");
+            alert("Error de conexión");
         } finally {
             btn.disabled = false;
-            loader.style.display = "none";
         }
     }
 
     function cerrarModal() { document.getElementById('modal-confirmar').classList.add('hidden'); }
-
+    
     function filtrarPedidos() {
-        const busqueda = document.getElementById('buscador').value.toLowerCase();
-        const filtrados = todosLosPedidos.filter(p => 
-            p.ID_Compra.toString().toLowerCase().includes(busqueda) || 
-            p.Proveedor.toString().toLowerCase().includes(busqueda)
-        );
-        renderizar(filtrados);
+        const b = document.getElementById('buscador').value.toLowerCase();
+        renderizar(todosLosPedidos.filter(p => 
+            p.ID_Compra.toLowerCase().includes(b) || p.Proveedor.toLowerCase().includes(b)
+        ));
     }
 
     window.onload = cargarDatos;

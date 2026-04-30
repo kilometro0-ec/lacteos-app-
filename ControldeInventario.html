@@ -13,24 +13,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <style>
-      body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #faf5ff; }
-      
+      body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #faf5ff; overflow-x: hidden; }
       .rotate-animation { animation: spin 1s linear infinite; }
       @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       
       .card-prod { 
-        background: white; 
-        border-radius: 2rem; 
-        border: 2px solid #e9d5ff; 
-        transition: all 0.2s ease; 
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 190px;
-        cursor: pointer;
+        background: white; border-radius: 2rem; border: 2px solid #e9d5ff; 
+        transition: all 0.2s ease; position: relative; overflow: hidden;
       }
-      .card-prod:active { transform: scale(0.95); opacity: 0.8; }
+      .card-prod.selected { border-color: #a21caf; background-color: #f5d0fe; transform: scale(0.95); }
+      .selection-check { position: absolute; top: 10px; right: 10px; display: none; color: #a21caf; font-weight: bold; }
+      .selected .selection-check { display: block; }
 
+      .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+      .modal.active { display: flex; }
+      
       ::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -38,187 +35,236 @@
 <body class="text-gray-900 pb-44">
 
 <header class="fixed top-0 w-full h-16 bg-white border-b border-[#e9d5ff] flex justify-between items-center px-4 shadow-sm z-50">
-  <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLacteo.html'">
-    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#a21caf] font-black shadow-inner">LL</div>
-    <h1 class="text-xl font-black text-[#a21caf] tracking-tight uppercase italic">Inventario</h1>
+  <div class="flex items-center gap-3">
+    <div id="btn-cancelar-seleccion" class="hidden text-red-500 font-bold text-xs uppercase" onclick="cancelarSeleccion()">Cancelar</div>
+    <h1 id="header-title" class="text-lg font-black text-[#a21caf] tracking-tight uppercase italic">Inventario</h1>
   </div>
-  <button onclick="cargarInventario()" class="p-2 text-[#a21caf] hover:bg-purple-50 rounded-full transition-colors">
-      <span id="refresh-icon" class="material-symbols-outlined scale-110">refresh</span>
-  </button>
+  <div class="flex items-center gap-2">
+      <button id="btn-eliminar-multi" class="hidden text-red-600 p-2" onclick="eliminarSeleccionados()">
+          <span class="material-symbols-outlined">delete_sweep</span>
+      </button>
+      <button onclick="cargarInventario()" class="p-2 text-[#a21caf]">
+          <span id="refresh-icon" class="material-symbols-outlined">refresh</span>
+      </button>
+  </div>
 </header>
 
 <main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
-  
-  <!-- RESUMEN TÉCNICO -->
-  <section class="grid grid-cols-3 gap-3">
-    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-sm">
-      <p class="text-[9px] text-gray-500 uppercase font-black mb-1 tracking-widest leading-none">Valor Neto</p>
-      <h2 id="valor-bodega" class="text-sm font-black text-[#a21caf]">$0.00</h2>
+  <section class="grid grid-cols-3 gap-2">
+    <div class="bg-white p-3 rounded-2xl border border-purple-100 text-center">
+        <p class="text-[8px] font-black uppercase text-gray-400">Bodega</p>
+        <p id="valor-bodega" class="text-xs font-black text-primary">$0.00</p>
     </div>
-    <div class="bg-red-50 p-4 rounded-[2rem] border-2 border-red-200 text-center shadow-sm">
-      <p class="text-[9px] text-red-600 uppercase font-black mb-1 tracking-widest leading-none">Críticos</p>
-      <h2 id="count-critico" class="text-sm font-black text-red-600">0</h2>
+    <div class="bg-white p-3 rounded-2xl border border-purple-100 text-center">
+        <p class="text-[8px] font-black uppercase text-gray-400">Críticos</p>
+        <p id="count-critico" class="text-xs font-black text-red-500">0</p>
     </div>
-    <div class="bg-white p-4 rounded-[2rem] border-2 border-[#e9d5ff] text-center shadow-sm">
-      <p class="text-[9px] text-green-600 uppercase font-black mb-1 tracking-widest leading-none">Skus</p>
-      <h2 id="total-sku" class="text-sm font-black text-green-600">0</h2>
+    <div class="bg-white p-3 rounded-2xl border border-purple-100 text-center">
+        <p class="text-[8px] font-black uppercase text-gray-400">Total</p>
+        <p id="total-sku" class="text-xs font-black text-green-600">0</p>
     </div>
   </section>
 
-  <!-- BUSCADOR -->
-  <div class="px-1">
-    <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar por nombre o ID..." 
-           class="w-full bg-white border-2 border-[#e9d5ff] rounded-2xl p-4 font-bold text-base shadow-sm focus:ring-2 focus:ring-[#a21caf] focus:border-[#a21caf] outline-none transition-all">
+  <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar producto..." class="w-full bg-white border-2 border-purple-100 rounded-2xl p-4 font-bold outline-none">
+
+  <div id="grid-productos" class="grid grid-cols-2 gap-3">
+      <div class="col-span-full text-center py-20 text-gray-400 font-bold">Cargando...</div>
   </div>
 
-  <!-- GRILLA DE PRODUCTOS -->
-  <div id="grid-productos" class="grid grid-cols-2 gap-4">
-      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Sincronizando datos...</div>
-  </div>
-
-  <!-- BOTÓN AGREGAR -->
-  <div class="fixed bottom-24 left-0 w-full px-4 z-40">
-    <button onclick="abrirModalNuevo()" class="w-full bg-[#a21caf] text-white py-5 rounded-3xl font-black shadow-2xl flex items-center justify-center gap-3 uppercase active:scale-95 transition-all border-b-4 border-purple-900">
-        <span class="material-symbols-outlined scale-125">add_box</span> 
-        <span>Nuevo Producto</span>
+  <div class="fixed bottom-24 left-0 w-full px-4 z-40 flex gap-2">
+    <button onclick="abrirModal('modal-nuevo')" class="flex-1 bg-[#a21caf] text-white py-4 rounded-2xl font-black shadow-lg uppercase active:scale-95 transition-all flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined">add_box</span> Nuevo
     </button>
   </div>
-
 </main>
+
+<div id="modal-nuevo" class="modal">
+    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-6 space-y-4 shadow-2xl">
+        <h2 class="font-black text-primary uppercase text-center">Nuevo Producto</h2>
+        <input type="text" id="n-nombre" placeholder="Nombre del Producto" class="w-full border-purple-100 rounded-xl p-3 font-bold uppercase">
+        <div class="grid grid-cols-2 gap-2">
+            <input type="number" id="n-costo" placeholder="Costo Dist." class="border-purple-100 rounded-xl p-3 font-bold">
+            <input type="number" id="n-pvp" placeholder="PVP Venta" class="border-purple-100 rounded-xl p-3 font-bold">
+        </div>
+        <input type="number" id="n-stock" placeholder="Stock Inicial" class="w-full border-purple-100 rounded-xl p-3 font-bold">
+        <div class="flex gap-2">
+            <button onclick="guardarNuevo()" class="flex-1 bg-primary text-white py-3 rounded-xl font-black uppercase">Guardar</button>
+            <button onclick="cerrarModal('modal-nuevo')" class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-black uppercase">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-stock" class="modal">
+    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-6 space-y-4 shadow-2xl text-center">
+        <h2 id="edit-nombre" class="font-black text-slate-800 uppercase">PRODUCTO</h2>
+        <p class="text-[10px] font-black text-gray-400 uppercase">El precio está bloqueado</p>
+        <div class="flex items-center justify-center gap-4 py-4">
+            <button onclick="ajustarStockNum(-1)" class="w-12 h-12 bg-purple-100 rounded-full text-primary font-black text-2xl">-</button>
+            <input type="number" id="edit-cantidad" value="0" class="w-20 text-center border-none text-3xl font-black text-primary">
+            <button onclick="ajustarStockNum(1)" class="w-12 h-12 bg-purple-100 rounded-full text-primary font-black text-2xl">+</button>
+        </div>
+        <div class="flex gap-2">
+            <button id="btn-confirmar-stock" class="flex-1 bg-primary text-white py-3 rounded-xl font-black uppercase">Actualizar</button>
+            <button onclick="cerrarModal('modal-stock')" class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl font-black uppercase">Cancelar</button>
+        </div>
+    </div>
+</div>
 
 <div id="menu-container"></div>
 
 <script>
 let inventarioLocal = [];
+let seleccionados = new Set();
+let modoSeleccion = false;
+let pressTimer;
 
-// Utilidad para convertir texto de Sheets a número usable
-const aNum = (v) => {
-    if (!v) return 0;
-    let n = v.toString().replace(/[^\d,.-]/g, '').replace(',', '.');
-    return parseFloat(n) || 0;
-};
+const aNum = (v) => v ? parseFloat(v.toString().replace(',', '.')) : 0;
 
-// 1. CARGAR DATOS
+// INICIO
 async function cargarInventario() {
-  const icon = document.getElementById('refresh-icon');
-  if (icon) icon.classList.add('rotate-animation');
-  
-  try {
-    const respuesta = await DairyAPI.obtenerDatos("Inventario");
-    if (Array.isArray(respuesta)) {
-        inventarioLocal = respuesta;
-        renderizar(inventarioLocal);
-    }
-  } catch (e) { 
-      document.getElementById('grid-productos').innerHTML = '<div class="col-span-full text-center py-20 text-red-500 font-bold">Error de Red</div>';
-  } finally {
-      if (icon) icon.classList.remove('rotate-animation');
-  }
+    const icon = document.getElementById('refresh-icon');
+    icon?.classList.add('rotate-animation');
+    try {
+        const res = await DairyAPI.obtenerDatos("Inventario");
+        if (Array.isArray(res)) {
+            inventarioLocal = res;
+            renderizar(inventarioLocal);
+        }
+    } catch (e) { console.error(e); }
+    finally { icon?.classList.remove('rotate-animation'); }
 }
 
-// 2. RENDERIZAR CON EVENTO DE CLIC
 function renderizar(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
     let totalCosto = 0, criticos = 0;
 
-    lista.forEach((prod) => {
-        const stock = aNum(prod.Stock);
-        const pvp = aNum(prod.Precio_Venta);
-        const costo = aNum(prod.Costo_Unitario || prod.Precio_Distribuidor || 0);
-        
+    lista.forEach((p) => {
+        const stock = aNum(p.Stock);
+        const pvp = aNum(p.Precio_Venta);
+        const costo = aNum(p.Costo_Unitario || p.Precio_Distribuidor);
         if(stock <= 5) criticos++;
         totalCosto += (costo * stock);
 
-        container.innerHTML += `
-        <div class="card-prod p-4 ${stock <= 5 ? 'border-red-300 bg-red-50' : 'border-[#e9d5ff] bg-white shadow-sm'}" 
-             onclick="gestionarProducto('${prod.ID}', '${prod.Producto}', ${stock})">
-          <div>
-            <p class="text-[9px] font-black text-[#a21caf] mb-1 uppercase opacity-40">ID: ${prod.ID || 'S/N'}</p> 
-            <h3 class="font-bold text-[13px] leading-tight uppercase text-slate-800 line-clamp-2">${prod.Producto}</h3>
-          </div>
-          
-          <div class="flex justify-between items-end border-t border-purple-100 pt-3">
-              <div>
-                  <p class="text-[8px] text-gray-400 font-black uppercase mb-0.5">Precio</p>
-                  <p class="text-slate-400 font-black text-lg leading-none italic">$${pvp.toFixed(2)}</p>
-              </div>
-              <div class="text-right">
-                  <p class="text-[8px] text-gray-400 font-black uppercase mb-0.5">Stock</p>
-                  <span class="inline-block text-[12px] px-3 py-1 rounded-full ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-[#a21caf]'} font-black">
-                    ${stock}
-                  </span>
-              </div>
-          </div>
-        </div>`;
+        const card = document.createElement('div');
+        card.className = `card-prod p-4 h-48 ${stock <= 5 ? 'border-red-300 bg-red-50' : ''}`;
+        card.dataset.id = p.ID;
+        card.innerHTML = `
+            <span class="selection-check material-symbols-outlined">check_circle</span>
+            <div>
+                <p class="text-[8px] font-black text-primary/40 uppercase">ID: ${p.ID}</p>
+                <h3 class="font-bold text-xs uppercase text-slate-800 leading-tight line-clamp-2">${p.Producto}</h3>
+            </div>
+            <div class="flex justify-between items-end border-t border-dashed pt-2">
+                <div>
+                    <p class="text-[7px] text-gray-400 font-black uppercase">PVP (Bloq)</p>
+                    <p class="text-slate-300 font-black text-base italic">$${pvp.toFixed(2)}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[7px] text-gray-400 font-black uppercase">Stock</p>
+                    <span class="inline-block text-[10px] px-2 py-1 rounded-full ${stock <= 5 ? 'bg-red-600 text-white' : 'bg-purple-100 text-primary'} font-black">${stock}</span>
+                </div>
+            </div>`;
+
+        // EVENTOS PARA MÓVIL (Long Press)
+        card.addEventListener('touchstart', () => {
+            pressTimer = setTimeout(() => activarModoSeleccion(p.ID), 700);
+        });
+        card.addEventListener('touchend', () => clearTimeout(pressTimer));
+        card.addEventListener('click', () => {
+            if(modoSeleccion) toggleSeleccion(p.ID);
+            else abrirEditorStock(p);
+        });
+
+        container.appendChild(card);
     });
-    
+
     document.getElementById('valor-bodega').innerText = `$${totalCosto.toFixed(2)}`;
     document.getElementById('count-critico').innerText = criticos;
     document.getElementById('total-sku').innerText = lista.length;
 }
 
-// 3. LOGICA EDITAR/ELIMINAR AL CLIC
-async function gestionarProducto(id, nombre, stockActual) {
-    const op = confirm(`PRODUCTO: ${nombre}\n\n¿Desea EDITAR EL STOCK?\n(Cancelar para ELIMINAR el producto)`);
-    
-    if (op) {
-        const suma = prompt(`Stock actual: ${stockActual}\n¿Cuánto desea sumar al inventario?`, "0");
-        if (suma !== null && !isNaN(suma)) {
-            const nuevoStock = stockActual + parseFloat(suma);
-            await ejecutarAccion(id, { Stock: nuevoStock }, "Actualizando Stock...");
-        }
-    } else {
-        if (confirm(`¿ELIMINAR definitivamente ${nombre}?\nEsta acción no se puede deshacer.`)) {
-            await ejecutarAccion(id, { ELIMINAR: true }, "Eliminando producto...");
-        }
-    }
+// MODOS Y SELECCION
+function activarModoSeleccion(id) {
+    modoSeleccion = true;
+    document.getElementById('btn-cancelar-seleccion').classList.remove('hidden');
+    document.getElementById('btn-eliminar-multi').classList.remove('hidden');
+    document.getElementById('header-title').innerText = "Seleccionar...";
+    toggleSeleccion(id);
 }
 
-// 4. LOGICA NUEVO PRODUCTO
-async function abrirModalNuevo() {
-    const nombre = prompt("Nombre del nuevo producto:");
-    if (!nombre) return;
-    const precio = prompt("Precio de Venta (PVP):", "0.00");
-    const costo = prompt("Costo Unitario (Distribuidor):", "0.00");
-    const stock = prompt("Stock inicial:", "0");
+function toggleSeleccion(id) {
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if(seleccionados.has(id)) {
+        seleccionados.delete(id);
+        el.classList.remove('selected');
+    } else {
+        seleccionados.add(id);
+        el.classList.add('selected');
+    }
+    if(seleccionados.size === 0) cancelarSeleccion();
+}
 
+function cancelarSeleccion() {
+    modoSeleccion = false;
+    seleccionados.clear();
+    document.querySelectorAll('.card-prod').forEach(c => c.classList.remove('selected'));
+    document.getElementById('btn-cancelar-seleccion').classList.add('hidden');
+    document.getElementById('btn-eliminar-multi').classList.add('hidden');
+    document.getElementById('header-title').innerText = "Inventario";
+}
+
+// ACCIONES API
+async function eliminarSeleccionados() {
+    if(!confirm(`¿Eliminar ${seleccionados.size} productos?`)) return;
+    for(let id of seleccionados) {
+        await DairyAPI.enviarDatos("Inventario", { ID: id, ELIMINAR: true, pestaña: "Inventario" });
+    }
+    alert("Eliminados correctamente");
+    cancelarSeleccion();
+    cargarInventario();
+}
+
+function abrirEditorStock(p) {
+    document.getElementById('edit-nombre').innerText = p.Producto;
+    document.getElementById('edit-cantidad').value = 0;
+    abrirModal('modal-stock');
+    document.getElementById('btn-confirmar-stock').onclick = async () => {
+        const suma = parseFloat(document.getElementById('edit-cantidad').value);
+        const nuevoStock = aNum(p.Stock) + suma;
+        cerrarModal('modal-stock');
+        await DairyAPI.enviarDatos("Inventario", { ID: p.ID, Stock: nuevoStock, pestaña: "Inventario" });
+        cargarInventario();
+    };
+}
+
+async function guardarNuevo() {
     const data = {
-        ID: "ID-" + Math.floor(Math.random()*9999),
-        Producto: nombre.toUpperCase(),
-        Precio_Venta: aNum(precio),
-        Costo_Unitario: aNum(costo),
-        Stock: aNum(stock),
+        ID: "P" + Date.now().toString().slice(-5),
+        Producto: document.getElementById('n-nombre').value.toUpperCase(),
+        Precio_Distribuidor: aNum(document.getElementById('n-costo').value),
+        Precio_Venta: aNum(document.getElementById('n-pvp').value),
+        Stock: aNum(document.getElementById('n-stock').value),
+        Estado: "ACTIVO",
+        Fecha: new Date().toLocaleDateString(),
         pestaña: "Inventario"
     };
-
-    await ejecutarAccion(data.ID, data, "Guardando nuevo producto...");
+    if(!data.Producto) return alert("Nombre requerido");
+    cerrarModal('modal-nuevo');
+    await DairyAPI.enviarDatos("Inventario", data);
+    cargarInventario();
 }
 
-// 5. ENVÍO A API
-async function ejecutarAccion(id, payload, msg) {
-    try {
-        console.log(msg, payload);
-        // Asegúrate de que tu Apps Script reciba "ID" y "pestaña"
-        await DairyAPI.enviarDatos("Inventario", { ID: id, ...payload, pestaña: "Inventario" });
-        alert("¡Operación completada!");
-        cargarInventario();
-    } catch (e) {
-        alert("Error al sincronizar con Google Sheets");
-    }
-}
-
+// UI HELPERS
+function abrirModal(id) { document.getElementById(id).classList.add('active'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
+function ajustarStockNum(v) { document.getElementById('edit-cantidad').value = parseInt(document.getElementById('edit-cantidad').value) + v; }
 function filtrar() {
-    const busqueda = document.getElementById('filtroProd').value.toLowerCase();
-    const filtrados = inventarioLocal.filter(p => 
-        (p.Producto && p.Producto.toLowerCase().includes(busqueda)) || 
-        (p.ID && String(p.ID).toLowerCase().includes(busqueda))
-    );
-    renderizar(filtrados);
+    const b = document.getElementById('filtroProd').value.toLowerCase();
+    renderizar(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b)));
 }
 
 window.onload = cargarInventario;
 </script>
-
 </body>
 </html>

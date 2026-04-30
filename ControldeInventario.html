@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
@@ -7,136 +7,139 @@
 
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
+    
+    <!-- TU ARCHIVO DE ESTILOS -->
+    <link rel="stylesheet" href="estilos-lacteos.css">
     
     <!-- Librerías PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <style>
-      body { font-family: 'Work Sans', sans-serif; background-color: #f0f7ff; }
-      .azul-electrico { color: #0047FF; }
-      .bg-azul-electrico { background-color: #0047FF; }
+      /* Ajustes adicionales para que combine con tus variables de CSS */
+      .nav-menu { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: white; border-top: 1px solid var(--outline); display: flex; justify-content: space-around; align-items: center; z-index: 60; }
+      .nav-item { display: flex; flex-direction: column; align-items: center; color: #9ca3af; font-size: 10px; font-weight: bold; }
+      .nav-item.active { color: var(--primary); }
       
-      /* Estilos de las Tarjetas */
-      .card-prod { background: white; border-radius: 1.5rem; border: 2px solid #e2e8f0; transition: all 0.2s; cursor: pointer; position: relative; }
-      .card-prod.selected { border-color: #0047FF; background-color: #e0eaff; transform: scale(0.96); }
-      
-      /* Modales */
-      .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
-      .modal.active { display: flex; }
-
-      /* Menú de Navegación Inferior - DEVUELTO */
-      .nav-menu { position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; align-items: center; z-index: 60; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); }
-      .nav-item { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-      .nav-item.active { color: #0047FF; }
+      /* Tus tarjetas redondeadas */
+      .card-inventario {
+          background: white;
+          border-radius: 2.5rem; /* El redondeado de tu estilos-lacteos.css */
+          border: 1px solid var(--outline);
+          padding: 1.5rem;
+          margin-bottom: 1rem;
+      }
+      .critico-border { border-left: 8px solid var(--secondary) !important; }
     </style>
 </head>
 
-<body class="pb-32">
+<body class="pb-24">
 
-<!-- HEADER -->
-<header class="fixed top-0 w-full h-16 bg-white border-b border-blue-100 flex justify-between items-center px-4 shadow-md z-50">
-  <div class="flex items-center gap-2">
-    <div id="btn-cancelar-seleccion" class="hidden bg-red-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase cursor-pointer" onclick="cancelarSeleccion()">Cancelar</div>
-    <h1 id="header-title" class="text-lg font-black azul-electrico uppercase italic">Inventario</h1>
-  </div>
-  
-  <div class="flex items-center gap-2">
-      <button onclick="descargarReportePDF()" class="p-2 text-blue-600 bg-blue-50 rounded-full">
-          <span class="material-symbols-outlined text-3xl">picture_as_pdf</span>
-      </button>
-      <button id="btn-eliminar-multi" class="hidden bg-red-600 text-white p-2 rounded-xl" onclick="eliminarSeleccionados()">
-          <span class="material-symbols-outlined">delete_sweep</span>
-      </button>
-  </div>
+<header class="fixed top-0 w-full h-16 bg-white border-b border-purple-100 flex justify-between items-center px-6 shadow-sm z-50">
+  <h1 class="brand-logo text-titulo italic">Lógica Láctea</h1>
+  <button onclick="descargarReportePDF()" class="header-btn p-2 rounded-full transition-all">
+      <span class="material-symbols-outlined text-3xl" style="color: var(--secondary)">picture_as_pdf</span>
+  </button>
 </header>
 
-<main class="pt-20 px-4 space-y-6">
-  <!-- Dashboard Rápido -->
-  <section class="grid grid-cols-3 gap-2">
-    <div class="bg-white p-4 rounded-2xl border-b-4 border-blue-500 shadow-sm text-center">
-        <p class="text-[9px] font-bold text-gray-400 uppercase">Ventas</p>
-        <p id="total-ventas-num" class="text-sm font-black azul-electrico">0</p>
-    </div>
-    <div class="bg-white p-4 rounded-2xl border-b-4 border-red-500 shadow-sm text-center">
-        <p class="text-[9px] font-bold text-gray-400 uppercase">Crítico</p>
-        <p id="count-critico" class="text-sm font-black text-red-600">0</p>
-    </div>
-    <div class="bg-white p-4 rounded-2xl border-b-4 border-green-500 shadow-sm text-center">
-        <p class="text-[9px] font-bold text-gray-400 uppercase">SKUs</p>
-        <p id="total-sku" class="text-sm font-black text-green-600">0</p>
-    </div>
-  </section>
+<main class="pt-20 px-4">
+  <!-- Barra de búsqueda con tu estilo .input-sutil -->
+  <div class="mb-6">
+      <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar en inventario..." class="input-sutil">
+  </div>
 
-  <input type="text" id="filtroProd" oninput="filtrar()" placeholder="🔍 Buscar producto..." class="w-full bg-white border-2 border-blue-50 rounded-2xl p-4 font-bold outline-none focus:border-blue-500 shadow-inner">
-
-  <!-- Grilla de Productos -->
-  <div id="grid-productos" class="grid grid-cols-2 gap-4 pb-20">
-      <div class="col-span-full text-center py-20 text-gray-400 font-bold italic">Cargando datos de Lógica Láctea...</div>
+  <div id="grid-productos">
+      <!-- Los productos se cargarán con la clase .card-inventario -->
+      <p class="text-center py-10 opacity-50">Cargando datos...</p>
   </div>
 </main>
 
-<!-- BOTÓN FLOTANTE "NUEVO" -->
-<div class="fixed bottom-24 right-6 z-40">
-    <button onclick="abrirModal('modal-nuevo')" class="w-16 h-16 bg-azul-electrico text-white rounded-full shadow-2xl flex items-center justify-center active:scale-90 transition-all">
-        <span class="material-symbols-outlined text-3xl">add</span>
-    </button>
-</div>
-
-<!-- MENU DE NAVEGACION INFERIOR -->
+<!-- MENÚ DE NAVEGACIÓN INFERIOR -->
 <nav class="nav-menu">
     <a href="panel-operativo-tienda.html" class="nav-item">
-        <span class="material-symbols-outlined">dashboard</span>
-        Panel
+        <span class="material-symbols-outlined">dashboard</span>Panel
     </a>
     <a href="ventas.html" class="nav-item">
-        <span class="material-symbols-outlined">shopping_cart</span>
-        Ventas
+        <span class="material-symbols-outlined">shopping_cart</span>Ventas
     </a>
     <a href="inventario.html" class="nav-item active">
-        <span class="material-symbols-outlined">inventory_2</span>
-        Stock
+        <span class="material-symbols-outlined">inventory_2</span>Stock
     </a>
     <a href="clientes.html" class="nav-item">
-        <span class="material-symbols-outlined">group</span>
-        Clientes
+        <span class="material-symbols-outlined">group</span>Clientes
     </a>
 </nav>
 
-<!-- MODAL STOCK (Edición Rápida) -->
-<div id="modal-stock" class="modal">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 space-y-6 shadow-2xl text-center">
-        <h2 id="edit-nombre" class="font-black text-gray-800 uppercase text-sm">---</h2>
-        <div class="flex items-center justify-center gap-4 py-2">
-            <button onclick="ajustarStockNum(-1)" class="w-12 h-12 bg-gray-100 rounded-xl font-bold text-2xl">-</button>
-            <input type="number" id="edit-cantidad" value="0" class="w-20 text-center border-none text-4xl font-black azul-electrico focus:ring-0">
-            <button onclick="ajustarStockNum(1)" class="w-12 h-12 bg-gray-100 rounded-xl font-bold text-2xl">+</button>
-        </div>
-        <button id="btn-confirmar-stock" class="w-full bg-azul-electrico text-white py-4 rounded-xl font-black uppercase">ACTUALIZAR</button>
-        <button onclick="cerrarModal('modal-stock')" class="w-full text-gray-400 py-2 font-bold uppercase text-xs">CERRAR</button>
-    </div>
-</div>
-
-<!-- MODAL NUEVO PRODUCTO -->
-<div id="modal-nuevo" class="modal">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 space-y-4 shadow-2xl">
-        <h3 class="font-black azul-electrico text-center uppercase">Crear Producto</h3>
-        <input type="text" id="n-nombre" placeholder="Nombre" class="w-full border-2 border-gray-50 rounded-xl p-3 font-bold uppercase">
-        <input type="number" id="n-pvp" placeholder="Precio Venta ($)" class="w-full border-2 border-gray-50 rounded-xl p-3 font-bold">
-        <input type="number" id="n-stock" placeholder="Stock Inicial" class="w-full border-2 border-gray-50 rounded-xl p-3 font-bold">
-        <button onclick="guardarNuevo()" class="w-full bg-azul-electrico text-white py-4 rounded-xl font-black uppercase mt-2">GUARDAR EN SISTEMA</button>
-        <button onclick="cerrarModal('modal-nuevo')" class="w-full text-gray-400 font-bold text-xs uppercase text-center w-full block">CANCELAR</button>
-    </div>
-</div>
-
 <script>
-// La lógica de JavaScript se mantiene igual que la anterior para asegurar el ordenamiento 
-// y la conexión con el Backend, pero ahora respeta el diseño completo.
-// [Aquí va el resto del JS que ya te pasé anteriormente]
+let DATA_LOCAL = [];
+
+async function cargarInventario() {
+    const grid = document.getElementById('grid-productos');
+    try {
+        const resp = await fetch(`${API_URL}?pestaña=Inventario`);
+        const data = await resp.json();
+        
+        // Ordenar por VENTAS (Columna H) - Más vendido primero
+        DATA_LOCAL = data.sort((a, b) => (parseFloat(b.Ventas) || 0) - (parseFloat(a.Ventas) || 0));
+        renderizar(DATA_LOCAL);
+    } catch (e) {
+        grid.innerHTML = '<p class="text-center text-red-500">Revisa la conexión con Google Sheets</p>';
+    }
+}
+
+function renderizar(lista) {
+    const grid = document.getElementById('grid-productos');
+    grid.innerHTML = '';
+    
+    lista.forEach(p => {
+        const esCritico = parseFloat(p.Stock) <= 5;
+        grid.innerHTML += `
+            <div class="card-inventario ${esCritico ? 'critico-border' : ''}">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="font-extrabold text-gray-800 uppercase text-sm">${p.Producto}</h3>
+                        <p class="text-[10px] opacity-50">CÓDIGO: ${p.ID}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xl font-black" style="color: var(--primary)">$${p.Precio_Venta}</p>
+                        <p class="text-[10px] font-bold ${esCritico ? 'text-red-500' : 'text-green-600'}">
+                            STOCK: ${p.Stock}
+                        </p>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t border-purple-50 flex justify-between items-center">
+                    <span class="text-[9px] font-bold uppercase opacity-40">Movimientos: ${p.Ventas || 0}</span>
+                    <button class="btn-magenta px-4 py-1">Editar</button>
+                </div>
+            </div>
+        `;
+    });
+}
+
+function filtrar() {
+    const q = document.getElementById('filtroProd').value.toLowerCase();
+    renderizar(DATA_LOCAL.filter(p => p.Producto.toLowerCase().includes(q)));
+}
+
+window.onload = cargarInventario;
+
+async function descargarReportePDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFont("helvetica", "bold");
+    doc.text("LÓGICA LÁCTEA - REPORTE DE STOCK", 14, 20);
+    
+    const body = DATA_LOCAL.map(p => [p.ID, p.Producto, p.Stock, p.Precio_Venta, p.Ventas || 0]);
+    doc.autoTable({
+        head: [['ID', 'PRODUCTO', 'STOCK', 'PVP', 'VENTAS']],
+        body: body,
+        startY: 30,
+        headStyles: { fillColor: [162, 28, 175] } // Color Magenta (#a21caf)
+    });
+    doc.save("Reporte_Inventario.pdf");
+}
 </script>
 </body>
 </html>

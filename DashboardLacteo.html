@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Lógica Láctea - Dashboard Pro</title>
+    <title>Lógica Láctea - Dashboard</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
@@ -50,7 +50,7 @@
 
 <main class="pt-24 px-4 max-w-7xl mx-auto space-y-4">
 
-    <!-- 1. BLOQUE DE DINERO: UTILIDAD Y PROYECCIÓN -->
+    <!-- 1. BLOQUE DE DINERO -->
     <div class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm space-y-6">
         <div class="flex justify-between items-start">
             <div>
@@ -75,19 +75,19 @@
         </div>
     </div>
 
-    <!-- 2. BOTONES DE ACCIÓN (MISMO TAMAÑO) -->
+    <!-- 2. BOTONES DE ACCIÓN (TODOS IGUALES) -->
     <div class="grid grid-cols-2 gap-3">
         <button onclick="location.href='RegistrodeVentas.html'" class="bg-primary text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
           <span class="material-symbols-outlined text-3xl">add_shopping_cart</span>
           <span class="text-[10px] font-black uppercase tracking-tighter">Vender</span>
-          <span class="text-[7px] opacity-70 italic">Registrar salida</span>
+          <span class="text-[7px] opacity-70 italic">Nueva salida</span>
         </button>
         
         <button id="btn-ruta" onclick="location.href='GestióndeDespachos.html'" class="relative bg-success text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
           <span id="badge-ruta" class="absolute top-2 right-4 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
           <span class="material-symbols-outlined text-3xl">local_shipping</span>
           <span class="text-[10px] font-black uppercase tracking-tighter">En Ruta</span>
-          <span class="text-[7px] opacity-70 italic">Pedidos hoy</span>
+          <span class="text-[7px] opacity-70 italic">Entregas hoy</span>
         </button>
 
         <button onclick="location.href='ControldeInventario.html'" class="relative bg-secondary text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
@@ -97,10 +97,16 @@
           <span class="text-[7px] opacity-70 italic">Cargar productos</span>
         </button>
 
-        <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 active:bg-slate-50 transition-all">
+        <button onclick="location.href='GestiondeProveedores.html'" class="bg-slate-800 text-white p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 shadow-lg active:scale-95 transition-all">
+          <span class="material-symbols-outlined text-3xl">factory</span>
+          <span class="text-[10px] font-black uppercase tracking-tighter">Proveedor</span>
+          <span class="text-[7px] opacity-70 italic">Gestión compras</span>
+        </button>
+
+        <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-5 rounded-[2rem] flex flex-col items-center text-center gap-1 active:bg-slate-50 transition-all col-span-2">
           <span class="material-symbols-outlined text-primary text-3xl">group</span>
-          <span class="text-[10px] font-black uppercase text-slate-600 tracking-tighter">Contactos</span>
-          <span class="text-[7px] text-slate-400 italic">Clientes/Prov</span>
+          <span class="text-[10px] font-black uppercase text-slate-600 tracking-tighter">Clientes</span>
+          <span class="text-[7px] text-slate-400 italic">Base de datos</span>
         </button>
     </div>
 
@@ -112,25 +118,16 @@
         <div id="lista-pedidos" class="space-y-2 text-[11px]"></div>
     </section>
 
-    <!-- 4. RANKING -->
+    <!-- 4. RANKING AMPLIADO -->
     <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
         <h3 class="text-[10px] font-black text-primary mb-5 uppercase tracking-widest flex items-center gap-2 italic">
-            <span class="material-symbols-outlined text-sm">bar_chart</span> Más Vendidos
+            <span class="material-symbols-outlined text-sm">bar_chart</span> Ranking de Productos
         </h3>
         <div id="grafico-vendidos" class="space-y-5"></div>
     </section>
 
-    <!-- 5. STOCK CRÍTICO (SIN CEROS) -->
-    <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
-        <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest flex items-center gap-2 italic">
-            <span class="material-symbols-outlined text-sm">report_problem</span> Alerta Stock Bajo
-        </h3>
-        <div id="cont-criticos" class="space-y-2"></div>
-    </section>
-
 </main>
 
-<!-- NAVEGADOR (Respetado) -->
 <div id="menu-container"></div>
 
 <script>
@@ -154,7 +151,6 @@ async function cargarDatos() {
         const ventas = Array.isArray(resVentas) ? resVentas : [];
 
         const costosMap = {};
-        const preciosVentaMap = {};
         let totalCostoBodega = 0;
         let utilidadProyectada = 0;
 
@@ -162,9 +158,7 @@ async function cargarDatos() {
             const costo = parseFloat(String(p.Precio_Distribuidor || 0).replace(',','.')) || 0;
             const precioVenta = parseFloat(String(p.Precio_Venta || 0).replace(',','.')) || 0;
             const stock = parseFloat(p.Stock) || 0;
-
             costosMap[p.Producto] = costo;
-            preciosVentaMap[p.Producto] = precioVenta;
             totalCostoBodega += (costo * stock);
             utilidadProyectada += ((precioVenta - costo) * stock);
         });
@@ -194,28 +188,20 @@ async function cargarDatos() {
         document.getElementById('ganancia-real').innerText = `$${utilidadHoy.toFixed(2)}`;
         document.getElementById('por-recaudar').innerText = `$${porRecaudar.toFixed(2)}`;
 
-        const contCriticos = document.getElementById('cont-criticos');
+        // STOCK CRÍTICO
         const badgeStock = document.getElementById('badge-stock');
-        contCriticos.innerHTML = "";
         const criticos = inventario.filter(p => {
             const s = parseFloat(p.Stock) || 0;
             return s > 0 && s <= 5;
-        }).sort((a,b) => parseFloat(a.Stock) - parseFloat(b.Stock));
-
+        });
         if(criticos.length > 0) {
             badgeStock.innerText = criticos.length;
             badgeStock.classList.remove('hidden');
-            criticos.forEach(p => {
-                contCriticos.innerHTML += `
-                    <div class="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100 font-bold">
-                        <span class="uppercase text-red-900 truncate italic">${p.Producto}</span>
-                        <span class="text-red-600">${p.Stock} un.</span>
-                    </div>`;
-            });
         } else {
             badgeStock.classList.add('hidden');
         }
 
+        // RUTA (CLIENTES ÚNICOS)
         const badgeRuta = document.getElementById('badge-ruta');
         const listaPed = document.getElementById('lista-pedidos');
         const clientesUnicos = [...new Set(pendsHoy.map(p => p.Cliente))];
@@ -223,22 +209,25 @@ async function cargarDatos() {
         if(clientesUnicos.length > 0) {
             badgeRuta.innerText = clientesUnicos.length;
             badgeRuta.classList.remove('hidden');
+            document.getElementById('btn-ruta').classList.add('pulse-notif');
             listaPed.innerHTML = "";
             clientesUnicos.forEach(c => {
                 listaPed.innerHTML += `
                     <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex justify-between font-bold">
                         <span class="uppercase text-slate-700">${c}</span>
-                        <span class="text-amber-500 italic">Pendiente</span>
+                        <span class="text-amber-500 italic">Cobro Pendiente</span>
                     </div>`;
             });
         } else {
             badgeRuta.classList.add('hidden');
-            listaPed.innerHTML = '<p class="text-center text-slate-300 italic">Día al día</p>';
+            document.getElementById('btn-ruta').classList.remove('pulse-notif');
+            listaPed.innerHTML = '<p class="text-center text-slate-300 italic">Todo al día</p>';
         }
 
+        // RANKING (Muestra los 6 principales)
         const rank = {};
         ventas.forEach(v => { rank[v.Producto] = (rank[v.Producto] || 0) + (parseFloat(v.Cantidad) || 0); });
-        const top = Object.entries(rank).sort((a,b) => b[1]-a[1]).slice(0, 4);
+        const top = Object.entries(rank).sort((a,b) => b[1]-a[1]).slice(0, 6);
         const grafico = document.getElementById('grafico-vendidos');
         grafico.innerHTML = "";
         const max = top[0] ? top[0][1] : 1;

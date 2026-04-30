@@ -9,6 +9,10 @@
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
     
+    <!-- LIBRERÍAS PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
@@ -40,6 +44,11 @@
     <h1 id="header-title" class="text-xl font-black text-[#a21caf] tracking-tight uppercase italic">Inventario</h1>
   </div>
   <div class="flex items-center gap-2">
+      <!-- BOTÓN PDF -->
+      <button onclick="descargarPDF()" class="p-2 text-[#a21caf] active:scale-90 transition-transform">
+          <span class="material-symbols-outlined text-3xl">picture_as_pdf</span>
+      </button>
+
       <button id="btn-eliminar-multi" class="hidden bg-red-500 text-white p-2 rounded-xl shadow-lg" onclick="eliminarSeleccionados()">
           <span class="material-symbols-outlined">delete_sweep</span>
       </button>
@@ -81,6 +90,7 @@
   </div>
 </main>
 
+<!-- MODALES -->
 <div id="modal-nuevo" class="modal">
     <div class="bg-white w-full max-w-sm rounded-[3rem] p-8 space-y-5 shadow-2xl">
         <h2 class="font-black text-[#a21caf] uppercase text-center text-xl">Registrar Nuevo</h2>
@@ -133,6 +143,37 @@ async function cargarInventario() {
     } catch (e) { console.error(e); }
 }
 
+async function descargarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor(162, 28, 175);
+    doc.text("LÓGICA LÁCTEA - REPORTE DE STOCK", 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 28);
+
+    const filas = inventarioLocal.map(p => [
+        p.ID,
+        p.Producto,
+        `$${aNum(p.Precio_Venta).toFixed(2)}`,
+        aNum(p.Stock),
+        `$${(aNum(p.Costo_Unitario || p.Precio_Distribuidor) * aNum(p.Stock)).toFixed(2)}`
+    ]);
+
+    doc.autoTable({
+        head: [['ID', 'PRODUCTO', 'PVP', 'STOCK', 'VALOR TOTAL']],
+        body: filas,
+        startY: 35,
+        theme: 'grid',
+        headStyles: { fillColor: [162, 28, 175] },
+        styles: { fontSize: 8 }
+    });
+
+    doc.save(`Stock_Logica_Lactea.pdf`);
+}
+
 function renderizar(lista) {
     const container = document.getElementById('grid-productos');
     container.innerHTML = "";
@@ -165,13 +206,7 @@ function renderizar(lista) {
                 </div>
             </div>`;
 
-        // SOPORTE PC: CLIC DERECHO PARA SELECCIONAR
-        card.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            activarModoSeleccion(p.ID);
-        });
-
-        // SOPORTE MÓVIL: LONG PRESS
+        card.addEventListener('contextmenu', (e) => { e.preventDefault(); activarModoSeleccion(p.ID); });
         card.addEventListener('touchstart', (e) => {
             pressTimer = setTimeout(() => {
                 if (window.navigator.vibrate) window.navigator.vibrate(50);
@@ -179,12 +214,10 @@ function renderizar(lista) {
             }, 600);
         });
         card.addEventListener('touchend', () => clearTimeout(pressTimer));
-        
         card.addEventListener('click', () => {
             if(modoSeleccion) toggleSeleccion(p.ID);
             else abrirEditorStock(p);
         });
-
         container.appendChild(card);
     });
 

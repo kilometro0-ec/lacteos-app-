@@ -7,87 +7,84 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
-    <link rel="stylesheet" href="estilos-lacteos.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <style>
-        body { background-color: #f8fafc; padding-bottom: 80px; }
+        body { background-color: #f8fafc; padding-bottom: 90px; font-family: sans-serif; }
+        
+        /* Tarjetas y Botones */
         .card-pro {
             background: white; border-radius: 2rem; border: 1px solid #f1f5f9;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); overflow: hidden;
+            animation: fadeInUp 0.4s ease-out forwards;
         }
-        /* BOTÓN ENTREGADO VERDE */
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
         .btn-verde {
             background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
             color: white; font-weight: 900; text-transform: uppercase;
             border-radius: 1.2rem; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
         }
-        .btn-verde:active { transform: scale(0.95); shadow: none; }
-        
-        .badge-id { background: #fdf4ff; color: #a21caf; border: 1px solid #f5d0fe; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 8px; }
-        .fade-in-up { animation: fadeInUp 0.4s ease-out forwards; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Estilos del Menú Inferior */
-        .nav-fija { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(8px); border-top: 1px solid #f3e8ff; padding: 10px 0; z-index: 999; }
+
+        /* Estilos del Menú Inferior (Corregido para que se pinte) */
+        .nav-fija { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #f3e8ff; padding: 12px 0; z-index: 1000; }
         .menu-grid { max-width: 500px; margin: 0 auto; display: flex; justify-content: space-around; }
-        .nav-btn { display: flex; flex-direction: column; align-items: center; color: #94a3b8; background: none; border: none; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; color: #94a3b8; background: none; border: none; gap: 4px; }
         .nav-btn .material-symbols-outlined { font-size: 24px; }
         .nav-btn span { font-size: 9px; font-weight: 800; text-transform: uppercase; }
         .active-btn { color: #a21caf !important; }
+        .active-btn .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+
+        /* Modal Selector Mapas */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; }
     </style>
 </head>
 <body>
 
 <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-20 bg-white/80 backdrop-blur-md border-b border-purple-100">
     <div class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#a21caf] to-[#db2777] flex items-center justify-center text-white shadow-lg">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#a21caf] to-[#db2777] flex items-center justify-center text-white">
             <span class="material-symbols-outlined font-black">local_shipping</span>
         </div>
-        <div>
-            <h1 class="brand-logo text-xl leading-none">LOGICA LACTEA</h1>
-            <p class="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Hoja de Ruta</p>
-        </div>
+        <h1 class="font-black text-lg text-slate-800">RUTAS</h1>
     </div>
-    <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:rotate-180 transition-all">
+    <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
         <span id="refresh-icon" class="material-symbols-outlined text-slate-500">sync</span>
     </button>
 </header>
 
 <main class="pt-24 px-5 max-w-lg mx-auto space-y-5">
-    
-    <!-- CONTADORES DE ESTADO (ID CARDS DE PROGRESO) -->
+    <!-- ID CARDS DE ESTADO -->
     <div class="grid grid-cols-2 gap-3">
-        <div class="bg-white p-4 rounded-3xl border border-orange-100 shadow-sm text-center">
+        <div class="bg-white p-4 rounded-3xl border border-orange-100 text-center">
             <p id="cont-pend" class="text-2xl font-black text-orange-500">0</p>
-            <p class="text-[9px] font-black text-slate-400 uppercase">Por Entregar</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase">Faltan</p>
         </div>
-        <div class="bg-white p-4 rounded-3xl border border-green-100 shadow-sm text-center">
+        <div class="bg-white p-4 rounded-3xl border border-green-100 text-center">
             <p id="cont-ent" class="text-2xl font-black text-green-500">0</p>
-            <p class="text-[9px] font-black text-slate-400 uppercase">Completados</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase">Entregados</p>
         </div>
     </div>
 
-    <!-- RESUMEN DINERO -->
-    <div class="flex gap-4">
-        <div class="flex-1 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
-            <p class="text-[9px] font-black text-slate-400 uppercase">Pendiente</p>
-            <h2 id="dinero-pend" class="text-xl font-black text-slate-700">$0.00</h2>
-        </div>
-        <!-- COBRADO EN VERDE -->
-        <div class="flex-1 bg-gradient-to-br from-[#16a34a] to-[#15803d] p-4 rounded-3xl shadow-lg shadow-green-100">
-            <p class="text-[9px] font-black text-green-100 uppercase">Cobrado Hoy</p>
-            <h2 id="dinero-ent" class="text-xl font-black text-white">$0.00</h2>
-        </div>
+    <div id="contenedor-pedidos" class="space-y-5 pb-10">
+        <!-- Tarjetas dinámicas -->
     </div>
-
-    <input type="text" id="filtroDespacho" oninput="filtrar()" placeholder="🔍 Buscar cliente..." 
-           class="w-full bg-white border border-slate-200 rounded-2xl py-4 px-6 font-bold text-slate-600 shadow-sm outline-none">
-
-    <div id="contenedor-pedidos" class="space-y-5 pb-10"></div>
 </main>
 
-<!-- MENU DE NAVEGACION -->
+<!-- SELECTOR DE MAPAS (MODAL) -->
+<div id="modal-mapas" class="modal-overlay" onclick="cerrarModal()">
+    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 space-y-4" onclick="event.stopPropagation()">
+        <h3 class="font-black text-center text-slate-800">Elegir Navegador</h3>
+        <button id="btn-gmaps" class="w-full flex items-center justify-center gap-3 py-4 bg-blue-500 text-white rounded-2xl font-black">
+            GOOGLE MAPS
+        </button>
+        <button id="btn-waze" class="w-full flex items-center justify-center gap-3 py-4 bg-cyan-400 text-white rounded-2xl font-black">
+            WAZE
+        </button>
+    </div>
+</div>
+
+<!-- NAVEGACIÓN -->
 <div id="menu-container"></div>
 
 <script>
@@ -112,94 +109,89 @@ async function cargarDatos() {
                     direccion: clientes.find(c => String(c.Nombre).trim().toLowerCase() === String(v.Cliente).trim().toLowerCase())?.Dirección || ""
                 };
             }
-            const precio = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
-            const cant = parseFloat(v.Cantidad) || 0;
-            agrupados[idV].items.push({ producto: v.Producto, cant: cant, precioUnit: cant > 0 ? precio/cant : 0 });
+            const precio = parseFloat(String(v["Precio Total"] || 0).replace(',', '.')) || 0;
+            agrupados[idV].items.push({ idFila: v.ID_Venta, producto: v.Producto, cant: v.Cantidad, precio: precio });
             agrupados[idV].total += precio;
         });
 
         pedidosLocal = Object.values(agrupados).reverse();
         renderizar();
-        actualizarResumen();
     } catch (e) { console.error(e); }
     finally { icon?.classList.remove('animate-spin'); }
 }
 
 function renderizar() {
     const container = document.getElementById('contenedor-pedidos');
-    container.innerHTML = pedidosLocal.length ? "" : '<div class="text-center py-20"><p class="text-slate-400 font-black uppercase text-xs">¡Ruta Completada!</p></div>';
+    document.getElementById('cont-pend').innerText = pedidosLocal.length;
+    document.getElementById('cont-ent').innerText = statsSesion.pedidos;
+    
+    container.innerHTML = pedidosLocal.length ? "" : '<div class="text-center py-20 text-slate-400 font-bold">TODO ENTREGADO ✅</div>';
     
     pedidosLocal.forEach((ped, idx) => {
-        const numItems = ped.items.length;
-        const totalUnid = ped.items.reduce((acc, it) => acc + it.cant, 0);
-
         container.innerHTML += `
-            <div id="card-${idx}" class="card-pro p-5 space-y-4 fade-in-up">
+            <div class="card-pro p-5 space-y-4">
                 <div class="flex justify-between items-start">
-                    <div class="space-y-1">
-                        <div class="flex gap-2">
-                            <span class="badge-id">ID: ${ped.id}</span>
-                            <span class="bg-slate-100 text-slate-500 text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-tighter">📦 ${numItems} Items (${totalUnid} Unid.)</span>
-                        </div>
-                        <h2 class="text-xl font-black text-slate-800 uppercase tracking-tight">${ped.cliente}</h2>
+                    <div>
+                        <span class="bg-purple-50 text-purple-600 text-[10px] font-black px-2 py-1 rounded-md">ID: ${ped.id}</span>
+                        <h2 class="text-xl font-black text-slate-800 uppercase mt-1">${ped.cliente}</h2>
                     </div>
-                    <!-- ICONO DE GOTA / UBICACIÓN -->
-                    <button onclick="elegirMapa('${ped.direccion}')" class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center active:bg-purple-600 active:text-white transition-all border border-purple-100">
+                    <button onclick="abrirSelectorMapas('${ped.direccion}')" class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
                         <span class="material-symbols-outlined">location_on</span>
                     </button>
                 </div>
 
-                <div class="bg-[#fcfaff] rounded-[1.5rem] p-2 border border-purple-50">
-                    ${ped.items.map(it => `
-                        <div class="flex justify-between items-center py-2 border-b border-purple-50 last:border-0 px-2">
-                            <span class="text-[11px] font-black text-slate-600 uppercase">${it.producto}</span>
-                            <span class="text-xs font-black text-purple-600">x${it.cant}</span>
+                <div class="bg-slate-50 rounded-2xl p-2">
+                    ${ped.items.map((it, iIdx) => `
+                        <div class="flex justify-between items-center py-2 px-2 border-b border-white last:border-0">
+                            <span class="text-xs font-bold text-slate-600 uppercase">${it.producto} (x${it.cant})</span>
+                            <button onclick="eliminarProducto(${idx}, ${iIdx})" class="text-red-400 p-1">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
                         </div>
                     `).join('')}
                 </div>
 
                 <div class="flex justify-between items-center pt-2">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase">Cobro</p>
-                        <p class="text-2xl font-black text-slate-900">$${ped.total.toFixed(2)}</p>
-                    </div>
-                    <!-- BOTÓN ENTREGADO VERDE -->
-                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="btn-verde px-8 h-14">
-                        Entregado
-                    </button>
+                    <p class="text-2xl font-black text-slate-900">$${ped.total.toFixed(2)}</p>
+                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="btn-verde px-8 h-14">ENTREGADO</button>
                 </div>
             </div>`;
     });
 }
 
-function actualizarResumen() {
-    const pend = pedidosLocal.reduce((acc, curr) => acc + curr.total, 0);
-    document.getElementById('dinero-pend').innerText = `$${pend.toFixed(2)}`;
-    document.getElementById('dinero-ent').innerText = `$${statsSesion.dinero.toFixed(2)}`;
+// FUNCIÓN PARA ELIMINAR PRODUCTO DE LA ID CARD
+function eliminarProducto(pedidoIdx, itemIdx) {
+    if(!confirm("¿Quitar este producto del pedido?")) return;
+    const item = pedidosLocal[pedidoIdx].items[itemIdx];
+    pedidosLocal[pedidoIdx].total -= item.precio;
+    pedidosLocal[pedidoIdx].items.splice(itemIdx, 1);
     
-    // Contadores de pedidos
-    document.getElementById('cont-pend').innerText = pedidosLocal.length;
-    document.getElementById('cont-ent').innerText = statsSesion.pedidos;
+    if(pedidosLocal[pedidoIdx].items.length === 0) {
+        pedidosLocal.splice(pedidoIdx, 1);
+    }
+    renderizar();
 }
 
+function abrirSelectorMapas(dir) {
+    if(!dir) return alert("Sin dirección");
+    const modal = document.getElementById('modal-mapas');
+    modal.style.display = 'flex';
+    document.getElementById('btn-gmaps').onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`);
+    document.getElementById('btn-waze').onclick = () => window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`);
+}
+
+function cerrarModal() { document.getElementById('modal-mapas').style.display = 'none'; }
+
 async function confirmarEntrega(idVenta, idx) {
-    if(!confirm("¿Registrar entrega?")) return;
+    if(!confirm("¿Marcar como entregado?")) return;
     try {
         await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: idVenta, Estado: "ENTREGADO" });
         statsSesion.pedidos++;
-        statsSesion.dinero += pedidosLocal[idx].total;
         localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
         cargarDatos();
-    } catch (e) { alert("Error"); }
+    } catch (e) { alert("Error de red"); }
 }
 
-function elegirMapa(dir) {
-    if(!dir) return alert("Sin dirección.");
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`;
-    window.open(url, '_blank');
-}
-
-// RENDER DEL MENÚ (Inyectado directamente)
 function renderMenu() {
     const container = document.getElementById('menu-container');
     const opciones = [
@@ -209,10 +201,18 @@ function renderMenu() {
         { n: 'Clientes', i: 'group', l: 'GestiondeClientes.html' },
         { n: 'Rutas', i: 'local_shipping', l: 'GestióndeDespachos.html' }
     ];
+    
+    // CORRECCIÓN: Usamos decodeURIComponent para manejar tildes en la URL
+    const pathActual = decodeURIComponent(window.location.pathname);
+    
     let html = '<nav class="nav-fija"><div class="menu-grid">';
     opciones.forEach(o => {
-        const act = window.location.pathname.includes(o.l) ? 'active-btn' : '';
-        html += `<button onclick="location.href='${o.l}'" class="nav-btn ${act}"><span class="material-symbols-outlined">${o.i}</span><span>${o.n}</span></button>`;
+        const esActivo = pathActual.includes(o.l) ? 'active-btn' : '';
+        html += `
+            <button onclick="location.href='${o.l}'" class="nav-btn ${esActivo}">
+                <span class="material-symbols-outlined">${o.i}</span>
+                <span>${o.n}</span>
+            </button>`;
     });
     container.innerHTML = html + '</div></nav>';
 }

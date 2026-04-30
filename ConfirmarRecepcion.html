@@ -3,10 +3,9 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Recibir Mercancía | Lógica Láctea</title>
+    <title>Verificar Mercadería | Lógica Láctea</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-    <!-- El script del menú que solicitaste -->
     <script src="menu-logic.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -25,21 +24,22 @@
     }
     </script>
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; }
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; overflow-x: hidden; }
         .glass-card-header { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
         
-        /* Animación de pantalla borrosa */
+        /* Animación igual al Dashboard */
         #loading-overlay { 
             display: flex; 
             position: fixed; 
             inset: 0; 
-            background: rgba(255, 255, 255, 0.7); 
-            backdrop-filter: blur(12px); /* Pantalla borrosa */
+            background: rgba(250, 245, 255, 0.4); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
             z-index: 9999; 
             flex-direction: column;
             align-items: center; 
             justify-content: center; 
-            transition: opacity 0.3s ease;
+            transition: all 0.5s ease;
         }
 
         .card-recepcion {
@@ -47,33 +47,37 @@
             border-radius: 2rem;
             border: 1px solid #e9d5ff;
             border-left: 6px solid #a21caf;
+            cursor: pointer;
         }
         
         .rotate-animation { animation: spin 1s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
+
+        /* Scroll personalizado para el modal */
+        #detalle-recepcion::-webkit-scrollbar { width: 4px; }
+        #detalle-recepcion::-webkit-scrollbar-thumb { background: #e9d5ff; border-radius: 10px; }
     </style>
 </head>
 <body class="pb-32 antialiased">
 
-<!-- Overlay de Carga (Pantalla Borrosa Inicial) -->
+<!-- Overlay de Carga Estilo Dashboard -->
 <div id="loading-overlay">
-    <div class="flex flex-col items-center">
-        <span class="material-symbols-outlined text-6xl text-primary rotate-animation">sync</span>
-        <p class="text-[10px] font-black uppercase tracking-[0.3em] text-primary mt-4 italic">Cargando Inventarios...</p>
+    <div class="relative flex items-center justify-center">
+        <div class="absolute w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full rotate-animation"></div>
+        <span class="material-symbols-outlined text-3xl text-primary">conveyor_belt</span>
     </div>
+    <p class="text-[10px] font-black uppercase tracking-[0.4em] text-primary mt-8 italic animate-pulse">Sincronizando...</p>
 </div>
 
 <!-- Header -->
 <header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 h-24 glass-card-header shadow-lg">
     <div class="flex items-center gap-4">
         <div class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/20 backdrop-blur-md border border-white/30 text-white" onclick="history.back()">
-            <span class="material-symbols-outlined font-bold">chevron_left</span>
+            <span class="material-symbols-outlined font-bold">arrow_back</span>
         </div>
         <div>
             <h1 class="text-[10px] font-black text-purple-200 uppercase tracking-widest leading-none">Logística</h1>
-            <h2 class="text-lg font-black text-white italic uppercase tracking-tighter">Verificar Mercadería</h2>
+            <h2 class="text-lg font-black text-white italic uppercase tracking-tighter">Checklist de Entrada</h2>
         </div>
     </div>
 </header>
@@ -82,52 +86,55 @@
     <!-- Buscador -->
     <div class="relative">
         <span class="material-symbols-outlined absolute left-5 top-4 text-primary">search</span>
-        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Filtrar por proveedor o ID..." 
+        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Proveedor o Factura..." 
             class="w-full bg-white border border-outline rounded-3xl py-4 pl-14 pr-6 text-slate-800 focus:ring-2 focus:ring-primary focus:border-primary outline-none font-bold text-xs shadow-sm">
     </div>
 
-    <!-- Contenedor de Lotes -->
     <div id="lista-pedidos" class="grid gap-4"></div>
 </main>
 
-<!-- Modal de Validación de Cantidades Reales -->
-<div id="modal-confirmar" class="fixed inset-0 bg-purple-900/40 backdrop-blur-md z-[60] hidden flex items-end">
-    <div class="bg-white w-full rounded-t-[3rem] p-8 space-y-6 border-t-4 border-primary shadow-2xl animate-in slide-in-from-bottom duration-300">
-        <div class="flex justify-between items-start">
+<!-- Modal de Validación con Botón Fijo -->
+<div id="modal-confirmar" class="fixed inset-0 bg-purple-900/60 backdrop-blur-sm z-[60] hidden flex items-end">
+    <div class="bg-white w-full rounded-t-[3rem] border-t-4 border-primary shadow-2xl animate-in slide-in-from-bottom duration-500 flex flex-col" style="max-height: 85vh;">
+        
+        <!-- Header del Modal -->
+        <div class="p-8 pb-4 flex justify-between items-start">
             <div>
-                <span class="text-[10px] font-black bg-primary text-white px-4 py-1 rounded-full uppercase italic">Checklist Real</span>
-                <h2 id="id-factura-modal" class="text-3xl font-black text-slate-800 tracking-tighter mt-2"></h2>
+                <span class="text-[10px] font-black bg-primary text-white px-4 py-1 rounded-full uppercase italic">Verificación Real</span>
+                <h2 id="id-factura-modal" class="text-2xl font-black text-slate-800 tracking-tighter mt-2 uppercase"></h2>
             </div>
-            <button onclick="cerrarModal()" class="bg-purple-50 p-3 rounded-full text-primary">
+            <button onclick="cerrarModal()" class="bg-purple-50 p-3 rounded-full text-primary active:scale-90">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
         
-        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-tight">Ajusta las cantidades si el camión trajo menos de lo pedido:</p>
-        
-        <div id="detalle-recepcion" class="max-h-[40vh] overflow-y-auto space-y-3 pr-2"></div>
+        <!-- Lista de productos (Scrollable) -->
+        <div id="detalle-recepcion" class="overflow-y-auto px-8 space-y-3 mb-24">
+            <!-- Items se cargan aquí -->
+        </div>
 
-        <div class="pt-4">
+        <!-- Footer del Modal (Fijo abajo) -->
+        <div class="absolute bottom-0 left-0 w-full p-6 bg-white/80 backdrop-blur-md border-t border-outline">
             <button id="btn-confirmar" onclick="confirmarIngreso()" 
-                class="w-full glass-card-header text-white font-black py-6 rounded-[2rem] shadow-xl shadow-primary/30 uppercase text-xs tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3">
-                <span class="material-symbols-outlined">inventory_2</span>
+                class="w-full glass-card-header text-white font-black py-5 rounded-2xl shadow-xl shadow-primary/30 uppercase text-xs tracking-[0.2em] active:scale-95 transition-all flex items-center justify-center gap-3">
+                <span class="material-symbols-outlined">done_all</span>
                 Finalizar Recepción
             </button>
         </div>
     </div>
 </div>
 
-<!-- Contenedor para el Menú de Navegación (inyectado por menu-logic.js) -->
 <nav id="menu-container"></nav>
 
 <script>
     let todosLosPedidos = [];
+    let itemsEnEdicion = [];
     let idSeleccionado = "";
 
     async function cargarDatos() {
         const loader = document.getElementById('loading-overlay');
-        loader.style.opacity = "1";
         loader.style.display = "flex";
+        loader.style.opacity = "1";
 
         try {
             const datos = await DairyAPI.obtenerDatos("Compras");
@@ -138,11 +145,10 @@
         } catch (e) {
             console.error(e);
         } finally {
-            // Quitamos el efecto borroso cuando ya hay info
             setTimeout(() => {
                 loader.style.opacity = "0";
-                setTimeout(() => loader.style.display = "none", 300);
-            }, 500);
+                setTimeout(() => loader.style.display = "none", 500);
+            }, 600);
         }
     }
 
@@ -157,75 +163,87 @@
 
         const ids = Object.keys(grupos);
         if (ids.length === 0) {
-            contenedor.innerHTML = `<p class="text-center py-20 font-black text-[10px] uppercase text-slate-400">No hay mercadería pendiente</p>`;
+            contenedor.innerHTML = `<div class="text-center py-20"><p class="font-black text-[10px] uppercase text-slate-300 italic">No hay ingresos pendientes</p></div>`;
             return;
         }
 
-        contenedor.innerHTML = ids.map(id => {
-            const p = grupos[id][0];
-            return `
-                <div onclick="abrirModal('${id}')" class="card-recepcion p-6 flex justify-between items-center shadow-sm active:bg-purple-50 transition-colors">
-                    <div>
-                        <p class="text-[10px] font-black text-primary italic uppercase">${id}</p>
-                        <p class="font-black text-slate-800 text-sm">${p.Proveedor}</p>
-                        <p class="text-[9px] font-bold text-slate-400">${p.Fecha} • ${grupos[id].length} SKUs</p>
-                    </div>
-                    <span class="material-symbols-outlined text-primary bg-purple-50 p-3 rounded-2xl">local_shipping</span>
+        contenedor.innerHTML = ids.map(id => `
+            <div onclick="abrirModal('${id}')" class="card-recepcion p-6 flex justify-between items-center shadow-sm active:scale-[0.98] transition-all">
+                <div>
+                    <p class="text-[10px] font-black text-primary italic uppercase">${id}</p>
+                    <p class="font-black text-slate-800 text-sm uppercase">${grupos[id][0].Proveedor}</p>
+                    <p class="text-[9px] font-bold text-slate-400 italic">${grupos[id].length} Productos en este lote</p>
                 </div>
-            `;
-        }).join('');
+                <span class="material-symbols-outlined text-primary bg-purple-50 p-3 rounded-2xl">arrow_forward_ios</span>
+            </div>
+        `).join('');
     }
 
     function abrirModal(id) {
         idSeleccionado = id;
         document.getElementById('id-factura-modal').innerText = id;
-        const items = todosLosPedidos.filter(p => p.ID_Compra === id);
-        
-        document.getElementById('detalle-recepcion').innerHTML = items.map((item, index) => `
-            <div class="bg-slate-50 p-4 rounded-2xl border border-outline flex justify-between items-center gap-4">
-                <div class="flex-1">
-                    <p class="text-[11px] font-black uppercase text-slate-700 leading-tight">${item.Producto}</p>
-                    <p class="text-[9px] text-primary font-bold">Pedido: ${item.Cantidad} ud.</p>
-                </div>
-                <div class="w-24">
-                    <input type="number" data-index="${index}" value="${item.Cantidad}" 
-                        class="input-real w-full text-center font-black text-primary bg-white border-2 border-primary rounded-xl py-2 focus:ring-0"
-                        min="0">
-                    <p class="text-[7px] font-black text-center text-slate-400 uppercase mt-1">Llegó Real</p>
-                </div>
-            </div>
-        `).join('');
-        
+        // Copia profunda para no afectar los datos originales hasta confirmar
+        itemsEnEdicion = JSON.parse(JSON.stringify(todosLosPedidos.filter(p => p.ID_Compra === id)));
+        renderizarItemsModal();
         document.getElementById('modal-confirmar').classList.remove('hidden');
     }
 
+    function renderizarItemsModal() {
+        const contenedor = document.getElementById('detalle-recepcion');
+        if (itemsEnEdicion.length === 0) {
+            contenedor.innerHTML = `<p class="text-center py-10 font-black text-[10px] text-red-400 uppercase">Has eliminado todos los productos</p>`;
+            return;
+        }
+
+        contenedor.innerHTML = itemsEnEdicion.map((item, index) => `
+            <div id="item-${index}" class="bg-slate-50 p-4 rounded-2xl border border-outline flex justify-between items-center gap-3 animate-in fade-in zoom-in duration-300">
+                <button onclick="eliminarItem(${index})" class="text-red-400 p-2 active:scale-90 transition-transform">
+                    <span class="material-symbols-outlined text-xl">delete_sweep</span>
+                </button>
+                <div class="flex-1">
+                    <p class="text-[11px] font-black uppercase text-slate-700 leading-tight">${item.Producto}</p>
+                    <p class="text-[9px] text-slate-400 font-bold italic">Pedido original: ${item.Cantidad}</p>
+                </div>
+                <div class="w-20">
+                    <input type="number" onchange="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" 
+                        class="w-full text-center font-black text-primary bg-white border-2 border-primary rounded-xl py-2 focus:ring-0 text-sm">
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function eliminarItem(index) {
+        itemsEnEdicion.splice(index, 1);
+        renderizarItemsModal();
+    }
+
+    function actualizarCantidad(index, valor) {
+        itemsEnEdicion[index].Cantidad = valor;
+    }
+
     async function confirmarIngreso() {
-        const inputs = document.querySelectorAll('.input-real');
-        const itemsSeleccionados = todosLosPedidos.filter(p => p.ID_Compra === idSeleccionado);
-        
-        // Mapeamos lo que el usuario escribió como cantidad real
-        const datosParaEnviar = itemsSeleccionados.map((item, idx) => ({
-            ...item,
-            Cantidad_Real: inputs[idx].value // Aquí capturamos lo que "en realidad llegó"
-        }));
+        if (itemsEnEdicion.length === 0) return alert("No hay productos para ingresar.");
 
         const btn = document.getElementById('btn-confirmar');
+        const loader = document.getElementById('loading-overlay');
+        
         btn.disabled = true;
-        document.getElementById('loading-overlay').style.display = "flex";
+        loader.style.display = "flex";
+        loader.style.opacity = "1";
 
         try {
             const respuesta = await DairyAPI.guardarDatos("Compras", {
-                accion: "marcar_recibido_ajustado",
+                accion: "recepcion_final",
                 ID_Compra: idSeleccionado,
-                items: datosParaEnviar
+                productos: itemsEnEdicion
             });
 
             if (respuesta === "OK") {
                 cerrarModal();
                 await cargarDatos();
-            } else { alert(respuesta); }
+            } else { alert("Error: " + respuesta); }
         } catch (e) {
-            alert("Error de conexión");
+            alert("Error de comunicación con el servidor");
         } finally {
             btn.disabled = false;
         }

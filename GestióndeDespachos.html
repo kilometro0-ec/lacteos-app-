@@ -1,11 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Despachos - Lógica Láctea</title>
+    
+    <!-- Scripts de Integración -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
+
+    <!-- Tu CSS con los colores Púrpura y Magenta -->
+    <link rel="stylesheet" href="estilos-lacteos.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    
+    <style>
+        .anim-slide-out { animation: slideRight 0.6s forwards; pointer-events: none; }
+        @keyframes slideRight { to { transform: translateX(150%); opacity: 0; } }
+        .modal-blur { backdrop-filter: blur(8px); background: rgba(31, 1, 42, 0.4); }
+        /* Forzar que no se vea el scroll */
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="pb-32">
+
+<!-- HEADER FIJO -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-[#e9d5ff] shadow-sm">
+    <div class="flex items-center gap-2" onclick="location.href='DashboardLacteo.html'">
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#a21caf]">
+            <span class="material-symbols-outlined font-black">local_shipping</span>
+        </div>
+        <h1 class="brand-logo text-xl uppercase tracking-tighter">Despachos</h1>
+    </div>
+    <button onclick="cargarDatos()" class="header-btn p-2 rounded-full transition-all">
+        <span id="refresh-icon" class="material-symbols-outlined text-[#a21caf]">refresh</span>
+    </button>
+</header>
+
+<main class="pt-20 px-4 max-w-4xl mx-auto space-y-4">
+    <!-- RECAUDACIÓN (Resumen superior) -->
+    <div class="grid grid-cols-2 gap-3">
+        <div class="card-sutil text-center !p-5 border-orange-100">
+            <p class="text-[10px] font-black text-orange-400 uppercase tracking-widest">Por Recaudar</p>
+            <h2 id="dinero-pend" class="text-2xl font-black text-orange-600">$0.00</h2>
+        </div>
+        <div class="card-sutil text-center !p-5 !bg-[#a21caf] border-transparent shadow-lg">
+            <p class="text-[10px] font-black text-purple-100 uppercase tracking-widest">Cobrado Hoy</p>
+            <h2 id="dinero-ent" class="text-2xl font-black text-white">$0.00</h2>
+        </div>
+    </div>
+
+    <!-- BUSCADOR -->
+    <input type="text" id="filtroDespacho" oninput="filtrar()" placeholder="🔍 Buscar cliente o sector..." 
+           class="input-sutil shadow-sm font-bold">
+
+    <!-- CONTENEDOR DE TARJETAS (Se llena con JS) -->
+    <div id="contenedor-pedidos" class="space-y-4 pt-2"></div>
+</main>
+
+<!-- MODAL MAPAS -->
+<div id="modal-mapas" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 modal-blur">
+    <div class="card-sutil w-full max-w-xs text-center space-y-4 shadow-2xl">
+        <h3 class="text-titulo text-sm text-[#a21caf]">Navegar a destino</h3>
+        <button id="btn-gmaps" class="w-full py-4 bg-blue-500 text-white rounded-2xl font-black flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">map</span> GOOGLE MAPS
+        </button>
+        <button id="btn-waze" class="w-full py-4 bg-cyan-400 text-white rounded-2xl font-black flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">navigation</span> WAZE
+        </button>
+        <button onclick="cerrarModal('modal-mapas')" class="text-gray-400 font-bold text-[10px] uppercase pt-2 tracking-widest">Cerrar</button>
+    </div>
+</div>
+
+<!-- MODAL EDICIÓN DE CANTIDAD -->
+<div id="modal-editar-item" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-6 modal-blur">
+    <div class="card-sutil w-full max-w-xs text-center shadow-2xl">
+        <h3 id="edit-item-name" class="text-[10px] font-black text-gray-400 uppercase mb-4"></h3>
+        <div class="flex items-center justify-between mb-8">
+            <button onclick="ajustarCant(-1)" class="w-14 h-14 bg-gray-100 rounded-2xl font-black text-2xl text-gray-600">-</button>
+            <input type="number" id="edit-item-qty" class="w-20 text-center text-4xl font-black outline-none bg-transparent" value="1">
+            <button onclick="ajustarCant(1)" class="w-14 h-14 bg-gray-100 rounded-2xl font-black text-2xl text-gray-600">+</button>
+        </div>
+        <button onclick="guardarCambioItem()" class="btn-magenta w-full py-4 !text-sm">Actualizar Cantidad</button>
+    </div>
+</div>
+
+<div id="menu-container"></div>
+
+<script>
+let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, dinero: 0 };
+let pedidosLocal = [];
+let itemEditando = null;
+
+async function cargarDatos() {
+    const icon = document.getElementById('refresh-icon');
+    icon?.classList.add('rotate-animation');
+    try {
+        const [ventas, clientes] = await Promise.all([
+            DairyAPI.obtenerDatos("Ventas"),
+            DairyAPI.obtenerDatos("Clientes")
+        ]);
+
+        const agrupados = {};
+        ventas.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE").forEach(v => {
+            const idV = v.ID_Venta || "S/N";
+            if (!agrupados[idV]) {
+                agrupados[idV] = {
+                    id: idV, cliente: v.Cliente, total: 0, items: [],
+                    direccion: clientes.find(c => String(c.Nombre).trim().toLowerCase() === String(v.Cliente).trim().toLowerCase())?.Dirección || ""
+                };
+            }
+            const precio = parseFloat(String(v["Precio Total"] || v["Precio_Total"] || 0).replace(',', '.')) || 0;
+            const cant = parseFloat(v.Cantidad) || 0;
+            agrupados[idV].items.push({ producto: v.Producto, cant: cant, precioUnit: cant > 0 ? precio / cant : 0 });
+            agrupados[idV].total += precio;
+        });
+
+        pedidosLocal = Object.values(agrupados).reverse();
+        renderizar();
+        actualizarResumen();
+    } catch (e) { console.error(e); }
+    finally { icon?.classList.remove('rotate-animation'); }
+}
+
 function renderizar() {
     const container = document.getElementById('contenedor-pedidos');
     container.innerHTML = pedidosLocal.length ? "" : '<p class="text-center py-20 text-gray-400 font-bold uppercase text-[10px]">Ruta completada</p>';
     
     pedidosLocal.forEach((ped, idx) => {
-        // Cálculo de cantidades para la ID CARD
-        const numItems = ped.items.length; // Cuántos productos distintos
-        const totalUnidades = ped.items.reduce((acc, it) => acc + it.cant, 0); // Suma de todas las unidades
+        // LÓGICA DE ID CARDS: CONTEO DE ITEMS Y UNIDADES
+        const numItems = ped.items.length;
+        const totalUnidades = ped.items.reduce((acc, it) => acc + it.cant, 0);
 
         const itemsHTML = ped.items.map((it, iIdx) => `
             <div onclick="abrirEditorItem(${idx}, ${iIdx})" class="flex justify-between items-center py-3 border-b border-gray-50 last:border-0 active:bg-purple-50 px-2 rounded-lg">
@@ -16,12 +141,11 @@ function renderizar() {
 
         container.innerHTML += `
             <div id="card-${idx}" class="card-sutil space-y-4">
-                <!-- CABECERA DE LA ID CARD -->
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[9px] font-black bg-purple-100 text-[#a21caf] px-2 py-0.5 rounded-md uppercase">ID: ${ped.id}</span>
-                            <span class="text-[9px] font-black bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md uppercase">
+                            <span class="text-[9px] font-black bg-purple-100 text-[#a21caf] px-2 py-0.5 rounded-md uppercase tracking-tighter">ID: ${ped.id}</span>
+                            <span class="text-[9px] font-black bg-gray-100 text-gray-500 px-2 py-0.5 rounded-md uppercase tracking-tighter">
                                 ${numItems} ${numItems === 1 ? 'ITEM' : 'ITEMS'} (${totalUnidades} UNID.)
                             </span>
                         </div>
@@ -32,21 +156,82 @@ function renderizar() {
                     </button>
                 </div>
 
-                <!-- CUERPO DE LA TARJETA (PRODUCTOS) -->
                 <div class="bg-[#fdfaff] rounded-[1.5rem] p-2 border border-purple-50">
                     ${itemsHTML}
                 </div>
 
-                <!-- PIE DE TARJETA (TOTAL Y ACCIÓN) -->
                 <div class="flex justify-between items-end pt-2 border-t border-dashed border-gray-100">
                     <div>
                         <p class="text-[9px] font-black text-gray-400 uppercase tracking-tighter">Total a Cobrar</p>
                         <p class="text-2xl font-black text-gray-900 leading-none">$${ped.total.toFixed(2)}</p>
                     </div>
-                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="btn-magenta h-14 px-8 shadow-lg">
-                        Entregado
-                    </button>
+                    <button onclick="confirmarEntrega('${ped.id}', ${idx})" class="btn-magenta h-14 px-8 shadow-lg">Entregado</button>
                 </div>
             </div>`;
     });
 }
+
+function elegirMapa(dir) {
+    if(!dir) return alert("Cliente sin dirección.");
+    document.getElementById('modal-mapas').classList.remove('hidden');
+    document.getElementById('btn-gmaps').onclick = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank'); cerrarModal('modal-mapas'); };
+    document.getElementById('btn-waze').onclick = () => { window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`, '_blank'); cerrarModal('modal-mapas'); };
+}
+
+function abrirEditorItem(pedIdx, itemIdx) {
+    itemEditando = { pedIdx, itemIdx };
+    const it = pedidosLocal[pedIdx].items[itemIdx];
+    document.getElementById('edit-item-name').innerText = it.producto;
+    document.getElementById('edit-item-qty').value = it.cant;
+    document.getElementById('modal-editar-item').classList.remove('hidden');
+}
+
+function ajustarCant(val) {
+    const input = document.getElementById('edit-item-qty');
+    input.value = Math.max(0, parseInt(input.value) + val);
+}
+
+function guardarCambioItem() {
+    const nuevaCant = parseInt(document.getElementById('edit-item-qty').value);
+    const ped = pedidosLocal[itemEditando.pedIdx];
+    ped.items[itemEditando.itemIdx].cant = nuevaCant;
+    ped.total = ped.items.reduce((acc, curr) => acc + (curr.cant * curr.precioUnit), 0);
+    cerrarModal('modal-editar-item');
+    renderizar();
+    actualizarResumen();
+}
+
+async function confirmarEntrega(idVenta, idx) {
+    if(!confirm("¿Confirmar entrega?")) return;
+    const card = document.getElementById(`card-${idx}`);
+    card.classList.add('anim-slide-out');
+    try {
+        await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: idVenta, Estado: "ENTREGADO" });
+        statsSesion.pedidos++;
+        statsSesion.dinero += pedidosLocal[idx].total;
+        localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
+        setTimeout(() => { cargarDatos(); }, 600);
+    } catch (e) {
+        alert("Error de conexión");
+        card.classList.remove('anim-slide-out');
+    }
+}
+
+function actualizarResumen() {
+    const pend = pedidosLocal.reduce((acc, curr) => acc + curr.total, 0);
+    document.getElementById('dinero-pend').innerText = `$${pend.toFixed(2)}`;
+    document.getElementById('dinero-ent').innerText = `$${statsSesion.dinero.toFixed(2)}`;
+}
+
+function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
+function filtrar() {
+    const q = document.getElementById('filtroDespacho').value.toLowerCase();
+    pedidosLocal.forEach((p, idx) => {
+        const card = document.getElementById(`card-${idx}`);
+        if(card) card.style.display = (p.cliente.toLowerCase().includes(q)) ? 'block' : 'none';
+    });
+}
+window.onload = cargarDatos;
+</script>
+</body>
+</html>

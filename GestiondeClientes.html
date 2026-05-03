@@ -6,7 +6,6 @@
     <title>Lógica Láctea | Ranking Premium</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <!-- Asegúrate de que estos archivos existan en tu servidor -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
     
@@ -37,14 +36,13 @@
         .card-premium { transition: all 0.3s ease; border: 1px solid rgba(162, 28, 175, 0.05); }
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 10, 25, 0.4); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
         .modal.active { display: flex; }
-        .modal-content { animation: modalSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .modal-content { animation: modalSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); max-height: 90vh; overflow-y: auto; }
         @keyframes modalSlide { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
     </style>
 </head>
 
 <body class="text-slate-800 pb-32">
 
-<!-- HEADER -->
 <header class="fixed top-0 w-full h-20 glass-header flex justify-between items-center px-6 z-50">
     <div class="flex items-center gap-4" onclick="window.location.href='DashboardLacteo.html'" style="cursor:pointer">
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-fuchsia-400 flex items-center justify-center text-white shadow-lg">
@@ -65,7 +63,6 @@
 </header>
 
 <main class="pt-28 px-6 max-w-2xl mx-auto space-y-8">
-    <!-- ESTADÍSTICAS RÁPIDAS -->
     <section class="grid grid-cols-2 gap-4 fade-in">
         <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-fuchsia-50">
             <p class="text-[10px] uppercase font-black tracking-widest text-slate-400">Total Clientes</p>
@@ -77,7 +74,6 @@
         </div>
     </section>
 
-    <!-- LISTADO DINÁMICO -->
     <section id="lista-clientes" class="space-y-4 fade-in">
         <div class="text-center py-10 text-slate-400 font-bold animate-pulse">Cargando ranking...</div>
     </section>
@@ -109,28 +105,34 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">CI / RUC</label>
-                    <input type="text" id="c-ruc" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">CI / RUC (10-13 dígitos)</label>
+                    <input type="text" id="c-ruc" required minlength="10" maxlength="13" pattern="\d{10,13}" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Teléfono</label>
-                    <input type="text" id="c-tel" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Teléfono (09...)</label>
+                    <input type="tel" id="c-tel" required pattern="09\d{8}" maxlength="10" placeholder="0984016027" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
                 </div>
             </div>
 
             <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Dirección</label>
-                <input type="text" id="c-dir" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Dirección Exacta</label>
+                <input type="text" id="c-dir" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Sector</label>
-                    <input type="text" id="c-sector" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                    <select id="c-sector" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                        <option value="">Seleccionar...</option>
+                        <option value="NORTE">NORTE</option>
+                        <option value="SUR">SUR</option>
+                        <option value="CENTRO">CENTRO</option>
+                        <option value="VALLES">VALLES</option>
+                    </select>
                 </div>
                 <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Referencia</label>
-                    <input type="text" id="c-ref" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                    <input type="text" id="c-ref" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
                 </div>
             </div>
 
@@ -163,7 +165,6 @@
 let clientesData = [];
 let esEdicion = false;
 
-// CARGAR DATOS INICIALES
 async function cargarDatos() {
     try {
         const [clientes, ventas] = await Promise.all([
@@ -201,11 +202,9 @@ async function cargarDatos() {
         document.getElementById('total-dinero').innerText = `$${factGlobal.toFixed(2)}`;
     } catch (e) {
         console.error("Error al cargar:", e);
-        document.getElementById('lista-clientes').innerHTML = `<div class="text-center text-red-500 font-bold">Error de conexión con la base de datos</div>`;
     }
 }
 
-// RENDERIZAR TARJETAS
 function renderizar(lista) {
     const container = document.getElementById('lista-clientes');
     if (lista.length === 0) {
@@ -218,27 +217,50 @@ function renderizar(lista) {
         if(index === 1 && c.montoTotal > 0) colorMedalla = "bg-slate-300 text-white shadow-md";
         if(index === 2 && c.montoTotal > 0) colorMedalla = "bg-orange-300 text-white shadow-md";
 
+        // Limpiar teléfono para links
+        const telLimpio = c.Teléfono ? c.Teléfono.replace(/\D/g, '') : "";
+        const telFormateado = telLimpio.startsWith('0') ? '593' + telLimpio.substring(1) : telLimpio;
+
         return `
-            <div class="bg-white p-5 rounded-[2.5rem] card-premium flex items-center gap-5 shadow-sm">
-                <div class="w-16 h-16 rounded-[1.5rem] ${colorMedalla} flex items-center justify-center shrink-0">
-                    <span class="font-black text-xl">${index + 1}</span>
+            <div class="bg-white p-5 rounded-[2.5rem] card-premium flex flex-col gap-4 shadow-sm border border-fuchsia-50">
+                <div class="flex items-center gap-5">
+                    <div class="w-16 h-16 rounded-[1.5rem] ${colorMedalla} flex items-center justify-center shrink-0">
+                        <span class="font-black text-xl">${index + 1}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-extrabold text-slate-900 truncate uppercase text-sm">${c.Nombre}</h3>
+                            <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">${c.Sector || 'S/S'}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl font-black text-secondary">$${c.montoTotal.toFixed(2)}</span>
+                            <span class="text-[9px] font-black bg-fuchsia-50 text-primary px-2 py-0.5 rounded-full uppercase">${c.numVentas} Ventas</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <h3 class="font-extrabold text-slate-900 truncate uppercase text-sm">${c.Nombre}</h3>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl font-black text-secondary">$${c.montoTotal.toFixed(2)}</span>
-                        <span class="text-[9px] font-black bg-fuchsia-50 text-primary px-2 py-0.5 rounded-full uppercase">${c.numVentas} Ventas</span>
-                    </div>
-                    <div class="flex gap-2 mt-3">
-                        <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-fuchsia-50 text-primary font-black text-[9px] uppercase active:scale-95 transition-transform">Historial</button>
-                        <button onclick="abrirModalEditar('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-slate-50 text-slate-500 font-black text-[9px] uppercase active:scale-95 transition-transform">Editar</button>
-                    </div>
+
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-fuchsia-50 text-primary hover:bg-fuchsia-100 transition-colors">
+                        <span class="material-symbols-outlined text-lg">history</span>
+                        <span class="text-[8px] font-bold uppercase">Ventas</span>
+                    </button>
+                    <a href="https://wa.me/${telFormateado}" target="_blank" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-green-50 text-green-600 hover:bg-green-100 transition-colors">
+                        <span class="material-symbols-outlined text-lg">chat</span>
+                        <span class="text-[8px] font-bold uppercase">WhatsApp</span>
+                    </a>
+                    <a href="tel:${telLimpio}" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors">
+                        <span class="material-symbols-outlined text-lg">call</span>
+                        <span class="text-[8px] font-bold uppercase">Llamar</span>
+                    </a>
+                    <button onclick="abrirModalEditar('${c.Nombre.replace(/'/g, "\\'")}')" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-slate-50 text-slate-500 hover:bg-slate-100 transition-colors">
+                        <span class="material-symbols-outlined text-lg">edit</span>
+                        <span class="text-[8px] font-bold uppercase">Perfil</span>
+                    </button>
                 </div>
             </div>`;
     }).join('');
 }
 
-// LÓGICA DE MODALES
 function abrirModalNuevo() {
     esEdicion = false;
     document.getElementById('form-cliente').reset();
@@ -266,23 +288,36 @@ function abrirModalEditar(nombre) {
 
 function cerrarModal() { document.getElementById('modal-cliente').classList.remove('active'); }
 
-// GUARDAR / ACTUALIZAR
 document.getElementById('form-cliente').onsubmit = async (e) => {
     e.preventDefault();
+    
+    // Validaciones extra
+    const ruc = document.getElementById('c-ruc').value;
+    const tel = document.getElementById('c-tel').value;
+    const sector = document.getElementById('c-sector').value;
+
+    if(ruc.length < 10 || ruc.length > 13) return alert("RUC/CI debe tener entre 10 y 13 dígitos");
+    if(!tel.startsWith("09") || tel.length !== 10) return alert("Teléfono inválido. Ejemplo: 0984016027");
+    if(!sector) return alert("Debe seleccionar un sector");
+
     const btn = document.getElementById('btn-guardar');
     btn.disabled = true;
     btn.innerText = "Sincronizando...";
+
+    // Fecha con Hora
+    const ahora = new Date();
+    const fechaHora = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
     const datos = {
         pestaña: "Clientes",
         ID: esEdicion ? document.getElementById('c-id').value : "CL-" + Date.now(),
         Nombre: document.getElementById('c-nombre').value.trim(),
-        CI_RUC: document.getElementById('c-ruc').value.trim(),
-        Teléfono: document.getElementById('c-tel').value.trim(),
+        CI_RUC: ruc,
+        Teléfono: tel,
         Dirección: document.getElementById('c-dir').value.trim(),
         Referencia: document.getElementById('c-ref').value.trim(),
-        Sector: document.getElementById('c-sector').value.trim(),
-        "Fecha Registro": esEdicion ? "" : new Date().toLocaleDateString()
+        Sector: sector,
+        "Fecha Registro": esEdicion ? "" : fechaHora
     };
 
     if(esEdicion) {
@@ -295,47 +330,31 @@ document.getElementById('form-cliente').onsubmit = async (e) => {
         if(res.trim() === "OK") {
             cerrarModal();
             cargarDatos();
-        } else {
-            alert("Respuesta del servidor: " + res);
         }
     } catch (err) {
-        alert("Error de conexión: Verifica api-config.js y los permisos del Script.");
+        alert("Error de conexión");
     } finally {
         btn.disabled = false;
         btn.innerText = "Guardar Cambios";
     }
 };
 
-// ELIMINAR
 async function confirmarEliminar() {
     const nombre = document.getElementById('edit-nombre-original').value;
-    if(confirm(`¿Estás seguro de eliminar a ${nombre}? Esta acción no se puede deshacer.`)) {
+    if(confirm(`¿Estás seguro de eliminar a ${nombre}?`)) {
         try {
-            const res = await DairyAPI.enviarDatos({ 
-                accion: "eliminar_proveedor", 
-                pestaña: "Clientes", 
-                nombre: nombre 
-            });
-            if(res.trim() === "OK") { 
-                cerrarModal(); 
-                cargarDatos(); 
-            } else {
-                alert("No se pudo eliminar: " + res);
-            }
+            const res = await DairyAPI.enviarDatos({ accion: "eliminar_proveedor", pestaña: "Clientes", nombre: nombre });
+            if(res.trim() === "OK") { cerrarModal(); cargarDatos(); }
         } catch (e) { alert("Error de conexión"); }
     }
 }
 
-// HISTORIAL
 function abrirHistorial(nombre) {
     const c = clientesData.find(cli => cli.Nombre === nombre);
     if(!c || !c.pedidos) return;
-    
     document.getElementById('hist-nombre').innerText = c.Nombre;
-    if(c.pedidos.length === 0) {
-        document.getElementById('hist-lista').innerHTML = `<div class="text-center text-slate-400 py-4">Sin historial de ventas</div>`;
-    } else {
-        document.getElementById('hist-lista').innerHTML = c.pedidos.map(p => `
+    document.getElementById('hist-lista').innerHTML = c.pedidos.length === 0 ? `<div class="text-center py-4">Sin ventas</div>` : 
+        c.pedidos.map(p => `
             <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex justify-between items-center">
                 <div>
                     <p class="text-[10px] font-black text-slate-400 uppercase">${p.Fecha || 'Reciente'}</p>
@@ -343,7 +362,6 @@ function abrirHistorial(nombre) {
                 </div>
                 <p class="text-sm font-black text-primary">$${parseFloat(p["Precio Total"] || 0).toFixed(2)}</p>
             </div>`).join('');
-    }
     document.getElementById('modal-historial').classList.add('active');
 }
 

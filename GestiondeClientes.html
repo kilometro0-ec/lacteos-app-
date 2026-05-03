@@ -31,14 +31,14 @@
         .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
         .active-icon { font-variation-settings: 'FILL' 1 !important; }
         body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        /* Ocultar scrollbars */
         ::-webkit-scrollbar { display: none; }
-        
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
         .medal-shadow { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+
+        /* Estilos del Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .modal.active { display: flex; }
     </style>
 </head>
 
@@ -52,7 +52,7 @@
     <h1 class="text-xl font-black text-primary tracking-tight uppercase">Ranking</h1>
   </div>
   <div class="relative">
-      <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar..." class="w-32 focus:w-48 transition-all bg-purple-50 border-none rounded-full px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-primary">
+      <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar cliente..." class="w-32 focus:w-48 transition-all bg-purple-50 border-none rounded-full px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-primary">
   </div>
 </header>
 
@@ -61,12 +61,12 @@
   <!-- INDICADORES PRINCIPALES -->
   <section class="grid grid-cols-2 gap-4 fade-in">
     <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg text-center">
-      <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Clientes Activos</p>
+      <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Clientes Registrados</p>
       <h2 id="total-clientes" class="text-3xl font-black">0</h2>
     </div>
     <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex flex-col justify-center text-center">
-      <p class="text-[10px] text-secondary uppercase font-black tracking-widest">Entregas Totales</p>
-      <h2 id="total-entregas" class="text-3xl font-black text-secondary">0</h2>
+      <p class="text-[10px] text-secondary uppercase font-black tracking-widest">Recaudación Total</p>
+      <h2 id="total-dinero" class="text-3xl font-black text-secondary">$0.00</h2>
     </div>
   </section>
 
@@ -74,17 +74,35 @@
   <section id="lista-clientes" class="space-y-4 fade-in" style="animation-delay: 0.1s;">
       <div class="flex flex-col items-center justify-center py-20 gap-4">
           <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p class="text-gray-400 italic font-bold">Calculando podio de ventas...</p>
+          <p class="text-gray-400 italic font-bold">Analizando historial de ventas...</p>
       </div>
   </section>
-
 </main>
+
+<!-- MODAL DE HISTORIAL DE PEDIDOS -->
+<div id="modal-historial" class="modal" onclick="event.target === this && cerrarModal()">
+    <div class="bg-white w-full max-w-md rounded-[2.5rem] p-6 space-y-4 shadow-2xl scale-in transform transition-transform">
+        <div class="flex justify-between items-center border-b border-gray-50 pb-4">
+            <div>
+                <h2 id="modal-nombre-cliente" class="text-xl font-black text-primary uppercase leading-none">Cargando...</h2>
+                <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">Historial de entregas</p>
+            </div>
+            <button onclick="cerrarModal()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div id="modal-lista-pedidos" class="max-h-[60vh] overflow-y-auto space-y-3 pr-2 custom-scroll">
+            <!-- Los pedidos se cargan aquí -->
+        </div>
+    </div>
+</div>
 
 <div id="menu-container"></div>
 
 <script>
 let clientesData = [];
 
+// CARGA DE DATOS DESDE GOOGLE SHEETS
 async function cargarDatos() {
     try {
         const [clientes, ventas] = await Promise.all([
@@ -92,42 +110,56 @@ async function cargarDatos() {
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
-        // 1. Contar entregas entregadas de forma eficiente (O(n))
-        const conteoVentas = {};
-        let entregasConfirmadas = 0;
+        const statsVentas = {};
+        let facturacionGlobal = 0;
 
+        // 1. Procesar Ventas (Basado en tus columnas: "Cliente", "Estado", "Precio Total")
         if (Array.isArray(ventas)) {
             ventas.forEach(v => {
                 if (String(v.Estado).trim().toUpperCase() === "ENTREGADO") {
-                    const nombreCli = String(v.Cliente).trim().toLowerCase();
-                    conteoVentas[nombreCli] = (conteoVentas[nombreCli] || 0) + 1;
-                    entregasConfirmadas++;
+                    const nombreKey = String(v.Cliente).trim().toLowerCase();
+                    
+                    // Manejo de decimales (Coma a Punto)
+                    const montoRaw = v["Precio Total"] ? v["Precio Total"].toString().replace(',', '.') : "0";
+                    const monto = parseFloat(montoRaw) || 0;
+
+                    if (!statsVentas[nombreKey]) {
+                        statsVentas[nombreKey] = { totalDinero: 0, conteo: 0, historial: [] };
+                    }
+                    
+                    statsVentas[nombreKey].totalDinero += monto;
+                    statsVentas[nombreKey].conteo += 1;
+                    statsVentas[nombreKey].historial.push(v);
+                    facturacionGlobal += monto;
                 }
             });
         }
 
+        // 2. Mapear Clientes
         const rawClientes = Array.isArray(clientes) ? clientes : [];
-        
-        // 2. Mapear datos vinculando el conteo
         clientesData = rawClientes.map(c => {
-            const nombreKey = String(c.Nombre).trim().toLowerCase();
+            const key = String(c.Nombre).trim().toLowerCase();
+            const stats = statsVentas[key] || { totalDinero: 0, conteo: 0, historial: [] };
             return { 
                 ...c, 
-                totalEntregas: conteoVentas[nombreKey] || 0 
+                montoTotal: stats.totalDinero,
+                numVentas: stats.conteo,
+                pedidos: stats.historial 
             };
         });
 
-        // 3. Ordenar: De mayor a menor entregas
-        clientesData.sort((a, b) => b.totalEntregas - a.totalEntregas);
+        // 3. Ordenar por MONTO (Mayor a Menor)
+        clientesData.sort((a, b) => b.montoTotal - a.montoTotal);
 
         renderizarClientes(clientesData);
 
+        // Actualizar indicadores
         document.getElementById('total-clientes').innerText = rawClientes.length;
-        document.getElementById('total-entregas').innerText = entregasConfirmadas;
+        document.getElementById('total-dinero').innerText = `$${facturacionGlobal.toFixed(2)}`;
 
     } catch (e) {
-        console.error("Error al cargar datos:", e);
-        document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-400 font-black">ERROR DE CONEXIÓN</p>`;
+        console.error("Error en carga:", e);
+        document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-500 font-bold py-10 uppercase">Error de conexión con la base de datos</p>`;
     }
 }
 
@@ -136,86 +168,100 @@ function renderizarClientes(lista) {
     container.innerHTML = "";
 
     if(lista.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 font-bold py-10 uppercase text-xs">No hay registros de clientes</p>`;
+        container.innerHTML = `<p class="text-center text-gray-400 font-bold py-10 uppercase text-xs tracking-widest">No se encontraron clientes</p>`;
         return;
     }
 
     lista.forEach((c, index) => {
-        // Lógica de colores para el podio (Top 3)
-        let medalStyle = "bg-purple-50 text-primary"; // Estilo por defecto
+        let medalStyle = "bg-purple-50 text-primary";
         let iconName = "person";
 
-        if (c.totalEntregas > 0) {
-            if (index === 0) { 
-                medalStyle = "bg-yellow-400 text-white medal-shadow scale-105 ring-4 ring-yellow-100"; 
-                iconName = "emoji_events";
-            } else if (index === 1) { 
-                medalStyle = "bg-slate-300 text-white medal-shadow scale-105 ring-4 ring-slate-100"; 
-                iconName = "emoji_events";
-            } else if (index === 2) { 
-                medalStyle = "bg-orange-400 text-white medal-shadow scale-105 ring-4 ring-orange-100"; 
-                iconName = "emoji_events";
-            }
+        if (c.montoTotal > 0) {
+            if (index === 0) { medalStyle = "bg-yellow-400 text-white medal-shadow ring-4 ring-yellow-100 scale-105"; iconName = "workspace_premium"; }
+            else if (index === 1) { medalStyle = "bg-slate-300 text-white medal-shadow ring-4 ring-slate-100 scale-105"; iconName = "workspace_premium"; }
+            else if (index === 2) { medalStyle = "bg-orange-400 text-white medal-shadow ring-4 ring-orange-100 scale-105"; iconName = "workspace_premium"; }
         }
 
-        // Limpiar teléfono para WhatsApp
-        let rawTel = c.Teléfono?.toString() || "";
-        let limpio = rawTel.replace(/\D/g, ''); 
-        if (limpio.startsWith('0')) limpio = limpio.substring(1); 
-        if (limpio.length > 0 && !limpio.startsWith('593')) limpio = '593' + limpio;
-
         container.innerHTML += `
-            <div class="bg-white p-5 rounded-[2.2rem] border border-outline shadow-sm flex items-center gap-4 active:scale-[0.98] transition-all relative overflow-hidden">
+            <div class="bg-white p-5 rounded-[2.2rem] border border-outline shadow-sm flex items-center gap-4 transition-all hover:border-primary/30">
                 
-                <!-- ICONO / MEDALLA -->
-                <div class="w-14 h-14 rounded-2xl ${medalStyle} flex items-center justify-center shrink-0 transition-transform">
+                <div class="w-14 h-14 rounded-2xl ${medalStyle} flex items-center justify-center shrink-0">
                     <span class="material-symbols-outlined text-3xl font-bold">${iconName}</span>
                 </div>
 
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
-                         <h3 class="font-extrabold text-gray-800 leading-tight uppercase text-[13px] truncate">${c.Nombre}</h3>
-                         ${index < 3 && c.totalEntregas > 0 ? '<span class="text-[10px] bg-secondary/10 text-secondary px-2 py-0.5 rounded-full font-black">TOP</span>' : ''}
-                    </div>
+                    <h3 class="font-extrabold text-gray-800 leading-tight uppercase text-[12px] truncate">${c.Nombre}</h3>
                     <div class="flex items-baseline gap-1">
-                        <span class="text-2xl font-black ${index < 3 && c.totalEntregas > 0 ? 'text-secondary' : 'text-primary'}">${c.totalEntregas}</span>
-                        <span class="text-[9px] font-bold text-gray-400 uppercase">Entregas</span>
+                        <span class="text-2xl font-black text-secondary">$${c.montoTotal.toFixed(2)}</span>
                     </div>
                     
-                    <div class="flex gap-2 mt-1">
-                        <a href="https://wa.me/${limpio}" target="_blank" class="flex items-center gap-1 text-[9px] font-black text-green-600 bg-green-50 px-3 py-1.5 rounded-xl uppercase">
-                            <span class="material-symbols-outlined text-xs">chat</span> WhatsApp
-                        </a>
+                    <div class="flex gap-2 mt-2">
+                        <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="text-[9px] font-black text-primary bg-purple-50 px-3 py-1.5 rounded-xl uppercase">
+                             Ventas (${c.numVentas})
+                        </button>
+                        <button onclick="irAEditar('${c.Nombre.replace(/'/g, "\\'")}')" class="text-[9px] font-black text-gray-400 bg-gray-50 px-3 py-1.5 rounded-xl uppercase">
+                            Editar
+                        </button>
                     </div>
                 </div>
 
-                <!-- ACCIONES LADO DERECHO -->
                 <div class="shrink-0 flex flex-col items-center gap-1">
                     <span class="text-[10px] font-black text-gray-300">#${index + 1}</span>
-                    <button onclick="verMapa('${c.Dirección}')" class="w-11 h-11 rounded-2xl bg-purple-50 flex items-center justify-center text-primary active:bg-primary active:text-white transition-colors">
-                        <span class="material-symbols-outlined active-icon text-2xl">location_on</span>
+                    <button onclick="verMapa('${c.Dirección}')" class="w-11 h-11 rounded-2xl bg-purple-50 flex items-center justify-center text-primary active:bg-primary active:text-white">
+                        <span class="material-symbols-outlined text-2xl">location_on</span>
                     </button>
                 </div>
             </div>`;
     });
 }
 
+// FUNCIONES DE INTERACCIÓN
+function abrirHistorial(nombre) {
+    const cliente = clientesData.find(c => c.Nombre === nombre);
+    if (!cliente || cliente.pedidos.length === 0) return alert("Este cliente no tiene compras entregadas todavía.");
+
+    document.getElementById('modal-nombre-cliente').innerText = cliente.Nombre;
+    const lista = document.getElementById('modal-lista-pedidos');
+    lista.innerHTML = "";
+
+    cliente.pedidos.forEach(p => {
+        const totalNum = parseFloat(p["Precio Total"].toString().replace(',', '.')) || 0;
+        lista.innerHTML += `
+            <div class="bg-gray-50 p-4 rounded-3xl border border-gray-100 flex justify-between items-center">
+                <div>
+                    <p class="text-[11px] font-black text-gray-700 uppercase">${p.Producto}</p>
+                    <p class="text-[9px] font-bold text-gray-400 uppercase">Cant: ${p.Cantidad} | ${new Date(p.Fecha).toLocaleDateString()}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm font-black text-primary">$${totalNum.toFixed(2)}</p>
+                </div>
+            </div>`;
+    });
+
+    document.getElementById('modal-historial').classList.add('active');
+}
+
+function cerrarModal() {
+    document.getElementById('modal-historial').classList.remove('active');
+}
+
+function irAEditar(nombre) {
+    // Redirige a tu página de edición enviando el nombre como parámetro
+    window.location.href = `EditarCliente.html?nombre=${encodeURIComponent(nombre)}`;
+}
+
 function filtrarClientes() {
-    const busqueda = document.getElementById('buscador').value.toLowerCase();
-    const filtrados = clientesData.filter(c => 
-        String(c.Nombre).toLowerCase().includes(busqueda)
-    );
+    const query = document.getElementById('buscador').value.toLowerCase();
+    const filtrados = clientesData.filter(c => String(c.Nombre).toLowerCase().includes(query));
     renderizarClientes(filtrados);
 }
 
 function verMapa(dir) {
-    if(!dir || dir === "undefined" || dir.trim() === "") return alert("Dirección no registrada");
+    if(!dir || dir === "undefined") return alert("Sin dirección registrada");
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
 }
 
-window.onload = () => {
-    cargarDatos();
-};
+window.onload = cargarDatos;
 </script>
 </body>
 </html>

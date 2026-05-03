@@ -17,7 +17,7 @@
           theme: {
             extend: {
               colors: {
-                primary: "#a21caf", // Regresamos al Fucsia pero con el estilo Premium
+                primary: "#a21caf", 
                 secondary: "#db2777",
                 surface: "#ffffff",
                 background: "#fdfaff"
@@ -30,21 +30,14 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #fdfaff; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
-        
         .fade-in { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        
         .glass-header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(162, 28, 175, 0.1); }
         .card-premium { transition: all 0.3s ease; border: 1px solid rgba(162, 28, 175, 0.05); }
-        .card-premium:active { transform: scale(0.97); }
-        
         .modal { display: none; position: fixed; inset: 0; background: rgba(15, 10, 25, 0.4); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
         .modal.active { display: flex; }
         .modal-content { animation: modalSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @keyframes modalSlide { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #f5d0fe; border-radius: 10px; }
     </style>
 </head>
 
@@ -53,7 +46,7 @@
 <!-- HEADER -->
 <header class="fixed top-0 w-full h-20 glass-header flex justify-between items-center px-6 z-50">
     <div class="flex items-center gap-4" onclick="window.location.href='DashboardLacteo.html'">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-fuchsia-400 flex items-center justify-center text-white shadow-lg shadow-fuchsia-200">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-fuchsia-400 flex items-center justify-center text-white shadow-lg">
             <span class="material-symbols-outlined text-2xl">workspace_premium</span>
         </div>
         <div>
@@ -71,30 +64,21 @@
 </header>
 
 <main class="pt-28 px-6 max-w-2xl mx-auto space-y-8">
-    
-    <!-- STATS CARDS -->
     <section class="grid grid-cols-2 gap-4 fade-in">
         <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-fuchsia-50">
-            <div class="w-10 h-10 rounded-full bg-fuchsia-50 flex items-center justify-center text-primary mb-3">
-                <span class="material-symbols-outlined text-xl">group</span>
-            </div>
             <p class="text-[10px] uppercase font-black tracking-widest text-slate-400">Total Clientes</p>
             <h2 id="total-clientes" class="text-3xl font-extrabold text-slate-900">0</h2>
         </div>
-        <div class="bg-gradient-to-br from-primary to-fuchsia-600 p-6 rounded-[2.5rem] shadow-xl shadow-fuchsia-100 text-white">
-            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white mb-3">
-                <span class="material-symbols-outlined text-xl">payments</span>
-            </div>
+        <div class="bg-gradient-to-br from-primary to-fuchsia-600 p-6 rounded-[2.5rem] shadow-xl text-white">
             <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Recaudación</p>
             <h2 id="total-dinero" class="text-2xl font-extrabold">$0.00</h2>
         </div>
     </section>
 
-    <!-- LISTA DE CLIENTES -->
     <section id="lista-clientes" class="space-y-4 fade-in"></section>
 </main>
 
-<!-- MODAL FORMULARIO (NUEVO / EDITAR) -->
+<!-- MODAL FORMULARIO -->
 <div id="modal-cliente" class="modal" onclick="event.target === this && cerrarModal()">
     <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl modal-content relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-secondary"></div>
@@ -110,8 +94,10 @@
         </div>
 
         <form id="form-cliente" class="space-y-4">
+            <!-- Campos ocultos para lógica interna -->
             <input type="hidden" id="edit-nombre-original">
-            
+            <input type="hidden" id="c-id">
+
             <div class="space-y-1">
                 <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre Completo</label>
                 <input type="text" id="c-nombre" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
@@ -134,27 +120,33 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <input type="text" id="c-sector" placeholder="Sector" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold">
-                <input type="text" id="c-ref" placeholder="Referencia" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Sector</label>
+                    <input type="text" id="c-sector" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Referencia</label>
+                    <input type="text" id="c-ref" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                </div>
             </div>
 
             <div class="pt-4 space-y-3">
                 <button type="submit" id="btn-guardar" class="w-full py-5 rounded-[2rem] bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
-                    Guardar Cliente
+                    Guardar Cambios
                 </button>
-                <button type="button" id="btn-eliminar" onclick="confirmarEliminar()" class="hidden w-full py-3 text-red-500 font-bold text-[10px] uppercase tracking-widest border border-red-50 rounded-2xl bg-red-50/50">
-                    Eliminar Cliente Definitivamente
+                <button type="button" id="btn-eliminar" onclick="confirmarEliminar()" class="hidden w-full py-3 text-red-500 font-bold text-[10px] uppercase border border-red-50 rounded-2xl bg-red-50/50">
+                    Eliminar Cliente
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- MODAL HISTORIAL -->
+<!-- EL RESTO DE MODALES (HISTORIAL, ETC) SE MANTIENEN IGUAL -->
 <div id="modal-historial" class="modal" onclick="event.target === this && cerrarHistorial()">
     <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl modal-content">
         <h2 id="hist-nombre" class="text-xl font-black text-slate-900 mb-6 uppercase">Ventas</h2>
-        <div id="hist-lista" class="max-h-[50vh] overflow-y-auto space-y-3 custom-scroll pr-2"></div>
+        <div id="hist-lista" class="max-h-[50vh] overflow-y-auto space-y-3 pr-2"></div>
     </div>
 </div>
 
@@ -173,7 +165,6 @@ async function cargarDatos() {
 
         const statsVentas = {};
         let factGlobal = 0;
-
         if (Array.isArray(ventas)) {
             ventas.forEach(v => {
                 if (String(v.Estado).trim().toUpperCase() === "ENTREGADO") {
@@ -203,9 +194,7 @@ async function cargarDatos() {
 function renderizar(lista) {
     const container = document.getElementById('lista-clientes');
     container.innerHTML = lista.map((c, index) => {
-        let colorMedalla = "bg-slate-50 text-slate-400";
-        if (index === 0 && c.montoTotal > 0) colorMedalla = "bg-yellow-400 text-white shadow-lg shadow-yellow-100";
-        
+        let colorMedalla = index === 0 && c.montoTotal > 0 ? "bg-yellow-400 text-white shadow-lg" : "bg-slate-50 text-slate-400";
         return `
             <div class="bg-white p-5 rounded-[2.5rem] card-premium flex items-center gap-5 shadow-sm">
                 <div class="w-16 h-16 rounded-[1.5rem] ${colorMedalla} flex items-center justify-center shrink-0">
@@ -218,15 +207,14 @@ function renderizar(lista) {
                         <span class="text-[9px] font-black bg-fuchsia-50 text-primary px-2 py-0.5 rounded-full uppercase">${c.numVentas} Ventas</span>
                     </div>
                     <div class="flex gap-2 mt-3">
-                        <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-fuchsia-50 text-primary font-black text-[9px] uppercase tracking-wider">Historial</button>
-                        <button onclick="abrirModalEditar('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-slate-50 text-slate-500 font-black text-[9px] uppercase tracking-wider">Editar</button>
+                        <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-fuchsia-50 text-primary font-black text-[9px] uppercase">Historial</button>
+                        <button onclick="abrirModalEditar('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-slate-50 text-slate-500 font-black text-[9px] uppercase">Editar</button>
                     </div>
                 </div>
             </div>`;
     }).join('');
 }
 
-// MODALES
 function abrirModalNuevo() {
     esEdicion = false;
     document.getElementById('form-cliente').reset();
@@ -241,6 +229,7 @@ function abrirModalEditar(nombre) {
     esEdicion = true;
     document.getElementById('modal-titulo').innerText = "Editar Perfil";
     document.getElementById('edit-nombre-original').value = c.Nombre;
+    document.getElementById('c-id').value = c.ID || "";
     document.getElementById('c-nombre').value = c.Nombre;
     document.getElementById('c-ruc').value = c.CI_RUC || "";
     document.getElementById('c-tel').value = c.Teléfono || "";
@@ -257,16 +246,19 @@ document.getElementById('form-cliente').onsubmit = async (e) => {
     e.preventDefault();
     const btn = document.getElementById('btn-guardar');
     btn.disabled = true;
-    btn.innerText = "Guardando...";
+    btn.innerText = "Procesando...";
 
+    // MAPEO EXACTO CON LAS COLUMNAS DE TU HOJA
     const datos = {
         pestaña: "Clientes",
+        ID: esEdicion ? document.getElementById('c-id').value : Date.now(), // Genera un ID si es nuevo
         Nombre: document.getElementById('c-nombre').value,
         CI_RUC: document.getElementById('c-ruc').value,
         Teléfono: document.getElementById('c-tel').value,
         Dirección: document.getElementById('c-dir').value,
+        Referencia: document.getElementById('c-ref').value,
         Sector: document.getElementById('c-sector').value,
-        Referencia: document.getElementById('c-ref').value
+        "Fecha Registro": esEdicion ? "" : new Date().toLocaleDateString()
     };
 
     if(esEdicion) {
@@ -274,10 +266,17 @@ document.getElementById('form-cliente').onsubmit = async (e) => {
         datos.nombreOriginal = document.getElementById('edit-nombre-original').value;
     }
 
-    const res = await DairyAPI.enviarDatos(datos);
-    if(res === "OK") { cerrarModal(); cargarDatos(); }
-    btn.disabled = false;
-    btn.innerText = "Guardar Cliente";
+    try {
+        const res = await DairyAPI.enviarDatos(datos);
+        if(res === "OK") {
+            cerrarModal();
+            cargarDatos();
+        } else { alert("Error: " + res); }
+    } catch (err) { alert("Error de conexión"); }
+    finally {
+        btn.disabled = false;
+        btn.innerText = "Guardar Cambios";
+    }
 };
 
 async function confirmarEliminar() {
@@ -293,7 +292,7 @@ function abrirHistorial(nombre) {
     document.getElementById('hist-nombre').innerText = c.Nombre;
     document.getElementById('hist-lista').innerHTML = c.pedidos.map(p => `
         <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex justify-between items-center">
-            <div><p class="text-[11px] font-black text-slate-800 uppercase">${p.Producto}</p></div>
+            <p class="text-[11px] font-black text-slate-800 uppercase">${p.Producto}</p>
             <p class="text-sm font-black text-primary">$${parseFloat(p["Precio Total"]).toFixed(2)}</p>
         </div>`).join('');
     document.getElementById('modal-historial').classList.add('active');
@@ -303,7 +302,6 @@ function filtrarClientes() {
     const q = document.getElementById('buscador').value.toLowerCase();
     renderizar(clientesData.filter(c => c.Nombre.toLowerCase().includes(q)));
 }
-
 window.onload = cargarDatos;
 </script>
 </body>

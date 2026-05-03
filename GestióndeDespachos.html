@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Ventas Premium - Lógica Láctea</title>
+    <title>Despachos Pro - Lógica Láctea</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
@@ -11,236 +11,306 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <style>
-        body { background-color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; padding-bottom: 120px; }
-        .input-premium { 
-            width: 100%; padding: 1rem; background: #f1f5f9; border: 2px solid transparent; 
-            border-radius: 1.2rem; font-weight: 700; transition: all 0.3s; outline: none;
-        }
-        .input-premium:focus { background: white; border-color: #a21caf; box-shadow: 0 10px 20px -5px rgba(162, 28, 175, 0.1); }
+        body { background-color: #fcfcfd; font-family: 'Plus Jakarta Sans', sans-serif; padding-bottom: 120px; }
         
-        .card-prod { 
-            background: white; border-radius: 1.5rem; padding: 1rem; 
-            display: flex; align-items: center; justify-content: space-between;
-            border: 1px solid #f1f5f9; margin-bottom: 0.75rem;
+        /* Estilo Premium de Tarjetas */
+        .card-premium {
+            background: white; border-radius: 2.5rem; border: 1px solid rgba(0,0,0,0.03);
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.04); transition: all 0.3s ease;
         }
-        .btn-cant { width: 40px; height: 40px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-weight: 800; transition: all 0.2s; }
         
-        #pantalla-carga {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.9); 
-            backdrop-filter: blur(10px); z-index: 9999; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
+        /* Estado Reprogramado */
+        .card-reprogramado {
+            background: #fffbeb; border: 1px solid #fde68a;
+        }
+        .tag-reprogramado { background: #f59e0b; color: white; }
+
+        .btn-icon {
+            width: 44px; height: 44px; border-radius: 1.2rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
         }
 
-        .nav-inferior {
+        /* Glassmorphism Navigation */
+        .nav-glass {
             position: fixed; bottom: 20px; left: 20px; right: 20px;
-            background: #0f172a; border-radius: 2rem; padding: 15px;
-            display: flex; justify-content: space-around; z-index: 1000;
+            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px);
+            border-radius: 2rem; border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 12px; z-index: 1000;
         }
+
+        .modal-blur {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(8px); z-index: 2000; display: none;
+            align-items: flex-end;
+        }
+        .sheet-bottom {
+            background: white; width: 100%; border-radius: 3rem 3rem 0 0;
+            padding: 30px; animation: slideUp 0.4s cubic-bezier(0, 1, 0, 1);
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<div id="pantalla-carga">
-    <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-    <p class="font-black text-slate-800 uppercase text-xs tracking-widest">Sincronizando...</p>
-</div>
-
-<header class="p-6 pt-10">
-    <h1 class="text-3xl font-800 text-slate-900 tracking-tighter italic">VENTAS<span class="text-primary">.</span></h1>
-    <p id="display-id" class="text-[10px] font-800 text-slate-400 mt-1 uppercase tracking-widest"></p>
+<!-- Header Minimalista -->
+<header class="px-6 pt-10 pb-6 flex justify-between items-end">
+    <div>
+        <p class="text-[10px] font-800 text-slate-400 uppercase tracking-widest">Logística Pro</p>
+        <h1 class="text-3xl font-800 text-slate-900 tracking-tighter">Rutas de hoy</h1>
+    </div>
+    <button onclick="cargarDatos()" class="btn-icon bg-slate-900 text-white shadow-lg shadow-slate-200">
+        <span id="refresh-icon" class="material-symbols-outlined text-xl">sync</span>
+    </button>
 </header>
 
-<main class="px-6 space-y-6">
-    <!-- SECCIÓN CLIENTE -->
-    <section class="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
-        <div class="flex justify-between items-center mb-4">
-            <span class="text-[10px] font-800 text-slate-400 uppercase">Cliente</span>
-            <button onclick="alternarNuevoCliente()" class="text-[10px] font-800 text-primary uppercase underline">Nuevo +</button>
-        </div>
-        
-        <select id="select-cliente" class="input-premium mb-4">
-            <option value="">SELECCIONAR CLIENTE</option>
-        </select>
-
-        <div id="form-nuevo-cliente" class="hidden space-y-3 pt-4 border-t border-slate-50">
-            <input type="text" id="nc-nombre" placeholder="NOMBRE COMPLETO" class="input-premium text-xs">
-            <input type="number" id="nc-ruc" placeholder="RUC / CÉDULA" class="input-premium text-xs">
-            <button onclick="guardarNuevoCliente()" class="w-full py-4 bg-primary text-white bg-fuchsia-600 rounded-2xl font-800 text-xs uppercase">Registrar Cliente</button>
-        </div>
-    </section>
-
-    <!-- LISTA PRODUCTOS -->
-    <section>
-        <div class="relative mb-4">
-            <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">search</span>
-            <input type="text" id="buscador" oninput="filtrar()" placeholder="Buscar producto..." class="input-premium pl-12 text-xs">
-        </div>
-        <div id="lista-productos"></div>
-    </section>
-</main>
-
-<!-- CARRITO FLOTANTE -->
-<div class="fixed bottom-32 left-6 right-6 bg-white p-6 rounded-[2.5rem] shadow-2xl border border-slate-100 z-50">
-    <div class="flex justify-between items-end mb-4">
-        <div>
-            <p class="text-[10px] font-800 text-slate-400 uppercase">Total Pedido</p>
-            <p id="total-dinero" class="text-4xl font-800 text-slate-900 leading-none">$0.00</p>
-        </div>
-        <input type="date" id="fecha-entrega" class="bg-slate-50 border-none rounded-xl text-[10px] font-800 p-2">
+<!-- Resumen Estadístico -->
+<div class="px-6 grid grid-cols-2 gap-4 mb-8">
+    <div class="bg-indigo-50 p-5 rounded-[2rem] border border-indigo-100">
+        <p id="cont-pend" class="text-2xl font-800 text-indigo-700">0</p>
+        <p class="text-[9px] font-800 text-indigo-400 uppercase tracking-wider">Pendientes</p>
     </div>
-    <button onclick="finalizarVenta()" class="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-800 uppercase text-xs tracking-widest shadow-xl shadow-slate-300">Confirmar Venta</button>
+    <div class="bg-emerald-50 p-5 rounded-[2rem] border border-emerald-100">
+        <p id="cont-ent" class="text-2xl font-800 text-emerald-700">0</p>
+        <p class="text-[9px] font-800 text-emerald-400 uppercase tracking-wider">Completados</p>
+    </div>
 </div>
 
+<main id="contenedor-pedidos" class="px-6 space-y-6"></main>
+
+<!-- MODAL DE EDICIÓN (BOTTOM SHEET) -->
+<div id="modal-edit" class="modal-blur" onclick="cerrarEdicion()">
+    <div class="sheet-bottom" onclick="event.stopPropagation()">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
+        <h2 class="text-xl font-800 text-slate-900 mb-1">Editar Pedido</h2>
+        <p id="edit-id-display" class="text-xs font-bold text-primary mb-6"></p>
+
+        <div class="space-y-4">
+            <!-- Reprogramar Fecha -->
+            <div>
+                <label class="text-[10px] font-800 text-slate-400 uppercase mb-2 block">Nueva Fecha de Entrega</label>
+                <input type="date" id="edit-fecha" class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700">
+            </div>
+
+            <!-- Listado de productos actual para borrar/editar -->
+            <div id="edit-productos-list" class="space-y-2 max-h-40 overflow-y-auto py-2">
+                <!-- Se llena dinámicamente -->
+            </div>
+
+            <!-- Agregar Producto -->
+            <button onclick="mostrarAgregar()" class="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-xs uppercase">
+                + Agregar Producto
+            </button>
+        </div>
+
+        <div class="flex gap-3 mt-8">
+            <button onclick="cerrarEdicion()" class="flex-1 py-4 font-800 text-slate-400 uppercase text-xs">Cancelar</button>
+            <button onclick="guardarCambiosPedido()" class="flex-1 py-4 bg-primary bg-slate-900 text-white rounded-2xl font-800 uppercase text-xs shadow-xl">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- NAVEGACIÓN -->
+<div id="menu-container"></div>
+
 <script>
-let inventario = [];
-let carrito = {};
-let idVentaGlobal = "";
+let pedidosLocal = [];
+let pedidoEnEdicion = null;
+let productosDB = [];
 
-async function inicializar() {
-    idVentaGlobal = "V-" + Date.now().toString().slice(-6);
-    document.getElementById('display-id').innerText = "ID VENTA: " + idVentaGlobal;
-    document.getElementById('fecha-entrega').valueAsDate = new Date();
-
+async function cargarDatos() {
+    const icon = document.getElementById('refresh-icon');
+    icon?.classList.add('animate-spin');
     try {
-        const [resInv, resCli] = await Promise.all([
-            DairyAPI.obtenerDatos("Inventario"),
-            DairyAPI.obtenerDatos("Clientes")
+        const [ventas, clientes, inventario] = await Promise.all([
+            DairyAPI.obtenerDatos("Ventas"),
+            DairyAPI.obtenerDatos("Clientes"),
+            DairyAPI.obtenerDatos("Inventario")
         ]);
-
-        inventario = resInv;
         
-        // Cargar Clientes
-        const select = document.getElementById('select-cliente');
-        resCli.sort((a,b) => a.Nombre.localeCompare(b.Nombre)).forEach(c => {
-            let opt = document.createElement('option');
-            opt.value = c.Nombre;
-            opt.innerText = c.Nombre;
-            select.appendChild(opt);
+        productosDB = inventario;
+        const agrupados = {};
+        
+        ventas.forEach(v => {
+            const estado = String(v.Estado_Entrega || v.Estado || "").trim().toUpperCase();
+            if (estado === "PENDIENTE" || estado === "REPROGRAMADO") {
+                const idV = v.ID_Venta;
+                if (!agrupados[idV]) {
+                    agrupados[idV] = {
+                        id: idV, 
+                        cliente: v.Cliente, 
+                        total: 0, 
+                        items: [],
+                        fecha: v.Fecha_Entrega,
+                        estado: estado,
+                        direccion: clientes.find(c => c.Nombre === v.Cliente)?.Dirección || "Sin dirección"
+                    };
+                }
+                const subtotal = parseFloat(v.Cantidad) * parseFloat(v.Precio_PVP || 0);
+                agrupados[idV].items.push({ ...v, subtotal });
+                agrupados[idV].total += subtotal;
+            }
         });
 
-        renderizarProductos();
-    } catch (e) {
-        alert("Error cargando base de datos");
-    }
+        pedidosLocal = Object.values(agrupados).reverse();
+        renderizar();
+    } catch (e) { console.error(e); }
+    finally { icon?.classList.remove('animate-spin'); }
 }
 
-function renderizarProductos() {
-    const contenedor = document.getElementById('lista-productos');
-    contenedor.innerHTML = "";
-    
-    inventario.forEach(p => {
-        const cant = carrito[p.Producto] || 0;
-        contenedor.innerHTML += `
-            <div class="card-prod" data-name="${p.Producto.toLowerCase()}">
-                <div class="flex-1">
-                    <p class="text-xs font-800 text-slate-800 uppercase">${p.Producto}</p>
-                    <p class="text-[10px] font-700 text-primary mt-0.5">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
+function renderizar() {
+    const container = document.getElementById('contenedor-pedidos');
+    document.getElementById('cont-pend').innerText = pedidosLocal.length;
+    container.innerHTML = "";
+
+    pedidosLocal.forEach((ped) => {
+        const esRepro = ped.estado === "REPROGRAMADO";
+        container.innerHTML += `
+            <div class="card-premium p-6 ${esRepro ? 'card-reprogramado' : ''}">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[9px] font-800 uppercase tracking-widest text-slate-400">ID: ${ped.id}</span>
+                            ${esRepro ? '<span class="text-[8px] font-900 bg-amber-500 text-white px-2 py-0.5 rounded-full uppercase">REPROGRAMADO</span>' : ''}
+                        </div>
+                        <h2 class="text-xl font-800 text-slate-800 uppercase leading-tight">${ped.cliente}</h2>
+                        <p class="text-[10px] text-slate-400 font-bold mt-1 uppercase"><span class="material-symbols-outlined text-[12px] align-middle">calendar_month</span> Entrega: ${ped.fecha}</p>
+                    </div>
+                    <div class="flex gap-2">
+                         <button onclick="abrirEdicion('${ped.id}')" class="btn-icon bg-slate-100 text-slate-600">
+                            <span class="material-symbols-outlined">edit_square</span>
+                        </button>
+                        <button onclick="abrirMapa('${ped.direccion}')" class="btn-icon bg-blue-50 text-blue-600">
+                            <span class="material-symbols-outlined">directions</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3 bg-slate-50 p-1 rounded-xl">
-                    <button onclick="updateCant('${p.Producto}', -1)" class="btn-cant bg-white text-slate-400 shadow-sm">-</button>
-                    <span class="w-4 text-center font-800 text-xs">${cant}</span>
-                    <button onclick="updateCant('${p.Producto}', 1)" class="btn-cant bg-slate-900 text-white shadow-md">+</button>
+
+                <div class="space-y-2 mb-6">
+                    ${ped.items.map(it => `
+                        <div class="flex justify-between text-xs font-bold text-slate-500 italic">
+                            <span>${it.Producto} <span class="text-slate-300">x${it.Cantidad}</span></span>
+                            <span class="text-slate-800">$${parseFloat(it.subtotal).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                    <p class="text-3xl font-800 text-slate-900 leading-none">$${ped.total.toFixed(2)}</p>
+                    <button onclick="marcarEntregado('${ped.id}')" class="h-14 px-8 bg-emerald-600 text-white rounded-2xl font-800 uppercase text-xs shadow-lg shadow-emerald-100 active:scale-95 transition-transform">
+                        Entregado
+                    </button>
                 </div>
             </div>
         `;
     });
 }
 
-function updateCant(nombre, cambio) {
-    const p = inventario.find(i => i.Producto === nombre);
-    const actual = carrito[nombre] || 0;
-    const nuevo = actual + cambio;
-
-    if (nuevo >= 0) {
-        if (cambio > 0 && nuevo > parseInt(p.Stock)) {
-            return alert("Stock insuficiente (" + p.Stock + " disp.)");
-        }
-        carrito[nombre] = nuevo;
-        renderizarProductos();
-        calcularTotal();
-    }
+// LÓGICA DE EDICIÓN
+function abrirEdicion(id) {
+    pedidoEnEdicion = JSON.parse(JSON.stringify(pedidosLocal.find(p => p.id === id)));
+    document.getElementById('edit-id-display').innerText = `EDITANDO PEDIDO: ${id}`;
+    document.getElementById('edit-fecha').value = pedidoEnEdicion.fecha;
+    
+    renderizarItemsEdicion();
+    document.getElementById('modal-edit').style.display = 'flex';
 }
 
-function calcularTotal() {
-    let total = 0;
-    Object.keys(carrito).forEach(nombre => {
-        const p = inventario.find(i => i.Producto === nombre);
-        total += (carrito[nombre] * parseFloat(p.Precio_Venta));
+function renderizarItemsEdicion() {
+    const list = document.getElementById('edit-productos-list');
+    list.innerHTML = "";
+    pedidoEnEdicion.items.forEach((it, index) => {
+        list.innerHTML += `
+            <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl">
+                <div class="flex-1">
+                    <p class="text-[11px] font-800 text-slate-700 uppercase">${it.Producto}</p>
+                    <p class="text-[10px] text-slate-400 font-bold">$${it.Precio_PVP} c/u</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" value="${it.Cantidad}" onchange="actualizarCantItem(${index}, this.value)" class="w-12 h-10 text-center bg-white border-none rounded-xl font-800 text-xs">
+                    <button onclick="eliminarItemEdicion(${index})" class="text-red-400 p-2"><span class="material-symbols-outlined">delete</span></button>
+                </div>
+            </div>
+        `;
     });
-    document.getElementById('total-dinero').innerText = "$" + total.toFixed(2);
 }
 
-async function finalizarVenta() {
-    const cliente = document.getElementById('select-cliente').value;
-    const fechaEnt = document.getElementById('fecha-entrega').value;
-    const items = Object.keys(carrito).filter(n => carrito[n] > 0);
+function actualizarCantItem(index, val) {
+    pedidoEnEdicion.items[index].Cantidad = val;
+}
 
-    if (!cliente) return alert("Selecciona un cliente");
-    if (items.length === 0) return alert("Agrega productos");
+function eliminarItemEdicion(index) {
+    pedidoEnEdicion.items.splice(index, 1);
+    renderizarItemsEdicion();
+}
 
-    document.getElementById('pantalla-carga').style.display = 'flex';
+function cerrarEdicion() { document.getElementById('modal-edit').style.display = 'none'; }
 
+async function guardarCambiosPedido() {
+    const nuevaFecha = document.getElementById('edit-fecha').value;
+    const esReprogramado = nuevaFecha !== pedidoEnEdicion.fecha;
+    
+    // Mostramos cargando
+    const btn = event.target;
+    btn.innerText = "SINCRONIZANDO...";
+    
     try {
-        for (const nombre of items) {
-            const p = inventario.find(i => i.Producto === nombre);
-            const cantidad = carrito[nombre];
-            const pvp = parseFloat(p.Precio_Venta);
-            const total = cantidad * pvp;
+        // 1. Primero eliminamos todos los registros anteriores de ese ID_Venta
+        // OJO: Esto depende de si tu API soporta eliminar por ID_Venta
+        await DairyAPI.enviarDatos({ pestaña: "Ventas", accion: "ELIMINAR_PEDIDO_ID", ID_Venta: pedidoEnEdicion.id });
 
-            // ESTE OBJETO SIGUE TU HOJA DE EXCEL EXACTAMENTE
-            const payload = {
+        // 2. Insertamos los nuevos (o actualizados)
+        for(let item of pedidoEnEdicion.items) {
+            await DairyAPI.enviarDatos({
                 pestaña: "Ventas",
-                ID_Venta: idVentaGlobal,
-                Fecha: new Date().toLocaleDateString(),
-                Cliente: cliente,
-                Producto: nombre,
-                Cantidad: cantidad,
-                "Precio PVP": pvp, // IMPORTANTE: El nombre debe ser idéntico al encabezado
-                "Precio Total": total,
-                Estado: "PENDIENTE",
-                Fecha_Entrega: fechaEnt
-            };
-
-            await DairyAPI.enviarDatos(payload);
+                ID_Venta: pedidoEnEdicion.id,
+                Cliente: pedidoEnEdicion.cliente,
+                Producto: item.Producto,
+                Cantidad: item.Cantidad,
+                Precio_PVP: item.Precio_PVP,
+                Fecha_Entrega: nuevaFecha,
+                Estado_Entrega: esReprogramado ? "REPROGRAMADO" : "PENDIENTE"
+            });
         }
         
-        alert("VENTA GUARDADA CORRECTAMENTE");
-        location.reload();
-    } catch (e) {
-        alert("Error al guardar");
-        document.getElementById('pantalla-carga').style.display = 'none';
-    }
+        cerrarEdicion();
+        cargarDatos();
+    } catch(e) { alert("Error al guardar cambios"); }
 }
 
-function filtrar() {
-    const q = document.getElementById('buscador').value.toLowerCase();
-    document.querySelectorAll('.card-prod').forEach(card => {
-        card.style.display = card.dataset.name.includes(q) ? 'flex' : 'none';
+function abrirMapa(dir) {
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
+}
+
+async function marcarEntregado(id) {
+    if(!confirm("¿Confirmar entrega y cobro?")) return;
+    try {
+        // Enviar actualización de estado a la fila(s) con ese ID
+        await DairyAPI.enviarDatos({ pestaña: "Ventas", accion: "MARCAR_ENTREGADO", ID_Venta: id });
+        cargarDatos();
+    } catch(e) { alert("Error"); }
+}
+
+function renderMenu() {
+    const container = document.getElementById('menu-container');
+    const opciones = [
+        { nombre: 'Panel', icon: 'dashboard', link: 'DashboardLacteo.html' },
+        { nombre: 'Ventas', icon: 'add_shopping_cart', link: 'Ventas.html' },
+        { nombre: 'Rutas', icon: 'local_shipping', link: 'Rutas.html' }
+    ];
+    let html = '<nav class="nav-glass flex justify-around items-center">';
+    opciones.forEach(opt => {
+        const esActivo = window.location.pathname.includes(opt.link) ? 'text-indigo-600' : 'text-slate-400';
+        html += `
+            <button onclick="location.href='${opt.link}'" class="flex flex-col items-center gap-1">
+                <span class="material-symbols-outlined ${esActivo}">${opt.icon}</span>
+                <span class="text-[8px] font-800 uppercase tracking-tighter ${esActivo}">${opt.nombre}</span>
+            </button>`;
     });
+    container.innerHTML = html + '</nav>';
 }
 
-function alternarNuevoCliente() {
-    document.getElementById('form-nuevo-cliente').classList.toggle('hidden');
-}
-
-async function guardarNuevoCliente() {
-    const nombre = document.getElementById('nc-nombre').value.toUpperCase();
-    const ruc = document.getElementById('nc-ruc').value;
-    if (!nombre || !ruc) return alert("Completa los datos");
-
-    await DairyAPI.enviarDatos({
-        pestaña: "Clientes",
-        ID: "C-" + Date.now().toString().slice(-4),
-        Nombre: nombre,
-        CI_RUC: ruc,
-        "Fecha Registro": new Date().toLocaleDateString()
-    });
-    alert("Cliente registrado");
-    location.reload();
-}
-
-window.onload = inicializar;
+window.onload = () => { cargarDatos(); renderMenu(); };
 </script>
-
 </body>
 </html>

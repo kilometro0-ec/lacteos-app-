@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Lógica Láctea | Ranking de Clientes</title>
+    <title>Lógica Láctea | Ranking Premium</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
     <script>
@@ -17,10 +17,11 @@
           theme: {
             extend: {
               colors: {
-                primary: "#a21caf",
-                secondary: "#db2777",
-                background: "#faf5ff",
-                outline: "#e9d5ff"
+                primary: "#7e22ce", // Púrpura más profundo
+                secondary: "#be185d", // Rosa fuerte
+                accent: "#f5d0fe",
+                surface: "#ffffff",
+                background: "#fdfaff"
               }
             }
           }
@@ -28,72 +29,152 @@
     </script>
 
     <style>
-        .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-        .active-icon { font-variation-settings: 'FILL' 1 !important; }
-        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        ::-webkit-scrollbar { display: none; }
-        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .medal-shadow { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
-
-        /* Estilos del Modal */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #fdfaff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+        
+        /* Animaciones */
+        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Glassmorphism & Shadows */
+        .glass-header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(126, 34, 206, 0.1); }
+        .card-premium { transition: all 0.3s ease; border: 1px solid rgba(126, 34, 206, 0.05); }
+        .card-premium:active { transform: scale(0.97); }
+        
+        /* Modales */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 10, 25, 0.4); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
         .modal.active { display: flex; }
+        .modal-content { animation: modalSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalSlide { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e9d5ff; border-radius: 10px; }
     </style>
 </head>
 
-<body class="bg-background text-gray-900 pb-40">
+<body class="text-slate-800 pb-32">
 
-<header class="fixed top-0 w-full h-16 bg-white border-b border-outline flex justify-between items-center px-4 shadow-sm z-50">
-  <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='DashboardLacteo.html'">
-    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold">
-        <span class="material-symbols-outlined text-3xl active-icon">workspace_premium</span>
+<!-- HEADER -->
+<header class="fixed top-0 w-full h-20 glass-header flex justify-between items-center px-6 z-50">
+    <div class="flex items-center gap-4" onclick="window.location.href='DashboardLacteo.html'">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-purple-400 flex items-center justify-center text-white shadow-lg shadow-purple-200">
+            <span class="material-symbols-outlined text-2xl">leaderboard</span>
+        </div>
+        <div>
+            <h1 class="text-lg font-extrabold tracking-tight text-slate-900 leading-none">RANKING</h1>
+            <p class="text-[10px] font-bold text-primary tracking-widest uppercase opacity-60">Lógica Láctea</p>
+        </div>
     </div>
-    <h1 class="text-xl font-black text-primary tracking-tight uppercase">Ranking</h1>
-  </div>
-  <div class="relative">
-      <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar cliente..." class="w-32 focus:w-48 transition-all bg-purple-50 border-none rounded-full px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-primary">
-  </div>
+    <div class="relative group">
+        <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar cliente..." 
+            class="w-36 focus:w-56 transition-all duration-300 bg-purple-50/50 border-1 border-purple-100 rounded-2xl px-4 py-2.5 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20">
+    </div>
 </header>
 
-<main class="pt-20 px-4 max-w-7xl mx-auto space-y-6">
-  
-  <!-- INDICADORES PRINCIPALES -->
-  <section class="grid grid-cols-2 gap-4 fade-in">
-    <div class="bg-primary p-5 rounded-[2rem] text-white shadow-lg text-center">
-      <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Clientes Registrados</p>
-      <h2 id="total-clientes" class="text-3xl font-black">0</h2>
-    </div>
-    <div class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm flex flex-col justify-center text-center">
-      <p class="text-[10px] text-secondary uppercase font-black tracking-widest">Recaudación Total</p>
-      <h2 id="total-dinero" class="text-3xl font-black text-secondary">$0.00</h2>
-    </div>
-  </section>
+<main class="pt-28 px-6 max-w-2xl mx-auto space-y-8">
+    
+    <!-- STATS CARDS -->
+    <section class="grid grid-cols-2 gap-4 fade-in">
+        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-purple-50">
+            <div class="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-primary mb-3">
+                <span class="material-symbols-outlined text-xl">group</span>
+            </div>
+            <p class="text-[10px] uppercase font-black tracking-widest text-slate-400">Clientes</p>
+            <h2 id="total-clientes" class="text-3xl font-extrabold text-slate-900">0</h2>
+        </div>
+        <div class="bg-gradient-to-br from-primary to-purple-600 p-6 rounded-[2.5rem] shadow-xl shadow-purple-100 text-white">
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white mb-3">
+                <span class="material-symbols-outlined text-xl">payments</span>
+            </div>
+            <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Recaudación</p>
+            <h2 id="total-dinero" class="text-2xl font-extrabold">$0.00</h2>
+        </div>
+    </section>
 
-  <!-- LISTA DE RANKING -->
-  <section id="lista-clientes" class="space-y-4 fade-in" style="animation-delay: 0.1s;">
-      <div class="flex flex-col items-center justify-center py-20 gap-4">
-          <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-          <p class="text-gray-400 italic font-bold">Analizando historial de ventas...</p>
-      </div>
-  </section>
+    <!-- LIST TITLE -->
+    <div class="flex justify-between items-center px-2">
+        <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Top Facturación</h3>
+        <span class="w-12 h-1 bg-purple-100 rounded-full"></span>
+    </div>
+
+    <!-- LISTA DE CLIENTES -->
+    <section id="lista-clientes" class="space-y-4 fade-in" style="animation-delay: 0.1s;">
+        <!-- Skeleton / Loading -->
+        <div class="text-center py-20">
+            <div class="inline-block w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            <p class="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Sincronizando...</p>
+        </div>
+    </section>
 </main>
 
-<!-- MODAL DE HISTORIAL DE PEDIDOS -->
-<div id="modal-historial" class="modal" onclick="event.target === this && cerrarModal()">
-    <div class="bg-white w-full max-w-md rounded-[2.5rem] p-6 space-y-4 shadow-2xl scale-in transform transition-transform">
-        <div class="flex justify-between items-center border-b border-gray-50 pb-4">
+<!-- MODAL EDITOR (NUEVO) -->
+<div id="modal-editor" class="modal" onclick="event.target === this && cerrarModalEditor()">
+    <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl modal-content relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-secondary"></div>
+        
+        <div class="flex justify-between items-start mb-6">
             <div>
-                <h2 id="modal-nombre-cliente" class="text-xl font-black text-primary uppercase leading-none">Cargando...</h2>
-                <p class="text-[10px] font-bold text-gray-400 uppercase mt-1">Historial de entregas</p>
+                <h2 class="text-2xl font-black text-slate-900">Editar Perfil</h2>
+                <p class="text-xs font-bold text-primary uppercase">Información del Cliente</p>
             </div>
-            <button onclick="cerrarModal()" class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+            <button onclick="cerrarModalEditor()" class="w-10 h-10 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <div id="modal-lista-pedidos" class="max-h-[60vh] overflow-y-auto space-y-3 pr-2 custom-scroll">
-            <!-- Los pedidos se cargan aquí -->
+
+        <form id="form-editar" class="space-y-4">
+            <input type="hidden" id="edit-nombre-original">
+            
+            <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre Completo</label>
+                <input type="text" id="edit-nombre" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">CI / RUC</label>
+                    <input type="text" id="edit-ruc" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Teléfono</label>
+                    <input type="text" id="edit-tel" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                </div>
+            </div>
+
+            <div class="space-y-1">
+                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Dirección Exacta</label>
+                <input type="text" id="edit-dir" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Sector</label>
+                    <input type="text" id="edit-sector" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Referencia</label>
+                    <input type="text" id="edit-ref" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                </div>
+            </div>
+
+            <button type="submit" id="btn-guardar" class="w-full py-5 rounded-[2rem] bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3 mt-4">
+                <span>Guardar Cambios</span>
+                <span class="material-symbols-outlined text-sm">task_alt</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL HISTORIAL -->
+<div id="modal-historial" class="modal" onclick="event.target === this && cerrarModalHistorial()">
+    <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl modal-content relative">
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="modal-nombre-cliente" class="text-xl font-black text-slate-900 uppercase">Historial</h2>
+            <button onclick="cerrarModalHistorial()" class="w-10 h-10 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
+        <div id="modal-lista-pedidos" class="max-h-[50vh] overflow-y-auto space-y-3 pr-2 custom-scroll"></div>
     </div>
 </div>
 
@@ -102,7 +183,6 @@
 <script>
 let clientesData = [];
 
-// CARGA DE DATOS DESDE GOOGLE SHEETS
 async function cargarDatos() {
     try {
         const [clientes, ventas] = await Promise.all([
@@ -113,20 +193,16 @@ async function cargarDatos() {
         const statsVentas = {};
         let facturacionGlobal = 0;
 
-        // 1. Procesar Ventas (Basado en tus columnas: "Cliente", "Estado", "Precio Total")
         if (Array.isArray(ventas)) {
             ventas.forEach(v => {
                 if (String(v.Estado).trim().toUpperCase() === "ENTREGADO") {
                     const nombreKey = String(v.Cliente).trim().toLowerCase();
-                    
-                    // Manejo de decimales (Coma a Punto)
                     const montoRaw = v["Precio Total"] ? v["Precio Total"].toString().replace(',', '.') : "0";
                     const monto = parseFloat(montoRaw) || 0;
 
                     if (!statsVentas[nombreKey]) {
                         statsVentas[nombreKey] = { totalDinero: 0, conteo: 0, historial: [] };
                     }
-                    
                     statsVentas[nombreKey].totalDinero += monto;
                     statsVentas[nombreKey].conteo += 1;
                     statsVentas[nombreKey].historial.push(v);
@@ -135,31 +211,21 @@ async function cargarDatos() {
             });
         }
 
-        // 2. Mapear Clientes
         const rawClientes = Array.isArray(clientes) ? clientes : [];
         clientesData = rawClientes.map(c => {
-            const key = String(c.Nombre).trim().toLowerCase();
-            const stats = statsVentas[key] || { totalDinero: 0, conteo: 0, historial: [] };
-            return { 
-                ...c, 
-                montoTotal: stats.totalDinero,
-                numVentas: stats.conteo,
-                pedidos: stats.historial 
-            };
+            const stats = statsVentas[String(c.Nombre).trim().toLowerCase()] || { totalDinero: 0, conteo: 0, historial: [] };
+            return { ...c, montoTotal: stats.totalDinero, numVentas: stats.conteo, pedidos: stats.historial };
         });
 
-        // 3. Ordenar por MONTO (Mayor a Menor)
         clientesData.sort((a, b) => b.montoTotal - a.montoTotal);
-
         renderizarClientes(clientesData);
 
-        // Actualizar indicadores
         document.getElementById('total-clientes').innerText = rawClientes.length;
         document.getElementById('total-dinero').innerText = `$${facturacionGlobal.toFixed(2)}`;
 
     } catch (e) {
-        console.error("Error en carga:", e);
-        document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-500 font-bold py-10 uppercase">Error de conexión con la base de datos</p>`;
+        console.error(e);
+        document.getElementById('lista-clientes').innerHTML = `<p class="text-center text-red-500 font-bold py-10">Error de conexión</p>`;
     }
 }
 
@@ -167,95 +233,116 @@ function renderizarClientes(lista) {
     const container = document.getElementById('lista-clientes');
     container.innerHTML = "";
 
-    if(lista.length === 0) {
-        container.innerHTML = `<p class="text-center text-gray-400 font-bold py-10 uppercase text-xs tracking-widest">No se encontraron clientes</p>`;
-        return;
-    }
-
     lista.forEach((c, index) => {
-        let medalStyle = "bg-purple-50 text-primary";
-        let iconName = "person";
-
+        let medalColor = "bg-slate-50 text-slate-400";
         if (c.montoTotal > 0) {
-            if (index === 0) { medalStyle = "bg-yellow-400 text-white medal-shadow ring-4 ring-yellow-100 scale-105"; iconName = "workspace_premium"; }
-            else if (index === 1) { medalStyle = "bg-slate-300 text-white medal-shadow ring-4 ring-slate-100 scale-105"; iconName = "workspace_premium"; }
-            else if (index === 2) { medalStyle = "bg-orange-400 text-white medal-shadow ring-4 ring-orange-100 scale-105"; iconName = "workspace_premium"; }
+            if (index === 0) medalColor = "bg-yellow-400 text-white shadow-lg shadow-yellow-100";
+            else if (index === 1) medalColor = "bg-slate-300 text-white shadow-lg shadow-slate-100";
+            else if (index === 2) medalColor = "bg-orange-400 text-white shadow-lg shadow-orange-100";
         }
 
         container.innerHTML += `
-            <div class="bg-white p-5 rounded-[2.2rem] border border-outline shadow-sm flex items-center gap-4 transition-all hover:border-primary/30">
-                
-                <div class="w-14 h-14 rounded-2xl ${medalStyle} flex items-center justify-center shrink-0">
-                    <span class="material-symbols-outlined text-3xl font-bold">${iconName}</span>
+            <div class="bg-white p-5 rounded-[2.5rem] card-premium flex items-center gap-5 shadow-sm hover:shadow-md transition-all">
+                <div class="w-16 h-16 rounded-[1.5rem] ${medalColor} flex items-center justify-center shrink-0">
+                    <span class="font-black text-xl">${index + 1}</span>
                 </div>
 
                 <div class="flex-1 min-w-0">
-                    <h3 class="font-extrabold text-gray-800 leading-tight uppercase text-[12px] truncate">${c.Nombre}</h3>
-                    <div class="flex items-baseline gap-1">
-                        <span class="text-2xl font-black text-secondary">$${c.montoTotal.toFixed(2)}</span>
+                    <h3 class="font-extrabold text-slate-900 leading-none truncate mb-1">${c.Nombre}</h3>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-black text-secondary">$${c.montoTotal.toFixed(2)}</span>
+                        <span class="text-[9px] font-black bg-purple-50 text-primary px-2 py-0.5 rounded-full uppercase">${c.numVentas} Pedidos</span>
                     </div>
                     
-                    <div class="flex gap-2 mt-2">
-                        <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="text-[9px] font-black text-primary bg-purple-50 px-3 py-1.5 rounded-xl uppercase">
-                             Ventas (${c.numVentas})
-                        </button>
-                        <button onclick="irAEditar('${c.Nombre.replace(/'/g, "\\'")}')" class="text-[9px] font-black text-gray-400 bg-gray-50 px-3 py-1.5 rounded-xl uppercase">
-                            Editar
-                        </button>
+                    <div class="flex gap-2 mt-3">
+                        <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-purple-50 text-primary font-black text-[9px] uppercase tracking-wider">Historial</button>
+                        <button onclick="abrirEditor('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-slate-50 text-slate-500 font-black text-[9px] uppercase tracking-wider">Editar</button>
                     </div>
                 </div>
 
-                <div class="shrink-0 flex flex-col items-center gap-1">
-                    <span class="text-[10px] font-black text-gray-300">#${index + 1}</span>
-                    <button onclick="verMapa('${c.Dirección}')" class="w-11 h-11 rounded-2xl bg-purple-50 flex items-center justify-center text-primary active:bg-primary active:text-white">
-                        <span class="material-symbols-outlined text-2xl">location_on</span>
-                    </button>
-                </div>
+                <button onclick="verMapa('${c.Dirección}')" class="w-12 h-12 rounded-2xl bg-purple-50 text-primary flex items-center justify-center active:scale-90 transition-transform">
+                    <span class="material-symbols-outlined text-2xl">map</span>
+                </button>
             </div>`;
     });
 }
 
-// FUNCIONES DE INTERACCIÓN
+// LÓGICA DEL EDITOR
+function abrirEditor(nombre) {
+    const c = clientesData.find(cli => cli.Nombre === nombre);
+    if(!c) return;
+
+    document.getElementById('edit-nombre-original').value = c.Nombre;
+    document.getElementById('edit-nombre').value = c.Nombre;
+    document.getElementById('edit-ruc').value = c.CI_RUC || "";
+    document.getElementById('edit-tel').value = c.Teléfono || "";
+    document.getElementById('edit-dir').value = c.Dirección || "";
+    document.getElementById('edit-sector').value = c.Sector || "";
+    document.getElementById('edit-ref').value = c.Referencia || "";
+    
+    document.getElementById('modal-editor').classList.add('active');
+}
+
+function cerrarModalEditor() { document.getElementById('modal-editor').classList.remove('active'); }
+
+document.getElementById('form-editar').onsubmit = async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btn-guardar');
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = `<div class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>`;
+    btn.disabled = true;
+
+    const datos = {
+        accion: "editar_cliente",
+        pestaña: "Clientes",
+        nombreOriginal: document.getElementById('edit-nombre-original').value,
+        Nombre: document.getElementById('edit-nombre').value,
+        CI_RUC: document.getElementById('edit-ruc').value,
+        Teléfono: document.getElementById('edit-tel').value,
+        Dirección: document.getElementById('edit-dir').value,
+        Sector: document.getElementById('edit-sector').value,
+        Referencia: document.getElementById('edit-ref').value
+    };
+
+    try {
+        const res = await DairyAPI.enviarDatos(datos);
+        if (res === "OK") {
+            cerrarModalEditor();
+            await cargarDatos(); // Recargar lista
+        } else {
+            alert("Error al actualizar: " + res);
+        }
+    } catch (err) {
+        alert("Error de conexión");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+};
+
+// OTROS
 function abrirHistorial(nombre) {
-    const cliente = clientesData.find(c => c.Nombre === nombre);
-    if (!cliente || cliente.pedidos.length === 0) return alert("Este cliente no tiene compras entregadas todavía.");
-
-    document.getElementById('modal-nombre-cliente').innerText = cliente.Nombre;
+    const c = clientesData.find(cli => cli.Nombre === nombre);
+    document.getElementById('modal-nombre-cliente').innerText = c.Nombre;
     const lista = document.getElementById('modal-lista-pedidos');
-    lista.innerHTML = "";
-
-    cliente.pedidos.forEach(p => {
-        const totalNum = parseFloat(p["Precio Total"].toString().replace(',', '.')) || 0;
-        lista.innerHTML += `
-            <div class="bg-gray-50 p-4 rounded-3xl border border-gray-100 flex justify-between items-center">
-                <div>
-                    <p class="text-[11px] font-black text-gray-700 uppercase">${p.Producto}</p>
-                    <p class="text-[9px] font-bold text-gray-400 uppercase">Cant: ${p.Cantidad} | ${new Date(p.Fecha).toLocaleDateString()}</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-sm font-black text-primary">$${totalNum.toFixed(2)}</p>
-                </div>
-            </div>`;
-    });
-
+    lista.innerHTML = c.pedidos.map(p => `
+        <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex justify-between items-center">
+            <div>
+                <p class="text-[11px] font-black text-slate-800 uppercase">${p.Producto}</p>
+                <p class="text-[9px] font-bold text-slate-400 uppercase">${new Date(p.Fecha).toLocaleDateString()}</p>
+            </div>
+            <p class="text-sm font-black text-primary">$${parseFloat(p["Precio Total"].toString().replace(',','.')).toFixed(2)}</p>
+        </div>
+    `).join('');
     document.getElementById('modal-historial').classList.add('active');
 }
 
-function cerrarModal() {
-    document.getElementById('modal-historial').classList.remove('active');
-}
-
-function irAEditar(nombre) {
-    // Redirige a tu página de edición enviando el nombre como parámetro
-    window.location.href = `EditarCliente.html?nombre=${encodeURIComponent(nombre)}`;
-}
-
+function cerrarModalHistorial() { document.getElementById('modal-historial').classList.remove('active'); }
 function filtrarClientes() {
-    const query = document.getElementById('buscador').value.toLowerCase();
-    const filtrados = clientesData.filter(c => String(c.Nombre).toLowerCase().includes(query));
-    renderizarClientes(filtrados);
+    const q = document.getElementById('buscador').value.toLowerCase();
+    renderizarClientes(clientesData.filter(c => c.Nombre.toLowerCase().includes(q)));
 }
-
 function verMapa(dir) {
     if(!dir || dir === "undefined") return alert("Sin dirección registrada");
     window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');

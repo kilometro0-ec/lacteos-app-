@@ -3,245 +3,244 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Rutas - Lógica Láctea</title>
+    <title>Ventas Premium - Lógica Láctea</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <style>
-        body { background-color: #f8fafc; padding-bottom: 90px; font-family: sans-serif; }
+        body { background-color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; padding-bottom: 120px; }
+        .input-premium { 
+            width: 100%; padding: 1rem; background: #f1f5f9; border: 2px solid transparent; 
+            border-radius: 1.2rem; font-weight: 700; transition: all 0.3s; outline: none;
+        }
+        .input-premium:focus { background: white; border-color: #a21caf; box-shadow: 0 10px 20px -5px rgba(162, 28, 175, 0.1); }
         
-        .card-pro {
-            background: white; border-radius: 2rem; border: 1px solid #f1f5f9;
-            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05); overflow: hidden;
+        .card-prod { 
+            background: white; border-radius: 1.5rem; padding: 1rem; 
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid #f1f5f9; margin-bottom: 0.75rem;
+        }
+        .btn-cant { width: 40px; height: 40px; border-radius: 1rem; display: flex; align-items: center; justify-content: center; font-weight: 800; transition: all 0.2s; }
+        
+        #pantalla-carga {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.9); 
+            backdrop-filter: blur(10px); z-index: 9999; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
         }
 
-        /* GOTA DE UBICACIÓN AZUL */
-        .btn-mapa-azul {
-            background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;
-            border-radius: 1.2rem; width: 48px; height: 48px; display: flex;
-            align-items: center; justify-content: center; transition: all 0.2s;
+        .nav-inferior {
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            background: #0f172a; border-radius: 2rem; padding: 15px;
+            display: flex; justify-content: space-around; z-index: 1000;
         }
-        .btn-mapa-azul:active { background-color: #2563eb; color: white; }
-
-        .btn-verde {
-            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-            color: white; font-weight: 900; text-transform: uppercase;
-            border-radius: 1.2rem;
-        }
-
-        /* NAVEGACIÓN ESTILO FINO */
-        .nav-fija { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-top: 1px solid #f3e8ff; padding: 10px 0 14px 0; z-index: 9999; }
-        .menu-grid { max-width: 500px; margin: 0 auto; display: flex; justify-content: space-around; }
-        .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #94a3b8; background: none; border: none; }
-        .nav-btn .material-symbols-outlined { font-size: 22px !important; font-variation-settings: 'wght' 300; }
-        .nav-btn span:last-child { font-size: 8px !important; font-weight: 800; text-transform: uppercase; }
-        .active-btn { color: #a21caf !important; }
-
-        /* MODALES */
-        .modal-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 25px; }
-        .modal-box { background: white; width: 100%; max-width: 300px; border-radius: 2.5rem; padding: 30px; text-align: center; animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
-<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-20 bg-white/80 backdrop-blur-sm border-b border-purple-50">
-    <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#a21caf] to-[#db2777] flex items-center justify-center text-white shadow-md">
-            <span class="material-symbols-outlined font-black">local_shipping</span>
-        </div>
-        <h1 class="font-black text-slate-800 tracking-tight">DESPACHOS</h1>
-    </div>
-    <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
-        <span id="refresh-icon" class="material-symbols-outlined text-slate-500">sync</span>
-    </button>
+<div id="pantalla-carga">
+    <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+    <p class="font-black text-slate-800 uppercase text-xs tracking-widest">Sincronizando...</p>
+</div>
+
+<header class="p-6 pt-10">
+    <h1 class="text-3xl font-800 text-slate-900 tracking-tighter italic">VENTAS<span class="text-primary">.</span></h1>
+    <p id="display-id" class="text-[10px] font-800 text-slate-400 mt-1 uppercase tracking-widest"></p>
 </header>
 
-<main class="pt-24 px-5 max-w-lg mx-auto space-y-6">
-    <div class="grid grid-cols-2 gap-4">
-        <div class="bg-white p-5 rounded-[2rem] border border-orange-50 text-center">
-            <p id="cont-pend" class="text-3xl font-black text-orange-500">0</p>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Pendientes</p>
+<main class="px-6 space-y-6">
+    <!-- SECCIÓN CLIENTE -->
+    <section class="bg-white p-6 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-[10px] font-800 text-slate-400 uppercase">Cliente</span>
+            <button onclick="alternarNuevoCliente()" class="text-[10px] font-800 text-primary uppercase underline">Nuevo +</button>
         </div>
-        <div class="bg-white p-5 rounded-[2rem] border border-green-50 text-center">
-            <p id="cont-ent" class="text-3xl font-black text-green-500">0</p>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Entregados</p>
+        
+        <select id="select-cliente" class="input-premium mb-4">
+            <option value="">SELECCIONAR CLIENTE</option>
+        </select>
+
+        <div id="form-nuevo-cliente" class="hidden space-y-3 pt-4 border-t border-slate-50">
+            <input type="text" id="nc-nombre" placeholder="NOMBRE COMPLETO" class="input-premium text-xs">
+            <input type="number" id="nc-ruc" placeholder="RUC / CÉDULA" class="input-premium text-xs">
+            <button onclick="guardarNuevoCliente()" class="w-full py-4 bg-primary text-white bg-fuchsia-600 rounded-2xl font-800 text-xs uppercase">Registrar Cliente</button>
         </div>
-    </div>
-    <div id="contenedor-pedidos" class="space-y-6 pb-20"></div>
+    </section>
+
+    <!-- LISTA PRODUCTOS -->
+    <section>
+        <div class="relative mb-4">
+            <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400">search</span>
+            <input type="text" id="buscador" oninput="filtrar()" placeholder="Buscar producto..." class="input-premium pl-12 text-xs">
+        </div>
+        <div id="lista-productos"></div>
+    </section>
 </main>
 
-<!-- MODAL SELECTOR DE MAPAS -->
-<div id="modal-mapas" class="modal-custom" onclick="cerrarModal('modal-mapas')">
-    <div class="modal-box" onclick="event.stopPropagation()">
-        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
-            <span class="material-symbols-outlined text-3xl">map</span>
+<!-- CARRITO FLOTANTE -->
+<div class="fixed bottom-32 left-6 right-6 bg-white p-6 rounded-[2.5rem] shadow-2xl border border-slate-100 z-50">
+    <div class="flex justify-between items-end mb-4">
+        <div>
+            <p class="text-[10px] font-800 text-slate-400 uppercase">Total Pedido</p>
+            <p id="total-dinero" class="text-4xl font-800 text-slate-900 leading-none">$0.00</p>
         </div>
-        <h3 class="font-black text-slate-800 text-lg mb-6">¿Qué navegador prefieres?</h3>
-        <div class="grid gap-3">
-            <button id="btn-gmaps" class="w-full py-4 bg-[#4285F4] text-white rounded-2xl font-black uppercase text-xs">Google Maps</button>
-            <button id="btn-waze" class="w-full py-4 bg-[#33CCFF] text-white rounded-2xl font-black uppercase text-xs">Waze</button>
-        </div>
+        <input type="date" id="fecha-entrega" class="bg-slate-50 border-none rounded-xl text-[10px] font-800 p-2">
     </div>
+    <button onclick="finalizarVenta()" class="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-800 uppercase text-xs tracking-widest shadow-xl shadow-slate-300">Confirmar Venta</button>
 </div>
-
-<!-- MODAL CONFIRMACIÓN ACCIONES -->
-<div id="modal-confirm" class="modal-custom">
-    <div class="modal-box">
-        <div id="confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
-        <h3 id="confirm-title" class="font-black text-slate-800 text-lg leading-tight mb-2"></h3>
-        <p id="confirm-text" class="text-slate-500 text-[11px] mb-6"></p>
-        <div class="flex gap-3">
-            <button onclick="cerrarModal('modal-confirm')" class="flex-1 py-3 font-black text-slate-400 text-xs uppercase">No</button>
-            <button id="confirm-ok" class="flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase shadow-lg">Confirmar</button>
-        </div>
-    </div>
-</div>
-
-<div id="menu-container"></div>
 
 <script>
-let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, dinero: 0 };
-let pedidosLocal = [];
+let inventario = [];
+let carrito = {};
+let idVentaGlobal = "";
 
-async function cargarDatos() {
-    const icon = document.getElementById('refresh-icon');
-    icon?.classList.add('animate-spin');
+async function inicializar() {
+    idVentaGlobal = "V-" + Date.now().toString().slice(-6);
+    document.getElementById('display-id').innerText = "ID VENTA: " + idVentaGlobal;
+    document.getElementById('fecha-entrega').valueAsDate = new Date();
+
     try {
-        const [ventas, clientes] = await Promise.all([
-            DairyAPI.obtenerDatos("Ventas"),
+        const [resInv, resCli] = await Promise.all([
+            DairyAPI.obtenerDatos("Inventario"),
             DairyAPI.obtenerDatos("Clientes")
         ]);
-        const agrupados = {};
-        ventas.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE").forEach(v => {
-            const idV = v.ID_Venta || "S/N";
-            if (!agrupados[idV]) {
-                agrupados[idV] = {
-                    id: idV, cliente: v.Cliente, total: 0, items: [],
-                    direccion: clientes.find(c => String(c.Nombre).trim().toLowerCase() === String(v.Cliente).trim().toLowerCase())?.Dirección || ""
-                };
-            }
-            const precio = parseFloat(String(v["Precio Total"] || 0).replace(',', '.')) || 0;
-            // Guardamos el ID_Fila o el identificador único que use tu API para poder borrar luego
-            agrupados[idV].items.push({ idFila: v.ID_Venta, producto: v.Producto, cant: v.Cantidad, precio: precio });
-            agrupados[idV].total += precio;
+
+        inventario = resInv;
+        
+        // Cargar Clientes
+        const select = document.getElementById('select-cliente');
+        resCli.sort((a,b) => a.Nombre.localeCompare(b.Nombre)).forEach(c => {
+            let opt = document.createElement('option');
+            opt.value = c.Nombre;
+            opt.innerText = c.Nombre;
+            select.appendChild(opt);
         });
-        pedidosLocal = Object.values(agrupados).reverse();
-        renderizar();
-    } catch (e) { console.error(e); }
-    finally { icon?.classList.remove('animate-spin'); }
-}
 
-function renderizar() {
-    const container = document.getElementById('contenedor-pedidos');
-    document.getElementById('cont-pend').innerText = pedidosLocal.length;
-    document.getElementById('cont-ent').innerText = statsSesion.pedidos;
-    
-    container.innerHTML = pedidosLocal.length ? "" : '<div class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">Ruta Finalizada</div>';
-    
-    pedidosLocal.forEach((ped, idx) => {
-        container.innerHTML += `
-            <div class="card-pro p-6 space-y-5">
-                <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <span class="bg-purple-50 text-[#a21caf] text-[10px] font-black px-2 py-1 rounded-lg">ID: ${ped.id}</span>
-                        <h2 class="text-xl font-black text-slate-800 uppercase mt-2">${ped.cliente}</h2>
-                    </div>
-                    <button onclick="abrirSelectorMapas('${ped.direccion}')" class="btn-mapa-azul">
-                        <span class="material-symbols-outlined text-2xl">location_on</span>
-                    </button>
-                </div>
-                <div class="bg-slate-50/50 rounded-2xl p-3">
-                    ${ped.items.map((it, iIdx) => `
-                        <div class="flex justify-between items-center py-2.5 px-2 border-b border-white last:border-0">
-                            <span class="text-xs font-bold text-slate-600 uppercase">${it.producto} <span class="text-purple-400 ml-1">x${it.cant}</span></span>
-                            <button onclick="askDelete(${idx}, ${iIdx})" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-400 rounded-xl">
-                                <span class="material-symbols-outlined text-sm">delete</span>
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="flex justify-between items-center pt-2">
-                    <p class="text-3xl font-black text-slate-900">$${ped.total.toFixed(2)}</p>
-                    <button onclick="askEntrega('${ped.id}', ${idx})" class="btn-verde px-8 h-14 shadow-lg shadow-green-100">ENTREGADO</button>
-                </div>
-            </div>`;
-    });
-}
-
-function abrirSelectorMapas(dir) {
-    if(!dir) return alert("Sin dirección");
-    document.getElementById('modal-mapas').style.display = 'flex';
-    document.getElementById('btn-gmaps').onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`);
-    document.getElementById('btn-waze').onclick = () => window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`);
-}
-
-function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
-
-function showConfirm(title, text, type, onOk) {
-    const modal = document.getElementById('modal-confirm');
-    const iconBox = document.getElementById('confirm-icon');
-    const okBtn = document.getElementById('confirm-ok');
-    document.getElementById('confirm-title').innerText = title;
-    document.getElementById('confirm-text').innerText = text;
-    modal.style.display = 'flex';
-
-    if(type === 'delete') {
-        iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-50 text-red-500";
-        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">delete</span>';
-        okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-red-500";
-    } else {
-        iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-50 text-green-500";
-        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">check</span>';
-        okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-green-600";
+        renderizarProductos();
+    } catch (e) {
+        alert("Error cargando base de datos");
     }
-    okBtn.onclick = () => { onOk(); cerrarModal('modal-confirm'); };
 }
 
-function askDelete(pIdx, iIdx) {
-    const it = pedidosLocal[pIdx].items[iIdx];
-    showConfirm("¿Eliminar producto?", "Se borrará permanentemente de la base de datos.", "delete", async () => {
-        try {
-            // AQUÍ LA LÓGICA DE ELIMINACIÓN REAL EN SHEETS
-            // Dependiendo de tu API, puede ser "eliminar_fila" o cambiar estado a "ELIMINADO"
-            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "eliminar_item", ID_Venta: it.idFila });
-            cargarDatos(); // Recargamos para que el total se actualice desde la nube
-        } catch (e) { alert("Error al borrar"); }
+function renderizarProductos() {
+    const contenedor = document.getElementById('lista-productos');
+    contenedor.innerHTML = "";
+    
+    inventario.forEach(p => {
+        const cant = carrito[p.Producto] || 0;
+        contenedor.innerHTML += `
+            <div class="card-prod" data-name="${p.Producto.toLowerCase()}">
+                <div class="flex-1">
+                    <p class="text-xs font-800 text-slate-800 uppercase">${p.Producto}</p>
+                    <p class="text-[10px] font-700 text-primary mt-0.5">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
+                </div>
+                <div class="flex items-center gap-3 bg-slate-50 p-1 rounded-xl">
+                    <button onclick="updateCant('${p.Producto}', -1)" class="btn-cant bg-white text-slate-400 shadow-sm">-</button>
+                    <span class="w-4 text-center font-800 text-xs">${cant}</span>
+                    <button onclick="updateCant('${p.Producto}', 1)" class="btn-cant bg-slate-900 text-white shadow-md">+</button>
+                </div>
+            </div>
+        `;
     });
 }
 
-function askEntrega(id, idx) {
-    showConfirm("¿Entregado?", "Se registrará como cobrado.", "success", async () => {
-        try {
-            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: id, Estado: "ENTREGADO" });
-            statsSesion.pedidos++;
-            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
-            cargarDatos();
-        } catch (e) { alert("Error"); }
+function updateCant(nombre, cambio) {
+    const p = inventario.find(i => i.Producto === nombre);
+    const actual = carrito[nombre] || 0;
+    const nuevo = actual + cambio;
+
+    if (nuevo >= 0) {
+        if (cambio > 0 && nuevo > parseInt(p.Stock)) {
+            return alert("Stock insuficiente (" + p.Stock + " disp.)");
+        }
+        carrito[nombre] = nuevo;
+        renderizarProductos();
+        calcularTotal();
+    }
+}
+
+function calcularTotal() {
+    let total = 0;
+    Object.keys(carrito).forEach(nombre => {
+        const p = inventario.find(i => i.Producto === nombre);
+        total += (carrito[nombre] * parseFloat(p.Precio_Venta));
+    });
+    document.getElementById('total-dinero').innerText = "$" + total.toFixed(2);
+}
+
+async function finalizarVenta() {
+    const cliente = document.getElementById('select-cliente').value;
+    const fechaEnt = document.getElementById('fecha-entrega').value;
+    const items = Object.keys(carrito).filter(n => carrito[n] > 0);
+
+    if (!cliente) return alert("Selecciona un cliente");
+    if (items.length === 0) return alert("Agrega productos");
+
+    document.getElementById('pantalla-carga').style.display = 'flex';
+
+    try {
+        for (const nombre of items) {
+            const p = inventario.find(i => i.Producto === nombre);
+            const cantidad = carrito[nombre];
+            const pvp = parseFloat(p.Precio_Venta);
+            const total = cantidad * pvp;
+
+            // ESTE OBJETO SIGUE TU HOJA DE EXCEL EXACTAMENTE
+            const payload = {
+                pestaña: "Ventas",
+                ID_Venta: idVentaGlobal,
+                Fecha: new Date().toLocaleDateString(),
+                Cliente: cliente,
+                Producto: nombre,
+                Cantidad: cantidad,
+                "Precio PVP": pvp, // IMPORTANTE: El nombre debe ser idéntico al encabezado
+                "Precio Total": total,
+                Estado: "PENDIENTE",
+                Fecha_Entrega: fechaEnt
+            };
+
+            await DairyAPI.enviarDatos(payload);
+        }
+        
+        alert("VENTA GUARDADA CORRECTAMENTE");
+        location.reload();
+    } catch (e) {
+        alert("Error al guardar");
+        document.getElementById('pantalla-carga').style.display = 'none';
+    }
+}
+
+function filtrar() {
+    const q = document.getElementById('buscador').value.toLowerCase();
+    document.querySelectorAll('.card-prod').forEach(card => {
+        card.style.display = card.dataset.name.includes(q) ? 'flex' : 'none';
     });
 }
 
-function renderMenu() {
-    const container = document.getElementById('menu-container');
-    const opciones = [
-        { nombre: 'Panel', icon: 'dashboard', link: 'DashboardLacteo.html' },
-        { nombre: 'Ventas', icon: 'add_shopping_cart', link: 'RegistrodeVentas.html' },
-        { nombre: 'Stock', icon: 'inventory', link: 'ControldeInventario.html' },
-        { nombre: 'Clientes', icon: 'group', link: 'GestiondeClientes.html' },
-        { nombre: 'Rutas', icon: 'local_shipping', link: 'GestióndeDespachos.html' }
-    ];
-    const pathActual = decodeURIComponent(window.location.pathname);
-    let html = '<nav class="nav-fija"><div class="menu-grid">';
-    opciones.forEach(opt => {
-        const esActivo = pathActual.includes(opt.link) ? 'active-btn' : '';
-        html += `<button onclick="location.href='${opt.link}'" class="nav-btn ${esActivo}"><span class="material-symbols-outlined">${opt.icon}</span><span>${opt.nombre}</span></button>`;
-    });
-    container.innerHTML = html + '</div></nav>';
+function alternarNuevoCliente() {
+    document.getElementById('form-nuevo-cliente').classList.toggle('hidden');
 }
 
-window.onload = () => { cargarDatos(); renderMenu(); };
+async function guardarNuevoCliente() {
+    const nombre = document.getElementById('nc-nombre').value.toUpperCase();
+    const ruc = document.getElementById('nc-ruc').value;
+    if (!nombre || !ruc) return alert("Completa los datos");
+
+    await DairyAPI.enviarDatos({
+        pestaña: "Clientes",
+        ID: "C-" + Date.now().toString().slice(-4),
+        Nombre: nombre,
+        CI_RUC: ruc,
+        "Fecha Registro": new Date().toLocaleDateString()
+    });
+    alert("Cliente registrado");
+    location.reload();
+}
+
+window.onload = inicializar;
 </script>
+
 </body>
 </html>

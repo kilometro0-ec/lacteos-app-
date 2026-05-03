@@ -6,6 +6,7 @@
     <title>Lógica Láctea | Ranking Premium</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Asegúrate de que estos archivos existan en tu servidor -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
     
@@ -45,7 +46,7 @@
 
 <!-- HEADER -->
 <header class="fixed top-0 w-full h-20 glass-header flex justify-between items-center px-6 z-50">
-    <div class="flex items-center gap-4" onclick="window.location.href='DashboardLacteo.html'">
+    <div class="flex items-center gap-4" onclick="window.location.href='DashboardLacteo.html'" style="cursor:pointer">
         <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-fuchsia-400 flex items-center justify-center text-white shadow-lg">
             <span class="material-symbols-outlined text-2xl">workspace_premium</span>
         </div>
@@ -64,6 +65,7 @@
 </header>
 
 <main class="pt-28 px-6 max-w-2xl mx-auto space-y-8">
+    <!-- ESTADÍSTICAS RÁPIDAS -->
     <section class="grid grid-cols-2 gap-4 fade-in">
         <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-fuchsia-50">
             <p class="text-[10px] uppercase font-black tracking-widest text-slate-400">Total Clientes</p>
@@ -75,10 +77,13 @@
         </div>
     </section>
 
-    <section id="lista-clientes" class="space-y-4 fade-in"></section>
+    <!-- LISTADO DINÁMICO -->
+    <section id="lista-clientes" class="space-y-4 fade-in">
+        <div class="text-center py-10 text-slate-400 font-bold animate-pulse">Cargando ranking...</div>
+    </section>
 </main>
 
-<!-- MODAL FORMULARIO -->
+<!-- MODAL FORMULARIO CLIENTE -->
 <div id="modal-cliente" class="modal" onclick="event.target === this && cerrarModal()">
     <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl modal-content relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-secondary"></div>
@@ -94,7 +99,6 @@
         </div>
 
         <form id="form-cliente" class="space-y-4">
-            <!-- Campos ocultos para lógica interna -->
             <input type="hidden" id="edit-nombre-original">
             <input type="hidden" id="c-id">
 
@@ -135,17 +139,20 @@
                     Guardar Cambios
                 </button>
                 <button type="button" id="btn-eliminar" onclick="confirmarEliminar()" class="hidden w-full py-3 text-red-500 font-bold text-[10px] uppercase border border-red-50 rounded-2xl bg-red-50/50">
-                    Eliminar Cliente
+                    Eliminar Cliente Definitivamente
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- EL RESTO DE MODALES (HISTORIAL, ETC) SE MANTIENEN IGUAL -->
+<!-- MODAL HISTORIAL -->
 <div id="modal-historial" class="modal" onclick="event.target === this && cerrarHistorial()">
     <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl modal-content">
-        <h2 id="hist-nombre" class="text-xl font-black text-slate-900 mb-6 uppercase">Ventas</h2>
+        <div class="flex justify-between items-center mb-6">
+            <h2 id="hist-nombre" class="text-xl font-black text-slate-900 uppercase">Ventas</h2>
+            <button onclick="cerrarHistorial()" class="text-slate-400"><span class="material-symbols-outlined">close</span></button>
+        </div>
         <div id="hist-lista" class="max-h-[50vh] overflow-y-auto space-y-3 pr-2"></div>
     </div>
 </div>
@@ -156,6 +163,7 @@
 let clientesData = [];
 let esEdicion = false;
 
+// CARGAR DATOS INICIALES
 async function cargarDatos() {
     try {
         const [clientes, ventas] = await Promise.all([
@@ -165,9 +173,11 @@ async function cargarDatos() {
 
         const statsVentas = {};
         let factGlobal = 0;
+
         if (Array.isArray(ventas)) {
             ventas.forEach(v => {
-                if (String(v.Estado).trim().toUpperCase() === "ENTREGADO") {
+                const estado = String(v.Estado || v.Estado_Entrega || "").trim().toUpperCase();
+                if (estado === "ENTREGADO") {
                     const key = String(v.Cliente).trim().toLowerCase();
                     const monto = parseFloat(v["Precio Total"]?.toString().replace(',', '.')) || 0;
                     if (!statsVentas[key]) statsVentas[key] = { t: 0, c: 0, h: [] };
@@ -186,15 +196,28 @@ async function cargarDatos() {
 
         clientesData.sort((a, b) => b.montoTotal - a.montoTotal);
         renderizar(clientesData);
+        
         document.getElementById('total-clientes').innerText = clientesData.length;
         document.getElementById('total-dinero').innerText = `$${factGlobal.toFixed(2)}`;
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        console.error("Error al cargar:", e);
+        document.getElementById('lista-clientes').innerHTML = `<div class="text-center text-red-500 font-bold">Error de conexión con la base de datos</div>`;
+    }
 }
 
+// RENDERIZAR TARJETAS
 function renderizar(lista) {
     const container = document.getElementById('lista-clientes');
+    if (lista.length === 0) {
+        container.innerHTML = `<div class="text-center py-10 text-slate-400 font-bold">No se encontraron clientes</div>`;
+        return;
+    }
+
     container.innerHTML = lista.map((c, index) => {
         let colorMedalla = index === 0 && c.montoTotal > 0 ? "bg-yellow-400 text-white shadow-lg" : "bg-slate-50 text-slate-400";
+        if(index === 1 && c.montoTotal > 0) colorMedalla = "bg-slate-300 text-white shadow-md";
+        if(index === 2 && c.montoTotal > 0) colorMedalla = "bg-orange-300 text-white shadow-md";
+
         return `
             <div class="bg-white p-5 rounded-[2.5rem] card-premium flex items-center gap-5 shadow-sm">
                 <div class="w-16 h-16 rounded-[1.5rem] ${colorMedalla} flex items-center justify-center shrink-0">
@@ -207,14 +230,15 @@ function renderizar(lista) {
                         <span class="text-[9px] font-black bg-fuchsia-50 text-primary px-2 py-0.5 rounded-full uppercase">${c.numVentas} Ventas</span>
                     </div>
                     <div class="flex gap-2 mt-3">
-                        <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-fuchsia-50 text-primary font-black text-[9px] uppercase">Historial</button>
-                        <button onclick="abrirModalEditar('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-slate-50 text-slate-500 font-black text-[9px] uppercase">Editar</button>
+                        <button onclick="abrirHistorial('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-fuchsia-50 text-primary font-black text-[9px] uppercase active:scale-95 transition-transform">Historial</button>
+                        <button onclick="abrirModalEditar('${c.Nombre.replace(/'/g, "\\'")}')" class="flex-1 py-2.5 rounded-2xl bg-slate-50 text-slate-500 font-black text-[9px] uppercase active:scale-95 transition-transform">Editar</button>
                     </div>
                 </div>
             </div>`;
     }).join('');
 }
 
+// LÓGICA DE MODALES
 function abrirModalNuevo() {
     esEdicion = false;
     document.getElementById('form-cliente').reset();
@@ -242,22 +266,22 @@ function abrirModalEditar(nombre) {
 
 function cerrarModal() { document.getElementById('modal-cliente').classList.remove('active'); }
 
+// GUARDAR / ACTUALIZAR
 document.getElementById('form-cliente').onsubmit = async (e) => {
     e.preventDefault();
     const btn = document.getElementById('btn-guardar');
     btn.disabled = true;
-    btn.innerText = "Procesando...";
+    btn.innerText = "Sincronizando...";
 
-    // MAPEO EXACTO CON LAS COLUMNAS DE TU HOJA
     const datos = {
         pestaña: "Clientes",
-        ID: esEdicion ? document.getElementById('c-id').value : Date.now(), // Genera un ID si es nuevo
-        Nombre: document.getElementById('c-nombre').value,
-        CI_RUC: document.getElementById('c-ruc').value,
-        Teléfono: document.getElementById('c-tel').value,
-        Dirección: document.getElementById('c-dir').value,
-        Referencia: document.getElementById('c-ref').value,
-        Sector: document.getElementById('c-sector').value,
+        ID: esEdicion ? document.getElementById('c-id').value : "CL-" + Date.now(),
+        Nombre: document.getElementById('c-nombre').value.trim(),
+        CI_RUC: document.getElementById('c-ruc').value.trim(),
+        Teléfono: document.getElementById('c-tel').value.trim(),
+        Dirección: document.getElementById('c-dir').value.trim(),
+        Referencia: document.getElementById('c-ref').value.trim(),
+        Sector: document.getElementById('c-sector').value.trim(),
         "Fecha Registro": esEdicion ? "" : new Date().toLocaleDateString()
     };
 
@@ -268,40 +292,68 @@ document.getElementById('form-cliente').onsubmit = async (e) => {
 
     try {
         const res = await DairyAPI.enviarDatos(datos);
-        if(res === "OK") {
+        if(res.trim() === "OK") {
             cerrarModal();
             cargarDatos();
-        } else { alert("Error: " + res); }
-    } catch (err) { alert("Error de conexión"); }
-    finally {
+        } else {
+            alert("Respuesta del servidor: " + res);
+        }
+    } catch (err) {
+        alert("Error de conexión: Verifica api-config.js y los permisos del Script.");
+    } finally {
         btn.disabled = false;
         btn.innerText = "Guardar Cambios";
     }
 };
 
+// ELIMINAR
 async function confirmarEliminar() {
     const nombre = document.getElementById('edit-nombre-original').value;
-    if(confirm(`¿Borrar a ${nombre}?`)) {
-        const res = await DairyAPI.enviarDatos({ accion: "eliminar_proveedor", pestaña: "Clientes", nombre: nombre });
-        if(res === "OK") { cerrarModal(); cargarDatos(); }
+    if(confirm(`¿Estás seguro de eliminar a ${nombre}? Esta acción no se puede deshacer.`)) {
+        try {
+            const res = await DairyAPI.enviarDatos({ 
+                accion: "eliminar_proveedor", 
+                pestaña: "Clientes", 
+                nombre: nombre 
+            });
+            if(res.trim() === "OK") { 
+                cerrarModal(); 
+                cargarDatos(); 
+            } else {
+                alert("No se pudo eliminar: " + res);
+            }
+        } catch (e) { alert("Error de conexión"); }
     }
 }
 
+// HISTORIAL
 function abrirHistorial(nombre) {
     const c = clientesData.find(cli => cli.Nombre === nombre);
+    if(!c || !c.pedidos) return;
+    
     document.getElementById('hist-nombre').innerText = c.Nombre;
-    document.getElementById('hist-lista').innerHTML = c.pedidos.map(p => `
-        <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex justify-between items-center">
-            <p class="text-[11px] font-black text-slate-800 uppercase">${p.Producto}</p>
-            <p class="text-sm font-black text-primary">$${parseFloat(p["Precio Total"]).toFixed(2)}</p>
-        </div>`).join('');
+    if(c.pedidos.length === 0) {
+        document.getElementById('hist-lista').innerHTML = `<div class="text-center text-slate-400 py-4">Sin historial de ventas</div>`;
+    } else {
+        document.getElementById('hist-lista').innerHTML = c.pedidos.map(p => `
+            <div class="bg-slate-50 p-4 rounded-3xl border border-slate-100 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] font-black text-slate-400 uppercase">${p.Fecha || 'Reciente'}</p>
+                    <p class="text-[11px] font-black text-slate-800 uppercase">${p.Producto}</p>
+                </div>
+                <p class="text-sm font-black text-primary">$${parseFloat(p["Precio Total"] || 0).toFixed(2)}</p>
+            </div>`).join('');
+    }
     document.getElementById('modal-historial').classList.add('active');
 }
+
 function cerrarHistorial() { document.getElementById('modal-historial').classList.remove('active'); }
+
 function filtrarClientes() {
     const q = document.getElementById('buscador').value.toLowerCase();
     renderizar(clientesData.filter(c => c.Nombre.toLowerCase().includes(q)));
 }
+
 window.onload = cargarDatos;
 </script>
 </body>

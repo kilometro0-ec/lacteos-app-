@@ -1,157 +1,139 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ranking Clientes | Lógica Láctea</title>
 
+    <!-- Librerías (Mismas que tu inventario) -->
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <link rel="stylesheet" href="estilos-lacteos.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
     <style>
-        :root {
-            --magenta-premium: #db2777;
-            --purple-premium: #a21caf;
-            --bg-premium: #fdfaff;
-        }
-        body { background-color: var(--bg-premium); padding-bottom: 120px; }
-        
-        /* BOTÓN AGREGAR - FORZADO PARA QUE APAREZCA */
-        .btn-float-add {
-            position: fixed;
-            bottom: 100px;
-            right: 24px;
-            width: 60px;
-            height: 60px;
-            background-color: var(--magenta-premium) !important;
-            color: white !important;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 25px rgba(219, 39, 119, 0.4);
-            z-index: 99;
-            border: none;
-            cursor: pointer;
-        }
+      body { 
+        background-color: var(--surface); 
+        padding-bottom: 110px; 
+        -webkit-user-select: none; 
+        user-select: none;
+      }
+      
+      /* ID CARDS SUPERIORES - COPIA EXACTA */
+      .id-card-top {
+        background: white; border-radius: 1.2rem; padding: 12px 5px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        border: 1px solid var(--outline); box-shadow: var(--shadow-sm);
+        transition: all 0.3s ease;
+      }
+      .id-card-top .label { font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 2px; }
+      .id-card-top .value { font-size: 15px; font-weight: 900; color: #1f012a; }
 
-        /* TARJETAS DE ESTADÍSTICAS - VISIBILIDAD TOTAL */
-        .stat-box {
-            padding: 20px;
-            border-radius: 2rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 110px; /* Altura suficiente para que no se corte */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        .stat-box.recaudo {
-            background: linear-gradient(135deg, var(--magenta-premium), #9d174d) !important;
-            color: white !important;
-        }
+      /* PRODUCT CARDS (Adaptadas a Clientes) - COPIA EXACTA */
+      .card-prod { 
+        background: white; border-radius: 1.5rem; border: 1px solid var(--outline); 
+        padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
+        min-height: 145px; position: relative; transition: all 0.2s;
+        cursor: pointer; box-shadow: var(--shadow-sm);
+      }
+      .card-prod:active { transform: scale(0.98); }
+      
+      .prod-title { 
+        font-size: 11px; font-weight: 800; color: #1f012a; 
+        line-height: 1.2; text-transform: uppercase; 
+        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; 
+      }
 
-        .modal { 
-            display: none; position: fixed; inset: 0; 
-            background: rgba(31, 1, 42, 0.7); z-index: 1000; 
-            align-items: center; justify-content: center; padding: 20px; 
-            backdrop-filter: blur(8px); 
-        }
-        .modal.active { display: flex; }
+      /* MODALES - COPIA EXACTA */
+      .modal-custom { 
+        display: none; position: fixed; inset: 0; 
+        background: rgba(31, 1, 42, 0.7); z-index: 1000; 
+        align-items: center; justify-content: center; 
+        padding: 20px; backdrop-filter: blur(8px); 
+      }
+      .modal-custom.active { display: flex; }
     </style>
 </head>
-
 <body>
 
-<!-- CABECERA -->
-<header class="fixed top-0 w-full h-20 bg-white/90 backdrop-blur-md border-b border-purple-100 flex justify-between items-center px-6 z-50">
-    <div class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center text-white shadow-lg">
-            <span class="material-symbols-outlined text-2xl">workspace_premium</span>
-        </div>
-        <div>
-            <h1 class="font-black text-xl text-slate-900 leading-none">RANKING</h1>
-            <p class="text-[10px] font-black text-pink-600 tracking-widest uppercase">CLIENTES PRO</p>
-        </div>
+<!-- HEADER (Estructura idéntica a Inventario) -->
+<header class="fixed top-0 w-full h-16 bg-white/80 backdrop-blur-md border-b border-purple-100 flex justify-between items-center px-4 z-50">
+    <div class="flex flex-col">
+        <h1 id="header-title" class="brand-logo text-xl leading-none">RANKING</h1>
+        <span id="sync-indicator" class="text-[9px] font-black text-orange-500">SINCRONIZANDO...</span>
     </div>
-    <button onclick="window.location.reload()" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center">
-        <span class="material-symbols-outlined">sync</span>
-    </button>
+    <div class="flex gap-3">
+        <button onclick="window.location.reload()" class="text-slate-300 active:rotate-180 transition-transform">
+            <span class="material-symbols-outlined text-3xl">sync</span>
+        </button>
+    </div>
 </header>
 
-<main class="pt-24 px-6 max-w-xl mx-auto">
-    <!-- DASHBOARD CORREGIDO -->
-    <div class="grid grid-cols-2 gap-4 mb-8">
-        <div class="stat-box bg-white border border-purple-100">
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Clientes</p>
-            <h2 id="total-clientes" class="text-3xl font-black text-slate-900">0</h2>
+<main class="pt-20 px-4">
+    <!-- INDICADORES SUPERIORES (Estructura idéntica a Inventario) -->
+    <section id="stats-header" class="grid grid-cols-3 gap-2 mb-6">
+        <div class="id-card-top">
+            <span class="label">Clientes</span>
+            <span id="total-clientes" class="value">0</span>
         </div>
-        <div class="stat-box recaudo">
-            <p class="text-[10px] font-black text-pink-100 uppercase tracking-widest mb-1">Recaudación</p>
-            <h2 id="total-dinero" class="text-2xl font-black">$0.00</h2>
+        <div class="id-card-top border-green-100">
+            <span class="label text-green-500">Recaudado</span>
+            <span id="total-dinero" class="value text-green-700">$0</span>
         </div>
-    </div>
+        <div class="id-card-top">
+            <span class="label">Top</span>
+            <span id="top-nombre" class="value text-[10px] truncate w-full text-center px-1">---</span>
+        </div>
+    </section>
 
     <!-- BUSCADOR -->
     <div class="relative mb-6">
-        <span class="material-symbols-outlined absolute left-4 top-3.5 text-pink-600">search</span>
-        <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar por nombre..." class="w-full pl-12 pr-4 py-3.5 bg-white border-none rounded-2xl shadow-sm focus:ring-2 focus:ring-pink-500 font-bold text-sm">
+        <span class="material-symbols-outlined absolute left-4 top-3.5 text-primary">search</span>
+        <input type="text" id="filtro" oninput="filtrar()" placeholder="Buscar cliente..." class="input-sutil pl-12 bg-white">
     </div>
 
-    <!-- LISTADO -->
-    <div id="lista-clientes" class="space-y-4">
-        <div class="text-center py-20 text-slate-400 animate-pulse">Sincronizando base de datos...</div>
-    </div>
+    <!-- GRID DE PRODUCTOS (Ahora Clientes) -->
+    <div id="grid-productos" class="grid grid-cols-2 gap-3 mb-24"></div>
 </main>
 
-<!-- BOTÓN FLOTANTE AGREGAR (EL QUE NO APARECÍA) -->
-<button onclick="abrirModalNuevo()" class="btn-float-add active:scale-90 transition-transform">
+<!-- BOTÓN AGREGAR -->
+<button onclick="abrirModal('modal-nuevo-prod')" class="fixed bottom-24 right-6 w-14 h-14 bg-magenta text-white rounded-full shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform" style="background: var(--primary);">
     <span class="material-symbols-outlined text-3xl">person_add</span>
 </button>
 
-<!-- MODAL FORMULARIO -->
-<div id="modal-cliente" class="modal" onclick="event.target === this && cerrarModal()">
-    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl relative">
-        <div class="flex justify-between items-center mb-6">
-            <h2 id="modal-titulo" class="text-xl font-black text-pink-600">CLIENTE</h2>
-            <button onclick="cerrarModal()" class="text-slate-300">✕</button>
-        </div>
-        <form id="form-cliente" class="space-y-4">
-            <input type="hidden" id="edit-nombre-original"><input type="hidden" id="c-id">
-            <input type="text" id="c-nombre" placeholder="NOMBRE COMPLETO" required class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold uppercase text-sm">
-            <div class="grid grid-cols-2 gap-3">
-                <input type="text" id="c-ruc" placeholder="CI / RUC" required class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm">
-                <input type="tel" id="c-tel" placeholder="TELÉFONO" required class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm">
-            </div>
-            <input type="text" id="c-dir" placeholder="DIRECCIÓN" required class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm">
-            <div class="grid grid-cols-2 gap-3">
-                <select id="c-sector" required class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm">
-                    <option value="SUR">SUR</option><option value="NORTE">NORTE</option><option value="CENTRO">CENTRO</option><option value="VALLES">VALLES</option>
-                </select>
-                <input type="text" id="c-ref" placeholder="REFERENCIA" required class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-sm">
-            </div>
-            <button type="submit" id="btn-guardar" class="w-full py-4 bg-pink-600 text-white rounded-2xl font-black shadow-lg">GUARDAR CLIENTE</button>
-            <button type="button" id="btn-eliminar" onclick="confirmarEliminar()" class="hidden w-full text-red-500 text-[10px] font-black uppercase mt-4">Eliminar permanentemente</button>
-        </form>
-    </div>
-</div>
-
-<!-- MODAL HISTORIAL -->
-<div id="modal-historial" class="modal" onclick="event.target === this && cerrarHistorial()">
-    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-8 shadow-2xl">
-        <h2 id="hist-nombre" class="text-lg font-black text-slate-900 uppercase mb-4 border-b pb-2">Ventas</h2>
-        <div id="hist-lista" class="max-h-80 overflow-y-auto space-y-2"></div>
-        <button onclick="cerrarHistorial()" class="w-full mt-6 py-4 bg-slate-100 rounded-2xl text-[10px] font-black text-slate-400 uppercase">Cerrar</button>
-    </div>
-</div>
-
 <div id="menu-container"></div>
+
+<!-- MODAL: GESTIÓN / EDICIÓN (Misma estructura modal-custom) -->
+<div id="modal-nuevo-prod" class="modal-custom">
+    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 space-y-3 shadow-2xl">
+        <h2 id="modal-titulo" class="text-center font-black text-primary uppercase mb-2">Cliente</h2>
+        <input type="hidden" id="edit-nombre-original">
+        <input type="hidden" id="c-id">
+        <input type="text" id="c-nombre" placeholder="NOMBRE COMPLETO" class="input-sutil uppercase text-sm">
+        <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="c-ruc" placeholder="CI / RUC" class="input-sutil text-sm">
+            <input type="tel" id="c-tel" placeholder="TELÉFONO" class="input-sutil text-sm">
+        </div>
+        <input type="text" id="c-dir" placeholder="DIRECCIÓN" class="input-sutil text-sm">
+        <div class="grid grid-cols-2 gap-2">
+            <select id="c-sector" class="input-sutil text-sm">
+                <option value="SUR">SUR</option>
+                <option value="NORTE">NORTE</option>
+                <option value="CENTRO">CENTRO</option>
+                <option value="VALLES">VALLES</option>
+            </select>
+            <input type="text" id="c-ref" placeholder="REFERENCIA" class="input-sutil text-sm">
+        </div>
+        <button onclick="guardarCliente()" class="btn-magenta mt-4" style="background: #059669;">GUARDAR DATOS</button>
+        <button id="btn-eliminar" onclick="confirmarEliminar()" class="hidden w-full text-[10px] font-black text-red-400 text-center mt-2 uppercase">Eliminar Cliente</button>
+        <button onclick="cerrarModal('modal-nuevo-prod')" class="w-full text-label text-slate-400 text-center mt-2">Cerrar</button>
+    </div>
+</div>
 
 <script>
 let clientesData = [];
-let esEdicion = false;
 
 async function cargarDatos() {
     try {
@@ -160,108 +142,74 @@ async function cargarDatos() {
             DairyAPI.obtenerDatos("Ventas")
         ]);
 
+        const sync = document.getElementById('sync-indicator');
+        sync.innerText = "CONECTADO ✓";
+        sync.className = "text-[9px] font-black text-green-500";
+
         const statsVentas = {};
         let factGlobal = 0;
 
         if (Array.isArray(ventas)) {
             ventas.forEach(v => {
-                const estado = String(v.Estado || v.Estado_Entrega || "").trim().toUpperCase();
-                if (estado === "ENTREGADO") {
+                if (String(v.Estado || v.Estado_Entrega || "").trim().toUpperCase() === "ENTREGADO") {
                     const key = String(v.Cliente).trim().toLowerCase();
                     const monto = parseFloat(String(v["Precio Total"]).replace(',', '.')) || 0;
-                    if (!statsVentas[key]) statsVentas[key] = { t: 0, c: 0, h: [] };
+                    if (!statsVentas[key]) statsVentas[key] = { t: 0, c: 0 };
                     statsVentas[key].t += monto;
                     statsVentas[key].c += 1;
-                    statsVentas[key].h.push(v);
                     factGlobal += monto;
                 }
             });
         }
 
         clientesData = (Array.isArray(clientes) ? clientes : []).map(c => {
-            const s = statsVentas[String(c.Nombre).trim().toLowerCase()] || { t: 0, c: 0, h: [] };
-            return { ...c, montoTotal: s.t, numVentas: s.c, pedidos: s.h };
+            const s = statsVentas[String(c.Nombre).trim().toLowerCase()] || { t: 0, c: 0 };
+            return { ...c, montoTotal: s.t, numVentas: s.c };
         });
 
         clientesData.sort((a, b) => b.montoTotal - a.montoTotal);
         renderizar(clientesData);
         
         document.getElementById('total-clientes').innerText = clientesData.length;
-        document.getElementById('total-dinero').innerText = `$${factGlobal.toFixed(2)}`;
-    } catch (e) {
-        document.getElementById('lista-clientes').innerHTML = `<div class="text-center text-red-500 font-bold">Error de Red</div>`;
-    }
+        document.getElementById('total-dinero').innerText = `$${Math.round(factGlobal)}`;
+        if(clientesData[0]) document.getElementById('top-nombre').innerText = clientesData[0].Nombre;
+    } catch (e) { console.error(e); }
 }
 
 function renderizar(lista) {
-    const container = document.getElementById('lista-clientes');
-    if (!lista || lista.length === 0) {
-        container.innerHTML = `<div class="text-center py-20 text-slate-300 italic">No hay clientes</div>`;
-        return;
-    }
+    const container = document.getElementById('grid-productos');
+    container.innerHTML = "";
 
-    container.innerHTML = lista.map((c, index) => {
-        let badge = "bg-slate-100 text-slate-400";
-        if (index === 0 && c.montoTotal > 0) badge = "bg-yellow-400 text-white shadow-md";
-        else if (index === 1 && c.montoTotal > 0) badge = "bg-slate-300 text-white shadow-md";
-        else if (index === 2 && c.montoTotal > 0) badge = "bg-orange-300 text-white shadow-md";
+    lista.forEach((c, index) => {
+        const card = document.createElement('div');
+        card.className = `card-prod`;
+        
+        // El diseño interno mantiene la jerarquía de las tarjetas de inventario
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-1">
+                <span class="text-[8px] font-black text-slate-300 italic">RANK: ${index + 1}</span>
+                <span class="text-[8px] font-black text-primary bg-purple-50 px-1.5 rounded-full uppercase">${c.Sector || 'SUR'}</span>
+            </div>
+            <h3 class="prod-title">${c.Nombre || 'SIN NOMBRE'}</h3>
+            <div class="flex justify-between items-end mt-auto pt-2">
+                <span class="font-black text-xl text-primary">$${Math.round(c.montoTotal)}</span>
+                <span class="font-black text-green-600 text-[10px] uppercase">${c.numVentas} Vtas</span>
+            </div>
+        `;
 
-        const telRaw = String(c.Teléfono || "").trim().replace(/\D/g, '');
-        const telWA = telRaw.startsWith('0') ? '593' + telRaw.substring(1) : telRaw;
-
-        return `
-            <div class="p-5 bg-white rounded-[2rem] border border-purple-50 shadow-sm">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-14 h-14 rounded-2xl ${badge} flex items-center justify-center shrink-0 font-black text-xl">
-                        ${index + 1}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-start">
-                            <h3 class="font-black text-slate-900 truncate uppercase text-xs">${c.Nombre || '---'}</h3>
-                            <span class="text-[7px] font-black bg-green-100 text-green-700 px-2 py-0.5 rounded-full uppercase">${c.Sector || 'SUR'}</span>
-                        </div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-xl font-black text-pink-600">$${(c.montoTotal || 0).toFixed(2)}</span>
-                            <span class="text-[8px] font-black text-slate-400 uppercase">${c.numVentas || 0} VENTAS</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-4 gap-2">
-                    <button onclick="abrirHistorial('${String(c.Nombre).replace(/'/g, "\\'")}')" class="flex flex-col items-center py-2 rounded-2xl bg-purple-50 text-purple-600">
-                        <span class="material-symbols-outlined text-lg">history</span>
-                        <span class="text-[7px] font-bold uppercase">Ventas</span>
-                    </button>
-                    <a href="https://wa.me/${telWA}" target="_blank" class="flex flex-col items-center py-2 rounded-2xl bg-green-50 text-green-600">
-                        <span class="material-symbols-outlined text-lg">chat</span>
-                        <span class="text-[7px] font-bold uppercase">Chat</span>
-                    </a>
-                    <a href="tel:${telRaw}" class="flex flex-col items-center py-2 rounded-2xl bg-blue-50 text-blue-600">
-                        <span class="material-symbols-outlined text-lg">call</span>
-                        <span class="text-[7px] font-bold uppercase">Llamar</span>
-                    </a>
-                    <button onclick="abrirModalEditar('${String(c.Nombre).replace(/'/g, "\\'")}')" class="flex flex-col items-center py-2 rounded-2xl bg-slate-50 text-slate-400">
-                        <span class="material-symbols-outlined text-lg">edit</span>
-                        <span class="text-[7px] font-bold uppercase">Perfil</span>
-                    </button>
-                </div>
-            </div>`;
-    }).join('');
+        card.onclick = () => abrirEditar(c);
+        container.appendChild(card);
+    });
 }
 
-function abrirModalNuevo() {
-    esEdicion = false;
-    document.getElementById('form-cliente').reset();
+function abrirModal(id) { 
     document.getElementById('modal-titulo').innerText = "NUEVO CLIENTE";
     document.getElementById('btn-eliminar').classList.add('hidden');
-    document.getElementById('modal-cliente').classList.add('active');
+    document.getElementById(id).classList.add('active'); 
 }
 
-function abrirModalEditar(nombre) {
-    const c = clientesData.find(cli => cli.Nombre === nombre);
-    if(!c) return;
-    esEdicion = true;
-    document.getElementById('modal-titulo').innerText = "EDITAR PERFIL";
+function abrirEditar(c) {
+    document.getElementById('modal-titulo').innerText = "EDITAR CLIENTE";
     document.getElementById('edit-nombre-original').value = c.Nombre;
     document.getElementById('c-id').value = c.ID || "";
     document.getElementById('c-nombre').value = c.Nombre;
@@ -271,65 +219,50 @@ function abrirModalEditar(nombre) {
     document.getElementById('c-sector').value = c.Sector || "";
     document.getElementById('c-ref').value = c.Referencia || "";
     document.getElementById('btn-eliminar').classList.remove('hidden');
-    document.getElementById('modal-cliente').classList.add('active');
+    document.getElementById('modal-nuevo-prod').classList.add('active');
 }
 
-function cerrarModal() { document.getElementById('modal-cliente').classList.remove('active'); }
+function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
 
-document.getElementById('form-cliente').onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('btn-guardar');
-    btn.disabled = true; btn.innerText = "SINCRO...";
+async function guardarCliente() {
+    const nom = document.getElementById('c-nombre').value.toUpperCase();
+    if (!nom) return;
+
     const datos = {
         pestaña: "Clientes",
-        ID: esEdicion ? document.getElementById('c-id').value : "CL-" + Date.now(),
-        Nombre: document.getElementById('c-nombre').value.trim().toUpperCase(),
-        CI_RUC: document.getElementById('c-ruc').value.trim(),
-        Teléfono: document.getElementById('c-tel').value.trim(),
-        Dirección: document.getElementById('c-dir').value.trim(),
-        Referencia: document.getElementById('c-ref').value.trim(),
+        ID: document.getElementById('c-id').value || "CL-" + Date.now(),
+        Nombre: nom,
+        CI_RUC: document.getElementById('c-ruc').value,
+        Teléfono: document.getElementById('c-tel').value,
+        Dirección: document.getElementById('c-dir').value,
+        Referencia: document.getElementById('c-ref').value,
         Sector: document.getElementById('c-sector').value,
-        "Fecha Registro": esEdicion ? "" : new Date().toLocaleString()
+        "Fecha Registro": new Date().toLocaleString()
     };
-    if(esEdicion) { datos.accion = "editar_cliente"; datos.nombreOriginal = document.getElementById('edit-nombre-original').value; }
-    try {
-        const res = await DairyAPI.enviarDatos(datos);
-        if(res === "OK") { cerrarModal(); cargarDatos(); }
-    } catch (err) { alert("Error de red"); }
-    finally { btn.disabled = false; btn.innerText = "GUARDAR CLIENTE"; }
-};
 
-function abrirHistorial(nombre) {
-    const c = clientesData.find(cli => cli.Nombre === nombre);
-    if(!c) return;
-    document.getElementById('hist-nombre').innerText = c.Nombre;
-    const lista = c.pedidos || [];
-    document.getElementById('hist-lista').innerHTML = lista.length === 0 ? 
-        `<div class="text-center py-10 text-slate-300 italic text-[10px]">Sin compras</div>` : 
-        lista.map(p => `
-            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl mb-1">
-                <div><p class="text-[7px] font-black text-pink-600 uppercase">${p.Fecha || 'Reciente'}</p>
-                <p class="text-[10px] font-bold text-slate-800">${p.Producto || 'Pedido'}</p></div>
-                <p class="font-black text-slate-900 text-sm">$${parseFloat(String(p["Precio Total"]).replace(',','.')).toFixed(2)}</p>
-            </div>`).join('');
-    document.getElementById('modal-historial').classList.add('active');
-}
+    const original = document.getElementById('edit-nombre-original').value;
+    if(original) {
+        datos.accion = "editar_cliente";
+        datos.nombreOriginal = original;
+    }
 
-function cerrarHistorial() { document.getElementById('modal-historial').classList.remove('active'); }
-
-function filtrarClientes() {
-    const q = document.getElementById('buscador').value.toLowerCase();
-    renderizar(clientesData.filter(c => String(c.Nombre).toLowerCase().includes(q)));
+    await DairyAPI.enviarDatos(datos);
+    cerrarModal('modal-nuevo-prod');
+    cargarDatos();
 }
 
 async function confirmarEliminar() {
     const nombre = document.getElementById('edit-nombre-original').value;
     if(confirm(`¿Eliminar a ${nombre}?`)) {
-        try {
-            await DairyAPI.enviarDatos({ accion: "eliminar_proveedor", pestaña: "Clientes", nombre: nombre });
-            cerrarModal(); cargarDatos();
-        } catch (e) { alert("Error"); }
+        await DairyAPI.enviarDatos({ accion: "eliminar_proveedor", pestaña: "Clientes", nombre: nombre });
+        cerrarModal('modal-nuevo-prod');
+        cargarDatos();
     }
+}
+
+function filtrar() { 
+    const b = document.getElementById('filtro').value.toLowerCase();
+    renderizar(clientesData.filter(c => c.Nombre.toLowerCase().includes(b))); 
 }
 
 window.onload = cargarDatos;

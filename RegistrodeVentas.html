@@ -4,126 +4,171 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ventas - Lógica Láctea</title>
+    
+    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
-    <!-- Tu script v2.4 -->
     <script src="menu-logic.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <script>
       tailwind.config = {
-        theme: { extend: { colors: { primary: "#a21caf", secondary: "#db2777", whatsapp: "#25d366" } } }
+        theme: { 
+            extend: { 
+                colors: { 
+                    primary: "#a21caf", 
+                    secondary: "#db2777", 
+                    whatsapp: "#25d366",
+                    surface: "#f8fafc"
+                } 
+            } 
+        }
       }
     </script>
 
     <style>
-        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
-        .card-producto { background: white; border-radius: 1rem; border: 1px solid #e9d5ff; padding: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fdfaff; -webkit-tap-highlight-color: transparent; }
+        .card-producto { background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; transition: all 0.2s; }
+        .card-producto:active { transform: scale(0.98); background: #faf5ff; }
         .bloqueado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
-        .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 0.75rem; padding: 0.6rem; width: 100%; font-size: 13px; font-weight: 600; }
         
+        .input-sutil { 
+            background-color: #f8fafc; 
+            border: 1px solid #f1f5f9; 
+            border-radius: 1.25rem; 
+            padding: 0.8rem 1rem; 
+            width: 100%; 
+            font-size: 13px; 
+            font-weight: 700;
+            color: #1e293b;
+            outline: none;
+            transition: all 0.2s;
+        }
+        .input-sutil:focus { background: white; border-color: #a21caf; box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05); }
+
         #overlay-exito {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.95);
+            position: fixed; inset: 0; background: rgba(255,255,255,0.98);
             display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200;
         }
-        .check-anim { font-size: 80px; color: #a21caf; transition: color 0.3s; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .check-anim { font-size: 80px; color: #a21caf; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
         #carrito-flotante {
-            position: fixed; bottom: 90px; left: 10px; right: 10px;
-            background: white; border: 2.5px solid #a21caf; border-radius: 1.5rem;
-            padding: 15px; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); z-index: 100;
+            position: fixed; bottom: 100px; left: 16px; right: 16px;
+            background: white; border-radius: 2.5rem;
+            padding: 20px; box-shadow: 0 20px 50px rgba(162, 28, 175, 0.15); 
+            z-index: 100; border: 1px solid rgba(162, 28, 175, 0.1);
         }
-        .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 14px; border-radius: 1rem; font-weight: 900; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
-        @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 16px; border-radius: 1.5rem; font-weight: 800; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
+        @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
     </style>
 </head>
 <body class="pb-96"> 
 
+<!-- Pantalla de Carga/Éxito -->
 <div id="overlay-exito">
     <span class="material-symbols-outlined check-anim" id="icono-estado">sync</span>
-    <h2 class="text-2xl font-black text-slate-800" id="titulo-estado">GUARDANDO...</h2>
-    <p class="text-slate-500 font-bold uppercase text-[10px]" id="p-estado">No cierres esta ventana</p>
+    <h2 class="text-2xl font-black text-slate-800 mt-4 uppercase tracking-tight" id="titulo-estado">Guardando...</h2>
+    <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-2" id="p-estado">Sincronizando con la nube</p>
 </div>
 
-<header class="h-14 bg-white border-b border-outline flex justify-between items-center px-4 sticky top-0 z-50">
+<!-- Cabecera -->
+<header class="h-20 bg-white/80 backdrop-blur-md border-b border-fuchsia-50 flex justify-between items-center px-6 sticky top-0 z-50">
     <div class="flex flex-col">
-        <h1 class="text-lg font-black text-primary italic uppercase leading-none">Ventas</h1>
-        <span id="id-venta-display" class="text-[9px] font-mono text-slate-400 font-bold">ID: ---</span>
+        <h1 class="text-xl font-black text-slate-900 leading-none uppercase tracking-tighter">Nueva Venta</h1>
+        <span id="id-venta-display" class="text-[10px] font-bold text-primary mt-1 tracking-widest">ID: ---</span>
     </div>
-    <button onclick="location.reload()" class="text-primary"><span class="material-symbols-outlined">sync</span></button>
+    <button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-xl">refresh</span>
+    </button>
 </header>
 
-<main class="mt-4 px-4 max-w-xl mx-auto">
-    <!-- SELECCIÓN DE CLIENTE -->
-    <section class="bg-white p-4 rounded-2xl border-2 border-primary/20 mb-4 shadow-sm">
+<main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
+    <!-- 1. SELECCIÓN DE CLIENTE -->
+    <section class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-fuchsia-50">
         <div id="vista-seleccion-cliente">
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-[10px] font-black text-primary uppercase">1. Seleccionar Cliente</span>
-                <button onclick="alternarFormulario(true)" class="text-[9px] font-bold text-white bg-secondary px-3 py-1 rounded-full uppercase">Nuevo +</button>
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paso 1: Cliente</span>
+                <button onclick="alternarFormulario(true)" class="text-[10px] font-black text-white bg-secondary px-4 py-1.5 rounded-full uppercase">Nuevo +</button>
             </div>
-            <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil border-primary/30 text-primary">
-                <option value="">-- BUSCAR CLIENTE --</option>
+            <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil">
+                <option value="">-- SELECCIONAR CLIENTE --</option>
             </select>
         </div>
 
-        <div id="vista-nuevo-cliente" class="hidden space-y-2">
-            <p class="text-[10px] font-black text-secondary uppercase italic">Registro de Nuevo Cliente</p>
-            <input type="text" id="reg-id" readonly class="hidden">
-            <input type="text" id="reg-nombre" placeholder="Nombre (Solo letras)" class="input-sutil" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
-            <input type="number" id="reg-ruc" placeholder="CI/RUC (Ej: 1712345678)" class="input-sutil">
-            <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
-            <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
-            <input type="text" id="reg-ref" placeholder="Referencia" class="input-sutil">
+        <!-- Registro Nuevo Cliente -->
+        <div id="vista-nuevo-cliente" class="hidden space-y-3">
+            <p class="text-[10px] font-black text-secondary uppercase italic tracking-widest">Nuevo Registro</p>
+            <input type="hidden" id="reg-id">
+            <input type="text" id="reg-nombre" placeholder="NOMBRE COMPLETO" class="input-sutil uppercase" oninput="this.value = this.value.toUpperCase()">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="number" id="reg-ruc" placeholder="CI / RUC" class="input-sutil">
+                <input type="tel" id="reg-tel" placeholder="TELÉFONO" class="input-sutil">
+            </div>
+            <input type="text" id="reg-dir" placeholder="DIRECCIÓN EXACTA" class="input-sutil">
+            <input type="text" id="reg-ref" placeholder="REFERENCIA" class="input-sutil">
             <select id="reg-sector" class="input-sutil">
-                <option value="">-- SELECCIONAR SECTOR --</option>
-                <option value="NORTE">NORTE</option>
                 <option value="SUR">SUR</option>
+                <option value="NORTE">NORTE</option>
                 <option value="CENTRO">CENTRO</option>
                 <option value="VALLES">VALLES</option>
             </select>
             <div class="flex gap-2 pt-2">
-                <button onclick="guardarCliente()" id="btn-guardar-cliente" class="flex-1 bg-primary text-white font-black py-3 rounded-xl text-xs uppercase">Guardar</button>
-                <button onclick="alternarFormulario(false)" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl text-xs uppercase">Cancelar</button>
+                <button onclick="guardarCliente()" id="btn-guardar-cliente" class="flex-1 bg-primary text-white font-black py-4 rounded-2xl text-xs uppercase shadow-lg shadow-primary/20">Guardar</button>
+                <button onclick="alternarFormulario(false)" class="flex-1 bg-slate-100 text-slate-500 font-black py-4 rounded-2xl text-xs uppercase">Cancelar</button>
             </div>
         </div>
     </section>
 
-    <!-- LISTA DE PRODUCTOS -->
+    <!-- 2. PRODUCTOS -->
     <div id="seccion-operativa" class="bloqueado transition-all duration-500">
-        <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="🔍 Buscar producto..." class="input-sutil mb-4">
-        <div id="contenedor-productos" class="space-y-2"></div>
+        <div class="flex items-center gap-3 mb-4">
+            <div class="relative flex-1">
+                <span class="material-symbols-outlined absolute left-4 top-3 text-slate-300">search</span>
+                <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="Buscar producto..." class="input-sutil pl-12 bg-white">
+            </div>
+        </div>
+        <div id="contenedor-productos" class="space-y-3"></div>
     </div>
 </main>
 
-<!-- CARRITO FLOTANTE -->
+<!-- 3. CARRITO FLOTANTE -->
 <div id="carrito-flotante" class="bloqueado">
-    <div class="flex justify-between items-center mb-2 border-b pb-2">
+    <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-4">
         <div class="flex-1">
-            <p id="car-cliente" class="text-xs font-black text-primary uppercase truncate italic">Sin Cliente</p>
-            <p id="car-id" class="text-[9px] font-mono text-slate-400">ID: ---</p>
+            <p id="car-cliente" class="text-xs font-black text-primary uppercase italic truncate">Esperando...</p>
+            <p id="car-id" class="text-[9px] font-bold text-slate-300">ID: ---</p>
         </div>
         <div class="text-right">
-            <p id="car-total" class="text-2xl font-black text-slate-800 leading-none">$0.00</p>
-            <p id="car-items" class="text-[9px] font-bold text-secondary uppercase">0 ÍTEMS</p>
+            <p id="car-total" class="text-3xl font-black text-slate-900 leading-none">$0.00</p>
+            <p id="car-items" class="text-[9px] font-black text-secondary uppercase tracking-widest mt-1">0 ÍTEMS</p>
         </div>
     </div>
-    <div id="car-detalle" class="max-h-24 overflow-y-auto mb-3 space-y-1 text-[10px] font-bold text-slate-500 italic">
-        <p class="text-center text-slate-200 py-2">Esperando selección...</p>
+    
+    <div id="car-detalle" class="max-h-24 overflow-y-auto mb-4 space-y-1 text-[10px] font-bold text-slate-500 italic">
+        <p class="text-center text-slate-200 py-2">No hay productos aún</p>
     </div>
-    <input type="date" id="fecha-entrega" class="input-sutil text-center mb-2 bg-purple-50 border-none h-9">
-    <button id="btn-confirmar" onclick="procesarVenta()" class="bg-secondary text-white w-full py-4 rounded-xl font-black uppercase text-sm shadow-lg active:scale-95 transition-transform">Confirmar Pedido</button>
+
+    <div class="flex gap-2 mb-4">
+        <input type="date" id="fecha-entrega" class="input-sutil bg-fuchsia-50 border-none h-12 text-center text-primary">
+    </div>
+
+    <button id="btn-confirmar" onclick="procesarVenta()" class="bg-slate-900 text-white w-full py-5 rounded-[1.5rem] font-black uppercase text-xs tracking-widest shadow-xl active:scale-95 transition-transform">Confirmar Pedido</button>
+    
     <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-whatsapp">
-        <span class="material-symbols-outlined">chat</span> ENVIAR DETALLE WHATSAPP
+        <span class="material-symbols-outlined text-xl">send</span> ENVIAR A WHATSAPP
     </button>
 </div>
 
-<!-- CONTENEDOR DEL MENÚ DE NAVEGACIÓN v2.4 -->
+<!-- Menú inferior -->
 <div id="menu-container"></div>
 
 <script>
-let carrito = {}; let productosData = []; let idVenta = "";
+let carrito = {}; 
+let productosData = []; 
+let idVenta = "";
 
 async function iniciar() {
     const d = new Date();
@@ -134,20 +179,22 @@ async function iniciar() {
 
     try {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
-        productosData = pr;
+        productosData = pr || [];
         const sel = document.getElementById('select-cliente');
-        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
+        
+        const listaClientes = Array.isArray(cl) ? cl : [];
+        listaClientes.sort((a,b)=>String(a.Nombre).localeCompare(b.Nombre)).forEach(c => { 
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
         });
         renderizar();
-    } catch(e) { console.error("Error al cargar datos:", e); }
+    } catch(e) { console.error("Error al cargar:", e); }
 }
 
 function activarInterfaz() {
     const cli = document.getElementById('select-cliente').value;
     document.getElementById('seccion-operativa').classList.toggle('bloqueado', !cli);
     document.getElementById('carrito-flotante').classList.toggle('bloqueado', !cli);
-    document.getElementById('car-cliente').innerText = cli || "Sin Cliente";
+    document.getElementById('car-cliente').innerText = cli || "Esperando Cliente...";
 }
 
 function renderizar() {
@@ -157,14 +204,16 @@ function renderizar() {
         cont.innerHTML += `
             <div class="card-producto shadow-sm">
                 <div class="flex-1">
-                    <h4 class="font-black text-xs uppercase text-slate-700 leading-tight">${p.Producto}</h4>
-                    <p class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase">Stock: ${p.Stock}</p>
+                    <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${p.Producto}</h4>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
+                        <span class="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full uppercase">Stock: ${p.Stock}</span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl">
-                    <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">-</button>
-                    <span id="${idCant}" class="w-6 text-center font-black text-lg">0</span>
-                    <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">+</button>
+                <div class="flex items-center gap-3 bg-fuchsia-50/50 p-1.5 rounded-2xl border border-fuchsia-50">
+                    <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
+                    <span id="${idCant}" class="w-6 text-center font-black text-lg text-slate-900">0</span>
+                    <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
                 </div>
             </div>`;
     });
@@ -191,73 +240,86 @@ function actualizarCarrito() {
             const p = productosData.find(x => x.Producto === n);
             const sub = (carrito[n] * parseFloat(p.Precio_Venta));
             t += sub; items += carrito[n];
-            html += `<div class="flex justify-between"><span>${n} (x${carrito[n]})</span><span>$${sub.toFixed(2)}</span></div>`;
+            html += `<div class="flex justify-between py-1 border-b border-fuchsia-50 last:border-0"><span>${n} (x${carrito[n]})</span><span class="text-slate-900">$${sub.toFixed(2)}</span></div>`;
         }
     });
-    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-200 py-2">Esperando selección...</p>';
+    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-200 py-2 italic">Sin productos elegidos</p>';
     document.getElementById('car-total').innerText = `$${t.toFixed(2)}`;
-    document.getElementById('car-items').innerText = `${items} ÍTEMS`;
+    document.getElementById('car-items').innerText = `${items} Unidades`;
 }
 
 async function procesarVenta() {
     const cli = document.getElementById('select-cliente').value;
     const fec = document.getElementById('fecha-entrega').value;
-    if(!cli || document.getElementById('car-items').innerText === "0 ÍTEMS") return alert("Faltan datos o productos");
+    if(!cli || document.getElementById('car-items').innerText === "0 Unidades") return alert("Selecciona cliente y productos");
     
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
-    document.getElementById('titulo-estado').innerText = "GUARDANDO PEDIDO...";
+    document.getElementById('titulo-estado').innerText = "Guardando Pedido...";
+    document.getElementById('icono-estado').innerText = "sync";
     document.getElementById('icono-estado').classList.add('animate-spin');
 
     try {
         for(const n in carrito) {
             if(carrito[n] > 0) {
                 const p = productosData.find(x => x.Producto === n);
-                await DairyAPI.enviarDatos("Ventas", { 
-                    ID_Venta: idVenta, Cliente: cli, Producto: n, 
-                    Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, 
-                    Fecha_Entrega: fec, pestaña: "Ventas" 
+                await DairyAPI.enviarDatos({ 
+                    pestaña: "Ventas",
+                    ID_Venta: idVenta, 
+                    Cliente: cli, 
+                    Producto: n, 
+                    Cantidad: carrito[n], 
+                    Precio_PVP: p.Precio_Venta, 
+                    Fecha_Entrega: fec,
+                    Estado_Entrega: "PENDIENTE"
                 });
             }
         }
         
         document.getElementById('icono-estado').classList.remove('animate-spin');
         document.getElementById('icono-estado').innerText = "check_circle";
-        document.getElementById('icono-estado').style.color = "#22c55e";
-        document.getElementById('titulo-estado').innerText = "¡PEDIDO GUARDADO!";
+        document.getElementById('titulo-estado').innerText = "¡Venta Exitosa!";
 
         setTimeout(() => {
             overlay.style.display = 'none';
             document.getElementById('btn-confirmar').style.display = 'none';
             document.getElementById('btn-whatsapp').style.display = 'flex';
-        }, 2000);
+        }, 1500);
     } catch(e) { 
         overlay.style.display = 'none';
-        alert("Error al conectar con el servidor"); 
+        alert("Error de conexión"); 
     }
 }
 
 async function guardarCliente() {
     const btn = document.getElementById('btn-guardar-cliente');
-    const data = {
-        ID: document.getElementById('reg-id').value,
-        Nombre: document.getElementById('reg-nombre').value,
-        CI_RUC: document.getElementById('reg-ruc').value,
-        Telefono: document.getElementById('reg-tel').value,
-        Direccion: document.getElementById('reg-dir').value,
-        Referencia: document.getElementById('reg-ref').value,
-        Sector: document.getElementById('reg-sector').value,
-        pestaña: "Clientes"
-    };
+    const nom = document.getElementById('reg-nombre').value.trim();
+    const ruc = document.getElementById('reg-ruc').value.trim();
+    const tel = document.getElementById('reg-tel').value.trim();
 
-    if(!data.Nombre || data.CI_RUC.length < 10) return alert("Nombre y CI/RUC (10 dígitos) requeridos");
+    if(!nom || ruc.length < 10) return alert("Nombre y CI (10 dígitos) obligatorios");
 
-    btn.innerText = "GUARDANDO...";
+    btn.innerText = "PROCESANDO...";
     btn.disabled = true;
 
+    const ahora = new Date();
+    const fechaReg = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString();
+
+    const data = {
+        pestaña: "Clientes",
+        ID: `C-${Date.now().toString().slice(-6)}`,
+        Nombre: nom.toUpperCase(),
+        CI_RUC: ruc,
+        Teléfono: tel,
+        Dirección: document.getElementById('reg-dir').value.trim(),
+        Referencia: document.getElementById('reg-ref').value.trim(),
+        Sector: document.getElementById('reg-sector').value,
+        "Fecha Registro": fechaReg
+    };
+
     try {
-        await DairyAPI.enviarDatos("Clientes", data);
-        alert("Cliente Registrado con Éxito");
+        const res = await DairyAPI.enviarDatos(data);
+        alert("✅ CLIENTE REGISTRADO");
         location.reload();
     } catch(e) { alert("Error al registrar"); btn.disabled = false; btn.innerText = "Guardar"; }
 }
@@ -269,12 +331,12 @@ function enviarWhatsApp() {
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
-            listado += `*${carrito[n]}x* ${n} ($${p.Precio_Venta})\n`;
+            listado += `• *${carrito[n]}* ${n} ($${p.Precio_Venta})\n`;
             t += (carrito[n] * parseFloat(p.Precio_Venta));
         }
     });
 
-    const msg = `*LÓGICA LÁCTEA - PEDIDO*\n\n*ID:* ${idVenta}\n*Cliente:* ${cli}\n*Entrega:* ${fec}\n\n*PRODUCTOS:*\n${listado}\n*TOTAL: $${t.toFixed(2)}*\n\n¡Gracias por su compra! 🥛🧀`;
+    const msg = `*LÓGICA LÁCTEA - PEDIDO*\n\n*ID:* ${idVenta}\n*Cliente:* ${cli}\n*Entrega:* ${fec}\n\n*PRODUCTOS:*\n${listado}\n*TOTAL: $${t.toFixed(2)}*\n\n¡Gracias por preferirnos! 🥛🧀`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     location.reload();
 }
@@ -282,7 +344,6 @@ function enviarWhatsApp() {
 function alternarFormulario(m) {
     document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
     document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
-    if(m) document.getElementById('reg-id').value = `C-${Date.now().toString().slice(-6)}`;
 }
 
 function filtrar() {

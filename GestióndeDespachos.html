@@ -33,6 +33,9 @@
         .modal-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 25px; }
         .modal-box { background: white; width: 100%; max-width: 300px; border-radius: 2.5rem; padding: 30px; text-align: center; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Estilo para el selector de meses */
+        select { -webkit-appearance: none; -moz-appearance: none; appearance: none; }
     </style>
 </head>
 <body>
@@ -54,7 +57,12 @@
     <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
         <button onclick="verHistorial('dia')" class="bg-white px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 border border-slate-100 shadow-sm whitespace-nowrap uppercase active:bg-slate-100">Hoy</button>
         <button onclick="verHistorial('semana')" class="bg-white px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 border border-slate-100 shadow-sm whitespace-nowrap uppercase active:bg-slate-100">Semana</button>
-        <button onclick="verHistorial('mes')" class="bg-white px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 border border-slate-100 shadow-sm whitespace-nowrap uppercase active:bg-slate-100">Mes</button>
+        
+        <!-- SELECTOR DE MESES DINÁMICO -->
+        <select id="selector-meses" onchange="verHistorial('mes_especifico')" class="bg-white px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 border border-slate-100 shadow-sm uppercase outline-none active:bg-slate-100">
+            <option value="mes_actual">Mes Actual</option>
+        </select>
+
         <button onclick="cerrarHistorial()" id="btn-cerrar-h" class="hidden bg-red-50 px-4 py-2 rounded-xl text-[10px] font-black text-red-500 border border-red-100 whitespace-nowrap uppercase">Volver a Rutas</button>
     </div>
 
@@ -66,7 +74,7 @@
         </div>
         <div class="bg-white p-5 rounded-[2rem] border border-green-50 text-center shadow-sm">
             <p id="cont-ent" class="text-3xl font-black text-green-500">0</p>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Entregados</p>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Entregados Hoy</p>
         </div>
     </div>
 
@@ -79,7 +87,7 @@
     </div>
 </main>
 
-<!-- MODALES (Mapas y Confirmación) -->
+<!-- MODALES -->
 <div id="modal-mapas" class="modal-custom" onclick="cerrarModal('modal-mapas')">
     <div class="modal-box" onclick="event.stopPropagation()">
         <h3 class="font-black text-slate-800 text-lg mb-6">Navegar con:</h3>
@@ -107,6 +115,22 @@
 <script>
 let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0 };
 let pedidosLocal = [];
+
+// Inicializar la lista de meses para el selector
+function inicializarMeses() {
+    const selector = document.getElementById('selector-meses');
+    const nombresMeses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const hoy = new Date();
+    
+    selector.innerHTML = '<option value="mes_actual">MES ACTUAL</option>';
+    
+    for (let i = 1; i <= 12; i++) {
+        let fecha = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+        let mesIndex = fecha.getMonth();
+        let anio = fecha.getFullYear();
+        selector.innerHTML += `<option value="${mesIndex}-${anio}">${nombresMeses[mesIndex].toUpperCase()} ${anio}</option>`;
+    }
+}
 
 async function cargarDatos() {
     const icon = document.getElementById('refresh-icon');
@@ -175,7 +199,6 @@ function renderizar() {
     `).join('');
 }
 
-// --- LÓGICA DE HISTORIAL ---
 async function verHistorial(periodo) {
     const mainCont = document.getElementById('contenedor-pedidos');
     const histCont = document.getElementById('contenedor-historial');
@@ -193,12 +216,12 @@ async function verHistorial(periodo) {
     try {
         const ventas = await DairyAPI.obtenerDatos("Ventas");
         const ahora = new Date();
+        const seleccionMes = document.getElementById('selector-meses').value;
         
         let filtrados = ventas.filter(v => String(v.Estado).trim().toUpperCase() === "ENTREGADO");
 
         filtrados = filtrados.filter(v => {
             if (!v.Fecha_Entrega) return false;
-            // Intentar convertir la fecha del sheet a objeto Date
             const partes = v.Fecha_Entrega.split('/'); 
             const fEntrega = partes.length === 3 ? new Date(partes[2], partes[1]-1, partes[0]) : new Date(v.Fecha_Entrega);
             
@@ -207,7 +230,13 @@ async function verHistorial(periodo) {
                 const hace7d = new Date(); hace7d.setDate(ahora.getDate() - 7);
                 return fEntrega >= hace7d;
             }
-            if (periodo === 'mes') return fEntrega.getMonth() === ahora.getMonth() && fEntrega.getFullYear() === ahora.getFullYear();
+            if (periodo === 'mes_actual' || (periodo === 'mes_especifico' && seleccionMes === 'mes_actual')) {
+                return fEntrega.getMonth() === ahora.getMonth() && fEntrega.getFullYear() === ahora.getFullYear();
+            }
+            if (periodo === 'mes_especifico') {
+                const [m, a] = seleccionMes.split('-');
+                return fEntrega.getMonth() === parseInt(m) && fEntrega.getFullYear() === parseInt(a);
+            }
             return true;
         });
 
@@ -221,7 +250,7 @@ async function verHistorial(periodo) {
             const sub = parseFloat(String(v.Total || 0).replace(',', '.')) || 0;
             totalPeriodo += sub;
             return `
-                <div class="card-pro p-4 flex justify-between items-center border-l-4 border-green-400">
+                <div class="card-pro p-4 flex justify-between items-center border-l-4 border-green-400 mb-3">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <span class="text-[8px] font-black bg-slate-100 px-1.5 py-0.5 rounded text-slate-400">#${v.ID_Venta}</span>
@@ -237,13 +266,13 @@ async function verHistorial(periodo) {
 
         listaItems.innerHTML = `
             <div class="bg-slate-900 p-6 rounded-[2rem] text-white mb-4 shadow-lg">
-                <p class="text-[9px] font-black uppercase opacity-50 tracking-widest">Caja ${periodo}</p>
+                <p class="text-[9px] font-black uppercase opacity-50 tracking-widest">Balance de Entregas</p>
                 <h2 class="text-4xl font-black">$${totalPeriodo.toFixed(2)}</h2>
-                <p class="text-[9px] mt-2 font-bold opacity-80">${filtrados.length} Entregas realizadas</p>
+                <p class="text-[9px] mt-2 font-bold opacity-80">${filtrados.length} Pedidos finalizados</p>
             </div>
             ${html}
         `;
-    } catch (e) { listaItems.innerHTML = 'Error'; }
+    } catch (e) { listaItems.innerHTML = 'Error al cargar historial'; }
 }
 
 function cerrarHistorial() {
@@ -253,22 +282,21 @@ function cerrarHistorial() {
     document.getElementById('btn-cerrar-h').classList.add('hidden');
 }
 
-// --- ACCIONES ---
 function askEntrega(id) {
     showConfirm("¿Entregado?", "Se guardará la fecha y el estado como cobrado.", "success", async () => {
         try {
-            const hoy = new Date().toLocaleDateString('es-ES'); // Formato DD/MM/YYYY
+            const hoy = new Date().toLocaleDateString('es-ES');
             await DairyAPI.enviarDatos("Ventas", { 
                 pestaña: "Ventas", 
                 accion: "editar_estado", 
                 ID_Venta: id, 
                 Estado: "ENTREGADO",
-                Fecha_Entrega: hoy // IMPORTANTE: Guardamos la fecha para el historial
+                Fecha_Entrega: hoy 
             });
             statsSesion.pedidos++;
             localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
             cargarDatos();
-        } catch (e) { alert("Error"); }
+        } catch (e) { alert("Error al actualizar"); }
     });
 }
 
@@ -277,11 +305,10 @@ function askDelete(idFila) {
         try {
             await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "eliminar_item", ID_Venta: idFila });
             cargarDatos();
-        } catch (e) { alert("Error"); }
+        } catch (e) { alert("Error al eliminar"); }
     });
 }
 
-// --- UTILIDADES UI ---
 function abrirSelectorMapas(dir) {
     if(!dir) return alert("Sin dirección");
     document.getElementById('modal-mapas').style.display = 'flex';
@@ -328,7 +355,11 @@ function renderMenu() {
     container.innerHTML = html + '</div></nav>';
 }
 
-window.onload = () => { cargarDatos(); renderMenu(); };
+window.onload = () => { 
+    cargarDatos(); 
+    renderMenu(); 
+    inicializarMeses();
+};
 </script>
 </body>
 </html>

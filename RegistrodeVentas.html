@@ -29,6 +29,7 @@
     </script>
 
     <style>
+        /* Ajustes específicos para esta vista que no están en el CSS global */
         .bloqueado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
         
         #overlay-exito {
@@ -50,14 +51,6 @@
             gap: 10px; animation: pulse-wa 2s infinite; border: none;
         }
         @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
-
-        /* Estilo para botón de calidad */
-        .btn-calidad {
-            font-size: 10px; font-weight: 800; color: #6366f1; background: #e0e7ff;
-            padding: 4px 8px; border-radius: 8px; text-transform: uppercase;
-            display: flex; align-items: center; gap: 4px; transition: all 0.2s;
-        }
-        .btn-calidad:active { transform: scale(0.95); background: #6366f1; color: white; }
     </style>
 </head>
 <body class="pb-96"> 
@@ -75,9 +68,15 @@
         <h1 class="brand-logo text-xl leading-none">Nueva Venta</h1>
         <span id="id-venta-display" class="text-label text-primary mt-1">ID: ---</span>
     </div>
-    <button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-purple-50 text-primary flex items-center justify-center active:scale-90 transition-transform">
-        <span class="material-symbols-outlined text-xl">refresh</span>
-    </button>
+    <div class="flex gap-2">
+        <!-- BOTÓN DE PRUEBA DE CALIDAD AGREGADO AL LADO DE REFRESCAR -->
+        <button onclick="registrarPruebaCalidadRapida()" class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center active:scale-90 transition-transform">
+            <span class="material-symbols-outlined text-xl">science</span>
+        </button>
+        <button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-purple-50 text-primary flex items-center justify-center active:scale-90 transition-transform">
+            <span class="material-symbols-outlined text-xl">refresh</span>
+        </button>
+    </div>
 </header>
 
 <main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
@@ -198,12 +197,7 @@ function renderizar() {
         cont.innerHTML += `
             <div class="card-sutil flex items-center justify-between mb-2">
                 <div class="flex-1">
-                    <div class="flex items-center gap-2">
-                        <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${p.Producto}</h4>
-                        <button onclick="agregarPruebaCalidad('${p.Producto}')" class="btn-calidad">
-                            <span class="material-symbols-outlined" style="font-size:12px">science</span> Pruebas
-                        </button>
-                    </div>
+                    <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${p.Producto}</h4>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
                         <span class="tag tag-success" style="font-size:8px">Stock: ${p.Stock}</span>
@@ -216,45 +210,6 @@ function renderizar() {
                 </div>
             </div>`;
     });
-}
-
-// NUEVA FUNCIÓN: Registro directo de prueba de calidad (Precio 0)
-async function agregarPruebaCalidad(nombreProd) {
-    const cli = document.getElementById('select-cliente').value;
-    if(!cli) return alert("Selecciona un cliente primero");
-    
-    const cantidad = prompt(`¿Cuántas unidades de "${nombreProd}" se usarán para PRUEBA DE CALIDAD?`, "1");
-    if(!cantidad || isNaN(cantidad) || cantidad <= 0) return;
-
-    const p = productosData.find(x => x.Producto === nombreProd);
-    if(parseInt(cantidad) > parseInt(p.Stock)) return alert("Stock insuficiente para la prueba");
-
-    if(!confirm(`Se registrará la salida de ${cantidad} unidades de ${nombreProd} con PRECIO $0.00. ¿Continuar?`)) return;
-
-    const overlay = document.getElementById('overlay-exito');
-    overlay.style.display = 'flex';
-    document.getElementById('titulo-estado').innerText = "Registrando Prueba...";
-
-    try {
-        await DairyAPI.enviarDatos({ 
-            pestaña: "Ventas",
-            ID_Venta: "LAB-" + Date.now().toString().slice(-4), 
-            Cliente: cli, 
-            Producto: nombreProd, 
-            Cantidad: cantidad, 
-            Precio_PVP: 0, // Precio Cero
-            Fecha_Entrega: new Date().toISOString().split('T')[0],
-            Estado_Entrega: "ENTREGADO",
-            Notas: "SALIDA POR PRUEBA DE CALIDAD"
-        });
-        
-        document.getElementById('icono-estado').innerText = "check_circle";
-        document.getElementById('titulo-estado').innerText = "¡Prueba Registrada!";
-        setTimeout(() => location.reload(), 1500);
-    } catch(e) {
-        overlay.style.display = 'none';
-        alert("Error al registrar prueba");
-    }
 }
 
 function cambiarCant(n, d) {
@@ -284,6 +239,44 @@ function actualizarCarrito() {
     document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-200 py-2 italic">Sin productos elegidos</p>';
     document.getElementById('car-total').innerText = `$${t.toFixed(2)}`;
     document.getElementById('car-items').innerText = `${items} Unidades`;
+}
+
+// FUNCIÓN PARA EL BOTÓN DE PRUEBA EN EL ENCABEZADO
+async function registrarPruebaCalidadRapida() {
+    const cli = document.getElementById('select-cliente').value;
+    if(!cli) return alert("Selecciona un cliente primero");
+    
+    // Si hay items en el carrito, los procesa como prueba ($0)
+    let itemsParaPrueba = Object.keys(carrito).filter(n => carrito[n] > 0);
+    if(itemsParaPrueba.length === 0) return alert("Añade productos al carrito para registrar la prueba");
+
+    if(!confirm("¿Registrar estos productos como PRUEBA DE CALIDAD (Precio $0.00)?")) return;
+
+    const overlay = document.getElementById('overlay-exito');
+    overlay.style.display = 'flex';
+    document.getElementById('titulo-estado').innerText = "Registrando Prueba...";
+
+    try {
+        for(const n of itemsParaPrueba) {
+            await DairyAPI.enviarDatos({ 
+                pestaña: "Ventas",
+                ID_Venta: "LAB-" + Date.now().toString().slice(-4), 
+                Cliente: cli, 
+                Producto: n, 
+                Cantidad: carrito[n], 
+                Precio_PVP: 0, 
+                Fecha_Entrega: document.getElementById('fecha-entrega').value,
+                Estado_Entrega: "ENTREGADO",
+                Notas: "SALIDA POR PRUEBA DE CALIDAD"
+            });
+        }
+        document.getElementById('icono-estado').innerText = "check_circle";
+        document.getElementById('titulo-estado').innerText = "¡Prueba Registrada!";
+        setTimeout(() => location.reload(), 1500);
+    } catch(e) {
+        overlay.style.display = 'none';
+        alert("Error de conexión");
+    }
 }
 
 async function procesarVenta() {

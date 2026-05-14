@@ -1,42 +1,48 @@
-/**
- * LÓGICA LÁCTEA - CLIENTE API v3.7 (ESTRUCTURA LIMPIA)
- */
-const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbxJkVl7jP3bQVfUQv_1_62F1lfKABJHxaye2XS6q0IlithEkqbhFhztilcUmgBBMSwtyg/exec";
+// ================================
+// CONFIGURACIÓN API CENTRAL
+// ================================
+
+// 🔴 PON AQUÍ TU URL DE GOOGLE APPS SCRIPT
+const SCRIPT_URL = "https://script.google.com/macros/s/TU_DEPLOY_ID/exec";
 
 const DairyAPI = {
-    // 1. LECTURA DE DATOS (doGet)
-    obtenerDatos: async (pestaña) => {
-        try {
-            const response = await fetch(`${DAIRY_API_URL}?pestaña=${pestaña}`);
-            if (!response.ok) throw new Error("Error en red");
-            return await response.json();
-        } catch (error) {
-            console.error("Error al obtener:", error);
-            return [];
-        }
-    },
 
-    // 2. ENVÍO DE DATOS (doPost)
-    enviarDatos: async (datos) => {
-        try {
-            // Se usa 'text/plain' y 'no-cors' para evitar bloqueos de seguridad de Google
-            await fetch(DAIRY_API_URL, {
-                method: 'POST',
-                mode: 'no-cors', 
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify(datos)
-            });
-            // Con no-cors asumimos éxito si no hay error de red
-            return "OK"; 
-        } catch (error) {
-            console.error("Error al enviar:", error);
-            throw error;
-        }
-    },
-
-    // 3. ALIAS PARA COMPATIBILIDAD CON OTROS SCRIPTS
-    guardarDatos: async (pestaña, datos) => {
-        const payload = { pestaña: pestaña, ...datos };
-        return await DairyAPI.enviarDatos(payload);
+  // ================================
+  // OBTENER DATOS
+  // ================================
+  obtenerDatos: async (sheetName) => {
+    try {
+      const res = await fetch(`${SCRIPT_URL}?action=get&sheet=${sheetName}`);
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.error("Error obtenerDatos:", error);
+      return [];
     }
+  },
+
+  // ================================
+  // GUARDAR / ACTUALIZAR DATOS
+  // ================================
+  guardarDatos: async (sheetName, payload) => {
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          sheet: sheetName,
+          ...payload
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      const text = await res.text();
+      return text;
+
+    } catch (error) {
+      console.error("Error guardarDatos:", error);
+      return "ERROR";
+    }
+  }
 };

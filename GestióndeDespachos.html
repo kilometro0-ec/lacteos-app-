@@ -3,89 +3,99 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Gestión de Despachos - Lógica Láctea</title>
+    <title>Rutas - Lógica Láctea</title>
     
-    <!-- Scripts Base -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
-    
-    <!-- Estética -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <link rel="stylesheet" href="estilos-lacteos.css">
-
+    
     <style>
-        :root { --accent: #4f46e5; }
-        .badge-prod { background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; }
-        .btn-action { transition: all 0.2s ease; }
-        .btn-action:active { transform: scale(0.95); }
-        #contenedor-pedidos { animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body { background-color: #f8fafc; padding-bottom: 90px; font-family: sans-serif; }
+        
+        .card-pro {
+            background: white; border-radius: 2rem; border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05); overflow: hidden;
+        }
+
+        /* GOTA DE UBICACIÓN AZUL */
+        .btn-mapa-azul {
+            background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;
+            border-radius: 1.2rem; width: 48px; height: 48px; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s;
+        }
+        .btn-mapa-azul:active { background-color: #2563eb; color: white; }
+
+        .btn-verde {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white; font-weight: 900; text-transform: uppercase;
+            border-radius: 1.2rem;
+        }
+
+        /* NAVEGACIÓN ESTILO FINO */
+        .nav-fija { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-top: 1px solid #f3e8ff; padding: 10px 0 14px 0; z-index: 9999; }
+        .menu-grid { max-width: 500px; margin: 0 auto; display: flex; justify-content: space-around; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #94a3b8; background: none; border: none; }
+        .nav-btn .material-symbols-outlined { font-size: 22px !important; font-variation-settings: 'wght' 300; }
+        .nav-btn span:last-child { font-size: 8px !important; font-weight: 800; text-transform: uppercase; }
+        .active-btn { color: #a21caf !important; }
+
+        /* MODALES */
+        .modal-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 25px; }
+        .modal-box { background: white; width: 100%; max-width: 300px; border-radius: 2.5rem; padding: 30px; text-align: center; animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
-<body class="bg-[#fcfcfd]">
+<body>
 
-<header class="px-6 pt-10 pb-6 flex justify-between items-center bg-white/50 backdrop-blur-md sticky top-0 z-50">
-    <div>
-        <p class="text-[10px] font-800 text-indigo-500 uppercase tracking-[0.2em]">Logística & Distribución</p>
-        <h1 class="text-2xl font-800 text-slate-900 tracking-tighter">Gestión de Despachos</h1>
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-20 bg-white/80 backdrop-blur-sm border-b border-purple-50">
+    <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#a21caf] to-[#db2777] flex items-center justify-center text-white shadow-md">
+            <span class="material-symbols-outlined font-black">local_shipping</span>
+        </div>
+        <h1 class="font-black text-slate-800 tracking-tight">DESPACHOS</h1>
     </div>
-    <button onclick="cargarDatos()" class="w-12 h-12 flex items-center justify-center bg-white border border-slate-200 text-slate-900 rounded-2xl shadow-sm hover:bg-slate-50">
-        <span id="refresh-icon" class="material-symbols-outlined font-bold">sync</span>
+    <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
+        <span id="refresh-icon" class="material-symbols-outlined text-slate-500">sync</span>
     </button>
 </header>
 
-<!-- Resumen de Carga -->
-<div class="px-6 grid grid-cols-2 gap-4 mt-4 mb-8">
-    <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
-        <div class="flex items-center gap-2 mb-1">
-            <span class="material-symbols-outlined text-indigo-500 text-sm">pending_actions</span>
-            <p class="text-[10px] font-800 text-slate-400 uppercase tracking-wider">Por Entregar</p>
+<main class="pt-24 px-5 max-w-lg mx-auto space-y-6">
+    <div class="grid grid-cols-2 gap-4">
+        <div class="bg-white p-5 rounded-[2rem] border border-orange-50 text-center">
+            <p id="cont-pend" class="text-3xl font-black text-orange-500">0</p>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Pendientes</p>
         </div>
-        <p id="cont-pend" class="text-3xl font-800 text-slate-900">0</p>
+        <div class="bg-white p-5 rounded-[2rem] border border-green-50 text-center">
+            <p id="cont-ent" class="text-3xl font-black text-green-500">0</p>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Entregados</p>
+        </div>
     </div>
-    <div class="bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
-        <div class="flex items-center gap-2 mb-1">
-            <span class="material-symbols-outlined text-emerald-500 text-sm">task_alt</span>
-            <p class="text-[10px] font-800 text-slate-400 uppercase tracking-wider">Completados</p>
+    <div id="contenedor-pedidos" class="space-y-6 pb-20"></div>
+</main>
+
+<!-- MODAL SELECTOR DE MAPAS -->
+<div id="modal-mapas" class="modal-custom" onclick="cerrarModal('modal-mapas')">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
+            <span class="material-symbols-outlined text-3xl">map</span>
         </div>
-        <p id="cont-ent" class="text-3xl font-800 text-slate-900">0</p>
+        <h3 class="font-black text-slate-800 text-lg mb-6">¿Qué navegador prefieres?</h3>
+        <div class="grid gap-3">
+            <button id="btn-gmaps" class="w-full py-4 bg-[#4285F4] text-white rounded-2xl font-black uppercase text-xs">Google Maps</button>
+            <button id="btn-waze" class="w-full py-4 bg-[#33CCFF] text-white rounded-2xl font-black uppercase text-xs">Waze</button>
+        </div>
     </div>
 </div>
 
-<!-- Listado Principal -->
-<main id="contenedor-pedidos" class="px-6 space-y-4"></main>
-
-<!-- Modal de Edición (Bottom Sheet) -->
-<div id="modal-edit" class="modal-blur" onclick="cerrarEdicion()">
-    <div class="sheet-bottom" onclick="event.stopPropagation()">
-        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
-        
-        <div class="mb-6">
-            <h2 class="text-2xl font-800 text-slate-900 tracking-tight">Editar Pedido</h2>
-            <p id="edit-id-display" class="text-xs font-bold text-indigo-500 uppercase tracking-widest"></p>
-        </div>
-
-        <div class="space-y-4">
-            <div>
-                <label class="text-[10px] font-800 text-slate-400 uppercase ml-2 mb-1 block">Cliente</label>
-                <input type="text" id="edit-cliente" class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700" readonly>
-            </div>
-            
-            <div>
-                <label class="text-[10px] font-800 text-slate-400 uppercase ml-2 mb-1 block">Nueva Fecha de Entrega</label>
-                <input type="date" id="edit-fecha" class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500">
-            </div>
-
-            <div class="pt-4">
-                <p class="text-[10px] font-800 text-slate-400 uppercase ml-2 mb-3 block">Resumen de Productos</p>
-                <div id="edit-productos-list" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
-            </div>
-        </div>
-
-        <div class="flex gap-3 mt-8">
-            <button onclick="cerrarEdicion()" class="flex-1 py-4 text-slate-400 font-800 text-xs tracking-widest">CANCELAR</button>
-            <button onclick="guardarCambiosPedido()" class="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-800 text-xs tracking-widest btn-action shadow-lg shadow-slate-200">GUARDAR CAMBIOS</button>
+<!-- MODAL CONFIRMACIÓN ACCIONES -->
+<div id="modal-confirm" class="modal-custom">
+    <div class="modal-box">
+        <div id="confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
+        <h3 id="confirm-title" class="font-black text-slate-800 text-lg leading-tight mb-2"></h3>
+        <p id="confirm-text" class="text-slate-500 text-[11px] mb-6"></p>
+        <div class="flex gap-3">
+            <button onclick="cerrarModal('modal-confirm')" class="flex-1 py-3 font-black text-slate-400 text-xs uppercase">No</button>
+            <button id="confirm-ok" class="flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase shadow-lg">Confirmar</button>
         </div>
     </div>
 </div>
@@ -93,181 +103,145 @@
 <div id="menu-container"></div>
 
 <script>
+let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, dinero: 0 };
 let pedidosLocal = [];
-let pedidoEnEdicion = null;
 
 async function cargarDatos() {
     const icon = document.getElementById('refresh-icon');
-    icon.classList.add('animate-spin');
+    icon?.classList.add('animate-spin');
     try {
         const [ventas, clientes] = await Promise.all([
             DairyAPI.obtenerDatos("Ventas"),
             DairyAPI.obtenerDatos("Clientes")
         ]);
-        
         const agrupados = {};
-        let completados = 0;
-
-        ventas.forEach(v => {
-            const estado = String(v.Estado || "").trim().toUpperCase();
-            if(estado === "ENTREGADO") { completados++; return; }
-            if(estado === "PENDIENTE" || estado === "REPROGRAMADO") {
-                const id = v.ID_Venta;
-                if(!agrupados[id]) {
-                    agrupados[id] = { 
-                        id, 
-                        cliente: v.Cliente, 
-                        total: 0, 
-                        items: [], 
-                        fecha: v.Fecha_Entrega, 
-                        estado, 
-                        direccion: clientes.find(c => c.Nombre === v.Cliente)?.Dirección || "Sin dirección registrada" 
-                    };
-                }
-                const sub = parseFloat(v.Cantidad) * parseFloat(String(v.Precio_PVP).replace(',','.'));
-                agrupados[id].items.push({ ...v, subtotal: sub });
-                agrupados[id].total += sub;
+        ventas.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE").forEach(v => {
+            const idV = v.ID_Venta || "S/N";
+            if (!agrupados[idV]) {
+                agrupados[idV] = {
+                    id: idV, cliente: v.Cliente, total: 0, items: [],
+                    direccion: clientes.find(c => String(c.Nombre).trim().toLowerCase() === String(v.Cliente).trim().toLowerCase())?.Dirección || ""
+                };
             }
+            const precio = parseFloat(String(v["Precio Total"] || 0).replace(',', '.')) || 0;
+            // Guardamos el ID_Fila o el identificador único que use tu API para poder borrar luego
+            agrupados[idV].items.push({ idFila: v.ID_Venta, producto: v.Producto, cant: v.Cantidad, precio: precio });
+            agrupados[idV].total += precio;
         });
-
-        pedidosLocal = Object.values(agrupados).sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-        document.getElementById('cont-ent').innerText = completados;
+        pedidosLocal = Object.values(agrupados).reverse();
         renderizar();
-    } finally { 
-        setTimeout(() => icon.classList.remove('animate-spin'), 500);
-    }
+    } catch (e) { console.error(e); }
+    finally { icon?.classList.remove('animate-spin'); }
 }
 
 function renderizar() {
     const container = document.getElementById('contenedor-pedidos');
     document.getElementById('cont-pend').innerText = pedidosLocal.length;
-    container.innerHTML = "";
-
-    if(pedidosLocal.length === 0) {
-        container.innerHTML = `<div class="text-center py-20"><span class="material-symbols-outlined text-slate-200 text-6xl">local_shipping</span><p class="text-slate-400 font-bold mt-2">No hay despachos pendientes</p></div>`;
-        return;
-    }
-
-    pedidosLocal.forEach(ped => {
-        const esRepro = ped.estado === "REPROGRAMADO";
+    document.getElementById('cont-ent').innerText = statsSesion.pedidos;
+    
+    container.innerHTML = pedidosLocal.length ? "" : '<div class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">Ruta Finalizada</div>';
+    
+    pedidosLocal.forEach((ped, idx) => {
         container.innerHTML += `
-            <div class="card-premium p-6 ${esRepro ? 'card-reprogramado' : ''}">
-                <div class="flex justify-between items-start mb-4">
+            <div class="card-pro p-6 space-y-5">
+                <div class="flex justify-between items-start">
                     <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1">
-                             <span class="text-[9px] font-800 text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">ID: ${ped.id}</span>
-                             ${esRepro ? '<span class="text-[9px] font-800 text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">REPROGRAMADO</span>' : ''}
-                        </div>
-                        <h2 class="text-xl font-800 text-slate-800 uppercase leading-tight">${ped.cliente}</h2>
-                        <p class="text-[11px] text-slate-400 font-medium mt-1 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-sm">calendar_today</span> ${ped.fecha || 'Sin fecha'}
-                        </p>
+                        <span class="bg-purple-50 text-[#a21caf] text-[10px] font-black px-2 py-1 rounded-lg">ID: ${ped.id}</span>
+                        <h2 class="text-xl font-black text-slate-800 uppercase mt-2">${ped.cliente}</h2>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="abrirEdicion('${ped.id}')" class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center text-slate-600 btn-action hover:bg-slate-200">
-                            <span class="material-symbols-outlined">edit</span>
-                        </button>
-                        <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ped.direccion)}')" class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 btn-action hover:bg-indigo-100">
-                            <span class="material-symbols-outlined">directions</span>
-                        </button>
-                    </div>
+                    <button onclick="abrirSelectorMapas('${ped.direccion}')" class="btn-mapa-azul">
+                        <span class="material-symbols-outlined text-2xl">location_on</span>
+                    </button>
                 </div>
-                
-                <div class="bg-slate-50/50 rounded-2xl p-4 mb-6 space-y-2">
-                    ${ped.items.map(it => `
-                        <div class="flex justify-between items-center">
-                            <span class="text-xs font-bold text-slate-600">${it.Producto} <span class="badge-prod ml-1">x${it.Cantidad}</span></span>
-                            <span class="text-xs font-800 text-slate-900">$${it.subtotal.toFixed(2)}</span>
+                <div class="bg-slate-50/50 rounded-2xl p-3">
+                    ${ped.items.map((it, iIdx) => `
+                        <div class="flex justify-between items-center py-2.5 px-2 border-b border-white last:border-0">
+                            <span class="text-xs font-bold text-slate-600 uppercase">${it.producto} <span class="text-purple-400 ml-1">x${it.cant}</span></span>
+                            <button onclick="askDelete(${idx}, ${iIdx})" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-400 rounded-xl">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                            </button>
                         </div>
                     `).join('')}
                 </div>
-
                 <div class="flex justify-between items-center pt-2">
-                    <div>
-                        <p class="text-[9px] font-800 text-slate-400 uppercase tracking-widest">Total a Cobrar</p>
-                        <p class="text-3xl font-800 text-slate-900 tracking-tighter">$${ped.total.toFixed(2)}</p>
-                    </div>
-                    <button onclick="marcarEntregado('${ped.id}')" class="h-14 px-8 bg-emerald-600 text-white rounded-2xl font-800 text-xs tracking-widest btn-action shadow-lg shadow-emerald-100">
-                        ENTREGADO
-                    </button>
+                    <p class="text-3xl font-black text-slate-900">$${ped.total.toFixed(2)}</p>
+                    <button onclick="askEntrega('${ped.id}', ${idx})" class="btn-verde px-8 h-14 shadow-lg shadow-green-100">ENTREGADO</button>
                 </div>
             </div>`;
     });
 }
 
-function abrirEdicion(id) {
-    pedidoEnEdicion = JSON.parse(JSON.stringify(pedidosLocal.find(p => p.id === id)));
-    document.getElementById('edit-id-display').innerText = `ORDEN #${id}`;
-    document.getElementById('edit-cliente').value = pedidoEnEdicion.cliente;
-    document.getElementById('edit-fecha').value = pedidoEnEdicion.fecha;
-    
-    const prodList = document.getElementById('edit-productos-list');
-    prodList.innerHTML = pedidoEnEdicion.items.map(it => `
-        <div class="flex justify-between p-3 bg-white border border-slate-100 rounded-xl">
-            <span class="text-xs font-bold text-slate-600">${it.Producto} (x${it.Cantidad})</span>
-            <span class="text-xs font-800 text-slate-900">$${it.subtotal.toFixed(2)}</span>
-        </div>
-    `).join('');
-
-    document.getElementById('modal-edit').style.display = 'flex';
+function abrirSelectorMapas(dir) {
+    if(!dir) return alert("Sin dirección");
+    document.getElementById('modal-mapas').style.display = 'flex';
+    document.getElementById('btn-gmaps').onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`);
+    document.getElementById('btn-waze').onclick = () => window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`);
 }
 
-function cerrarEdicion() { 
-    document.getElementById('modal-edit').style.display = 'none'; 
-}
+function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 
-async function marcarEntregado(id) {
-    if(!confirm("¿Confirmar que el pedido ha sido entregado?")) return;
-    await DairyAPI.enviarDatos({ pestaña: "Ventas", accion: "MARCAR_ENTREGADO", ID_Venta: id });
-    cargarDatos();
-}
+function showConfirm(title, text, type, onOk) {
+    const modal = document.getElementById('modal-confirm');
+    const iconBox = document.getElementById('confirm-icon');
+    const okBtn = document.getElementById('confirm-ok');
+    document.getElementById('confirm-title').innerText = title;
+    document.getElementById('confirm-text').innerText = text;
+    modal.style.display = 'flex';
 
-async function guardarCambiosPedido() {
-    const nuevaFecha = document.getElementById('edit-fecha').value;
-    const esRepro = nuevaFecha !== pedidoEnEdicion.fecha;
-    
-    // Paso 1: Eliminar registros antiguos por ID
-    await DairyAPI.enviarDatos({ pestaña: "Ventas", accion: "ELIMINAR_PEDIDO_ID", ID_Venta: pedidoEnEdicion.id });
-    
-    // Paso 2: Re-insertar registros actualizados
-    for(let it of pedidoEnEdicion.items) {
-        await DairyAPI.enviarDatos({ 
-            pestaña: "Ventas", 
-            ID_Venta: pedidoEnEdicion.id, 
-            Cliente: pedidoEnEdicion.cliente, 
-            Producto: it.Producto, 
-            Cantidad: it.Cantidad, 
-            Precio_PVP: it.Precio_PVP, 
-            Fecha_Entrega: nuevaFecha, 
-            Estado: esRepro ? "REPROGRAMADO" : "PENDIENTE" 
-        });
+    if(type === 'delete') {
+        iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-50 text-red-500";
+        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">delete</span>';
+        okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-red-500";
+    } else {
+        iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-green-50 text-green-500";
+        iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">check</span>';
+        okBtn.className = "flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase bg-green-600";
     }
-    
-    cerrarEdicion();
-    cargarDatos();
+    okBtn.onclick = () => { onOk(); cerrarModal('modal-confirm'); };
+}
+
+function askDelete(pIdx, iIdx) {
+    const it = pedidosLocal[pIdx].items[iIdx];
+    showConfirm("¿Eliminar producto?", "Se borrará permanentemente de la base de datos.", "delete", async () => {
+        try {
+            // AQUÍ LA LÓGICA DE ELIMINACIÓN REAL EN SHEETS
+            // Dependiendo de tu API, puede ser "eliminar_fila" o cambiar estado a "ELIMINADO"
+            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "eliminar_item", ID_Venta: it.idFila });
+            cargarDatos(); // Recargamos para que el total se actualice desde la nube
+        } catch (e) { alert("Error al borrar"); }
+    });
+}
+
+function askEntrega(id, idx) {
+    showConfirm("¿Entregado?", "Se registrará como cobrado.", "success", async () => {
+        try {
+            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: id, Estado: "ENTREGADO" });
+            statsSesion.pedidos++;
+            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
+            cargarDatos();
+        } catch (e) { alert("Error"); }
+    });
 }
 
 function renderMenu() {
+    const container = document.getElementById('menu-container');
     const opciones = [
         { nombre: 'Panel', icon: 'dashboard', link: 'DashboardLacteo.html' },
-        { nombre: 'Ventas', icon: 'add_shopping_cart', link: 'Ventas.html' },
+        { nombre: 'Ventas', icon: 'add_shopping_cart', link: 'RegistrodeVentas.html' },
+        { nombre: 'Stock', icon: 'inventory', link: 'ControldeInventario.html' },
+        { nombre: 'Clientes', icon: 'group', link: 'GestiondeClientes.html' },
         { nombre: 'Rutas', icon: 'local_shipping', link: 'GestióndeDespachos.html' }
     ];
-    let html = '<nav class="nav-glass flex justify-around items-center">';
+    const pathActual = decodeURIComponent(window.location.pathname);
+    let html = '<nav class="nav-fija"><div class="menu-grid">';
     opciones.forEach(opt => {
-        const esActivo = window.location.pathname.includes(opt.link) ? 'text-indigo-600' : 'text-slate-400';
-        html += `<button onclick="location.href='${opt.link}'" class="flex flex-col items-center gap-1">
-            <span class="material-symbols-outlined ${esActivo}">${opt.icon}</span>
-            <span class="text-[8px] font-800 uppercase ${esActivo}">${opt.nombre}</span>
-        </button>`;
+        const esActivo = pathActual.includes(opt.link) ? 'active-btn' : '';
+        html += `<button onclick="location.href='${opt.link}'" class="nav-btn ${esActivo}"><span class="material-symbols-outlined">${opt.icon}</span><span>${opt.nombre}</span></button>`;
     });
-    document.getElementById('menu-container').innerHTML = html + '</nav>';
+    container.innerHTML = html + '</div></nav>';
 }
 
-window.onload = () => { 
-    cargarDatos(); 
-    renderMenu(); 
-};
+window.onload = () => { cargarDatos(); renderMenu(); };
 </script>
 </body>
 </html>

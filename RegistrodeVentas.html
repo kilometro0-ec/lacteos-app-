@@ -1,16 +1,14 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>Ventas - Lógica Láctea</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>POS Ventas - Lógica Láctea</title>
 
 <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
 <script src="api-config.js"></script>
-<script src="menu-logic.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
 
 <script>
 tailwind.config = {
@@ -18,8 +16,7 @@ tailwind.config = {
     extend: {
       colors: {
         primary: "#a21caf",
-        secondary: "#db2777",
-        whatsapp: "#25d366"
+        secondary: "#db2777"
       }
     }
   }
@@ -27,203 +24,253 @@ tailwind.config = {
 </script>
 
 <style>
-body { font-family: 'Work Sans', sans-serif; background:#faf5ff; }
-.card-producto{background:white;border:1px solid #e9d5ff;border-radius:1rem;padding:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.bloqueado{opacity:.3;pointer-events:none;filter:grayscale(1)}
-.input-sutil{width:100%;padding:.6rem;border-radius:.75rem;border:1px solid #f3e8ff}
-#carrito-flotante{position:fixed;bottom:90px;left:10px;right:10px;background:white;border:2px solid #a21caf;border-radius:1.5rem;padding:15px}
-.btn-whatsapp{background:#25d366;color:white;width:100%;padding:14px;border-radius:1rem;font-weight:900;display:none}
+body{font-family:Work Sans;background:#faf5ff}
+.card{background:white;border:1px solid #e9d5ff;border-radius:12px;padding:10px;display:flex;justify-content:space-between;margin-bottom:8px}
+.bloq{opacity:.4;pointer-events:none}
+.btn{padding:10px;border-radius:10px;font-weight:800}
 </style>
 </head>
 
-<body class="pb-96">
+<body class="p-4 pb-40">
 
 <!-- HEADER -->
-<header class="h-14 bg-white border-b flex justify-between items-center px-4 sticky top-0 z-50">
-<div>
-<h1 class="text-lg font-black text-primary">Ventas</h1>
-<span id="id-venta-display" class="text-[10px] text-gray-400">ID---</span>
-</div>
-<button onclick="location.reload()">🔄</button>
+<header class="flex justify-between items-center mb-4">
+<h1 class="font-black text-xl text-primary">POS VENTAS</h1>
+<div id="idVenta">ID---</div>
 </header>
 
-<main class="p-4 max-w-xl mx-auto">
-
 <!-- CLIENTE -->
-<section class="bg-white p-4 rounded-2xl mb-4">
-<select id="select-cliente" onchange="activarInterfaz()" class="input-sutil">
-<option value="">-- CLIENTE --</option>
-</select>
-</section>
+<div class="bg-white p-3 rounded-xl mb-3">
+<select id="clientes" class="w-full border p-2 rounded" onchange="activar()"></select>
+
+<button onclick="mostrarNuevoCliente()" class="mt-2 bg-primary text-white btn w-full">
++ Nuevo Cliente
+</button>
+</div>
+
+<!-- FORM NUEVO CLIENTE -->
+<div id="formCliente" class="hidden bg-white p-3 rounded-xl mb-3">
+<input id="nc_nombre" placeholder="Nombre" class="w-full border p-2 mb-2"/>
+<input id="nc_ci" placeholder="CI/RUC" class="w-full border p-2 mb-2"/>
+
+<button onclick="guardarCliente()" class="bg-secondary text-white btn w-full">
+Guardar Cliente
+</button>
+</div>
 
 <!-- BUSCADOR -->
-<input id="buscarProducto" oninput="filtrar()" class="input-sutil mb-4" placeholder="Buscar producto...">
+<input id="buscar" oninput="filtrar()" class="w-full p-2 border rounded mb-3" placeholder="Buscar producto...">
 
 <!-- PRODUCTOS -->
-<div id="contenedor-productos"></div>
-
-</main>
+<div id="productos"></div>
 
 <!-- CARRITO -->
-<div id="carrito-flotante" class="bloqueado">
-<div class="flex justify-between">
-<div>
-<p id="car-cliente">Sin cliente</p>
-<p id="car-id">ID---</p>
-</div>
-<div>
-<p id="car-total">$0</p>
-<p id="car-items">0</p>
-</div>
+<div id="carrito" class="fixed bottom-0 left-0 right-0 bg-white border-t p-3">
+
+<div class="flex justify-between mb-2">
+<div id="cliSel">Sin cliente</div>
+<div id="total">$0</div>
 </div>
 
-<div id="car-detalle" class="text-xs my-2"></div>
+<div id="detalle" class="text-xs mb-2"></div>
 
-<input type="date" id="fecha-entrega" class="input-sutil mb-2">
+<input type="date" id="fecha" class="w-full border p-2 mb-2">
 
-<button id="btn-confirmar" onclick="procesarVenta()" class="bg-secondary text-white w-full py-3 rounded-xl">
+<button id="btnConfirm" onclick="procesarVenta()" class="bg-secondary text-white w-full btn">
 Confirmar Pedido
 </button>
 
-<button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-whatsapp">
+<button onclick="enviarWhatsApp()" class="bg-green-500 text-white w-full btn mt-2">
 WhatsApp
 </button>
+
 </div>
 
-<!-- ================= JS ================= -->
 <script>
-let carrito = {};
-let productosData = [];
-let filtrados = [];
-let idVenta = "";
 
-function safe(id, val){
-  const el = document.getElementById(id);
-  if(el) el.innerText = val;
+let productos=[], carrito={}, filtro=[];
+
+let idVenta="";
+
+function safe(id,val){
+  const el=document.getElementById(id);
+  if(el) el.innerText=val;
 }
 
-function normalizar(r){
-  if(!r) return [];
-  if(Array.isArray(r)) return r;
-  if(Array.isArray(r.data)) return r.data;
-  return [];
-}
-
+/* INIT */
 async function iniciar(){
-  const d = new Date();
 
-  idVenta = "V-" + Date.now().toString().slice(-6);
+idVenta="V-"+Date.now().toString().slice(-6);
+safe("idVenta","ID "+idVenta);
 
-  safe("id-venta-display", "ID: " + idVenta);
-  safe("car-id", "ID: " + idVenta);
+document.getElementById("fecha").value=new Date().toISOString().split("T")[0];
 
-  const fecha = document.getElementById("fecha-entrega");
-  if(fecha) fecha.value = d.toISOString().split("T")[0];
+const cl=await DairyAPI.obtenerDatos("Clientes");
+const pr=await DairyAPI.obtenerDatos("Inventario");
 
-  try{
-    const [cl, pr] = await Promise.all([
-      DairyAPI.obtenerDatos("Clientes"),
-      DairyAPI.obtenerDatos("Inventario")
-    ]);
+productos = Array.isArray(pr)?pr:(pr.data||[]);
+filtro=productos;
 
-    const clientes = normalizar(cl);
-    productosData = normalizar(pr);
+const sel=document.getElementById("clientes");
+sel.innerHTML="<option value=''>Cliente</option>";
 
-    filtrados = productosData;
+(cl.data||cl).forEach(c=>{
+sel.innerHTML+=`<option value="${c.Nombre}">${c.Nombre}</option>`;
+});
 
-    const sel = document.getElementById("select-cliente");
-    sel.innerHTML = `<option value="">-- CLIENTE --</option>`;
+render();
 
-    clientes.forEach(c=>{
-      sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
-    });
-
-    render();
-
-  }catch(e){
-    console.error(e);
-  }
 }
 
-function activarInterfaz(){
-  const cli = document.getElementById("select-cliente").value;
-  document.getElementById("carrito-flotante").classList.toggle("bloqueado", !cli);
+function activar(){
+const v=document.getElementById("clientes").value;
+document.getElementById("cliSel").innerText=v||"Sin cliente";
 }
 
+function mostrarNuevoCliente(){
+document.getElementById("formCliente").classList.toggle("hidden");
+}
+
+async function guardarCliente(){
+
+await DairyAPI.enviarDatos("Clientes",{
+Nombre:document.getElementById("nc_nombre").value,
+CI_RUC:document.getElementById("nc_ci").value,
+pestaña:"Clientes"
+});
+
+alert("Cliente guardado");
+location.reload();
+}
+
+/* FILTRO */
 function filtrar(){
-  const q = document.getElementById("buscarProducto").value.toLowerCase();
+const q=document.getElementById("buscar").value.toLowerCase();
 
-  filtrados = productosData.filter(p=>{
-    return (p.Stock>0) && p.Producto.toLowerCase().includes(q);
-  });
+filtro=productos.filter(p=>
+p.Stock>0 &&
+p.Producto.toLowerCase().includes(q)
+);
 
-  render();
+render();
 }
 
+/* RENDER */
 function render(){
-  const cont = document.getElementById("contenedor-productos");
-  cont.innerHTML = "";
 
-  filtrados.filter(p=>p.Stock>0).forEach(p=>{
-    const id = "c-" + p.Producto.replace(/\s+/g,'-');
+const c=document.getElementById("productos");
+c.innerHTML="";
 
-    cont.innerHTML += `
-    <div class="card-producto">
-      <div>
-        <b>${p.Producto}</b>
-        <div>$${p.Precio_Venta}</div>
-        <small>Stock ${p.Stock}</small>
-      </div>
+filtro.filter(p=>p.Stock>0).forEach(p=>{
 
-      <div>
-        <button onclick="add('${p.Producto}',-1)">-</button>
-        <span id="${id}">0</span>
-        <button onclick="add('${p.Producto}',1)">+</button>
-      </div>
-    </div>`;
-  });
+const id="p-"+p.Producto.replace(/\s+/g,"-");
+
+c.innerHTML+=`
+<div class="card">
+<div>
+<b>${p.Producto}</b>
+<div>$${p.Precio_Venta}</div>
+</div>
+
+<div>
+<button onclick="add('${p.Producto}',-1)">-</button>
+<span id="${id}">0</span>
+<button onclick="add('${p.Producto}',1)">+</button>
+</div>
+</div>`;
+});
+
 }
 
+/* CARRITO */
 function add(n,d){
-  if(!carrito[n]) carrito[n]=0;
 
-  const p = productosData.find(x=>x.Producto===n);
-  if(!p) return;
+if(!carrito[n])carrito[n]=0;
 
-  const stock = +p.Stock || 0;
+const p=productos.find(x=>x.Producto===n);
+if(!p)return;
 
-  if(carrito[n]+d>=0 && carrito[n]+d<=stock){
-    carrito[n]+=d;
-    const el = document.getElementById("c-"+n.replace(/\s+/g,'-'));
-    if(el) el.innerText = carrito[n];
-    update();
-  }
+const stock=+p.Stock||0;
+
+if(carrito[n]+d>=0&&carrito[n]+d<=stock){
+carrito[n]+=d;
+document.getElementById("p-"+n.replace(/\s+/g,"-")).innerText=carrito[n];
+update();
 }
 
+}
+
+/* UPDATE */
 function update(){
-  let t=0,i=0,h="";
 
-  Object.keys(carrito).forEach(n=>{
-    if(carrito[n]>0){
-      const p = productosData.find(x=>x.Producto===n);
-      const s = carrito[n]*p.Precio_Venta;
-      t+=s;i+=carrito[n];
-      h+=`${n} x${carrito[n]} = $${s.toFixed(2)}<br>`;
-    }
-  });
+let t=0,i=0,h="";
 
-  safe("car-detalle", h||"Sin productos");
-  safe("car-total", "$"+t.toFixed(2));
-  safe("car-items", i+" ítems");
+Object.keys(carrito).forEach(n=>{
+if(carrito[n]>0){
+const p=productos.find(x=>x.Producto===n);
+const s=carrito[n]*p.Precio_Venta;
+t+=s;i+=carrito[n];
+h+=`${n} x${carrito[n]} = $${s.toFixed(2)}<br>`;
+}
+});
 
-  const btn = document.getElementById("btn-confirmar");
-  if(btn){
-    btn.disabled = i===0;
-    btn.style.opacity = i===0?0.4:1;
-  }
+safe("detalle",h||"vacío");
+safe("total","$"+t.toFixed(2));
+
+const btn=document.getElementById("btnConfirm");
+btn.disabled=i===0;
+
 }
 
-window.addEventListener("DOMContentLoaded", iniciar);
+/* VENTA */
+async function procesarVenta(){
+
+const cli=document.getElementById("clientes").value;
+const fec=document.getElementById("fecha").value;
+
+if(!cli)return alert("Selecciona cliente");
+
+for(const n in carrito){
+if(carrito[n]>0){
+const p=productos.find(x=>x.Producto===n);
+
+await DairyAPI.enviarDatos("Ventas",{
+ID_Venta:idVenta,
+Cliente:cli,
+Producto:n,
+Cantidad:carrito[n],
+Precio_PVP:p.Precio_Venta,
+Fecha_Entrega:fec,
+pestaña:"Ventas"
+});
+}
+}
+
+alert("Venta guardada");
+location.reload();
+
+}
+
+/* WHATSAPP */
+function enviarWhatsApp(){
+
+let msg="*PEDIDO*\n";
+let t=0;
+
+Object.keys(carrito).forEach(n=>{
+if(carrito[n]>0){
+const p=productos.find(x=>x.Producto===n);
+msg+=`${carrito[n]}x ${n}\n`;
+t+=carrito[n]*p.Precio_Venta;
+}
+});
+
+window.open(`https://wa.me/?text=${encodeURIComponent(msg+"TOTAL $"+t)}`);
+
+}
+
+window.onload=iniciar;
+
 </script>
 
 </body>

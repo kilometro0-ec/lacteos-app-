@@ -7,42 +7,19 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJkVl7jP3bQVfUQv_1_
 
 const DairyAPI = {
 
-  // ================================
-  // OBTENER DATOS
-  // ================================
-  obtenerDatos: async (sheetName) => {
-    try {
-      const res = await fetch(`${SCRIPT_URL}?action=get&sheet=${sheetName}`);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    } catch (error) {
-      console.error("Error obtenerDatos:", error);
-      return [];
-    }
+  async get(sheet) {
+    const res = await fetch(`${SCRIPT_URL}?pestaña=${sheet}`);
+    const json = await res.json();
+    return json.data || [];
   },
 
-  // ================================
-  // GUARDAR / ACTUALIZAR DATOS
-  // ================================
-  guardarDatos: async (sheetName, payload) => {
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          sheet: sheetName,
-          ...payload
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
+  async post(payload) {
+    const res = await fetch(SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" }
+    });
 
-      const text = await res.text();
-      return text;
-
-    } catch (error) {
-      console.error("Error guardarDatos:", error);
-      return "ERROR";
-    }
+    return await res.text();
   }
 };

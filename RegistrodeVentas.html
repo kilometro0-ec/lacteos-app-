@@ -146,207 +146,613 @@
 <div id="menu-container"></div>
 
 <script>
-let carrito = {}; 
-let productosData = []; 
+let carrito = {};
+let productosData = [];
 let idVenta = "";
 
+// ===============================
+// CONFIG API
+// ===============================
+const API_URL = typeof API_CONFIG !== "undefined"
+    ? API_CONFIG.URL
+    : "TU_WEBAPP_URL";
+
+// ===============================
+// API UNIFICADA
+// ===============================
+const DairyAPI = {
+
+    async obtenerDatos(pestaña) {
+        try {
+            const res = await fetch(`${API_URL}?pestaña=${encodeURIComponent(pestaña)}`);
+            const json = await res.json();
+
+            if (json.status === "OK") {
+                return json.data || [];
+            }
+
+            console.error(json.message);
+            return [];
+
+        } catch (err) {
+            console.error("Error GET:", err);
+            return [];
+        }
+    },
+
+    async enviarDatos(datos) {
+        try {
+            const res = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(datos)
+            });
+
+            return await res.json();
+
+        } catch (err) {
+            console.error("Error POST:", err);
+            throw err;
+        }
+    }
+};
+
+// ===============================
+// INICIO
+// ===============================
 async function iniciar() {
+
     const d = new Date();
+
     idVenta = `V-${d.getFullYear().toString().slice(-2)}${Math.floor(100000 + Math.random() * 900000)}`;
+
     document.getElementById('car-id').innerText = `ID: ${idVenta}`;
     document.getElementById('id-venta-display').innerText = `ID: ${idVenta}`;
-    document.getElementById('fecha-entrega').value = d.toISOString().split('T')[0];
+
+    document.getElementById('fecha-entrega').value =
+        d.toISOString().split('T')[0];
 
     try {
-        const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
-        productosData = pr || [];
+
+        const [clientes, inventario] = await Promise.all([
+            DairyAPI.obtenerDatos("Clientes"),
+            DairyAPI.obtenerDatos("Inventario")
+        ]);
+
+        productosData = Array.isArray(inventario)
+            ? inventario
+            : [];
+
         const sel = document.getElementById('select-cliente');
-        const listaClientes = Array.isArray(cl) ? cl : [];
-        listaClientes.sort((a,b)=>String(a.Nombre).localeCompare(b.Nombre)).forEach(c => { 
-            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
-        });
+
+        sel.innerHTML =
+            '<option value="">-- SELECCIONAR CLIENTE --</option>';
+
+        const listaClientes = Array.isArray(clientes)
+            ? clientes
+            : [];
+
+        listaClientes
+            .sort((a, b) =>
+                String(a.Nombre || "").localeCompare(String(b.Nombre || ""))
+            )
+            .forEach(c => {
+
+                sel.innerHTML += `
+                    <option value="${c.Nombre}">
+                        ${c.Nombre}
+                    </option>
+                `;
+            });
+
         renderizar();
-    } catch(e) { console.error("Error al cargar:", e); }
+
+    } catch (e) {
+
+        console.error("Error al cargar:", e);
+        alert("Error cargando información");
+    }
 }
 
+// ===============================
+// ACTIVAR INTERFAZ
+// ===============================
 function activarInterfaz() {
-    const cli = document.getElementById('select-cliente').value;
-    document.getElementById('seccion-operativa').classList.toggle('bloqueado', !cli);
-    document.getElementById('carrito-flotante').classList.toggle('bloqueado', !cli);
-    document.getElementById('car-cliente').innerText = cli || "Esperando Cliente...";
+
+    const cli =
+        document.getElementById('select-cliente').value;
+
+    document
+        .getElementById('seccion-operativa')
+        .classList.toggle('bloqueado', !cli);
+
+    document
+        .getElementById('carrito-flotante')
+        .classList.toggle('bloqueado', !cli);
+
+    document.getElementById('car-cliente').innerText =
+        cli || "Esperando Cliente...";
 }
 
+// ===============================
+// RENDER PRODUCTOS
+// ===============================
 function renderizar() {
-    const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
+
+    const cont =
+        document.getElementById('contenedor-productos');
+
+    cont.innerHTML = "";
+
     productosData.forEach(p => {
-        const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
+
+        const producto = p.Producto || "";
+        const precio = Number(p.Precio_Venta) || 0;
+        const stock = Number(p.Stock) || 0;
+
+        const idCant =
+            `cant-${producto.replace(/\s+/g,'-')}`;
+
         cont.innerHTML += `
             <div class="card-sutil flex items-center justify-between mb-2">
+
                 <div class="flex-1">
-                    <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${p.Producto}</h4>
+
+                    <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">
+                        ${producto}
+                    </h4>
+
                     <div class="flex items-center gap-2 mt-1">
-                        <span class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
-                        <span class="tag tag-success" style="font-size:8px">Stock: ${p.Stock}</span>
+
+                        <span class="text-sm font-black text-primary">
+                            $${precio.toFixed(2)}
+                        </span>
+
+                        <span class="tag tag-success" style="font-size:8px">
+                            Stock: ${stock}
+                        </span>
+
                     </div>
                 </div>
+
                 <div class="flex items-center gap-3 bg-purple-50 p-1 rounded-2xl">
-                    <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
-                    <span id="${idCant}" class="w-6 text-center font-black text-lg text-slate-900">0</span>
-                    <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
+
+                    <button
+                        onclick="cambiarCant('${producto}',-1)"
+                        class="w-10 h-10 bg-white rounded-xl shadow-sm font-black text-xl text-primary">
+                        -
+                    </button>
+
+                    <span id="${idCant}"
+                        class="w-6 text-center font-black text-lg text-slate-900">
+                        0
+                    </span>
+
+                    <button
+                        onclick="cambiarCant('${producto}',1)"
+                        class="w-10 h-10 bg-white rounded-xl shadow-sm font-black text-xl text-primary">
+                        +
+                    </button>
+
                 </div>
-            </div>`;
+            </div>
+        `;
     });
 }
 
-function cambiarCant(n, d) {
-    if(!carrito[n]) carrito[n] = 0;
-    const p = productosData.find(x => x.Producto === n);
-    const stockDisp = parseInt(p.Stock || 0);
-    if(carrito[n]+d >= 0 && (carrito[n]+d <= stockDisp)) {
-        carrito[n] += d;
-        document.getElementById(`cant-${n.replace(/\s+/g,'-')}`).innerText = carrito[n];
-        actualizarCarrito();
-    } else if (d > 0) alert("¡Stock insuficiente!");
+// ===============================
+// CAMBIAR CANTIDAD
+// ===============================
+function cambiarCant(nombre, delta) {
+
+    if (!carrito[nombre]) carrito[nombre] = 0;
+
+    const p =
+        productosData.find(x => x.Producto === nombre);
+
+    if (!p) return;
+
+    const stockDisp = Number(p.Stock) || 0;
+
+    const nuevaCant =
+        carrito[nombre] + delta;
+
+    if (nuevaCant < 0) return;
+
+    if (nuevaCant > stockDisp) {
+        alert("¡Stock insuficiente!");
+        return;
+    }
+
+    carrito[nombre] = nuevaCant;
+
+    document.getElementById(
+        `cant-${nombre.replace(/\s+/g,'-')}`
+    ).innerText = nuevaCant;
+
+    actualizarCarrito();
 }
 
+// ===============================
+// ACTUALIZAR CARRITO
+// ===============================
 function actualizarCarrito() {
-    let t = 0; let items = 0; let html = "";
-    Object.keys(carrito).forEach(n => {
-        if(carrito[n] > 0) {
-            const p = productosData.find(x => x.Producto === n);
-            const sub = (carrito[n] * parseFloat(p.Precio_Venta));
-            t += sub; items += carrito[n];
-            html += `<div class="flex justify-between py-1 border-b border-purple-50 last:border-0"><span>${n} (x${carrito[n]})</span><span class="text-slate-900">$${sub.toFixed(2)}</span></div>`;
+
+    let total = 0;
+    let items = 0;
+    let html = "";
+
+    Object.keys(carrito).forEach(nombre => {
+
+        const cantidad = carrito[nombre];
+
+        if (cantidad > 0) {
+
+            const p =
+                productosData.find(x => x.Producto === nombre);
+
+            const precio =
+                Number(p.Precio_Venta) || 0;
+
+            const subtotal =
+                cantidad * precio;
+
+            total += subtotal;
+            items += cantidad;
+
+            html += `
+                <div class="flex justify-between py-1 border-b border-purple-50 last:border-0">
+
+                    <span>
+                        ${nombre} (x${cantidad})
+                    </span>
+
+                    <span class="text-slate-900">
+                        $${subtotal.toFixed(2)}
+                    </span>
+
+                </div>
+            `;
         }
     });
-    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-200 py-2 italic">Sin productos elegidos</p>';
-    document.getElementById('car-total').innerText = `$${t.toFixed(2)}`;
-    document.getElementById('car-items').innerText = `${items} Unidades`;
+
+    document.getElementById('car-detalle').innerHTML =
+        html ||
+        '<p class="text-center text-slate-200 py-2 italic">Sin productos elegidos</p>';
+
+    document.getElementById('car-total').innerText =
+        `$${total.toFixed(2)}`;
+
+    document.getElementById('car-items').innerText =
+        `${items} Unidades`;
 }
 
-// CORRECCIÓN: Función que envía PRECIO 0 a la hoja Ventas
+// ===============================
+// PRUEBA CALIDAD
+// ===============================
 async function registrarPruebaCalidadRapida() {
-    const cli = document.getElementById('select-cliente').value;
-    const fec = document.getElementById('fecha-entrega').value;
-    
-    const itemsParaPrueba = Object.keys(carrito).filter(n => carrito[n] > 0);
-    
-    if(!cli) return alert("Primero selecciona un cliente");
-    if(itemsParaPrueba.length === 0) return alert("Añade productos al carrito para la prueba");
 
-    if(!confirm("¿CONFIRMAR PRUEBA DE CALIDAD? Los productos se guardarán con valor $0.00")) return;
+    const cli =
+        document.getElementById('select-cliente').value;
 
-    const overlay = document.getElementById('overlay-exito');
+    const fec =
+        document.getElementById('fecha-entrega').value;
+
+    const items =
+        Object.keys(carrito)
+            .filter(n => carrito[n] > 0);
+
+    if (!cli)
+        return alert("Primero selecciona un cliente");
+
+    if (items.length === 0)
+        return alert("Añade productos");
+
+    if (!confirm("¿CONFIRMAR PRUEBA DE CALIDAD?"))
+        return;
+
+    const overlay =
+        document.getElementById('overlay-exito');
+
     overlay.style.display = 'flex';
-    document.getElementById('titulo-estado').innerText = "Enviando Prueba...";
+
+    document.getElementById('titulo-estado').innerText =
+        "Enviando Prueba...";
 
     try {
-        for(const n of itemsParaPrueba) {
-            await DairyAPI.enviarDatos({ 
+
+        for (const nombre of items) {
+
+            await DairyAPI.enviarDatos({
+
                 pestaña: "Ventas",
-                ID_Venta: "PRUEBA-" + Math.floor(Math.random()*9999), 
-                Cliente: cli, 
-                Producto: n, 
-                Cantidad: carrito[n], 
-                Precio_PVP: 0, // AQUÍ FORZAMOS EL CERO
+
+                ID_Venta:
+                    "PRUEBA-" + Math.floor(Math.random() * 9999),
+
+                Cliente: cli,
+
+                Producto: nombre,
+
+                Cantidad: carrito[nombre],
+
+                Precio_PVP: 0,
+
                 Fecha_Entrega: fec,
-                Estado_Entrega: "ENTREGADO",
-                Notas: "SALIDA POR CALIDAD"
+
+                Estado: "ENTREGADO"
             });
         }
-        document.getElementById('icono-estado').innerText = "check_circle";
-        document.getElementById('titulo-estado').innerText = "¡Prueba Guardada!";
-        setTimeout(() => location.reload(), 1500);
-    } catch(e) {
+
+        document.getElementById('icono-estado').innerText =
+            "check_circle";
+
+        document.getElementById('titulo-estado').innerText =
+            "¡Prueba Guardada!";
+
+        setTimeout(() => {
+            location.reload();
+        }, 1500);
+
+    } catch (e) {
+
         overlay.style.display = 'none';
+
+        console.error(e);
+
         alert("Error de conexión");
     }
 }
 
+// ===============================
+// PROCESAR VENTA
+// ===============================
 async function procesarVenta() {
-    const cli = document.getElementById('select-cliente').value;
-    const fec = document.getElementById('fecha-entrega').value;
-    if(!cli || document.getElementById('car-items').innerText === "0 Unidades") return alert("Selecciona cliente y productos");
-    
-    const overlay = document.getElementById('overlay-exito');
+
+    const cli =
+        document.getElementById('select-cliente').value;
+
+    const fec =
+        document.getElementById('fecha-entrega').value;
+
+    const items =
+        Object.keys(carrito)
+            .filter(n => carrito[n] > 0);
+
+    if (!cli || items.length === 0) {
+        alert("Selecciona cliente y productos");
+        return;
+    }
+
+    const overlay =
+        document.getElementById('overlay-exito');
+
     overlay.style.display = 'flex';
 
+    document.getElementById('titulo-estado').innerText =
+        "Guardando Pedido...";
+
     try {
-        for(const n in carrito) {
-            if(carrito[n] > 0) {
-                const p = productosData.find(x => x.Producto === n);
-                await DairyAPI.enviarDatos({ 
-                    pestaña: "Ventas",
-                    ID_Venta: idVenta, 
-                    Cliente: cli, 
-                    Producto: n, 
-                    Cantidad: carrito[n], 
-                    Precio_PVP: p.Precio_Venta, 
-                    Fecha_Entrega: fec,
-                    Estado_Entrega: "PENDIENTE"
-                });
-            }
+
+        for (const nombre of items) {
+
+            const p =
+                productosData.find(x => x.Producto === nombre);
+
+            await DairyAPI.enviarDatos({
+
+                pestaña: "Ventas",
+
+                ID_Venta: idVenta,
+
+                Cliente: cli,
+
+                Producto: nombre,
+
+                Cantidad: carrito[nombre],
+
+                Precio_PVP:
+                    Number(p.Precio_Venta) || 0,
+
+                Fecha_Entrega: fec,
+
+                Estado: "PENDIENTE"
+            });
         }
-        document.getElementById('icono-estado').innerText = "check_circle";
-        document.getElementById('titulo-estado').innerText = "¡Pedido Guardado!";
+
+        document.getElementById('icono-estado').innerText =
+            "check_circle";
+
+        document.getElementById('titulo-estado').innerText =
+            "¡Pedido Guardado!";
+
         setTimeout(() => {
+
             overlay.style.display = 'none';
-            document.getElementById('btn-confirmar').style.display = 'none';
-            document.getElementById('btn-whatsapp').style.display = 'flex';
+
+            document.getElementById('btn-confirmar').style.display =
+                'none';
+
+            document.getElementById('btn-whatsapp').style.display =
+                'flex';
+
         }, 1500);
-    } catch(e) { overlay.style.display = 'none'; alert("Error"); }
+
+    } catch (e) {
+
+        console.error(e);
+
+        overlay.style.display = 'none';
+
+        alert("Error guardando venta");
+    }
 }
 
+// ===============================
+// GUARDAR CLIENTE
+// ===============================
 async function guardarCliente() {
-    const btn = document.getElementById('btn-guardar-cliente');
-    const nom = document.getElementById('reg-nombre').value.trim();
-    const ruc = document.getElementById('reg-ruc').value.trim();
-    if(!nom || ruc.length < 10) return alert("Nombre y CI/RUC obligatorios");
+
+    const btn =
+        document.getElementById('btn-guardar-cliente');
+
+    const nom =
+        document.getElementById('reg-nombre')
+            .value.trim();
+
+    const ruc =
+        document.getElementById('reg-ruc')
+            .value.trim();
+
+    if (!nom || ruc.length < 10) {
+        alert("Nombre y CI/RUC obligatorios");
+        return;
+    }
+
     btn.innerText = "PROCESANDO...";
     btn.disabled = true;
+
     try {
+
         await DairyAPI.enviarDatos({
+
             pestaña: "Clientes",
-            ID: `C-${Date.now().toString().slice(-6)}`,
-            Nombre: nom.toUpperCase(), CI_RUC: ruc,
-            Teléfono: document.getElementById('reg-tel').value.trim(),
-            Dirección: document.getElementById('reg-dir').value.trim(),
-            Sector: document.getElementById('reg-sector').value,
-            "Fecha Registro": new Date().toLocaleString()
+
+            ID:
+                `C-${Date.now().toString().slice(-6)}`,
+
+            Nombre:
+                nom.toUpperCase(),
+
+            CI_RUC: ruc,
+
+            Teléfono:
+                document.getElementById('reg-tel').value.trim(),
+
+            Dirección:
+                document.getElementById('reg-dir').value.trim(),
+
+            Referencia:
+                document.getElementById('reg-ref').value.trim(),
+
+            Sector:
+                document.getElementById('reg-sector').value,
+
+            Fecha_Registro:
+                new Date().toLocaleString()
         });
+
         alert("✅ CLIENTE REGISTRADO");
+
         location.reload();
-    } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "Guardar"; }
+
+    } catch (e) {
+
+        console.error(e);
+
+        alert("Error registrando cliente");
+
+        btn.disabled = false;
+        btn.innerText = "Guardar";
+    }
 }
 
+// ===============================
+// WHATSAPP
+// ===============================
 function enviarWhatsApp() {
-    const cli = document.getElementById('select-cliente').value;
-    const fec = document.getElementById('fecha-entrega').value;
-    let listado = ""; let t = 0;
-    Object.keys(carrito).forEach(n => {
-        if(carrito[n] > 0) {
-            const p = productosData.find(x => x.Producto === n);
-            listado += `• *${carrito[n]}* ${n}\n`;
-            t += (carrito[n] * parseFloat(p.Precio_Venta));
+
+    const cli =
+        document.getElementById('select-cliente').value;
+
+    const fec =
+        document.getElementById('fecha-entrega').value;
+
+    let listado = "";
+    let total = 0;
+
+    Object.keys(carrito).forEach(nombre => {
+
+        if (carrito[nombre] > 0) {
+
+            const p =
+                productosData.find(x => x.Producto === nombre);
+
+            const precio =
+                Number(p.Precio_Venta) || 0;
+
+            listado +=
+                `• *${carrito[nombre]}* ${nombre}\n`;
+
+            total += carrito[nombre] * precio;
         }
     });
-    const msg = `*LÓGICA LÁCTEA - PEDIDO*\n\n*ID:* ${idVenta}\n*Cliente:* ${cli}\n*Entrega:* ${fec}\n\n*PRODUCTOS:*\n${listado}\n*TOTAL: $${t.toFixed(2)}*`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+
+    const mensaje = `
+*LÓGICA LÁCTEA - PEDIDO*
+
+*ID:* ${idVenta}
+*Cliente:* ${cli}
+*Entrega:* ${fec}
+
+*PRODUCTOS:*
+${listado}
+
+*TOTAL: $${total.toFixed(2)}*
+`;
+
+    window.open(
+        `https://wa.me/?text=${encodeURIComponent(mensaje)}`,
+        '_blank'
+    );
+
     location.reload();
 }
 
-function alternarFormulario(m) {
-    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
-    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
+// ===============================
+// FORMULARIO
+// ===============================
+function alternarFormulario(mostrar) {
+
+    document
+        .getElementById('vista-seleccion-cliente')
+        .classList.toggle('hidden', mostrar);
+
+    document
+        .getElementById('vista-nuevo-cliente')
+        .classList.toggle('hidden', !mostrar);
 }
 
+// ===============================
+// FILTRO
+// ===============================
 function filtrar() {
-    const q = document.getElementById('buscarProducto').value.toLowerCase();
-    document.querySelectorAll('.card-sutil').forEach(c => {
-        if(c.querySelector('h4')) c.style.display = c.querySelector('h4').innerText.toLowerCase().includes(q) ? "flex" : "none";
-    });
+
+    const q =
+        document.getElementById('buscarProducto')
+            .value.toLowerCase();
+
+    document
+        .querySelectorAll('.card-sutil')
+        .forEach(c => {
+
+            const h4 = c.querySelector('h4');
+
+            if (h4) {
+
+                c.style.display =
+                    h4.innerText.toLowerCase().includes(q)
+                        ? "flex"
+                        : "none";
+            }
+        });
 }
 
+// ===============================
+// START
+// ===============================
 window.onload = iniciar;
 </script>
 </body>

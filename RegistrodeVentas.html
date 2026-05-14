@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ventas - Lógica Láctea</title>
     
-    <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
     
-    <!-- Estilos Externos -->
     <link rel="stylesheet" href="estilos-lacteos.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
@@ -29,16 +27,13 @@
     </script>
 
     <style>
-        /* Ajustes específicos para esta vista que no están en el CSS global */
         .bloqueado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
-        
         #overlay-exito {
             position: fixed; inset: 0; background: rgba(255,255,255,0.98);
             display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200;
         }
         .check-anim { font-size: 80px; color: var(--primary); animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-
         #carrito-flotante {
             position: fixed; bottom: 100px; left: 16px; right: 16px;
             background: white; border-radius: 2.5rem;
@@ -50,27 +45,24 @@
             font-weight: 800; display: none; align-items: center; justify-content: center; 
             gap: 10px; animation: pulse-wa 2s infinite; border: none;
         }
-        @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
     </style>
 </head>
 <body class="pb-96"> 
 
-<!-- Pantalla de Éxito -->
 <div id="overlay-exito">
     <span class="material-symbols-outlined check-anim" id="icono-estado">sync</span>
     <h2 class="text-titulo mt-4" id="titulo-estado">Guardando...</h2>
     <p class="text-label mt-2" id="p-estado">Sincronizando con la nube</p>
 </div>
 
-<!-- Cabecera -->
 <header class="h-20 bg-white/80 backdrop-blur-md border-b border-purple-100 flex justify-between items-center px-6 sticky top-0 z-50">
     <div class="flex flex-col">
         <h1 class="brand-logo text-xl leading-none">Nueva Venta</h1>
         <span id="id-venta-display" class="text-label text-primary mt-1">ID: ---</span>
     </div>
     <div class="flex gap-2">
-        <!-- BOTÓN DE PRUEBA DE CALIDAD AGREGADO AL LADO DE REFRESCAR -->
-        <button onclick="registrarPruebaCalidadRapida()" class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center active:scale-90 transition-transform">
+        <!-- BOTÓN PRUEBA DE CALIDAD (Fuerza valor 0) -->
+        <button onclick="registrarPruebaCalidadRapida()" class="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center active:scale-90 transition-transform shadow-sm">
             <span class="material-symbols-outlined text-xl">science</span>
         </button>
         <button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-purple-50 text-primary flex items-center justify-center active:scale-90 transition-transform">
@@ -80,7 +72,6 @@
 </header>
 
 <main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
-    <!-- 1. SELECCIÓN DE CLIENTE -->
     <section class="card-sutil">
         <div id="vista-seleccion-cliente">
             <div class="flex justify-between items-center mb-4">
@@ -92,7 +83,6 @@
             </select>
         </div>
 
-        <!-- Registro Nuevo Cliente -->
         <div id="vista-nuevo-cliente" class="hidden space-y-3">
             <p class="text-label text-secondary italic">Nuevo Registro</p>
             <input type="text" id="reg-nombre" placeholder="NOMBRE COMPLETO" class="input-sutil uppercase" oninput="this.value = this.value.toUpperCase()">
@@ -115,7 +105,6 @@
         </div>
     </section>
 
-    <!-- 2. PRODUCTOS -->
     <div id="seccion-operativa" class="bloqueado transition-all duration-500">
         <div class="flex items-center gap-3 mb-4">
             <div class="relative flex-1">
@@ -127,7 +116,6 @@
     </div>
 </main>
 
-<!-- 3. CARRITO FLOTANTE -->
 <div id="carrito-flotante" class="bloqueado">
     <div class="flex justify-between items-center mb-4 border-b border-purple-50 pb-4">
         <div class="flex-1">
@@ -155,7 +143,6 @@
     </button>
 </div>
 
-<!-- Menú inferior -->
 <div id="menu-container"></div>
 
 <script>
@@ -174,7 +161,6 @@ async function iniciar() {
         const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
         productosData = pr || [];
         const sel = document.getElementById('select-cliente');
-        
         const listaClientes = Array.isArray(cl) ? cl : [];
         listaClientes.sort((a,b)=>String(a.Nombre).localeCompare(b.Nombre)).forEach(c => { 
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
@@ -216,14 +202,11 @@ function cambiarCant(n, d) {
     if(!carrito[n]) carrito[n] = 0;
     const p = productosData.find(x => x.Producto === n);
     const stockDisp = parseInt(p.Stock || 0);
-    
     if(carrito[n]+d >= 0 && (carrito[n]+d <= stockDisp)) {
         carrito[n] += d;
         document.getElementById(`cant-${n.replace(/\s+/g,'-')}`).innerText = carrito[n];
         actualizarCarrito();
-    } else if (d > 0) {
-        alert("¡Stock insuficiente!");
-    }
+    } else if (d > 0) alert("¡Stock insuficiente!");
 }
 
 function actualizarCarrito() {
@@ -241,37 +224,38 @@ function actualizarCarrito() {
     document.getElementById('car-items').innerText = `${items} Unidades`;
 }
 
-// FUNCIÓN PARA EL BOTÓN DE PRUEBA EN EL ENCABEZADO
+// CORRECCIÓN: Función que envía PRECIO 0 a la hoja Ventas
 async function registrarPruebaCalidadRapida() {
     const cli = document.getElementById('select-cliente').value;
-    if(!cli) return alert("Selecciona un cliente primero");
+    const fec = document.getElementById('fecha-entrega').value;
     
-    // Si hay items en el carrito, los procesa como prueba ($0)
-    let itemsParaPrueba = Object.keys(carrito).filter(n => carrito[n] > 0);
-    if(itemsParaPrueba.length === 0) return alert("Añade productos al carrito para registrar la prueba");
+    const itemsParaPrueba = Object.keys(carrito).filter(n => carrito[n] > 0);
+    
+    if(!cli) return alert("Primero selecciona un cliente");
+    if(itemsParaPrueba.length === 0) return alert("Añade productos al carrito para la prueba");
 
-    if(!confirm("¿Registrar estos productos como PRUEBA DE CALIDAD (Precio $0.00)?")) return;
+    if(!confirm("¿CONFIRMAR PRUEBA DE CALIDAD? Los productos se guardarán con valor $0.00")) return;
 
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
-    document.getElementById('titulo-estado').innerText = "Registrando Prueba...";
+    document.getElementById('titulo-estado').innerText = "Enviando Prueba...";
 
     try {
         for(const n of itemsParaPrueba) {
             await DairyAPI.enviarDatos({ 
                 pestaña: "Ventas",
-                ID_Venta: "LAB-" + Date.now().toString().slice(-4), 
+                ID_Venta: "PRUEBA-" + Math.floor(Math.random()*9999), 
                 Cliente: cli, 
                 Producto: n, 
                 Cantidad: carrito[n], 
-                Precio_PVP: 0, 
-                Fecha_Entrega: document.getElementById('fecha-entrega').value,
+                Precio_PVP: 0, // AQUÍ FORZAMOS EL CERO
+                Fecha_Entrega: fec,
                 Estado_Entrega: "ENTREGADO",
-                Notas: "SALIDA POR PRUEBA DE CALIDAD"
+                Notas: "SALIDA POR CALIDAD"
             });
         }
         document.getElementById('icono-estado').innerText = "check_circle";
-        document.getElementById('titulo-estado').innerText = "¡Prueba Registrada!";
+        document.getElementById('titulo-estado').innerText = "¡Prueba Guardada!";
         setTimeout(() => location.reload(), 1500);
     } catch(e) {
         overlay.style.display = 'none';
@@ -286,9 +270,6 @@ async function procesarVenta() {
     
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
-    document.getElementById('titulo-estado').innerText = "Guardando...";
-    document.getElementById('icono-estado').innerText = "sync";
-    document.getElementById('icono-estado').classList.add('animate-spin');
 
     try {
         for(const n in carrito) {
@@ -306,46 +287,33 @@ async function procesarVenta() {
                 });
             }
         }
-        
-        document.getElementById('icono-estado').classList.remove('animate-spin');
         document.getElementById('icono-estado').innerText = "check_circle";
         document.getElementById('titulo-estado').innerText = "¡Pedido Guardado!";
-
         setTimeout(() => {
             overlay.style.display = 'none';
             document.getElementById('btn-confirmar').style.display = 'none';
             document.getElementById('btn-whatsapp').style.display = 'flex';
         }, 1500);
-    } catch(e) { 
-        overlay.style.display = 'none';
-        alert("Error de conexión"); 
-    }
+    } catch(e) { overlay.style.display = 'none'; alert("Error"); }
 }
 
 async function guardarCliente() {
     const btn = document.getElementById('btn-guardar-cliente');
     const nom = document.getElementById('reg-nombre').value.trim();
     const ruc = document.getElementById('reg-ruc').value.trim();
-
-    if(!nom || ruc.length < 10) return alert("Nombre y CI (10 dígitos) obligatorios");
-
+    if(!nom || ruc.length < 10) return alert("Nombre y CI/RUC obligatorios");
     btn.innerText = "PROCESANDO...";
     btn.disabled = true;
-
-    const ahora = new Date();
-    const data = {
-        pestaña: "Clientes",
-        ID: `C-${Date.now().toString().slice(-6)}`,
-        Nombre: nom.toUpperCase(),
-        CI_RUC: ruc,
-        Teléfono: document.getElementById('reg-tel').value.trim(),
-        Dirección: document.getElementById('reg-dir').value.trim(),
-        Sector: document.getElementById('reg-sector').value,
-        "Fecha Registro": ahora.toLocaleString()
-    };
-
     try {
-        await DairyAPI.enviarDatos(data);
+        await DairyAPI.enviarDatos({
+            pestaña: "Clientes",
+            ID: `C-${Date.now().toString().slice(-6)}`,
+            Nombre: nom.toUpperCase(), CI_RUC: ruc,
+            Teléfono: document.getElementById('reg-tel').value.trim(),
+            Dirección: document.getElementById('reg-dir').value.trim(),
+            Sector: document.getElementById('reg-sector').value,
+            "Fecha Registro": new Date().toLocaleString()
+        });
         alert("✅ CLIENTE REGISTRADO");
         location.reload();
     } catch(e) { alert("Error"); btn.disabled = false; btn.innerText = "Guardar"; }
@@ -358,12 +326,11 @@ function enviarWhatsApp() {
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
-            listado += `• *${carrito[n]}* ${n} ($${p.Precio_Venta})\n`;
+            listado += `• *${carrito[n]}* ${n}\n`;
             t += (carrito[n] * parseFloat(p.Precio_Venta));
         }
     });
-
-    const msg = `*LÓGICA LÁCTEA - PEDIDO*\n\n*ID:* ${idVenta}\n*Cliente:* ${cli}\n*Entrega:* ${fec}\n\n*PRODUCTOS:*\n${listado}\n*TOTAL: $${t.toFixed(2)}*\n\n¡Gracias! 🥛`;
+    const msg = `*LÓGICA LÁCTEA - PEDIDO*\n\n*ID:* ${idVenta}\n*Cliente:* ${cli}\n*Entrega:* ${fec}\n\n*PRODUCTOS:*\n${listado}\n*TOTAL: $${t.toFixed(2)}*`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     location.reload();
 }
@@ -376,9 +343,7 @@ function alternarFormulario(m) {
 function filtrar() {
     const q = document.getElementById('buscarProducto').value.toLowerCase();
     document.querySelectorAll('.card-sutil').forEach(c => {
-        if(c.querySelector('h4')) {
-            c.style.display = c.querySelector('h4').innerText.toLowerCase().includes(q) ? "flex" : "none";
-        }
+        if(c.querySelector('h4')) c.style.display = c.querySelector('h4').innerText.toLowerCase().includes(q) ? "flex" : "none";
     });
 }
 

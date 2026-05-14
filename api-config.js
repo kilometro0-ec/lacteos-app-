@@ -3,7 +3,7 @@
 // ================================
 
 // 🔴 PON AQUÍ TU URL DE GOOGLE APPS SCRIPT
-const SCRIPT_URL = "https://script.google.com/macros/s/TU_DEPLOY_ID/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJkVl7jP3bQVfUQv_1_62F1lfKABJHxaye2XS6q0IlithEkqbhFhztilcUmgBBMSwtyg/exec";
 
 const DairyAPI = {
 

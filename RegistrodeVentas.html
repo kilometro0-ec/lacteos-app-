@@ -4,273 +4,292 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ventas - Lógica Láctea</title>
-
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
+    <!-- Tu script v2.4 -->
     <script src="menu-logic.js"></script>
-
-    <link rel="stylesheet" href="estilos-lacteos.css">
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-
+    
     <script>
       tailwind.config = {
-        theme: {
-            extend: {
-                colors: {
-                    primary: "#a21caf",
-                    secondary: "#db2777",
-                    surface: "#faf5ff"
-                }
-            }
-        }
+        theme: { extend: { colors: { primary: "#a21caf", secondary: "#db2777", whatsapp: "#25d366" } } }
       }
     </script>
 
     <style>
+        body { font-family: 'Work Sans', sans-serif; background-color: #faf5ff; -webkit-tap-highlight-color: transparent; }
+        .card-producto { background: white; border-radius: 1rem; border: 1px solid #e9d5ff; padding: 12px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
         .bloqueado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+        .input-sutil { background-color: #fdfaff; border: 1.5px solid #f3e8ff; border-radius: 0.75rem; padding: 0.6rem; width: 100%; font-size: 13px; font-weight: 600; }
+        
         #overlay-exito {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.98);
+            position: fixed; inset: 0; background: rgba(255,255,255,0.95);
             display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200;
         }
-        .btn-wa-premium {
-            background: #25d366; color: white; width: 100%; padding: 16px;
-            border-radius: 1.5rem; font-weight: 800; display: none;
-            align-items: center; justify-content: center; gap: 10px;
+        .check-anim { font-size: 80px; color: #a21caf; transition: color 0.3s; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+        #carrito-flotante {
+            position: fixed; bottom: 90px; left: 10px; right: 10px;
+            background: white; border: 2.5px solid #a21caf; border-radius: 1.5rem;
+            padding: 15px; box-shadow: 0 -10px 30px rgba(0,0,0,0.2); z-index: 100;
         }
+        .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 14px; border-radius: 1rem; font-weight: 900; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
+        @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
     </style>
 </head>
-
-<body class="pb-96">
+<body class="pb-96"> 
 
 <div id="overlay-exito">
-    <span class="material-symbols-outlined" id="icono-estado">sync</span>
-    <h2 id="titulo-estado">Guardando...</h2>
-    <p id="p-estado">Sincronizando con la nube</p>
+    <span class="material-symbols-outlined check-anim" id="icono-estado">sync</span>
+    <h2 class="text-2xl font-black text-slate-800" id="titulo-estado">GUARDANDO...</h2>
+    <p class="text-slate-500 font-bold uppercase text-[10px]" id="p-estado">No cierres esta ventana</p>
 </div>
 
-<header class="h-20 bg-white/80 backdrop-blur-md border-b border-purple-100 flex justify-between items-center px-6 sticky top-0 z-50">
+<header class="h-14 bg-white border-b border-outline flex justify-between items-center px-4 sticky top-0 z-50">
     <div class="flex flex-col">
-        <h1 class="text-xl">Nueva Venta</h1>
-        <span id="id-venta-display">ID: ---</span>
+        <h1 class="text-lg font-black text-primary italic uppercase leading-none">Ventas</h1>
+        <span id="id-venta-display" class="text-[9px] font-mono text-slate-400 font-bold">ID: ---</span>
     </div>
-
-    <div class="flex gap-2">
-        <button onclick="location.reload()">🔄</button>
-    </div>
+    <button onclick="location.reload()" class="text-primary"><span class="material-symbols-outlined">sync</span></button>
 </header>
 
-<main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
+<main class="mt-4 px-4 max-w-xl mx-auto">
+    <!-- SELECCIÓN DE CLIENTE -->
+    <section class="bg-white p-4 rounded-2xl border-2 border-primary/20 mb-4 shadow-sm">
+        <div id="vista-seleccion-cliente">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] font-black text-primary uppercase">1. Seleccionar Cliente</span>
+                <button onclick="alternarFormulario(true)" class="text-[9px] font-bold text-white bg-secondary px-3 py-1 rounded-full uppercase">Nuevo +</button>
+            </div>
+            <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil border-primary/30 text-primary">
+                <option value="">-- BUSCAR CLIENTE --</option>
+            </select>
+        </div>
 
-    <section>
-        <select id="select-cliente" onchange="activarInterfaz()">
-            <option value="">-- SELECCIONAR CLIENTE --</option>
-        </select>
+        <div id="vista-nuevo-cliente" class="hidden space-y-2">
+            <p class="text-[10px] font-black text-secondary uppercase italic">Registro de Nuevo Cliente</p>
+            <input type="text" id="reg-id" readonly class="hidden">
+            <input type="text" id="reg-nombre" placeholder="Nombre (Solo letras)" class="input-sutil" oninput="this.value = this.value.replace(/[^a-zA-Z\s]/g, '')">
+            <input type="number" id="reg-ruc" placeholder="CI/RUC (Ej: 1712345678)" class="input-sutil">
+            <input type="tel" id="reg-tel" placeholder="Teléfono" class="input-sutil">
+            <input type="text" id="reg-dir" placeholder="Dirección" class="input-sutil">
+            <input type="text" id="reg-ref" placeholder="Referencia" class="input-sutil">
+            <select id="reg-sector" class="input-sutil">
+                <option value="">-- SELECCIONAR SECTOR --</option>
+                <option value="NORTE">NORTE</option>
+                <option value="SUR">SUR</option>
+                <option value="CENTRO">CENTRO</option>
+                <option value="VALLES">VALLES</option>
+            </select>
+            <div class="flex gap-2 pt-2">
+                <button onclick="guardarCliente()" id="btn-guardar-cliente" class="flex-1 bg-primary text-white font-black py-3 rounded-xl text-xs uppercase">Guardar</button>
+                <button onclick="alternarFormulario(false)" class="flex-1 bg-slate-100 text-slate-500 font-black py-3 rounded-xl text-xs uppercase">Cancelar</button>
+            </div>
+        </div>
     </section>
 
-    <div id="seccion-operativa" class="bloqueado">
-        <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="Buscar...">
-        <div id="contenedor-productos"></div>
+    <!-- LISTA DE PRODUCTOS -->
+    <div id="seccion-operativa" class="bloqueado transition-all duration-500">
+        <input type="text" id="buscarProducto" oninput="filtrar()" placeholder="🔍 Buscar producto..." class="input-sutil mb-4">
+        <div id="contenedor-productos" class="space-y-2"></div>
     </div>
-
 </main>
 
+<!-- CARRITO FLOTANTE -->
 <div id="carrito-flotante" class="bloqueado">
-    <p id="car-cliente">Esperando...</p>
-    <p id="car-id"></p>
-
-    <div id="car-detalle"></div>
-
-    <h2 id="car-total">$0.00</h2>
-    <p id="car-items">0</p>
-
-    <input type="date" id="fecha-entrega">
-
-    <button onclick="procesarVenta()">Confirmar Pedido</button>
-    <button onclick="enviarWhatsApp()" class="btn-wa-premium" id="btn-whatsapp">WhatsApp</button>
+    <div class="flex justify-between items-center mb-2 border-b pb-2">
+        <div class="flex-1">
+            <p id="car-cliente" class="text-xs font-black text-primary uppercase truncate italic">Sin Cliente</p>
+            <p id="car-id" class="text-[9px] font-mono text-slate-400">ID: ---</p>
+        </div>
+        <div class="text-right">
+            <p id="car-total" class="text-2xl font-black text-slate-800 leading-none">$0.00</p>
+            <p id="car-items" class="text-[9px] font-bold text-secondary uppercase">0 ÍTEMS</p>
+        </div>
+    </div>
+    <div id="car-detalle" class="max-h-24 overflow-y-auto mb-3 space-y-1 text-[10px] font-bold text-slate-500 italic">
+        <p class="text-center text-slate-200 py-2">Esperando selección...</p>
+    </div>
+    <input type="date" id="fecha-entrega" class="input-sutil text-center mb-2 bg-purple-50 border-none h-9">
+    <button id="btn-confirmar" onclick="procesarVenta()" class="bg-secondary text-white w-full py-4 rounded-xl font-black uppercase text-sm shadow-lg active:scale-95 transition-transform">Confirmar Pedido</button>
+    <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-whatsapp">
+        <span class="material-symbols-outlined">chat</span> ENVIAR DETALLE WHATSAPP
+    </button>
 </div>
 
+<!-- CONTENEDOR DEL MENÚ DE NAVEGACIÓN v2.4 -->
 <div id="menu-container"></div>
 
 <script>
-let carrito = {};
-let productosData = [];
-let idVenta = "";
-let clientesLoaded = false;
+let carrito = {}; let productosData = []; let idVenta = "";
 
-// ===============================
-// USAR API GLOBAL (api-config.js)
-// ===============================
-const API_URL = window.API_URL;
-const DairyAPI = window.DairyAPI;
-
-// ===============================
-// BLOQUEO UI
-// ===============================
-function bloquearUI(v) {
-    document.getElementById('seccion-operativa').classList.toggle('bloqueado', v);
-    document.getElementById('carrito-flotante').classList.toggle('bloqueado', v);
-}
-
-// ===============================
-// INICIO
-// ===============================
 async function iniciar() {
-
-    bloquearUI(true);
-
     const d = new Date();
-
     idVenta = `V-${d.getFullYear().toString().slice(-2)}${Math.floor(100000 + Math.random() * 900000)}`;
-
     document.getElementById('car-id').innerText = `ID: ${idVenta}`;
     document.getElementById('id-venta-display').innerText = `ID: ${idVenta}`;
     document.getElementById('fecha-entrega').value = d.toISOString().split('T')[0];
 
     try {
-
-        console.log("📡 Cargando clientes e inventario...");
-
-        const [clientes, inventario] = await Promise.all([
-            DairyAPI.obtenerDatos("Clientes"),
-            DairyAPI.obtenerDatos("Inventario")
-        ]);
-
-        console.log("CLIENTES:", clientes);
-        console.log("INVENTARIO:", inventario);
-
-        productosData = Array.isArray(inventario) ? inventario : [];
-
-        // ===============================
-        // CLIENTES
-        // ===============================
+        const [cl, pr] = await Promise.all([DairyAPI.obtenerDatos("Clientes"), DairyAPI.obtenerDatos("Inventario")]);
+        productosData = pr;
         const sel = document.getElementById('select-cliente');
-        sel.innerHTML = '<option value="">-- SELECCIONAR CLIENTE --</option>';
-
-        const listaClientes = Array.isArray(clientes) ? clientes : [];
-
-        if (listaClientes.length === 0) {
-            console.warn("⚠ No hay clientes");
-        }
-
-        listaClientes.forEach(c => {
-            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
+        cl.sort((a,b)=>a.Nombre.localeCompare(b.Nombre)).forEach(c => { 
+            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
         });
-
         renderizar();
-
-        clientesLoaded = true;
-        bloquearUI(false);
-
-    } catch (e) {
-        console.error("ERROR:", e);
-        alert("Error cargando datos (ver consola)");
-        bloquearUI(true);
-    }
+    } catch(e) { console.error("Error al cargar datos:", e); }
 }
 
-// ===============================
 function activarInterfaz() {
-
     const cli = document.getElementById('select-cliente').value;
-
-    if (!clientesLoaded) {
-        alert("Cargando datos...");
-        return;
-    }
-
-    bloquearUI(!cli);
-
-    document.getElementById('car-cliente').innerText =
-        cli || "Esperando Cliente...";
+    document.getElementById('seccion-operativa').classList.toggle('bloqueado', !cli);
+    document.getElementById('carrito-flotante').classList.toggle('bloqueado', !cli);
+    document.getElementById('car-cliente').innerText = cli || "Sin Cliente";
 }
 
-// ===============================
 function renderizar() {
-
-    const cont = document.getElementById('contenedor-productos');
-    cont.innerHTML = "";
-
-    if (!productosData.length) {
-        cont.innerHTML = "<p>No hay productos</p>";
-        return;
-    }
-
+    const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
     productosData.forEach(p => {
-
-        const producto = p.Producto || "";
-        const precio = Number(p.Precio_Venta) || 0;
-        const stock = Number(p.Stock) || 0;
-
-        const idCant = `cant-${producto.replace(/\s+/g,'-')}`;
-
+        const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
         cont.innerHTML += `
-            <div class="card-sutil flex items-center justify-between mb-2">
-
-                <div>
-                    <h4>${producto}</h4>
-                    <small>$${precio} | Stock ${stock}</small>
+            <div class="card-producto shadow-sm">
+                <div class="flex-1">
+                    <h4 class="font-black text-xs uppercase text-slate-700 leading-tight">${p.Producto}</h4>
+                    <p class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</p>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase">Stock: ${p.Stock}</p>
                 </div>
-
-                <div>
-                    <button onclick="cambiarCant('${producto}',-1)">-</button>
-                    <span id="${idCant}">0</span>
-                    <button onclick="cambiarCant('${producto}',1)">+</button>
+                <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-xl">
+                    <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">-</button>
+                    <span id="${idCant}" class="w-6 text-center font-black text-lg">0</span>
+                    <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-lg shadow-sm font-black text-xl text-primary">+</button>
                 </div>
-
-            </div>
-        `;
+            </div>`;
     });
 }
 
-// ===============================
-function cambiarCant(nombre, delta) {
-
-    if (!carrito[nombre]) carrito[nombre] = 0;
-
-    const p = productosData.find(x => x.Producto === nombre);
-    if (!p) return;
-
-    const stock = Number(p.Stock) || 0;
-
-    const nueva = carrito[nombre] + delta;
-
-    if (nueva < 0) return;
-    if (nueva > stock) return alert("Sin stock");
-
-    carrito[nombre] = nueva;
-
-    document.getElementById(`cant-${nombre.replace(/\s+/g,'-')}`).innerText = nueva;
-
-    actualizarCarrito();
+function cambiarCant(n, d) {
+    if(!carrito[n]) carrito[n] = 0;
+    const p = productosData.find(x => x.Producto === n);
+    const stockDisp = parseInt(p.Stock || 0);
+    
+    if(carrito[n]+d >= 0 && (carrito[n]+d <= stockDisp)) {
+        carrito[n] += d;
+        document.getElementById(`cant-${n.replace(/\s+/g,'-')}`).innerText = carrito[n];
+        actualizarCarrito();
+    } else if (d > 0) {
+        alert("¡Stock insuficiente!");
+    }
 }
 
-// ===============================
 function actualizarCarrito() {
-
-    let total = 0;
-    let items = 0;
-    let html = "";
-
+    let t = 0; let items = 0; let html = "";
     Object.keys(carrito).forEach(n => {
-
-        if (carrito[n] > 0) {
-
+        if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
-            const precio = Number(p?.Precio_Venta) || 0;
+            const sub = (carrito[n] * parseFloat(p.Precio_Venta));
+            t += sub; items += carrito[n];
+            html += `<div class="flex justify-between"><span>${n} (x${carrito[n]})</span><span>$${sub.toFixed(2)}</span></div>`;
+        }
+    });
+    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-200 py-2">Esperando selección...</p>';
+    document.getElementById('car-total').innerText = `$${t.toFixed(2)}`;
+    document.getElementById('car-items').innerText = `${items} ÍTEMS`;
+}
 
-            total += carrito[n] * precio;
-            items += carrito[n];
+async function procesarVenta() {
+    const cli = document.getElementById('select-cliente').value;
+    const fec = document.getElementById('fecha-entrega').value;
+    if(!cli || document.getElementById('car-items').innerText === "0 ÍTEMS") return alert("Faltan datos o productos");
+    
+    const overlay = document.getElementById('overlay-exito');
+    overlay.style.display = 'flex';
+    document.getElementById('titulo-estado').innerText = "GUARDANDO PEDIDO...";
+    document.getElementById('icono-estado').classList.add('animate-spin');
 
-            html += `<div>${n} x${carrito[n]}</div>`;
+    try {
+        for(const n in carrito) {
+            if(carrito[n] > 0) {
+                const p = productosData.find(x => x.Producto === n);
+                await DairyAPI.enviarDatos("Ventas", { 
+                    ID_Venta: idVenta, Cliente: cli, Producto: n, 
+                    Cantidad: carrito[n], Precio_PVP: p.Precio_Venta, 
+                    Fecha_Entrega: fec, pestaña: "Ventas" 
+                });
+            }
+        }
+        
+        document.getElementById('icono-estado').classList.remove('animate-spin');
+        document.getElementById('icono-estado').innerText = "check_circle";
+        document.getElementById('icono-estado').style.color = "#22c55e";
+        document.getElementById('titulo-estado').innerText = "¡PEDIDO GUARDADO!";
+
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            document.getElementById('btn-confirmar').style.display = 'none';
+            document.getElementById('btn-whatsapp').style.display = 'flex';
+        }, 2000);
+    } catch(e) { 
+        overlay.style.display = 'none';
+        alert("Error al conectar con el servidor"); 
+    }
+}
+
+async function guardarCliente() {
+    const btn = document.getElementById('btn-guardar-cliente');
+    const data = {
+        ID: document.getElementById('reg-id').value,
+        Nombre: document.getElementById('reg-nombre').value,
+        CI_RUC: document.getElementById('reg-ruc').value,
+        Telefono: document.getElementById('reg-tel').value,
+        Direccion: document.getElementById('reg-dir').value,
+        Referencia: document.getElementById('reg-ref').value,
+        Sector: document.getElementById('reg-sector').value,
+        pestaña: "Clientes"
+    };
+
+    if(!data.Nombre || data.CI_RUC.length < 10) return alert("Nombre y CI/RUC (10 dígitos) requeridos");
+
+    btn.innerText = "GUARDANDO...";
+    btn.disabled = true;
+
+    try {
+        await DairyAPI.enviarDatos("Clientes", data);
+        alert("Cliente Registrado con Éxito");
+        location.reload();
+    } catch(e) { alert("Error al registrar"); btn.disabled = false; btn.innerText = "Guardar"; }
+}
+
+function enviarWhatsApp() {
+    const cli = document.getElementById('select-cliente').value;
+    const fec = document.getElementById('fecha-entrega').value;
+    let listado = ""; let t = 0;
+    Object.keys(carrito).forEach(n => {
+        if(carrito[n] > 0) {
+            const p = productosData.find(x => x.Producto === n);
+            listado += `*${carrito[n]}x* ${n} ($${p.Precio_Venta})\n`;
+            t += (carrito[n] * parseFloat(p.Precio_Venta));
         }
     });
 
-    document.getElementById('car-detalle').innerHTML = html || "Sin productos";
-    document.getElementById('car-total').innerText = `$${total.toFixed(2)}`;
-    document.getElementById('car-items').innerText = items;
+    const msg = `*LÓGICA LÁCTEA - PEDIDO*\n\n*ID:* ${idVenta}\n*Cliente:* ${cli}\n*Entrega:* ${fec}\n\n*PRODUCTOS:*\n${listado}\n*TOTAL: $${t.toFixed(2)}*\n\n¡Gracias por su compra! 🥛🧀`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    location.reload();
 }
 
-// ===============================
+function alternarFormulario(m) {
+    document.getElementById('vista-seleccion-cliente').classList.toggle('hidden', m);
+    document.getElementById('vista-nuevo-cliente').classList.toggle('hidden', !m);
+    if(m) document.getElementById('reg-id').value = `C-${Date.now().toString().slice(-6)}`;
+}
+
+function filtrar() {
+    const q = document.getElementById('buscarProducto').value.toLowerCase();
+    document.querySelectorAll('.card-producto').forEach(c => c.style.display = c.innerText.toLowerCase().includes(q) ? "flex" : "none");
+}
+
 window.onload = iniciar;
 </script>
 </body>

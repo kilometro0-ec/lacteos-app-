@@ -4,10 +4,13 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Lógica Láctea - Dashboard Total</title>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
+
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
     <script>
     tailwind.config = {
       theme: {
@@ -23,218 +26,202 @@
         }
       }
     }
-    <script>
+    </script>
+
+    <style>
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+    .rotate-animation { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    #loading-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .glass-card { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
+
+    .pulse-notif { animation: shadow-pulse 1.5s infinite; }
+    @keyframes shadow-pulse {
+        0% { box-shadow: 0 0 0 0px rgba(0, 85, 255, 0.4); }
+        70% { box-shadow: 0 0 0 8px rgba(0, 85, 255, 0); }
+        100% { box-shadow: 0 0 0 0px rgba(0, 85, 255, 0); }
+    }
+    </style>
+</head>
+
+<body class="bg-background text-[#1f012a] font-[Work_Sans] antialiased pb-10">
+
+<div id="loading-overlay">
+    <div class="flex flex-col items-center gap-2">
+        <span class="material-symbols-outlined text-5xl text-primary rotate-animation">sync</span>
+        <span class="text-[10px] font-black uppercase tracking-widest text-primary italic">Sincronizando...</span>
+    </div>
+</div>
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-24 bg-white border-b border-outline shadow-sm">
+  <div class="flex items-center gap-2">
+    <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary border border-purple-200">
+      <span class="material-symbols-outlined text-3xl">analytics</span>
+    </div>
+
+    <div class="flex flex-col">
+        <h1 class="text-xs font-black text-primary">Lógica Láctea</h1>
+
+        <select id="periodo-filtro" onchange="cargarDatos()" class="text-[11px] font-black bg-transparent">
+            <option value="hoy">Hoy</option>
+            <option value="semana">Semana</option>
+            <option value="mes">Mes</option>
+            <option value="personalizado">Día</option>
+        </select>
+
+        <input type="date" id="filtro-fecha" onchange="cargarDatos()" class="hidden">
+    </div>
+  </div>
+
+  <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center">
+    <span class="material-symbols-outlined">sync</span>
+  </button>
+</header>
+
+<main class="pt-28 px-4 max-w-7xl mx-auto space-y-5">
+
+<!-- CARD -->
+<div class="glass-card p-6 rounded-[2.5rem] text-white">
+
+    <p id="label-dinero" class="text-xs">Ventas</p>
+    <h2 id="ventas-total-hoy" class="text-4xl font-black">$0.00</h2>
+
+    <div class="grid grid-cols-2 gap-4 mt-4">
+        <div>
+            <p>Utilidad</p>
+            <p id="ganancia-real">$0</p>
+        </div>
+        <div>
+            <p>Proyección</p>
+            <p id="ganancia-proyectada">$0</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- BOTONES -->
+<div class="grid grid-cols-2 gap-3">
+
+<button onclick="location.href='RegistrodeVentas.html'">Vender</button>
+<button onclick="location.href='GestióndeDespachos.html'">Despachos</button>
+<button onclick="location.href='ControldeInventario.html'">Stock</button>
+<button onclick="location.href='ConfirmarRecepcion.html'">Recepción</button>
+<button onclick="location.href='Proveedores.html'">Proveedores</button>
+<button onclick="location.href='GestiondeClientes.html'">Clientes</button>
+
+</div>
+
+<!-- LISTAS -->
+<section>
+  <div id="lista-pedidos"></div>
+</section>
+
+<section>
+  <div id="ranking-productos"></div>
+</section>
+
+<section>
+  <div id="cont-criticos"></div>
+</section>
+
+</main>
+
+<script>
+const API_URL = "https://script.google.com/macros/s/AKfycbzmON_L0C1Ci2sQxMPAUDKN2nbPI3HZGAlqFjNkrF7ZHK2jaI-RMqagzL_3S6pkgZxl5w/exec";
+
+const DairyAPI = {
+  obtenerDatos: async (sheet) => {
+    const res = await fetch(`${API_URL}?pestaña=${sheet}`);
+    const json = await res.json();
+    return json.data || [];
+  }
+};
+
 const fInput = document.getElementById('filtro-fecha');
 const hoy = new Date();
-fInput.value = new Date(hoy - (hoy.getTimezoneOffset() * 60000))
+
+fInput.value = new Date(hoy - hoy.getTimezoneOffset()*60000)
   .toISOString().split('T')[0];
 
-function mostrarCargando(show) {
-  document.getElementById('loading-overlay').style.display =
-    show ? 'flex' : 'none';
+function mostrarCargando(s) {
+  document.getElementById('loading-overlay').style.display = s ? 'flex':'none';
 }
 
-// 🔥 FIX CRÍTICO: SIEMPRE DEVOLVER ARRAY
-function normalizar(res) {
-  if (Array.isArray(res)) return res;
-  if (res && Array.isArray(res.data)) return res.data;
+function normalizar(d){
+  if(Array.isArray(d)) return d;
+  if(d?.data) return d.data;
   return [];
 }
 
-function cumpleFiltro(fechaVenta, periodo, fechaSeleccionada) {
-  if (!fechaVenta) return false;
-
-  const fV = new Date(fechaVenta);
-  if (isNaN(fV.getTime())) return false;
-
-  if (periodo === 'hoy')
-    return fV.toDateString() === hoy.toDateString();
-
-  if (periodo === 'semana') {
-    const diff = hoy.getDate() - hoy.getDay() + (hoy.getDay() === 0 ? -6 : 1);
-    const lunes = new Date(hoy);
-    lunes.setDate(diff);
-    lunes.setHours(0,0,0,0);
-    return fV >= lunes;
-  }
-
-  if (periodo === 'mes')
-    return fV.getMonth() === hoy.getMonth() &&
-           fV.getFullYear() === hoy.getFullYear();
-
-  return fV.toISOString().split('T')[0] === fechaSeleccionada;
+function cumpleFiltro(f,p,sel){
+  if(!f) return false;
+  const d = new Date(f);
+  if(isNaN(d)) return false;
+  return true;
 }
 
-async function cargarDatos() {
+async function cargarDatos(){
 
-  mostrarCargando(true);
+mostrarCargando(true);
 
-  const periodo = document.getElementById('periodo-filtro').value;
-  const fSel = fInput.value;
-  fInput.classList.toggle('hidden', periodo !== 'personalizado');
+const [inv,v,com] = await Promise.all([
+  DairyAPI.obtenerDatos("Inventario"),
+  DairyAPI.obtenerDatos("Ventas"),
+  DairyAPI.obtenerDatos("Compras")
+]);
 
-  try {
+const inventario = normalizar(inv);
+const ventas = normalizar(v);
+const compras = normalizar(com);
 
-    const [resInv, resVentas, resCompras] = await Promise.all([
-      DairyAPI.obtenerDatos("Inventario"),
-      DairyAPI.obtenerDatos("Ventas"),
-      DairyAPI.obtenerDatos("Compras")
-    ]);
+let ventasTotal=0, utilidad=0, cobrar=0;
+let ranking={};
 
-    // 🔥 FIX AQUÍ
-    const inventario = normalizar(resInv);
-    const ventas = normalizar(resVentas);
-    const compras = normalizar(resCompras);
+const costos={};
 
-    // ================= INVENTARIO =================
-    const costosMap = {};
-    let valorBodega = 0;
-    let proyeccionG = 0;
+inventario.forEach(p=>{
+  costos[p.Producto]=+p.Precio_Distribuidor||0;
+});
 
-    inventario.forEach(p => {
-      const c = parseFloat(String(p.Precio_Distribuidor || 0).replace(',', '.')) || 0;
-      const v = parseFloat(String(p.Precio_Venta || 0).replace(',', '.')) || 0;
-      const s = parseFloat(p.Stock) || 0;
+ventas.forEach(v=>{
+  const t=+v.Total||0;
+  const c=+v.Cantidad||0;
 
-      costosMap[p.Producto] = c;
+  ventasTotal+=t;
+  utilidad+=t-(costos[v.Producto]||0)*c;
 
-      valorBodega += c * s;
-      proyeccionG += (v - c) * s;
-    });
+  ranking[v.Producto]=(ranking[v.Producto]||0)+c;
 
-    document.getElementById('valor-invertido').innerText = `$${valorBodega.toFixed(2)}`;
-    document.getElementById('ganancia-proyectada').innerText = `$${proyeccionG.toFixed(2)}`;
+  if(v.Estado==="PENDIENTE") cobrar+=t;
+});
 
-    // ================= VENTAS =================
-    let tVentas = 0;
-    let tUtilidad = 0;
-    let tPorCobrar = 0;
+document.getElementById("ventas-total-hoy").innerText="$"+ventasTotal.toFixed(2);
+document.getElementById("ganancia-real").innerText="$"+utilidad.toFixed(2);
+document.getElementById("ganancia-proyectada").innerText="$"+utilidad.toFixed(2);
 
-    const ranking = {};
-    const pedidosPendientes = {};
+const r=document.getElementById("ranking-productos");
+r.innerHTML=Object.entries(ranking).slice(0,4).map(([n,c])=>
+`<div>${n} - ${c}</div>`).join("");
 
-    ventas.forEach(v => {
+const c=document.getElementById("cont-criticos");
+c.innerHTML="OK";
 
-      const cantidad = parseFloat(v.Cantidad) || 0;
-      const total = parseFloat(String(v.Total || v["Precio Total"] || 0).replace(',', '.')) || 0;
-
-      const estado = String(v.Estado || "").toUpperCase();
-      const producto = v.Producto || "SIN PRODUCTO";
-      const id = v.ID_Venta;
-
-      if (cumpleFiltro(v.Fecha, periodo, fSel)) {
-
-        tVentas += total;
-
-        const costo = costosMap[producto] || 0;
-        tUtilidad += total - (costo * cantidad);
-
-        ranking[producto] = (ranking[producto] || 0) + cantidad;
-      }
-
-      if (estado === "PENDIENTE") {
-
-        tPorCobrar += total;
-
-        if (id && !pedidosPendientes[id]) {
-          const fecha = new Date(v.Fecha);
-          const dias = isNaN(fecha) ? 0 : Math.floor((hoy - fecha) / (1000*60*60*24));
-
-          pedidosPendientes[id] = {
-            cliente: v.Cliente || "Cliente",
-            dias,
-            total: 0
-          };
-        }
-
-        if (id) pedidosPendientes[id].total += total;
-      }
-    });
-
-    document.getElementById('ventas-total-hoy').innerText = `$${tVentas.toFixed(2)}`;
-    document.getElementById('ganancia-real').innerText = `$${tUtilidad.toFixed(2)}`;
-    document.getElementById('por-recaudar').innerText = `$${tPorCobrar.toFixed(2)}`;
-    document.getElementById('label-dinero').innerText = `Ventas ${periodo.toUpperCase()}`;
-
-    // ================= PEDIDOS =================
-    const lista = document.getElementById('lista-pedidos');
-
-    const ordenados = Object.entries(pedidosPendientes)
-      .sort((a,b) => b[1].dias - a[1].dias);
-
-    lista.innerHTML = ordenados.length
-      ? ordenados.map(([id,p]) => `
-        <div class="p-3 bg-white rounded-2xl border flex justify-between items-center">
-          <div>
-            <div class="text-[10px] font-black">${p.cliente}</div>
-            <div class="text-[9px] text-red-500">
-              RETRASO ${p.dias} DÍAS (ID ${id})
-            </div>
-          </div>
-          <div class="font-black text-amber-600">
-            $${p.total.toFixed(2)}
-          </div>
-        </div>
-      `).join('')
-      : `<p class="text-center text-slate-300 text-xs">Sin pendientes</p>`;
-
-    document.getElementById('badge-ruta').innerText = ordenados.length;
-    document.getElementById('badge-ruta')
-      .classList.toggle('hidden', ordenados.length === 0);
-
-    // ================= COMPRAS =================
-    const comprasPend = compras.filter(c =>
-      String(c.Estado_Entrega || "").toUpperCase() === "PENDIENTE"
-    );
-
-    const badge = document.getElementById('badge-recepcion');
-
-    if (comprasPend.length > 0) {
-      badge.innerText = [...new Set(comprasPend.map(c => c.ID_Compra))].length;
-      badge.classList.remove('hidden');
-    } else {
-      badge.classList.add('hidden');
-    }
-
-    // ================= TOP =================
-    const rankDiv = document.getElementById('ranking-productos');
-
-    rankDiv.innerHTML = Object.entries(ranking)
-      .sort((a,b) => b[1]-a[1])
-      .slice(0,4)
-      .map(([n,c],i)=>`
-        <div class="flex justify-between p-2 bg-purple-50 rounded-xl text-[10px]">
-          <span>${i+1}. ${n}</span>
-          <span class="text-primary">${c} ud.</span>
-        </div>
-      `).join('') || `<p class="text-center text-slate-300 text-[9px]">Sin datos</p>`;
-
-    // ================= STOCK =================
-    const crit = inventario.filter(p => {
-      const s = parseFloat(p.Stock) || 0;
-      return s > 0 && s <= 5;
-    });
-
-    const cont = document.getElementById('cont-criticos');
-
-    cont.innerHTML = crit.length
-      ? crit.map(p => `
-        <div class="flex justify-between p-2 bg-red-50 rounded-xl text-[10px]">
-          <span>${p.Producto}</span>
-          <span class="text-red-600 font-black">${p.Stock}</span>
-        </div>
-      `).join('')
-      : `<p class="text-center text-slate-300 text-[9px]">Stock estable</p>`;
-
-  } catch (e) {
-    console.error("ERROR DASHBOARD:", e);
-    alert("Error conectando con el servidor");
-  }
-
-  setTimeout(() => mostrarCargando(false), 400);
+mostrarCargando(false);
 }
 
-window.onload = cargarDatos;
+window.onload=cargarDatos;
 </script>
+
 </body>
 </html>

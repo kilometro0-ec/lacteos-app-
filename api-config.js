@@ -4,16 +4,20 @@ const DairyAPI = {
 
   obtenerDatos: async (pestaña) => {
     try {
-      const res = await fetch(`${SCRIPT_URL}?pestaña=${encodeURIComponent(pestaña)}`);
+      const res = await fetch(
+        `${SCRIPT_URL}?pestaña=${encodeURIComponent(pestaña)}`
+      );
+
       const json = await res.json();
 
       console.log("API OK:", pestaña, json);
 
-      return json;
+      // 🔥 IMPORTANTE: siempre devolver array limpio
+      return json.data || [];
 
     } catch (err) {
       console.error("ERROR API:", err);
-      return { status: "ERROR", data: [] };
+      return [];
     }
   },
 
@@ -22,7 +26,9 @@ const DairyAPI = {
       const res = await fetch(SCRIPT_URL, {
         method: "POST",
         body: JSON.stringify(payload),
-        headers: { "Content-Type": "application/json" }
+        headers: {
+          "Content-Type": "application/json"
+        }
       });
 
       return await res.json();

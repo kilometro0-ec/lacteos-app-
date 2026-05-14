@@ -12,7 +12,6 @@ const DairyAPI = {
 
       console.log("API OK:", pestaña, json);
 
-      // 🔥 IMPORTANTE: siempre devolver array limpio
       return json.data || [];
 
     } catch (err) {

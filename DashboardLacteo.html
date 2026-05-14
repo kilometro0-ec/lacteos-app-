@@ -191,146 +191,210 @@
     </div>
 
 </main>
-
 <script>
 const fInput = document.getElementById('filtro-fecha');
 const hoy = new Date();
-fInput.value = new Date(hoy - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+
+fInput.value = new Date(hoy - (hoy.getTimezoneOffset() * 60000))
+  .toISOString().split('T')[0];
 
 function mostrarCargando(show) {
-    document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
+  document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
 }
 
+function norm(t){
+  return (t || "").toString().trim().toUpperCase();
+}
+
+/* =========================
+   FILTROS
+========================= */
 function cumpleFiltro(fechaVenta, periodo, fechaSeleccionada) {
-    const fV = new Date(fechaVenta);
-    if (periodo === 'hoy') return fV.toDateString() === hoy.toDateString();
-    if (periodo === 'semana') {
-        const diff = hoy.getDate() - hoy.getDay() + (hoy.getDay() === 0 ? -6 : 1);
-        const lunes = new Date(new Date().setDate(diff)); lunes.setHours(0,0,0,0);
-        return fV >= lunes;
-    }
-    if (periodo === 'mes') return fV.getMonth() === hoy.getMonth() && fV.getFullYear() === hoy.getFullYear();
+  if (!fechaVenta) return false;
+
+  const fV = new Date(fechaVenta);
+  if (isNaN(fV)) return false;
+
+  const hoy = new Date();
+
+  if (periodo === 'hoy')
+    return fV.toDateString() === hoy.toDateString();
+
+  if (periodo === 'semana') {
+    const start = new Date(hoy);
+    start.setDate(hoy.getDate() - hoy.getDay() + 1);
+    start.setHours(0,0,0,0);
+    return fV >= start;
+  }
+
+  if (periodo === 'mes')
+    return fV.getMonth() === hoy.getMonth() &&
+           fV.getFullYear() === hoy.getFullYear();
+
+  if (periodo === 'personalizado')
     return fV.toISOString().split('T')[0] === fechaSeleccionada;
+
+  return true;
 }
 
+/* =========================
+   MAIN
+========================= */
 async function cargarDatos() {
-    mostrarCargando(true);
-    const periodo = document.getElementById('periodo-filtro').value;
-    const fSel = fInput.value;
-    fInput.classList.toggle('hidden', periodo !== 'personalizado');
 
-    try {
-        const [resInv, resVentas, resCompras] = await Promise.all([
-            DairyAPI.obtenerDatos("Inventario"), 
-            DairyAPI.obtenerDatos("Ventas"), 
-            DairyAPI.obtenerDatos("Compras")
-        ]);
+  mostrarCargando(true);
 
-        const inventario = resInv || [];
-        const ventas = resVentas || [];
-        const compras = resCompras || [];
+  const periodo = document.getElementById('periodo-filtro').value;
+  const fSel = fInput.value;
+  fInput.classList.toggle('hidden', periodo !== 'personalizado');
 
-        // 1. Inventario y Proyecciones
-        const costosMap = {};
-        let valorBodega = 0;
-        let proyeccionG = 0;
-        inventario.forEach(p => {
-            const c = parseFloat(String(p.Precio_Distribuidor || 0).replace(',','.'));
-            const v = parseFloat(String(p.Precio_Venta || 0).replace(',','.'));
-            const s = parseFloat(p.Stock) || 0;
-            costosMap[p.Producto] = c;
-            valorBodega += (c * s);
-            proyeccionG += ((v - c) * s);
-        });
-        document.getElementById('valor-invertido').innerText = `$${valorBodega.toFixed(2)}`;
-        document.getElementById('ganancia-proyectada').innerText = `$${proyeccionG.toFixed(2)}`;
+  try {
 
-        // 2. Procesar Ventas y Pendientes
-        let tVentas = 0;
-        let tUtilidad = 0;
-        let tPorCobrar = 0;
-        let ranking = {};
-        let pedidosPendientes = {};
+    const [inventario, ventas, compras] = await Promise.all([
+      DairyAPI.obtenerDatos("Inventario"),
+      DairyAPI.obtenerDatos("Ventas"),
+      DairyAPI.obtenerDatos("Compras")
+    ]);
 
-        ventas.forEach(v => {
-            const totalFila = parseFloat(String(v["Precio Total"] || 0).replace(',','.'));
-            const idVenta = v.ID_Venta;
-            const esPendiente = String(v.Estado).toUpperCase() === "PENDIENTE";
+    const inv = inventario || [];
+    const ven = ventas || [];
+    const com = compras || [];
 
-            if(cumpleFiltro(v.Fecha, periodo, fSel)) {
-                tVentas += totalFila;
-                const cB = costosMap[v.Producto] || 0;
-                tUtilidad += (totalFila - (cB * (parseFloat(v.Cantidad) || 0)));
-                ranking[v.Producto] = (ranking[v.Producto] || 0) + (parseFloat(v.Cantidad) || 0);
-            }
+    /* =========================
+       INVENTARIO
+    ========================= */
+    const costos = {};
+    const stock = {};
+    let valorBodega = 0;
+    let proyeccion = 0;
 
-            if(esPendiente && idVenta) {
-                tPorCobrar += totalFila;
-                if(!pedidosPendientes[idVenta]) {
-                    const fP = new Date(v.Fecha);
-                    const dias = Math.floor((hoy - fP) / (1000 * 60 * 60 * 24));
-                    pedidosPendientes[idVenta] = { cliente: v.Cliente, dias, total: 0 };
-                }
-                pedidosPendientes[idVenta].total += totalFila;
-            }
-        });
+    inv.forEach(p => {
 
-        document.getElementById('ventas-total-hoy').innerText = `$${tVentas.toFixed(2)}`;
-        document.getElementById('ganancia-real').innerText = `$${tUtilidad.toFixed(2)}`;
-        document.getElementById('por-recaudar').innerText = `$${tPorCobrar.toFixed(2)}`;
-        document.getElementById('label-dinero').innerText = `Ventas ${periodo.toUpperCase()}`;
+      const prod = norm(p.Producto);
+      const c = Number(p.Precio_Distribuidor) || 0;
+      const v = Number(p.Precio_Venta) || 0;
+      const s = Number(p.Stock) || 0;
 
-        // 3. Render Pendientes (MÁS ANTIGUO PRIMERO: b.dias - a.dias)
-        const listaPed = document.getElementById('lista-pedidos');
-        const sortedPendientes = Object.entries(pedidosPendientes).sort((a,b) => b[1].dias - a[1].dias);
-        
-        listaPed.innerHTML = sortedPendientes.map(([id, p]) => `
-            <div class="p-3 bg-white rounded-2xl border ${p.dias > 1 ? 'border-l-4 border-l-red-500 shadow-md' : 'border-slate-100'} flex justify-between items-center">
-                <div class="flex flex-col">
-                    <span class="text-[10px] font-black uppercase text-slate-700">${p.cliente}</span>
-                    <span class="text-[9px] font-bold ${p.dias > 1 ? 'text-red-600' : 'text-amber-500'} italic">RETRASO: ${p.dias} DÍAS (ID: ${id})</span>
-                </div>
-                <span class="text-amber-600 font-black italic text-xs">$${p.total.toFixed(2)}</span>
-            </div>
-        `).join('') || '<p class="text-center text-slate-300 text-xs italic">Sin pendientes</p>';
+      costos[prod] = c;
+      stock[prod] = s;
 
-        document.getElementById('badge-ruta').innerText = sortedPendientes.length;
-        document.getElementById('badge-ruta').classList.toggle('hidden', sortedPendientes.length === 0);
+      valorBodega += c * s;
+      proyeccion += (v - c) * s;
+    });
 
-        // 4. Badge Compras
-        const bRec = document.getElementById('badge-recepcion');
-        const cPends = compras.filter(c => String(c.Estado_Entrega).toUpperCase() === "PENDIENTE");
-        if(cPends.length > 0){
-            bRec.innerText = [...new Set(cPends.map(p => p.ID_Compra))].length;
-            bRec.classList.remove('hidden');
-            document.getElementById('btn-recepcion').classList.add('pulse-notif');
-        } else { bRec.classList.add('hidden'); }
+    document.getElementById('valor-invertido').innerText = `$${valorBodega.toFixed(2)}`;
+    document.getElementById('ganancia-proyectada').innerText = `$${proyeccion.toFixed(2)}`;
 
-        // 5. Ranking
-        const rDiv = document.getElementById('ranking-productos');
-        rDiv.innerHTML = Object.entries(ranking).sort((a,b) => b[1]-a[1]).slice(0,4).map(([n,c],i) => `
-            <div class="flex justify-between p-2 bg-purple-50 rounded-xl text-[10px] font-bold">
-                <span>${i+1}. ${n}</span>
-                <span class="text-primary">${c} ud.</span>
-            </div>
-        `).join('') || '<p class="text-center text-slate-300 text-[9px]">Sin datos</p>';
+    /* =========================
+       VENTAS
+    ========================= */
+    let totalVentas = 0;
+    let utilidad = 0;
+    let porCobrar = 0;
 
-        // 6. Stock Crítico (SOLO ENTRE 1 Y 5)
-        const contCrit = document.getElementById('cont-criticos');
-        const criticos = inventario.filter(p => {
-            const s = parseFloat(p.Stock) || 0;
-            return s > 0 && s <= 5;
-        });
-        contCrit.innerHTML = criticos.map(p => `
-            <div class="flex justify-between p-2 bg-red-50 rounded-xl border border-red-100 text-[10px]">
-                <span class="font-black uppercase text-red-900">${p.Producto}</span>
-                <span class="font-black text-red-600 uppercase">${p.Stock} UD</span>
-            </div>
-        `).join('') || '<p class="text-center text-slate-300 text-[9px] italic">Stock estable</p>';
+    const ranking = {};
+    const pedidos = {};
 
-    } catch (e) { console.error(e); }
-    finally { setTimeout(() => mostrarCargando(false), 500); }
+    ven.forEach(v => {
+
+      const prod = norm(v.Producto);
+      const cantidad = Number(v.Cantidad) || 0;
+      const total = Number(v.Total) || 0;
+      const estado = (v.Estado || "").toUpperCase();
+      const fecha = v.Fecha;
+
+      if (cumpleFiltro(fecha, periodo, fSel)) {
+
+        totalVentas += total;
+
+        utilidad += total - ((costos[prod] || 0) * cantidad);
+
+        ranking[prod] = (ranking[prod] || 0) + cantidad;
+      }
+
+      if (estado === "PENDIENTE") {
+        porCobrar += total;
+      }
+
+      if (estado === "PENDIENTE" && v.ID_Venta) {
+        if (!pedidos[v.ID_Venta]) {
+          const fV = new Date(fecha);
+          const dias = Math.floor((hoy - fV) / (1000 * 60 * 60 * 24));
+
+          pedidos[v.ID_Venta] = {
+            cliente: v.Cliente,
+            dias,
+            total: 0
+          };
+        }
+        pedidos[v.ID_Venta].total += total;
+      }
+
+    });
+
+    /* =========================
+       UI PRINCIPAL
+    ========================= */
+    document.getElementById('ventas-total-hoy').innerText = `$${totalVentas.toFixed(2)}`;
+    document.getElementById('ganancia-real').innerText = `$${utilidad.toFixed(2)}`;
+    document.getElementById('por-recaudar').innerText = `$${porCobrar.toFixed(2)}`;
+    document.getElementById('label-dinero').innerText = `Ventas ${periodo.toUpperCase()}`;
+
+    /* =========================
+       LISTA PEDIDOS
+    ========================= */
+    const lista = document.getElementById('lista-pedidos');
+
+    const ordenados = Object.entries(pedidos)
+      .sort((a,b) => b[1].dias - a[1].dias);
+
+    lista.innerHTML = ordenados.length ? ordenados.map(([id,p]) => `
+      <div class="p-3 bg-white rounded-2xl border flex justify-between items-center">
+        <div>
+          <div class="text-[10px] font-black uppercase">${p.cliente}</div>
+          <div class="text-[9px] text-red-600 font-bold">RETRASO ${p.dias} DÍAS</div>
+        </div>
+        <div class="text-xs font-black text-amber-600">$${p.total.toFixed(2)}</div>
+      </div>
+    `).join('') : '<p class="text-center text-slate-300">Sin pedidos</p>';
+
+    /* =========================
+       RANKING
+    ========================= */
+    document.getElementById('ranking-productos').innerHTML =
+      Object.entries(ranking)
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,4)
+        .map(([n,c],i)=>`
+          <div class="flex justify-between p-2 bg-purple-50 rounded-xl text-[10px] font-bold">
+            <span>${i+1}. ${n}</span>
+            <span class="text-primary">${c}</span>
+          </div>
+        `).join('');
+
+    /* =========================
+       STOCK CRÍTICO
+    ========================= */
+    const crit = inv.filter(p => {
+      const s = Number(p.Stock) || 0;
+      return s > 0 && s <= 5;
+    });
+
+    document.getElementById('cont-criticos').innerHTML =
+      crit.length ? crit.map(p => `
+        <div class="flex justify-between p-2 bg-red-50 rounded-xl text-[10px] font-bold">
+          <span>${p.Producto}</span>
+          <span class="text-red-600">${p.Stock}</span>
+        </div>
+      `).join('') : '<p class="text-center text-slate-300">Stock estable</p>';
+
+  } catch (err) {
+    console.error(err);
+  }
+
+  mostrarCargando(false);
 }
+
 window.onload = cargarDatos;
 </script>
 </body>

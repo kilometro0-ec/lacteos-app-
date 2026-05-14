@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Rutas - Lógica Láctea</title>
+    <title>Rutas y Historial - Lógica Láctea</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
@@ -11,38 +11,28 @@
     
     <style>
         body { background-color: #f8fafc; padding-bottom: 90px; font-family: sans-serif; }
-        
         .card-pro {
             background: white; border-radius: 2rem; border: 1px solid #f1f5f9;
             box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05); overflow: hidden;
         }
-
-        /* GOTA DE UBICACIÓN AZUL */
         .btn-mapa-azul {
             background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe;
             border-radius: 1.2rem; width: 48px; height: 48px; display: flex;
             align-items: center; justify-content: center; transition: all 0.2s;
         }
-        .btn-mapa-azul:active { background-color: #2563eb; color: white; }
-
         .btn-verde {
             background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-            color: white; font-weight: 900; text-transform: uppercase;
-            border-radius: 1.2rem;
+            color: white; font-weight: 900; text-transform: uppercase; border-radius: 1.2rem;
         }
-
-        /* NAVEGACIÓN ESTILO FINO */
         .nav-fija { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); border-top: 1px solid #f3e8ff; padding: 10px 0 14px 0; z-index: 9999; }
         .menu-grid { max-width: 500px; margin: 0 auto; display: flex; justify-content: space-around; }
         .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #94a3b8; background: none; border: none; }
-        .nav-btn .material-symbols-outlined { font-size: 22px !important; font-variation-settings: 'wght' 300; }
+        .nav-btn .material-symbols-outlined { font-size: 22px !important; }
         .nav-btn span:last-child { font-size: 8px !important; font-weight: 800; text-transform: uppercase; }
         .active-btn { color: #a21caf !important; }
-
-        /* MODALES */
         .modal-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 25px; }
-        .modal-box { background: white; width: 100%; max-width: 300px; border-radius: 2.5rem; padding: 30px; text-align: center; animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-box { background: white; width: 100%; max-width: 300px; border-radius: 2.5rem; padding: 30px; text-align: center; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -60,26 +50,39 @@
 </header>
 
 <main class="pt-24 px-5 max-w-lg mx-auto space-y-6">
-    <div class="grid grid-cols-2 gap-4">
-        <div class="bg-white p-5 rounded-[2rem] border border-orange-50 text-center">
+    <!-- FILTROS DE HISTORIAL -->
+    <div class="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <button onclick="verHistorial('dia')" class="bg-white px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 border border-slate-100 shadow-sm whitespace-nowrap uppercase active:bg-slate-100">Hoy</button>
+        <button onclick="verHistorial('semana')" class="bg-white px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 border border-slate-100 shadow-sm whitespace-nowrap uppercase active:bg-slate-100">Semana</button>
+        <button onclick="verHistorial('mes')" class="bg-white px-4 py-2 rounded-xl text-[10px] font-black text-slate-500 border border-slate-100 shadow-sm whitespace-nowrap uppercase active:bg-slate-100">Mes</button>
+        <button onclick="cerrarHistorial()" id="btn-cerrar-h" class="hidden bg-red-50 px-4 py-2 rounded-xl text-[10px] font-black text-red-500 border border-red-100 whitespace-nowrap uppercase">Volver a Rutas</button>
+    </div>
+
+    <!-- CONTADORES -->
+    <div id="stats-principales" class="grid grid-cols-2 gap-4">
+        <div class="bg-white p-5 rounded-[2rem] border border-orange-50 text-center shadow-sm">
             <p id="cont-pend" class="text-3xl font-black text-orange-500">0</p>
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Pendientes</p>
         </div>
-        <div class="bg-white p-5 rounded-[2rem] border border-green-50 text-center">
+        <div class="bg-white p-5 rounded-[2rem] border border-green-50 text-center shadow-sm">
             <p id="cont-ent" class="text-3xl font-black text-green-500">0</p>
             <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">Entregados</p>
         </div>
     </div>
+
+    <!-- LISTADO DE RUTAS PENDIENTES -->
     <div id="contenedor-pedidos" class="space-y-6 pb-20"></div>
+    
+    <!-- LISTADO DE HISTORIAL -->
+    <div id="contenedor-historial" class="hidden space-y-4 pb-20">
+        <div id="lista-historial-items" class="space-y-3"></div>
+    </div>
 </main>
 
-<!-- MODAL SELECTOR DE MAPAS -->
+<!-- MODALES (Mapas y Confirmación) -->
 <div id="modal-mapas" class="modal-custom" onclick="cerrarModal('modal-mapas')">
     <div class="modal-box" onclick="event.stopPropagation()">
-        <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 text-blue-600">
-            <span class="material-symbols-outlined text-3xl">map</span>
-        </div>
-        <h3 class="font-black text-slate-800 text-lg mb-6">¿Qué navegador prefieres?</h3>
+        <h3 class="font-black text-slate-800 text-lg mb-6">Navegar con:</h3>
         <div class="grid gap-3">
             <button id="btn-gmaps" class="w-full py-4 bg-[#4285F4] text-white rounded-2xl font-black uppercase text-xs">Google Maps</button>
             <button id="btn-waze" class="w-full py-4 bg-[#33CCFF] text-white rounded-2xl font-black uppercase text-xs">Waze</button>
@@ -87,7 +90,6 @@
     </div>
 </div>
 
-<!-- MODAL CONFIRMACIÓN ACCIONES -->
 <div id="modal-confirm" class="modal-custom">
     <div class="modal-box">
         <div id="confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
@@ -103,7 +105,7 @@
 <div id="menu-container"></div>
 
 <script>
-let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0, dinero: 0 };
+let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0 };
 let pedidosLocal = [];
 
 async function cargarDatos() {
@@ -114,6 +116,7 @@ async function cargarDatos() {
             DairyAPI.obtenerDatos("Ventas"),
             DairyAPI.obtenerDatos("Clientes")
         ]);
+        
         const agrupados = {};
         ventas.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE").forEach(v => {
             const idV = v.ID_Venta || "S/N";
@@ -123,10 +126,9 @@ async function cargarDatos() {
                     direccion: clientes.find(c => String(c.Nombre).trim().toLowerCase() === String(v.Cliente).trim().toLowerCase())?.Dirección || ""
                 };
             }
-            const precio = parseFloat(String(v["Precio Total"] || 0).replace(',', '.')) || 0;
-            // Guardamos el ID_Fila o el identificador único que use tu API para poder borrar luego
-            agrupados[idV].items.push({ idFila: v.ID_Venta, producto: v.Producto, cant: v.Cantidad, precio: precio });
-            agrupados[idV].total += precio;
+            const precioTotalItem = parseFloat(String(v.Total || 0).replace(',', '.')) || 0;
+            agrupados[idV].items.push({ idFila: v.ID_Venta, producto: v.Producto, cant: v.Cantidad, precio: precioTotalItem });
+            agrupados[idV].total += precioTotalItem;
         });
         pedidosLocal = Object.values(agrupados).reverse();
         renderizar();
@@ -139,38 +141,147 @@ function renderizar() {
     document.getElementById('cont-pend').innerText = pedidosLocal.length;
     document.getElementById('cont-ent').innerText = statsSesion.pedidos;
     
-    container.innerHTML = pedidosLocal.length ? "" : '<div class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">Ruta Finalizada</div>';
-    
-    pedidosLocal.forEach((ped, idx) => {
-        container.innerHTML += `
-            <div class="card-pro p-6 space-y-5">
-                <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <span class="bg-purple-50 text-[#a21caf] text-[10px] font-black px-2 py-1 rounded-lg">ID: ${ped.id}</span>
-                        <h2 class="text-xl font-black text-slate-800 uppercase mt-2">${ped.cliente}</h2>
+    if(pedidosLocal.length === 0) {
+        container.innerHTML = '<div class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">Ruta Finalizada</div>';
+        return;
+    }
+
+    container.innerHTML = pedidosLocal.map((ped, idx) => `
+        <div class="card-pro p-6 space-y-5">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <span class="bg-purple-50 text-[#a21caf] text-[10px] font-black px-2 py-1 rounded-lg">ID: ${ped.id}</span>
+                    <h2 class="text-xl font-black text-slate-800 uppercase mt-2">${ped.cliente}</h2>
+                </div>
+                <button onclick="abrirSelectorMapas('${ped.direccion}')" class="btn-mapa-azul">
+                    <span class="material-symbols-outlined text-2xl">location_on</span>
+                </button>
+            </div>
+            <div class="bg-slate-50/50 rounded-2xl p-3">
+                ${ped.items.map((it, iIdx) => `
+                    <div class="flex justify-between items-center py-2.5 px-2 border-b border-white last:border-0">
+                        <span class="text-xs font-bold text-slate-600 uppercase">${it.producto} <span class="text-purple-400 ml-1">x${it.cant}</span></span>
+                        <button onclick="askDelete('${it.idFila}')" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-400 rounded-xl">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
                     </div>
-                    <button onclick="abrirSelectorMapas('${ped.direccion}')" class="btn-mapa-azul">
-                        <span class="material-symbols-outlined text-2xl">location_on</span>
-                    </button>
-                </div>
-                <div class="bg-slate-50/50 rounded-2xl p-3">
-                    ${ped.items.map((it, iIdx) => `
-                        <div class="flex justify-between items-center py-2.5 px-2 border-b border-white last:border-0">
-                            <span class="text-xs font-bold text-slate-600 uppercase">${it.producto} <span class="text-purple-400 ml-1">x${it.cant}</span></span>
-                            <button onclick="askDelete(${idx}, ${iIdx})" class="w-8 h-8 flex items-center justify-center bg-red-50 text-red-400 rounded-xl">
-                                <span class="material-symbols-outlined text-sm">delete</span>
-                            </button>
+                `).join('')}
+            </div>
+            <div class="flex justify-between items-center pt-2">
+                <p class="text-3xl font-black text-slate-900">$${ped.total.toFixed(2)}</p>
+                <button onclick="askEntrega('${ped.id}')" class="btn-verde px-8 h-14 shadow-lg shadow-green-100">ENTREGADO</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// --- LÓGICA DE HISTORIAL ---
+async function verHistorial(periodo) {
+    const mainCont = document.getElementById('contenedor-pedidos');
+    const histCont = document.getElementById('contenedor-historial');
+    const listaItems = document.getElementById('lista-historial-items');
+    const statsDiv = document.getElementById('stats-principales');
+    const btnCerrar = document.getElementById('btn-cerrar-h');
+    
+    mainCont.classList.add('hidden');
+    statsDiv.classList.add('hidden');
+    histCont.classList.remove('hidden');
+    btnCerrar.classList.remove('hidden');
+    
+    listaItems.innerHTML = '<div class="text-center py-10 font-black text-slate-400 text-[10px] animate-bounce">CARGANDO...</div>';
+
+    try {
+        const ventas = await DairyAPI.obtenerDatos("Ventas");
+        const ahora = new Date();
+        
+        let filtrados = ventas.filter(v => String(v.Estado).trim().toUpperCase() === "ENTREGADO");
+
+        filtrados = filtrados.filter(v => {
+            if (!v.Fecha_Entrega) return false;
+            // Intentar convertir la fecha del sheet a objeto Date
+            const partes = v.Fecha_Entrega.split('/'); 
+            const fEntrega = partes.length === 3 ? new Date(partes[2], partes[1]-1, partes[0]) : new Date(v.Fecha_Entrega);
+            
+            if (periodo === 'dia') return fEntrega.toDateString() === ahora.toDateString();
+            if (periodo === 'semana') {
+                const hace7d = new Date(); hace7d.setDate(ahora.getDate() - 7);
+                return fEntrega >= hace7d;
+            }
+            if (periodo === 'mes') return fEntrega.getMonth() === ahora.getMonth() && fEntrega.getFullYear() === ahora.getFullYear();
+            return true;
+        });
+
+        if (filtrados.length === 0) {
+            listaItems.innerHTML = '<div class="text-center py-20 text-slate-300 font-black uppercase text-[10px]">Sin registros</div>';
+            return;
+        }
+
+        let totalPeriodo = 0;
+        let html = filtrados.reverse().map(v => {
+            const sub = parseFloat(String(v.Total || 0).replace(',', '.')) || 0;
+            totalPeriodo += sub;
+            return `
+                <div class="card-pro p-4 flex justify-between items-center border-l-4 border-green-400">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[8px] font-black bg-slate-100 px-1.5 py-0.5 rounded text-slate-400">#${v.ID_Venta}</span>
+                            <span class="text-[8px] font-black text-slate-400">${v.Fecha_Entrega}</span>
                         </div>
-                    `).join('')}
+                        <h4 class="font-black text-slate-800 text-xs uppercase">${v.Cliente}</h4>
+                        <p class="text-[10px] text-slate-500">${v.Producto} x${v.Cantidad}</p>
+                    </div>
+                    <p class="text-lg font-black text-slate-900">$${sub.toFixed(2)}</p>
                 </div>
-                <div class="flex justify-between items-center pt-2">
-                    <p class="text-3xl font-black text-slate-900">$${ped.total.toFixed(2)}</p>
-                    <button onclick="askEntrega('${ped.id}', ${idx})" class="btn-verde px-8 h-14 shadow-lg shadow-green-100">ENTREGADO</button>
-                </div>
-            </div>`;
+            `;
+        }).join('');
+
+        listaItems.innerHTML = `
+            <div class="bg-slate-900 p-6 rounded-[2rem] text-white mb-4 shadow-lg">
+                <p class="text-[9px] font-black uppercase opacity-50 tracking-widest">Caja ${periodo}</p>
+                <h2 class="text-4xl font-black">$${totalPeriodo.toFixed(2)}</h2>
+                <p class="text-[9px] mt-2 font-bold opacity-80">${filtrados.length} Entregas realizadas</p>
+            </div>
+            ${html}
+        `;
+    } catch (e) { listaItems.innerHTML = 'Error'; }
+}
+
+function cerrarHistorial() {
+    document.getElementById('contenedor-pedidos').classList.remove('hidden');
+    document.getElementById('stats-principales').classList.remove('hidden');
+    document.getElementById('contenedor-historial').classList.add('hidden');
+    document.getElementById('btn-cerrar-h').classList.add('hidden');
+}
+
+// --- ACCIONES ---
+function askEntrega(id) {
+    showConfirm("¿Entregado?", "Se guardará la fecha y el estado como cobrado.", "success", async () => {
+        try {
+            const hoy = new Date().toLocaleDateString('es-ES'); // Formato DD/MM/YYYY
+            await DairyAPI.enviarDatos("Ventas", { 
+                pestaña: "Ventas", 
+                accion: "editar_estado", 
+                ID_Venta: id, 
+                Estado: "ENTREGADO",
+                Fecha_Entrega: hoy // IMPORTANTE: Guardamos la fecha para el historial
+            });
+            statsSesion.pedidos++;
+            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
+            cargarDatos();
+        } catch (e) { alert("Error"); }
     });
 }
 
+function askDelete(idFila) {
+    showConfirm("¿Eliminar?", "Se borrará de la base de datos.", "delete", async () => {
+        try {
+            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "eliminar_item", ID_Venta: idFila });
+            cargarDatos();
+        } catch (e) { alert("Error"); }
+    });
+}
+
+// --- UTILIDADES UI ---
 function abrirSelectorMapas(dir) {
     if(!dir) return alert("Sin dirección");
     document.getElementById('modal-mapas').style.display = 'flex';
@@ -187,7 +298,7 @@ function showConfirm(title, text, type, onOk) {
     document.getElementById('confirm-title').innerText = title;
     document.getElementById('confirm-text').innerText = text;
     modal.style.display = 'flex';
-
+    
     if(type === 'delete') {
         iconBox.className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 bg-red-50 text-red-500";
         iconBox.innerHTML = '<span class="material-symbols-outlined text-3xl">delete</span>';
@@ -200,29 +311,6 @@ function showConfirm(title, text, type, onOk) {
     okBtn.onclick = () => { onOk(); cerrarModal('modal-confirm'); };
 }
 
-function askDelete(pIdx, iIdx) {
-    const it = pedidosLocal[pIdx].items[iIdx];
-    showConfirm("¿Eliminar producto?", "Se borrará permanentemente de la base de datos.", "delete", async () => {
-        try {
-            // AQUÍ LA LÓGICA DE ELIMINACIÓN REAL EN SHEETS
-            // Dependiendo de tu API, puede ser "eliminar_fila" o cambiar estado a "ELIMINADO"
-            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "eliminar_item", ID_Venta: it.idFila });
-            cargarDatos(); // Recargamos para que el total se actualice desde la nube
-        } catch (e) { alert("Error al borrar"); }
-    });
-}
-
-function askEntrega(id, idx) {
-    showConfirm("¿Entregado?", "Se registrará como cobrado.", "success", async () => {
-        try {
-            await DairyAPI.enviarDatos("Ventas", { pestaña: "Ventas", accion: "editar_estado", ID_Venta: id, Estado: "ENTREGADO" });
-            statsSesion.pedidos++;
-            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
-            cargarDatos();
-        } catch (e) { alert("Error"); }
-    });
-}
-
 function renderMenu() {
     const container = document.getElementById('menu-container');
     const opciones = [
@@ -232,10 +320,9 @@ function renderMenu() {
         { nombre: 'Clientes', icon: 'group', link: 'GestiondeClientes.html' },
         { nombre: 'Rutas', icon: 'local_shipping', link: 'GestióndeDespachos.html' }
     ];
-    const pathActual = decodeURIComponent(window.location.pathname);
     let html = '<nav class="nav-fija"><div class="menu-grid">';
     opciones.forEach(opt => {
-        const esActivo = pathActual.includes(opt.link) ? 'active-btn' : '';
+        const esActivo = window.location.pathname.includes(opt.link) ? 'active-btn' : '';
         html += `<button onclick="location.href='${opt.link}'" class="nav-btn ${esActivo}"><span class="material-symbols-outlined">${opt.icon}</span><span>${opt.nombre}</span></button>`;
     });
     container.innerHTML = html + '</div></nav>';

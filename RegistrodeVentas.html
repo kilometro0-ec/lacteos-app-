@@ -98,27 +98,37 @@ let idVenta = "";
 let clientesLoaded = false;
 
 // ===============================
-// USAR API GLOBAL (NO DUPLICAR)
+// USAR API GLOBAL (api-config.js)
 // ===============================
 const API_URL = window.API_URL;
 const DairyAPI = window.DairyAPI;
+
+// ===============================
+// BLOQUEO UI
+// ===============================
+function bloquearUI(v) {
+    document.getElementById('seccion-operativa').classList.toggle('bloqueado', v);
+    document.getElementById('carrito-flotante').classList.toggle('bloqueado', v);
+}
 
 // ===============================
 // INICIO
 // ===============================
 async function iniciar() {
 
+    bloquearUI(true);
+
     const d = new Date();
 
-    idVenta = `V-${Date.now()}`;
+    idVenta = `V-${d.getFullYear().toString().slice(-2)}${Math.floor(100000 + Math.random() * 900000)}`;
 
-    document.getElementById('car-id').innerText = idVenta;
-    document.getElementById('id-venta-display').innerText = idVenta;
+    document.getElementById('car-id').innerText = `ID: ${idVenta}`;
+    document.getElementById('id-venta-display').innerText = `ID: ${idVenta}`;
     document.getElementById('fecha-entrega').value = d.toISOString().split('T')[0];
 
     try {
 
-        console.log("📡 Cargando datos...");
+        console.log("📡 Cargando clientes e inventario...");
 
         const [clientes, inventario] = await Promise.all([
             DairyAPI.obtenerDatos("Clientes"),
@@ -128,24 +138,33 @@ async function iniciar() {
         console.log("CLIENTES:", clientes);
         console.log("INVENTARIO:", inventario);
 
-        productosData = inventario || [];
+        productosData = Array.isArray(inventario) ? inventario : [];
 
+        // ===============================
+        // CLIENTES
+        // ===============================
         const sel = document.getElementById('select-cliente');
         sel.innerHTML = '<option value="">-- SELECCIONAR CLIENTE --</option>';
 
-        (clientes || []).forEach(c => {
+        const listaClientes = Array.isArray(clientes) ? clientes : [];
+
+        if (listaClientes.length === 0) {
+            console.warn("⚠ No hay clientes");
+        }
+
+        listaClientes.forEach(c => {
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`;
         });
 
         renderizar();
-        clientesLoaded = true;
 
-        document.getElementById('seccion-operativa').classList.remove('bloqueado');
-        document.getElementById('carrito-flotante').classList.remove('bloqueado');
+        clientesLoaded = true;
+        bloquearUI(false);
 
     } catch (e) {
         console.error("ERROR:", e);
         alert("Error cargando datos (ver consola)");
+        bloquearUI(true);
     }
 }
 
@@ -154,9 +173,15 @@ function activarInterfaz() {
 
     const cli = document.getElementById('select-cliente').value;
 
-    if (!clientesLoaded) return alert("Cargando...");
+    if (!clientesLoaded) {
+        alert("Cargando datos...");
+        return;
+    }
 
-    document.getElementById('car-cliente').innerText = cli || "Esperando...";
+    bloquearUI(!cli);
+
+    document.getElementById('car-cliente').innerText =
+        cli || "Esperando Cliente...";
 }
 
 // ===============================
@@ -165,27 +190,40 @@ function renderizar() {
     const cont = document.getElementById('contenedor-productos');
     cont.innerHTML = "";
 
+    if (!productosData.length) {
+        cont.innerHTML = "<p>No hay productos</p>";
+        return;
+    }
+
     productosData.forEach(p => {
 
-        const nombre = p.Producto;
+        const producto = p.Producto || "";
         const precio = Number(p.Precio_Venta) || 0;
         const stock = Number(p.Stock) || 0;
 
-        const id = `cant-${nombre.replace(/\s+/g,'-')}`;
+        const idCant = `cant-${producto.replace(/\s+/g,'-')}`;
 
         cont.innerHTML += `
-            <div>
-                <b>${nombre}</b> $${precio} Stock:${stock}
-                <button onclick="cambiarCant('${nombre}',-1)">-</button>
-                <span id="${id}">0</span>
-                <button onclick="cambiarCant('${nombre}',1)">+</button>
+            <div class="card-sutil flex items-center justify-between mb-2">
+
+                <div>
+                    <h4>${producto}</h4>
+                    <small>$${precio} | Stock ${stock}</small>
+                </div>
+
+                <div>
+                    <button onclick="cambiarCant('${producto}',-1)">-</button>
+                    <span id="${idCant}">0</span>
+                    <button onclick="cambiarCant('${producto}',1)">+</button>
+                </div>
+
             </div>
         `;
     });
 }
 
 // ===============================
-function cambiarCant(nombre, d) {
+function cambiarCant(nombre, delta) {
 
     if (!carrito[nombre]) carrito[nombre] = 0;
 
@@ -194,14 +232,14 @@ function cambiarCant(nombre, d) {
 
     const stock = Number(p.Stock) || 0;
 
-    const n = carrito[nombre] + d;
+    const nueva = carrito[nombre] + delta;
 
-    if (n < 0) return;
-    if (n > stock) return alert("Sin stock");
+    if (nueva < 0) return;
+    if (nueva > stock) return alert("Sin stock");
 
-    carrito[nombre] = n;
+    carrito[nombre] = nueva;
 
-    document.getElementById(`cant-${nombre.replace(/\s+/g,'-')}`).innerText = n;
+    document.getElementById(`cant-${nombre.replace(/\s+/g,'-')}`).innerText = nueva;
 
     actualizarCarrito();
 }
@@ -218,16 +256,16 @@ function actualizarCarrito() {
         if (carrito[n] > 0) {
 
             const p = productosData.find(x => x.Producto === n);
-            const price = Number(p?.Precio_Venta) || 0;
+            const precio = Number(p?.Precio_Venta) || 0;
 
-            total += carrito[n] * price;
+            total += carrito[n] * precio;
             items += carrito[n];
 
             html += `<div>${n} x${carrito[n]}</div>`;
         }
     });
 
-    document.getElementById('car-detalle').innerHTML = html || "Vacío";
+    document.getElementById('car-detalle').innerHTML = html || "Sin productos";
     document.getElementById('car-total').innerText = `$${total.toFixed(2)}`;
     document.getElementById('car-items').innerText = items;
 }
@@ -235,6 +273,5 @@ function actualizarCarrito() {
 // ===============================
 window.onload = iniciar;
 </script>
-
 </body>
 </html>

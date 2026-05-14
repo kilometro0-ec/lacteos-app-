@@ -1,7 +1,7 @@
 /**
  * LÓGICA LÁCTEA - CLIENTE API v3.7 (ESTRUCTURA LIMPIA)
  */
-const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbxDsYMqyVo_5ftqlr2KPHpoE0hQTDBfu3TwXPADWnOnu6CgP_jw30aMhsxHVwGPIDMpXw/exec";
+const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbyZj-AuX47r3e-Xkz2rXTyvPQMHMU1c0WvaVoUEaf4xVCHetstdLnaeknw6tOUOkid5sg/exec";
 
 const DairyAPI = {
     // 1. LECTURA DE DATOS (doGet)

@@ -23,17 +23,12 @@
         }
       }
     }
-<script>
-
 const fInput = document.getElementById('filtro-fecha');
 
 const hoy = new Date();
-
-const hoyLocal = new Date(
+fInput.value = new Date(
     hoy.getTime() - (hoy.getTimezoneOffset() * 60000)
-);
-
-fInput.value = hoyLocal.toISOString().split('T')[0];
+).toISOString().split('T')[0];
 
 function mostrarCargando(show) {
     document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
@@ -47,36 +42,42 @@ function obtenerArraySeguro(respuesta) {
 
 function numero(valor) {
     if (valor === null || valor === undefined || valor === "") return 0;
-    return parseFloat(String(valor).replace("$", "").replace(",", ".").trim()) || 0;
+    return parseFloat(
+        String(valor)
+            .replace("$", "")
+            .replace(",", ".")
+            .trim()
+    ) || 0;
 }
 
-function fechaValida(f) {
+/* FIX FECHA ROBUSTO */
+function parseFecha(f) {
+    if (!f) return null;
     const d = new Date(f);
-    return !isNaN(d.getTime()) ? d : null;
+    return isNaN(d.getTime()) ? null : d;
 }
 
 function cumpleFiltro(fechaVenta, periodo, fechaSeleccionada) {
-
-    const fecha = fechaValida(fechaVenta);
+    const fecha = parseFecha(fechaVenta);
     if (!fecha) return false;
 
-    const hoy = new Date();
+    const hoyLocal = new Date();
 
     if (periodo === "hoy") {
-        return fecha.toDateString() === hoy.toDateString();
+        return fecha.toDateString() === hoyLocal.toDateString();
     }
 
     if (periodo === "semana") {
-        const lunes = new Date(hoy);
-        lunes.setDate(hoy.getDate() - hoy.getDay() + (hoy.getDay() === 0 ? -6 : 1));
-        lunes.setHours(0,0,0,0);
+        const lunes = new Date(hoyLocal);
+        lunes.setDate(hoyLocal.getDate() - hoyLocal.getDay() + (hoyLocal.getDay() === 0 ? -6 : 1));
+        lunes.setHours(0, 0, 0, 0);
         return fecha >= lunes;
     }
 
     if (periodo === "mes") {
         return (
-            fecha.getMonth() === hoy.getMonth() &&
-            fecha.getFullYear() === hoy.getFullYear()
+            fecha.getMonth() === hoyLocal.getMonth() &&
+            fecha.getFullYear() === hoyLocal.getFullYear()
         );
     }
 
@@ -110,12 +111,11 @@ async function cargarDatos() {
         const costosMap = {};
 
         inventario.forEach(item => {
-
             const costo = numero(item.Precio_Distribuidor);
             const venta = numero(item.Precio_Venta);
             const stock = numero(item.Stock);
 
-            if (item.Producto) costosMap[item.Producto] = costo;
+            costosMap[item.Producto] = costo;
 
             valorBodega += costo * stock;
             proyeccion += (venta - costo) * stock;
@@ -128,14 +128,14 @@ async function cargarDatos() {
         let totalVentas = 0;
         let utilidad = 0;
         let porCobrar = 0;
+
         const ranking = {};
         const pedidosPendientes = {};
 
         ventas.forEach(v => {
 
             const cantidad = numero(v.Cantidad);
-            const precio = numero(v.Precio_PVP);
-            const total = numero(v.Total) || (cantidad * precio);
+            const total = numero(v.Total) || (cantidad * numero(v.Precio_PVP));
 
             const estado = String(v.Estado || "").trim().toUpperCase();
             const producto = v.Producto || "SIN PRODUCTO";
@@ -155,13 +155,13 @@ async function cargarDatos() {
 
                 porCobrar += total;
 
+                const fechaPedido = parseFecha(v.Fecha);
+
+                const dias = fechaPedido
+                    ? Math.floor((hoy - fechaPedido) / (1000 * 60 * 60 * 24))
+                    : 0;
+
                 if (!pedidosPendientes[idVenta]) {
-                    const fechaPedido = fechaValida(v.Fecha) || new Date();
-
-                    const dias = Math.floor(
-                        (hoy - fechaPedido) / (1000 * 60 * 60 * 24)
-                    );
-
                     pedidosPendientes[idVenta] = {
                         cliente: v.Cliente || "Consumidor Final",
                         dias,
@@ -184,25 +184,28 @@ async function cargarDatos() {
         const pedidosOrdenados = Object.entries(pedidosPendientes)
             .sort((a, b) => b[1].dias - a[1].dias);
 
-        listaPedidos.innerHTML = pedidosOrdenados.length ? pedidosOrdenados.map(([id, p]) => `
-            <div class="p-3 bg-white rounded-2xl border ${p.dias > 1 ? 'border-l-4 border-l-red-500 shadow-md' : 'border-slate-100'} flex justify-between items-center">
-                <div class="flex flex-col">
-                    <span class="text-[10px] font-black uppercase text-slate-700">${p.cliente}</span>
-                    <span class="text-[9px] font-bold ${p.dias > 1 ? 'text-red-600' : 'text-amber-500'} italic">
-                        RETRASO: ${p.dias} DÍAS (ID: ${id})
-                    </span>
+        listaPedidos.innerHTML = pedidosOrdenados.length
+            ? pedidosOrdenados.map(([id, p]) => `
+                <div class="p-3 bg-white rounded-2xl border flex justify-between items-center">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black uppercase">${p.cliente}</span>
+                        <span class="text-[9px] text-red-600 italic">
+                            RETRASO: ${p.dias} DÍAS (ID: ${id})
+                        </span>
+                    </div>
+                    <span class="text-amber-600 font-black">$${p.total.toFixed(2)}</span>
                 </div>
-                <span class="text-amber-600 font-black italic text-xs">$${p.total.toFixed(2)}</span>
-            </div>
-        `).join('') : `<p class="text-center text-slate-300 text-xs italic">Sin pendientes</p>`;
+            `).join("")
+            : `<p class="text-center text-slate-300 text-xs italic">Sin pendientes</p>`;
 
+        // badge ruta
         const badgeRuta = document.getElementById('badge-ruta');
         badgeRuta.innerText = pedidosOrdenados.length;
         badgeRuta.classList.toggle('hidden', pedidosOrdenados.length === 0);
 
         // ================= COMPRAS =================
         const comprasPendientes = compras.filter(c =>
-            String(c.Estado_Entrega || "").toUpperCase().trim() === "PENDIENTE"
+            String(c.Estado_Entrega || "").trim().toUpperCase() === "PENDIENTE"
         );
 
         const badgeRecepcion = document.getElementById('badge-recepcion');
@@ -210,7 +213,6 @@ async function cargarDatos() {
 
         if (comprasPendientes.length > 0) {
             const ids = [...new Set(comprasPendientes.map(c => c.ID_Compra))];
-
             badgeRecepcion.innerText = ids.length;
             badgeRecepcion.classList.remove('hidden');
             btnRecepcion.classList.add('pulse-notif');
@@ -219,18 +221,18 @@ async function cargarDatos() {
             btnRecepcion.classList.remove('pulse-notif');
         }
 
-        // ================= RANKING =================
+        // ================= TOP =================
         const rankingDiv = document.getElementById('ranking-productos');
 
         rankingDiv.innerHTML = Object.entries(ranking)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 4)
-            .map(([nombre, cantidad], i) => `
+            .map(([n, c], i) => `
                 <div class="flex justify-between p-2 bg-purple-50 rounded-xl text-[10px] font-bold">
-                    <span>${i + 1}. ${nombre}</span>
-                    <span class="text-primary">${cantidad} ud.</span>
+                    <span>${i + 1}. ${n}</span>
+                    <span class="text-primary">${c} ud.</span>
                 </div>
-            `).join('') || `<p class="text-center text-slate-300 text-[9px]">Sin datos</p>`;
+            `).join("") || `<p class="text-center text-slate-300 text-[9px]">Sin datos</p>`;
 
         // ================= STOCK CRÍTICO =================
         const criticos = inventario.filter(p => {
@@ -240,443 +242,24 @@ async function cargarDatos() {
 
         const contCriticos = document.getElementById('cont-criticos');
 
-        contCriticos.innerHTML = criticos.map(p => `
-            <div class="flex justify-between p-2 bg-red-50 rounded-xl border border-red-100 text-[10px]">
-                <span class="font-black uppercase text-red-900">${p.Producto}</span>
-                <span class="font-black text-red-600 uppercase">${p.Stock} UD</span>
-            </div>
-        `).join('') || `<p class="text-center text-slate-300 text-[9px] italic">Stock estable</p>`;
+        contCriticos.innerHTML = criticos.length
+            ? criticos.map(p => `
+                <div class="flex justify-between p-2 bg-red-50 rounded-xl text-[10px]">
+                    <span>${p.Producto}</span>
+                    <span class="text-red-600 font-black">${p.Stock} UD</span>
+                </div>
+            `).join("")
+            : `<p class="text-center text-slate-300 text-[9px]">Stock estable</p>`;
 
     } catch (error) {
-        console.error("ERROR DASHBOARD:", error);
+        console.error(error);
         alert("Error conectando con el servidor.");
     } finally {
-        setTimeout(() => mostrarCargando(false), 500);
+        setTimeout(() => mostrarCargando(false), 400);
     }
 }
 
 window.onload = cargarDatos;
-
-</script>
         
-const fInput = document.getElementById('filtro-fecha');
-
-const hoy = new Date();
-
-fInput.value = new Date(
-    hoy.getTime() - (hoy.getTimezoneOffset() * 60000)
-).toISOString().split('T')[0];
-
-function mostrarCargando(show) {
-    document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none';
-}
-
-function obtenerArraySeguro(respuesta) {
-
-    if (Array.isArray(respuesta)) return respuesta;
-
-    if (respuesta && respuesta.status === "OK" && Array.isArray(respuesta.data)) {
-        return respuesta.data;
-    }
-
-    return [];
-}
-
-function numero(valor) {
-
-    if (valor === null || valor === undefined || valor === "") return 0;
-
-    return parseFloat(
-        String(valor)
-        .replace("$", "")
-        .replace(",", ".")
-        .trim()
-    ) || 0;
-}
-
-function cumpleFiltro(fechaVenta, periodo, fechaSeleccionada) {
-
-    if (!fechaVenta) return false;
-
-    const fecha = new Date(fechaVenta);
-
-    if (isNaN(fecha.getTime())) return false;
-
-    const hoyLocal = new Date();
-
-    if (periodo === "hoy") {
-        return fecha.toDateString() === hoyLocal.toDateString();
-    }
-
-    if (periodo === "semana") {
-
-        const lunes = new Date(hoyLocal);
-
-        lunes.setDate(
-            hoyLocal.getDate() -
-            hoyLocal.getDay() +
-            (hoyLocal.getDay() === 0 ? -6 : 1)
-        );
-
-        lunes.setHours(0,0,0,0);
-
-        return fecha >= lunes;
-    }
-
-    if (periodo === "mes") {
-
-        return (
-            fecha.getMonth() === hoyLocal.getMonth() &&
-            fecha.getFullYear() === hoyLocal.getFullYear()
-        );
-    }
-
-    return (
-        fecha.toISOString().split('T')[0] === fechaSeleccionada
-    );
-}
-
-async function cargarDatos() {
-
-    mostrarCargando(true);
-
-    const periodo = document.getElementById('periodo-filtro').value;
-
-    const fechaSeleccionada = fInput.value;
-
-    fInput.classList.toggle(
-        'hidden',
-        periodo !== 'personalizado'
-    );
-
-    try {
-
-        const [
-            inventarioRes,
-            ventasRes,
-            comprasRes
-        ] = await Promise.all([
-
-            DairyAPI.obtenerDatos("Inventario"),
-            DairyAPI.obtenerDatos("Ventas"),
-            DairyAPI.obtenerDatos("Compras")
-
-        ]);
-
-        const inventario = obtenerArraySeguro(inventarioRes);
-
-        const ventas = obtenerArraySeguro(ventasRes);
-
-        const compras = obtenerArraySeguro(comprasRes);
-
-        // =========================
-        // INVENTARIO
-        // =========================
-
-        let valorBodega = 0;
-
-        let proyeccion = 0;
-
-        const costosMap = {};
-
-        inventario.forEach(item => {
-
-            const costo = numero(item.Precio_Distribuidor);
-
-            const venta = numero(item.Precio_Venta);
-
-            const stock = numero(item.Stock);
-
-            costosMap[item.Producto] = costo;
-
-            valorBodega += (costo * stock);
-
-            proyeccion += ((venta - costo) * stock);
-
-        });
-
-        document.getElementById('valor-invertido').innerText =
-            `$${valorBodega.toFixed(2)}`;
-
-        document.getElementById('ganancia-proyectada').innerText =
-            `$${proyeccion.toFixed(2)}`;
-
-        // =========================
-        // VENTAS
-        // =========================
-
-        let totalVentas = 0;
-
-        let utilidad = 0;
-
-        let porCobrar = 0;
-
-        const ranking = {};
-
-        const pedidosPendientes = {};
-
-        ventas.forEach(v => {
-
-            const cantidad = numero(v.Cantidad);
-
-            const total =
-                numero(v["Precio Total"]) ||
-                numero(v.Total) ||
-                (cantidad * numero(v.Precio_PVP));
-
-            const estado =
-                String(v.Estado || "")
-                .trim()
-                .toUpperCase();
-
-            const producto = v.Producto || "SIN PRODUCTO";
-
-            const idVenta = v.ID_Venta || "S/N";
-
-            if (
-                cumpleFiltro(
-                    v.Fecha,
-                    periodo,
-                    fechaSeleccionada
-                )
-            ) {
-
-                totalVentas += total;
-
-                const costoBase = costosMap[producto] || 0;
-
-                utilidad += (
-                    total -
-                    (costoBase * cantidad)
-                );
-
-                ranking[producto] =
-                    (ranking[producto] || 0) + cantidad;
-            }
-
-            if (estado === "PENDIENTE") {
-
-                porCobrar += total;
-
-                if (!pedidosPendientes[idVenta]) {
-
-                    const fechaPedido = new Date(v.Fecha);
-
-                    const dias =
-                        Math.floor(
-                            (hoy - fechaPedido)
-                            /
-                            (1000 * 60 * 60 * 24)
-                        );
-
-                    pedidosPendientes[idVenta] = {
-                        cliente: v.Cliente || "Consumidor Final",
-                        dias,
-                        total: 0
-                    };
-                }
-
-                pedidosPendientes[idVenta].total += total;
-            }
-        });
-
-        document.getElementById('ventas-total-hoy').innerText =
-            `$${totalVentas.toFixed(2)}`;
-
-        document.getElementById('ganancia-real').innerText =
-            `$${utilidad.toFixed(2)}`;
-
-        document.getElementById('por-recaudar').innerText =
-            `$${porCobrar.toFixed(2)}`;
-
-        document.getElementById('label-dinero').innerText =
-            `Ventas ${periodo.toUpperCase()}`;
-
-        // =========================
-        // PEDIDOS PENDIENTES
-        // =========================
-
-        const listaPedidos =
-            document.getElementById('lista-pedidos');
-
-        const pedidosOrdenados =
-            Object.entries(pedidosPendientes)
-            .sort((a,b) => b[1].dias - a[1].dias);
-
-        listaPedidos.innerHTML =
-            pedidosOrdenados.map(([id,p]) => `
-
-            <div class="p-3 bg-white rounded-2xl border ${p.dias > 1 ? 'border-l-4 border-l-red-500 shadow-md' : 'border-slate-100'} flex justify-between items-center">
-
-                <div class="flex flex-col">
-
-                    <span class="text-[10px] font-black uppercase text-slate-700">
-                        ${p.cliente}
-                    </span>
-
-                    <span class="text-[9px] font-bold ${p.dias > 1 ? 'text-red-600' : 'text-amber-500'} italic">
-                        RETRASO: ${p.dias} DÍAS (ID: ${id})
-                    </span>
-
-                </div>
-
-                <span class="text-amber-600 font-black italic text-xs">
-                    $${p.total.toFixed(2)}
-                </span>
-
-            </div>
-
-        `).join('')
-
-        ||
-
-        `<p class="text-center text-slate-300 text-xs italic">
-            Sin pendientes
-        </p>`;
-
-        const badgeRuta =
-            document.getElementById('badge-ruta');
-
-        badgeRuta.innerText = pedidosOrdenados.length;
-
-        badgeRuta.classList.toggle(
-            'hidden',
-            pedidosOrdenados.length === 0
-        );
-
-        // =========================
-        // COMPRAS PENDIENTES
-        // =========================
-
-        const comprasPendientes =
-            compras.filter(c =>
-                String(c.Estado_Entrega || "")
-                .trim()
-                .toUpperCase() === "PENDIENTE"
-            );
-
-        const badgeRecepcion =
-            document.getElementById('badge-recepcion');
-
-        const btnRecepcion =
-            document.getElementById('btn-recepcion');
-
-        if (comprasPendientes.length > 0) {
-
-            const ids =
-                [...new Set(
-                    comprasPendientes.map(c => c.ID_Compra)
-                )];
-
-            badgeRecepcion.innerText = ids.length;
-
-            badgeRecepcion.classList.remove('hidden');
-
-            btnRecepcion.classList.add('pulse-notif');
-
-        } else {
-
-            badgeRecepcion.classList.add('hidden');
-
-            btnRecepcion.classList.remove('pulse-notif');
-        }
-
-        // =========================
-        // TOP PRODUCTOS
-        // =========================
-
-        const rankingDiv =
-            document.getElementById('ranking-productos');
-
-        rankingDiv.innerHTML =
-
-            Object.entries(ranking)
-
-            .sort((a,b) => b[1] - a[1])
-
-            .slice(0,4)
-
-            .map(([nombre,cantidad],i) => `
-
-                <div class="flex justify-between p-2 bg-purple-50 rounded-xl text-[10px] font-bold">
-
-                    <span>
-                        ${i + 1}. ${nombre}
-                    </span>
-
-                    <span class="text-primary">
-                        ${cantidad} ud.
-                    </span>
-
-                </div>
-
-            `).join('')
-
-            ||
-
-            `<p class="text-center text-slate-300 text-[9px]">
-                Sin datos
-            </p>`;
-
-        // =========================
-        // STOCK CRÍTICO
-        // =========================
-
-        const criticos =
-            inventario.filter(p => {
-
-                const stock = numero(p.Stock);
-
-                return stock > 0 && stock <= 5;
-
-            });
-
-        const contCriticos =
-            document.getElementById('cont-criticos');
-
-        contCriticos.innerHTML =
-
-            criticos.map(p => `
-
-                <div class="flex justify-between p-2 bg-red-50 rounded-xl border border-red-100 text-[10px]">
-
-                    <span class="font-black uppercase text-red-900">
-                        ${p.Producto}
-                    </span>
-
-                    <span class="font-black text-red-600 uppercase">
-                        ${p.Stock} UD
-                    </span>
-
-                </div>
-
-            `).join('')
-
-            ||
-
-            `<p class="text-center text-slate-300 text-[9px] italic">
-                Stock estable
-            </p>`;
-
-    } catch (error) {
-
-        console.error("ERROR DASHBOARD:", error);
-
-        alert("Error conectando con el servidor.");
-
-    } finally {
-
-        setTimeout(() => {
-
-            mostrarCargando(false);
-
-        }, 500);
-    }
-}
-
-window.onload = cargarDatos;
-
-</script>
-
 </body>
 </html>

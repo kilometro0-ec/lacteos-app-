@@ -3,57 +3,24 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Despachos Pro - Lógica Láctea</title>
-    
+    <title>Rutas Pro - Lógica Láctea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    
     <style>
         body { background-color: #fcfcfd; font-family: 'Plus Jakarta Sans', sans-serif; padding-bottom: 120px; }
-        
-        /* Estilo Premium de Tarjetas */
-        .card-premium {
-            background: white; border-radius: 2.5rem; border: 1px solid rgba(0,0,0,0.03);
-            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.04); transition: all 0.3s ease;
-        }
-        
-        /* Estado Reprogramado */
-        .card-reprogramado {
-            background: #fffbeb; border: 1px solid #fde68a;
-        }
-        .tag-reprogramado { background: #f59e0b; color: white; }
-
-        .btn-icon {
-            width: 44px; height: 44px; border-radius: 1.2rem;
-            display: flex; align-items: center; justify-content: center;
-            transition: all 0.2s;
-        }
-
-        /* Glassmorphism Navigation */
-        .nav-glass {
-            position: fixed; bottom: 20px; left: 20px; right: 20px;
-            background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px);
-            border-radius: 2rem; border: 1px solid rgba(255,255,255,0.5);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 12px; z-index: 1000;
-        }
-
-        .modal-blur {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(8px); z-index: 2000; display: none;
-            align-items: flex-end;
-        }
-        .sheet-bottom {
-            background: white; width: 100%; border-radius: 3rem 3rem 0 0;
-            padding: 30px; animation: slideUp 0.4s cubic-bezier(0, 1, 0, 1);
-        }
+        .card-premium { background: white; border-radius: 2.5rem; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 10px 30px -5px rgba(0,0,0,0.04); transition: all 0.3s ease; }
+        .card-reprogramado { background: #fffbeb; border: 1px solid #fde68a; }
+        .btn-icon { width: 44px; height: 44px; border-radius: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        .nav-glass { position: fixed; bottom: 20px; left: 20px; right: 20px; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-radius: 2rem; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 12px; z-index: 1000; }
+        .modal-blur { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); z-index: 2000; display: none; align-items: flex-end; }
+        .sheet-bottom { background: white; width: 100%; border-radius: 3rem 3rem 0 0; padding: 30px; animation: slideUp 0.4s cubic-bezier(0, 1, 0, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-<!-- Header Minimalista -->
 <header class="px-6 pt-10 pb-6 flex justify-between items-end">
     <div>
         <p class="text-[10px] font-800 text-slate-400 uppercase tracking-widest">Logística Pro</p>
@@ -64,13 +31,12 @@
     </button>
 </header>
 
-<!-- Resumen Estadístico -->
 <div class="px-6 grid grid-cols-2 gap-4 mb-8">
     <div class="bg-indigo-50 p-5 rounded-[2rem] border border-indigo-100">
         <p id="cont-pend" class="text-2xl font-800 text-indigo-700">0</p>
         <p class="text-[9px] font-800 text-indigo-400 uppercase tracking-wider">Pendientes</p>
     </div>
-    <div class="bg-emerald-50 p-5 rounded-[2rem] border border-emerald-100">
+    <div id="btn-historial" class="bg-emerald-50 p-5 rounded-[2rem] border border-emerald-100">
         <p id="cont-ent" class="text-2xl font-800 text-emerald-700">0</p>
         <p class="text-[9px] font-800 text-emerald-400 uppercase tracking-wider">Completados</p>
     </div>
@@ -78,61 +44,51 @@
 
 <main id="contenedor-pedidos" class="px-6 space-y-6"></main>
 
-<!-- MODAL DE EDICIÓN (BOTTOM SHEET) -->
+<!-- Bottom Sheet Edición -->
 <div id="modal-edit" class="modal-blur" onclick="cerrarEdicion()">
     <div class="sheet-bottom" onclick="event.stopPropagation()">
         <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
         <h2 class="text-xl font-800 text-slate-900 mb-1">Editar Pedido</h2>
-        <p id="edit-id-display" class="text-xs font-bold text-primary mb-6"></p>
-
+        <p id="edit-id-display" class="text-xs font-bold text-indigo-600 mb-6"></p>
         <div class="space-y-4">
-            <!-- Reprogramar Fecha -->
             <div>
                 <label class="text-[10px] font-800 text-slate-400 uppercase mb-2 block">Nueva Fecha de Entrega</label>
                 <input type="date" id="edit-fecha" class="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700">
             </div>
-
-            <!-- Listado de productos actual para borrar/editar -->
-            <div id="edit-productos-list" class="space-y-2 max-h-40 overflow-y-auto py-2">
-                <!-- Se llena dinámicamente -->
-            </div>
-
-            <!-- Agregar Producto -->
-            <button onclick="mostrarAgregar()" class="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-xs uppercase">
-                + Agregar Producto
-            </button>
+            <div id="edit-productos-list" class="space-y-2 max-h-40 overflow-y-auto py-2"></div>
         </div>
-
         <div class="flex gap-3 mt-8">
             <button onclick="cerrarEdicion()" class="flex-1 py-4 font-800 text-slate-400 uppercase text-xs">Cancelar</button>
-            <button onclick="guardarCambiosPedido()" class="flex-1 py-4 bg-primary bg-slate-900 text-white rounded-2xl font-800 uppercase text-xs shadow-xl">Guardar Cambios</button>
+            <button id="btn-guardar" onclick="guardarCambiosPedido()" class="flex-1 py-4 bg-slate-900 text-white rounded-2xl font-800 uppercase text-xs shadow-xl">Guardar</button>
         </div>
     </div>
 </div>
 
-<!-- NAVEGACIÓN -->
 <div id="menu-container"></div>
 
 <script>
 let pedidosLocal = [];
 let pedidoEnEdicion = null;
-let productosDB = [];
 
 async function cargarDatos() {
     const icon = document.getElementById('refresh-icon');
     icon?.classList.add('animate-spin');
     try {
-        const [ventas, clientes, inventario] = await Promise.all([
+        const [ventas, clientes] = await Promise.all([
             DairyAPI.obtenerDatos("Ventas"),
-            DairyAPI.obtenerDatos("Clientes"),
-            DairyAPI.obtenerDatos("Inventario")
+            DairyAPI.obtenerDatos("Clientes")
         ]);
         
-        productosDB = inventario;
         const agrupados = {};
-        
+        let entregadosCount = 0;
+
         ventas.forEach(v => {
-            const estado = String(v.Estado_Entrega || v.Estado || "").trim().toUpperCase();
+            const estado = String(v.Estado || "").trim().toUpperCase();
+            if (estado === "ENTREGADO") {
+                entregadosCount++;
+                return;
+            }
+
             if (estado === "PENDIENTE" || estado === "REPROGRAMADO") {
                 const idV = v.ID_Venta;
                 if (!agrupados[idV]) {
@@ -146,22 +102,30 @@ async function cargarDatos() {
                         direccion: clientes.find(c => c.Nombre === v.Cliente)?.Dirección || "Sin dirección"
                     };
                 }
-                const subtotal = parseFloat(v.Cantidad) * parseFloat(v.Precio_PVP || 0);
-                agrupados[idV].items.push({ ...v, subtotal });
+                
+                const cant = parseFloat(String(v.Cantidad || 0).replace(',', '.'));
+                const pvp = parseFloat(String(v.Precio_PVP || 0).replace('$', '').replace(',', '.'));
+                const subtotal = cant * pvp;
+                
+                agrupados[idV].items.push({ Producto: v.Producto, Cantidad: cant, Precio_PVP: pvp, subtotal });
                 agrupados[idV].total += subtotal;
             }
         });
 
         pedidosLocal = Object.values(agrupados).reverse();
+        document.getElementById('cont-ent').innerText = entregadosCount;
         renderizar();
-    } catch (e) { console.error(e); }
-    finally { icon?.classList.remove('animate-spin'); }
+    } catch (e) { 
+        console.error("Error cargando datos:", e); 
+    } finally { 
+        icon?.classList.remove('animate-spin'); 
+    }
 }
 
 function renderizar() {
     const container = document.getElementById('contenedor-pedidos');
     document.getElementById('cont-pend').innerText = pedidosLocal.length;
-    container.innerHTML = "";
+    container.innerHTML = pedidosLocal.length === 0 ? '<p class="text-center text-slate-400 py-10">No hay rutas pendientes</p>' : "";
 
     pedidosLocal.forEach((ped) => {
         const esRepro = ped.estado === "REPROGRAMADO";
@@ -169,97 +133,50 @@ function renderizar() {
             <div class="card-premium p-6 ${esRepro ? 'card-reprogramado' : ''}">
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex-1">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[9px] font-800 uppercase tracking-widest text-slate-400">ID: ${ped.id}</span>
-                            ${esRepro ? '<span class="text-[8px] font-900 bg-amber-500 text-white px-2 py-0.5 rounded-full uppercase">REPROGRAMADO</span>' : ''}
-                        </div>
+                        <span class="text-[9px] font-800 uppercase text-slate-400">ID: ${ped.id}</span>
                         <h2 class="text-xl font-800 text-slate-800 uppercase leading-tight">${ped.cliente}</h2>
-                        <p class="text-[10px] text-slate-400 font-bold mt-1 uppercase"><span class="material-symbols-outlined text-[12px] align-middle">calendar_month</span> Entrega: ${ped.fecha}</p>
+                        <p class="text-[10px] text-slate-400 font-bold mt-1 uppercase">📍 ${ped.direccion}</p>
                     </div>
                     <div class="flex gap-2">
-                         <button onclick="abrirEdicion('${ped.id}')" class="btn-icon bg-slate-100 text-slate-600">
-                            <span class="material-symbols-outlined">edit_square</span>
-                        </button>
-                        <button onclick="abrirMapa('${ped.direccion}')" class="btn-icon bg-blue-50 text-blue-600">
-                            <span class="material-symbols-outlined">directions</span>
-                        </button>
+                         <button onclick="abrirEdicion('${ped.id}')" class="btn-icon bg-slate-100 text-slate-600"><span class="material-symbols-outlined">edit_square</span></button>
+                         <button onclick="abrirMapa('${ped.direccion}')" class="btn-icon bg-blue-50 text-blue-600"><span class="material-symbols-outlined">directions</span></button>
                     </div>
                 </div>
-
                 <div class="space-y-2 mb-6">
                     ${ped.items.map(it => `
-                        <div class="flex justify-between text-xs font-bold text-slate-500 italic">
+                        <div class="flex justify-between text-xs font-bold text-slate-500">
                             <span>${it.Producto} <span class="text-slate-300">x${it.Cantidad}</span></span>
-                            <span class="text-slate-800">$${parseFloat(it.subtotal).toFixed(2)}</span>
+                            <span class="text-slate-800">$${it.subtotal.toFixed(2)}</span>
                         </div>
                     `).join('')}
                 </div>
-
                 <div class="flex justify-between items-center pt-4 border-t border-slate-100">
-                    <p class="text-3xl font-800 text-slate-900 leading-none">$${ped.total.toFixed(2)}</p>
-                    <button onclick="marcarEntregado('${ped.id}')" class="h-14 px-8 bg-emerald-600 text-white rounded-2xl font-800 uppercase text-xs shadow-lg shadow-emerald-100 active:scale-95 transition-transform">
-                        Entregado
-                    </button>
+                    <p class="text-3xl font-800 text-slate-900">$${ped.total.toFixed(2)}</p>
+                    <button onclick="marcarEntregado('${ped.id}')" class="h-14 px-8 bg-emerald-600 text-white rounded-2xl font-800 uppercase text-xs shadow-lg">Entregado</button>
                 </div>
-            </div>
-        `;
+            </div>`;
     });
 }
 
-// LÓGICA DE EDICIÓN
 function abrirEdicion(id) {
     pedidoEnEdicion = JSON.parse(JSON.stringify(pedidosLocal.find(p => p.id === id)));
-    document.getElementById('edit-id-display').innerText = `EDITANDO PEDIDO: ${id}`;
+    document.getElementById('edit-id-display').innerText = `ORDEN #${id}`;
     document.getElementById('edit-fecha').value = pedidoEnEdicion.fecha;
-    
-    renderizarItemsEdicion();
     document.getElementById('modal-edit').style.display = 'flex';
-}
-
-function renderizarItemsEdicion() {
-    const list = document.getElementById('edit-productos-list');
-    list.innerHTML = "";
-    pedidoEnEdicion.items.forEach((it, index) => {
-        list.innerHTML += `
-            <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl">
-                <div class="flex-1">
-                    <p class="text-[11px] font-800 text-slate-700 uppercase">${it.Producto}</p>
-                    <p class="text-[10px] text-slate-400 font-bold">$${it.Precio_PVP} c/u</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" value="${it.Cantidad}" onchange="actualizarCantItem(${index}, this.value)" class="w-12 h-10 text-center bg-white border-none rounded-xl font-800 text-xs">
-                    <button onclick="eliminarItemEdicion(${index})" class="text-red-400 p-2"><span class="material-symbols-outlined">delete</span></button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function actualizarCantItem(index, val) {
-    pedidoEnEdicion.items[index].Cantidad = val;
-}
-
-function eliminarItemEdicion(index) {
-    pedidoEnEdicion.items.splice(index, 1);
-    renderizarItemsEdicion();
 }
 
 function cerrarEdicion() { document.getElementById('modal-edit').style.display = 'none'; }
 
 async function guardarCambiosPedido() {
+    const btn = document.getElementById('btn-guardar');
     const nuevaFecha = document.getElementById('edit-fecha').value;
-    const esReprogramado = nuevaFecha !== pedidoEnEdicion.fecha;
+    const esRepro = nuevaFecha !== pedidoEnEdicion.fecha;
     
-    // Mostramos cargando
-    const btn = event.target;
-    btn.innerText = "SINCRONIZANDO...";
-    
-    try {
-        // 1. Primero eliminamos todos los registros anteriores de ese ID_Venta
-        // OJO: Esto depende de si tu API soporta eliminar por ID_Venta
-        await DairyAPI.enviarDatos({ pestaña: "Ventas", accion: "ELIMINAR_PEDIDO_ID", ID_Venta: pedidoEnEdicion.id });
+    btn.innerText = "PROCESANDO...";
+    btn.disabled = true;
 
-        // 2. Insertamos los nuevos (o actualizados)
+    try {
+        await DairyAPI.enviarDatos({ pestaña: "Ventas", accion: "ELIMINAR_PEDIDO_ID", ID_Venta: pedidoEnEdicion.id });
         for(let item of pedidoEnEdicion.items) {
             await DairyAPI.enviarDatos({
                 pestaña: "Ventas",
@@ -269,27 +186,24 @@ async function guardarCambiosPedido() {
                 Cantidad: item.Cantidad,
                 Precio_PVP: item.Precio_PVP,
                 Fecha_Entrega: nuevaFecha,
-                Estado_Entrega: esReprogramado ? "REPROGRAMADO" : "PENDIENTE"
+                Estado: esRepro ? "REPROGRAMADO" : "PENDIENTE"
             });
         }
-        
         cerrarEdicion();
         cargarDatos();
-    } catch(e) { alert("Error al guardar cambios"); }
-}
-
-function abrirMapa(dir) {
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
+    } catch(e) { alert("Error al guardar"); }
+    finally { btn.innerText = "GUARDAR"; btn.disabled = false; }
 }
 
 async function marcarEntregado(id) {
-    if(!confirm("¿Confirmar entrega y cobro?")) return;
+    if(!confirm("¿Confirmar entrega?")) return;
     try {
-        // Enviar actualización de estado a la fila(s) con ese ID
         await DairyAPI.enviarDatos({ pestaña: "Ventas", accion: "MARCAR_ENTREGADO", ID_Venta: id });
         cargarDatos();
-    } catch(e) { alert("Error"); }
+    } catch(e) { alert("Error al marcar"); }
 }
+
+function abrirMapa(dir) { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank'); }
 
 function renderMenu() {
     const container = document.getElementById('menu-container');
@@ -301,11 +215,10 @@ function renderMenu() {
     let html = '<nav class="nav-glass flex justify-around items-center">';
     opciones.forEach(opt => {
         const esActivo = window.location.pathname.includes(opt.link) ? 'text-indigo-600' : 'text-slate-400';
-        html += `
-            <button onclick="location.href='${opt.link}'" class="flex flex-col items-center gap-1">
-                <span class="material-symbols-outlined ${esActivo}">${opt.icon}</span>
-                <span class="text-[8px] font-800 uppercase tracking-tighter ${esActivo}">${opt.nombre}</span>
-            </button>`;
+        html += `<button onclick="location.href='${opt.link}'" class="flex flex-col items-center gap-1">
+            <span class="material-symbols-outlined ${esActivo}">${opt.icon}</span>
+            <span class="text-[8px] font-800 uppercase ${esActivo}">${opt.nombre}</span>
+        </button>`;
     });
     container.innerHTML = html + '</nav>';
 }

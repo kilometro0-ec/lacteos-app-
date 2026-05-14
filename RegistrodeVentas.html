@@ -145,59 +145,10 @@
 
 <div id="menu-container"></div>
 
-<script>
+    <script>
 let carrito = {};
 let productosData = [];
 let idVenta = "";
-
-// ===============================
-// CONFIG API
-// ===============================
-const API_URL = typeof API_CONFIG !== "undefined"
-    ? API_CONFIG.URL
-    : "TU_WEBAPP_URL";
-
-// ===============================
-// API UNIFICADA
-// ===============================
-const DairyAPI = {
-
-    async obtenerDatos(pestaña) {
-        try {
-            const res = await fetch(`${API_URL}?pestaña=${encodeURIComponent(pestaña)}`);
-            const json = await res.json();
-
-            if (json.status === "OK") {
-                return json.data || [];
-            }
-
-            console.error(json.message);
-            return [];
-
-        } catch (err) {
-            console.error("Error GET:", err);
-            return [];
-        }
-    },
-
-    async enviarDatos(datos) {
-        try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(datos)
-            });
-
-            return await res.json();
-
-        } catch (err) {
-            console.error("Error POST:", err);
-            throw err;
-        }
-    }
-};
 
 // ===============================
 // INICIO
@@ -206,37 +157,51 @@ async function iniciar() {
 
     const d = new Date();
 
-    idVenta = `V-${d.getFullYear().toString().slice(-2)}${Math.floor(100000 + Math.random() * 900000)}`;
+    idVenta =
+        `V-${d.getFullYear().toString().slice(-2)}${Math.floor(100000 + Math.random() * 900000)}`;
 
-    document.getElementById('car-id').innerText = `ID: ${idVenta}`;
-    document.getElementById('id-venta-display').innerText = `ID: ${idVenta}`;
+    document.getElementById('car-id').innerText =
+        `ID: ${idVenta}`;
+
+    document.getElementById('id-venta-display').innerText =
+        `ID: ${idVenta}`;
 
     document.getElementById('fecha-entrega').value =
         d.toISOString().split('T')[0];
 
     try {
 
+        // ===============================
+        // OBTENER CLIENTES + INVENTARIO
+        // ===============================
         const [clientes, inventario] = await Promise.all([
             DairyAPI.obtenerDatos("Clientes"),
             DairyAPI.obtenerDatos("Inventario")
         ]);
 
-        productosData = Array.isArray(inventario)
-            ? inventario
-            : [];
+        productosData =
+            Array.isArray(inventario)
+                ? inventario
+                : [];
 
-        const sel = document.getElementById('select-cliente');
+        // ===============================
+        // CARGAR CLIENTES
+        // ===============================
+        const sel =
+            document.getElementById('select-cliente');
 
         sel.innerHTML =
             '<option value="">-- SELECCIONAR CLIENTE --</option>';
 
-        const listaClientes = Array.isArray(clientes)
-            ? clientes
-            : [];
+        const listaClientes =
+            Array.isArray(clientes)
+                ? clientes
+                : [];
 
         listaClientes
             .sort((a, b) =>
-                String(a.Nombre || "").localeCompare(String(b.Nombre || ""))
+                String(a.Nombre || "")
+                    .localeCompare(String(b.Nombre || ""))
             )
             .forEach(c => {
 
@@ -247,11 +212,15 @@ async function iniciar() {
                 `;
             });
 
+        // ===============================
+        // RENDER PRODUCTOS
+        // ===============================
         renderizar();
 
     } catch (e) {
 
         console.error("Error al cargar:", e);
+
         alert("Error cargando información");
     }
 }
@@ -288,9 +257,14 @@ function renderizar() {
 
     productosData.forEach(p => {
 
-        const producto = p.Producto || "";
-        const precio = Number(p.Precio_Venta) || 0;
-        const stock = Number(p.Stock) || 0;
+        const producto =
+            p.Producto || "";
+
+        const precio =
+            Number(p.Precio_Venta) || 0;
+
+        const stock =
+            Number(p.Stock) || 0;
 
         const idCant =
             `cant-${producto.replace(/\s+/g,'-')}`;
@@ -315,6 +289,7 @@ function renderizar() {
                         </span>
 
                     </div>
+
                 </div>
 
                 <div class="flex items-center gap-3 bg-purple-50 p-1 rounded-2xl">
@@ -347,14 +322,17 @@ function renderizar() {
 // ===============================
 function cambiarCant(nombre, delta) {
 
-    if (!carrito[nombre]) carrito[nombre] = 0;
+    if (!carrito[nombre]) {
+        carrito[nombre] = 0;
+    }
 
     const p =
         productosData.find(x => x.Producto === nombre);
 
     if (!p) return;
 
-    const stockDisp = Number(p.Stock) || 0;
+    const stockDisp =
+        Number(p.Stock) || 0;
 
     const nuevaCant =
         carrito[nombre] + delta;
@@ -362,7 +340,9 @@ function cambiarCant(nombre, delta) {
     if (nuevaCant < 0) return;
 
     if (nuevaCant > stockDisp) {
+
         alert("¡Stock insuficiente!");
+
         return;
     }
 
@@ -386,7 +366,8 @@ function actualizarCarrito() {
 
     Object.keys(carrito).forEach(nombre => {
 
-        const cantidad = carrito[nombre];
+        const cantidad =
+            carrito[nombre];
 
         if (cantidad > 0) {
 
@@ -400,6 +381,7 @@ function actualizarCarrito() {
                 cantidad * precio;
 
             total += subtotal;
+
             items += cantidad;
 
             html += `
@@ -444,14 +426,17 @@ async function registrarPruebaCalidadRapida() {
         Object.keys(carrito)
             .filter(n => carrito[n] > 0);
 
-    if (!cli)
+    if (!cli) {
         return alert("Primero selecciona un cliente");
+    }
 
-    if (items.length === 0)
+    if (items.length === 0) {
         return alert("Añade productos");
+    }
 
-    if (!confirm("¿CONFIRMAR PRUEBA DE CALIDAD?"))
+    if (!confirm("¿CONFIRMAR PRUEBA DE CALIDAD?")) {
         return;
+    }
 
     const overlay =
         document.getElementById('overlay-exito');
@@ -498,9 +483,9 @@ async function registrarPruebaCalidadRapida() {
 
     } catch (e) {
 
-        overlay.style.display = 'none';
-
         console.error(e);
+
+        overlay.style.display = 'none';
 
         alert("Error de conexión");
     }
@@ -522,7 +507,9 @@ async function procesarVenta() {
             .filter(n => carrito[n] > 0);
 
     if (!cli || items.length === 0) {
+
         alert("Selecciona cliente y productos");
+
         return;
     }
 
@@ -607,7 +594,9 @@ async function guardarCliente() {
             .value.trim();
 
     if (!nom || ruc.length < 10) {
+
         alert("Nombre y CI/RUC obligatorios");
+
         return;
     }
 
@@ -628,19 +617,19 @@ async function guardarCliente() {
 
             CI_RUC: ruc,
 
-            Teléfono:
+            "Teléfono":
                 document.getElementById('reg-tel').value.trim(),
 
-            Dirección:
+            "Dirección":
                 document.getElementById('reg-dir').value.trim(),
 
-            Referencia:
+            "Referencia":
                 document.getElementById('reg-ref').value.trim(),
 
-            Sector:
+            "Sector":
                 document.getElementById('reg-sector').value,
 
-            Fecha_Registro:
+            "Fecha Registro":
                 new Date().toLocaleString()
         });
 
@@ -655,6 +644,7 @@ async function guardarCliente() {
         alert("Error registrando cliente");
 
         btn.disabled = false;
+
         btn.innerText = "Guardar";
     }
 }
@@ -686,7 +676,8 @@ function enviarWhatsApp() {
             listado +=
                 `• *${carrito[nombre]}* ${nombre}\n`;
 
-            total += carrito[nombre] * precio;
+            total +=
+                carrito[nombre] * precio;
         }
     });
 
@@ -738,7 +729,8 @@ function filtrar() {
         .querySelectorAll('.card-sutil')
         .forEach(c => {
 
-            const h4 = c.querySelector('h4');
+            const h4 =
+                c.querySelector('h4');
 
             if (h4) {
 

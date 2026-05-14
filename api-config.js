@@ -3,7 +3,7 @@
 // ================================
 
 // 🔴 PON AQUÍ TU URL DE GOOGLE APPS SCRIPT
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxJkVl7jP3bQVfUQv_1_62F1lfKABJHxaye2XS6q0IlithEkqbhFhztilcUmgBBMSwtyg/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzmON_L0C1Ci2sQxMPAUDKN2nbPI3HZGAlqFjNkrF7ZHK2jaI-RMqagzL_3S6pkgZxl5w/exec";
 
 const DairyAPI = {
 

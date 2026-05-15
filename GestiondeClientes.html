@@ -8,7 +8,6 @@
     <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -21,7 +20,8 @@
                 primary: "#a21caf", 
                 secondary: "#db2777",
                 surface: "#ffffff",
-                background: "#fdfaff"
+                background: "#fdfaff",
+                dark: "#1e1b4b"
               }
             }
           }
@@ -31,31 +31,33 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #fdfaff; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
-        .fade-in { animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .glass-header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(162, 28, 175, 0.1); }
-        .card-premium { transition: all 0.3s ease; border: 1px solid rgba(162, 28, 175, 0.05); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 10, 25, 0.4); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(8px); }
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .glass-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(162, 28, 175, 0.08); }
+        .card-premium { transition: transform 0.2s, box-shadow 0.2s; border: 1px solid rgba(162, 28, 175, 0.06); }
+        .card-premium:active { transform: scale(0.99); }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 10, 25, 0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(6px); }
         .modal.active { display: flex; }
-        .modal-content { animation: modalSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); max-height: 90vh; overflow-y: auto; }
-        @keyframes modalSlide { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+        .modal-content { animation: modalSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); max-height: 85vh; overflow-y: auto; }
+        @keyframes modalSlide { from { transform: scale(0.95) translateY(15px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
         
         #overlay-loading {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            position: fixed; inset: 0; background: rgba(15, 10, 25, 0.6);
             display: none; align-items: center; justify-content: center; z-index: 200;
-            backdrop-filter: blur(8px);
+            backdrop-filter: blur(6px);
         }
         .spinner {
-            width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3);
+            width: 44px; height: 44px; border: 4px solid rgba(162, 28, 175, 0.2);
             border-top: 4px solid #a21caf; border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         #status-banner {
             position: fixed; top: 0; left: 0; right: 0; z-index: 9999; 
-            background: #f97316; color: white; text-align: center; 
-            padding: 4px; font-size: 10px; font-weight: bold; display: none;
+            background: #ea580c; color: white; text-align: center; 
+            padding: 6px; font-size: 11px; font-weight: bold; display: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -63,101 +65,104 @@
 <body class="text-slate-800 pb-32">
 
 <div id="status-banner">
-    ⚠️ Sin conexión a internet. Los datos se guardarán localmente.
+    ⚠️ Modo de contingencia local activado. Verifique su red.
 </div>
 
 <div id="overlay-loading">
-    <div class="bg-white rounded-3xl p-8 text-center">
+    <div class="bg-white rounded-[2.5rem] p-8 text-center shadow-xl max-w-xs w-full mx-4">
         <div class="spinner mx-auto mb-4"></div>
-        <p class="font-bold text-slate-800">Procesando...</p>
+        <p class="font-extrabold text-slate-800 text-sm tracking-wide">Sincronizando Servidor...</p>
     </div>
 </div>
 
 <!-- CABECERA -->
 <header class="fixed top-0 w-full h-20 glass-header flex justify-between items-center px-6 z-50">
-    <div class="flex items-center gap-4" onclick="window.location.href='DashboardLacteo.html'" style="cursor:pointer">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary to-fuchsia-400 flex items-center justify-center text-white shadow-lg">
-            <span class="material-symbols-outlined text-2xl">workspace_premium</span>
+    <div class="flex items-center gap-3" onclick="window.location.href='DashboardLacteo.html'" style="cursor:pointer">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary to-fuchsia-400 flex items-center justify-center text-white shadow-md">
+            <span class="material-symbols-outlined text-xl">workspace_premium</span>
         </div>
         <div>
-            <h1 class="text-lg font-extrabold tracking-tight text-slate-900 leading-none uppercase">Ranking</h1>
-            <p class="text-[10px] font-bold text-primary tracking-widest uppercase opacity-60">Clientes</p>
+            <h1 class="text-base font-black tracking-tight text-slate-900 leading-none uppercase italic">Ranking</h1>
+            <p class="text-[9px] font-black text-primary tracking-widest uppercase opacity-75 mt-0.5">Clientes</p>
         </div>
     </div>
-    <div class="flex items-center gap-3">
-        <button onclick="abrirModalNuevo()" class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-lg active:scale-90 transition-transform">
-            <span class="material-symbols-outlined text-xl">person_add</span>
+    <div class="flex items-center gap-2">
+        <button onclick="abrirModalNuevo()" class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center shadow-md active:scale-90 transition-transform">
+            <span class="material-symbols-outlined text-lg">person_add</span>
         </button>
-        <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar..." 
-            class="w-24 focus:w-40 transition-all duration-300 bg-fuchsia-50/50 border-none rounded-xl px-4 py-2 text-xs font-semibold outline-none focus:ring-2 focus:ring-primary/20">
+        <input type="text" id="buscador" oninput="filtrarClientes()" placeholder="Buscar cliente..." 
+            class="w-28 focus:w-44 transition-all duration-300 bg-fuchsia-50/60 border-none rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20">
     </div>
 </header>
 
-<main class="pt-28 px-6 max-w-2xl mx-auto space-y-8">
+<main class="pt-26 px-4 max-w-xl mx-auto space-y-6">
     <!-- DASHBOARD DE ESTADÍSTICAS -->
-    <section class="grid grid-cols-2 gap-4 fade-in">
-        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-fuchsia-50">
-            <p class="text-[10px] uppercase font-black tracking-widest text-slate-400">Total Clientes</p>
-            <h2 id="total-clientes" class="text-3xl font-extrabold text-slate-900">0</h2>
+    <section class="grid grid-cols-2 gap-3.5 fade-in">
+        <div class="bg-white p-5 rounded-[2.25rem] shadow-sm border border-fuchsia-50/50">
+            <p class="text-[9px] uppercase font-black tracking-widest text-slate-400">Cartera de Clientes</p>
+            <h2 id="total-clientes" class="text-3xl font-black text-slate-900 mt-1">0</h2>
         </div>
-        <div class="bg-gradient-to-br from-primary to-fuchsia-600 p-6 rounded-[2.5rem] shadow-xl text-white">
-            <p class="text-[10px] uppercase font-black tracking-widest opacity-80">Recaudación</p>
-            <h2 id="total-dinero" class="text-2xl font-extrabold">$0.00</h2>
+        <div class="bg-gradient-to-br from-primary to-secondary p-5 rounded-[2.25rem] shadow-lg text-white">
+            <p class="text-[9px] uppercase font-black tracking-widest opacity-85">Colecta Consolidada</p>
+            <h2 id="total-dinero" class="text-2xl font-black mt-1 italic">$0.00</h2>
         </div>
     </section>
 
     <!-- LISTADO DE CLIENTES -->
-    <section id="lista-clientes" class="space-y-4 fade-in">
-        <div class="text-center py-10 text-slate-400 font-bold animate-pulse">Sincronizando base de datos...</div>
+    <section id="lista-clientes" class="space-y-3.5 fade-in">
+        <div class="text-center py-12 text-slate-400 font-bold text-xs animate-pulse">
+            Leyendo registros comerciales de la central...
+        </div>
     </section>
 </main>
 
 <!-- MODAL FORMULARIO CLIENTE -->
 <div id="modal-cliente" class="modal" onclick="event.target === this && cerrarModal()">
-    <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl modal-content relative overflow-hidden">
+    <div class="bg-white w-full max-w-sm rounded-[2.75rem] p-7 shadow-2xl modal-content relative overflow-hidden">
         <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-secondary"></div>
         
-        <div class="flex justify-between items-start mb-6">
+        <div class="flex justify-between items-start mb-5">
             <div>
-                <h2 id="modal-titulo" class="text-2xl font-black text-slate-900">Nuevo Cliente</h2>
-                <p class="text-xs font-bold text-primary uppercase">Datos Obligatorios</p>
+                <h2 id="modal-titulo" class="text-xl font-black text-slate-900">Nuevo Cliente</h2>
+                <p class="text-[9px] font-black text-primary uppercase tracking-wider">Sanitización de Registro</p>
             </div>
-            <button onclick="cerrarModal()" class="w-10 h-10 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center">
-                <span class="material-symbols-outlined">close</span>
+            <button onclick="cerrarModal()" class="w-9 h-9 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center">
+                <span class="material-symbols-outlined text-lg">close</span>
             </button>
         </div>
 
-        <form id="form-cliente" class="space-y-4">
+        <form id="form-cliente" class="space-y-3.5">
             <input type="hidden" id="edit-id-original">
             <input type="hidden" id="edit-nombre-original">
+            <input type="hidden" id="c-fecha-registro-original">
             <input type="hidden" id="c-id">
 
             <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre Completo</label>
-                <input type="text" id="c-nombre" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Nombre Comercial / Cliente</label>
+                <input type="text" id="c-nombre" required class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary uppercase">
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-3">
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">CI / RUC (10-13)</label>
-                    <input type="text" id="c-ruc" required minlength="10" maxlength="13" pattern="\d*" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">CI / RUC (Ecuador)</label>
+                    <input type="text" id="c-ruc" required minlength="10" maxlength="13" pattern="\d*" class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary">
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Teléfono (09...)</label>
-                    <input type="tel" id="c-tel" required pattern="09\d{8}" maxlength="10" placeholder="0984016027" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Teléfono Móvil</label>
+                    <input type="tel" id="c-tel" required pattern="09\d{8}" maxlength="10" placeholder="09xxxxxxxx" class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary">
                 </div>
             </div>
 
             <div class="space-y-1">
-                <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Dirección Principal</label>
-                <input type="text" id="c-dir" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Dirección Estructurada (Para Enrutamiento)</label>
+                <input type="text" id="c-dir" required class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary">
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-2 gap-3">
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Sector</label>
-                    <select id="c-sector" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary appearance-none">
-                        <option value="">ELEGIR...</option>
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Sector Logístico</label>
+                    <select id="c-sector" required class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary appearance-none">
+                        <option value="">SELECCIONAR...</option>
                         <option value="NORTE">NORTE</option>
                         <option value="SUR">SUR</option>
                         <option value="CENTRO">CENTRO</option>
@@ -165,17 +170,17 @@
                     </select>
                 </div>
                 <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Referencia</label>
-                    <input type="text" id="c-ref" class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
+                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Referencia Entrega</label>
+                    <input type="text" id="c-ref" class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary">
                 </div>
             </div>
 
-            <div class="pt-4 space-y-3">
-                <button type="submit" id="btn-guardar" class="w-full py-5 rounded-[2rem] bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+            <div class="pt-2 space-y-2.5">
+                <button type="submit" id="btn-guardar" class="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-md active:scale-95 transition-transform">
                     Guardar Cliente
                 </button>
-                <button type="button" id="btn-eliminar" onclick="confirmarEliminar()" class="hidden w-full py-3 text-red-500 font-bold text-[10px] uppercase border border-red-50 rounded-2xl bg-red-50/50">
-                    Eliminar permanentemente
+                <button type="button" id="btn-eliminar" onclick="confirmarEliminar()" class="hidden w-full py-3 text-red-500 font-extrabold text-[9px] uppercase border border-red-100 rounded-xl bg-red-50/40 transition-colors hover:bg-red-50">
+                    Eliminar Fila del Sistema
                 </button>
             </div>
         </form>
@@ -184,12 +189,15 @@
 
 <!-- MODAL HISTORIAL -->
 <div id="modal-historial" class="modal" onclick="event.target === this && cerrarHistorial()">
-    <div class="bg-white w-full max-w-md rounded-[3rem] p-8 shadow-2xl modal-content">
-        <div class="flex justify-between items-center mb-6">
-            <h2 id="hist-nombre" class="text-xl font-black text-slate-900 uppercase">Ventas</h2>
-            <button onclick="cerrarHistorial()" class="text-slate-400"><span class="material-symbols-outlined">close</span></button>
+    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-7 shadow-2xl modal-content">
+        <div class="flex justify-between items-center mb-5">
+            <div>
+                <h2 id="hist-nombre" class="text-base font-black text-slate-900 uppercase tracking-tight">Ventas</h2>
+                <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">Trazabilidad de Despachos</p>
+            </div>
+            <button onclick="cerrarHistorial()" class="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center"><span class="material-symbols-outlined text-lg">close</span></button>
         </div>
-        <div id="hist-lista" class="max-h-[50vh] overflow-y-auto space-y-3 pr-2"></div>
+        <div id="hist-lista" class="max-h-[45vh] overflow-y-auto space-y-2.5 pr-1"></div>
     </div>
 </div>
 
@@ -200,19 +208,35 @@ let clientesData = [];
 let ventasData = [];
 let esEdicion = false;
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>'"\/]/g, m => {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;' };
+        return map[m];
+    });
+}
+
+function parseLogisticaFecha(fechaStr) {
+    if(!fechaStr) return new Date(0);
+    // Maneja formato dd/mm/aaaa hh:mm:ss o similar devuelto por Apps Script
+    const partes = String(fechaStr).split(' ')[0].split('/');
+    if(partes.length === 3) {
+        return new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+    }
+    const isoDate = Date.parse(fechaStr);
+    return isNaN(isoDate) ? new Date(0) : new Date(isoDate);
+}
+
 function mostrarLoading(mostrar) {
     const overlay = document.getElementById('overlay-loading');
     if (overlay) overlay.style.display = mostrar ? 'flex' : 'none';
 }
 
-// Probar conexión al cargar
 async function testConnection() {
     try {
-        const response = await fetch(DairyAPI.API_BASE_URL + '?pestaña=Clientes', { method: 'GET', mode: 'no-cors' });
-        console.log('✅ Conexión OK');
+        await fetch(DairyAPI.API_BASE_URL + '?pestaña=Clientes', { method: 'GET', mode: 'no-cors' });
         document.getElementById('status-banner').style.display = 'none';
     } catch(e) {
-        console.warn('⚠️ Sin conexión directa');
         document.getElementById('status-banner').style.display = 'block';
     }
 }
@@ -226,14 +250,18 @@ async function cargarDatos() {
         ]);
 
         ventasData = Array.isArray(ventas) ? ventas : [];
+        const listaClientesRaw = Array.isArray(clientes) ? clientes : [];
         const statsVentas = {};
         let factGlobal = 0;
 
         ventasData.forEach(v => {
-            const cliente = String(v.Cliente || "").trim();
+            const cliente = String(v.Cliente || "").trim().toUpperCase();
             if (!cliente || cliente === "CONSUMO_INTERNO") return;
             
-            const total = parseFloat(v.Total || v.G || 0);
+            // Unifica parsing numérico nativo
+            let totalStr = String(v.Total || v.G || 0).trim().replace(/,/g, '');
+            if(totalStr.includes(',') && !totalStr.includes('.')) totalStr = totalStr.replace(',', '.');
+            const total = parseFloat(totalStr) || 0;
             
             if (!statsVentas[cliente]) {
                 statsVentas[cliente] = { total: 0, cantidad: 0, pedidos: [] };
@@ -241,22 +269,27 @@ async function cargarDatos() {
             statsVentas[cliente].total += total;
             statsVentas[cliente].cantidad += 1;
             statsVentas[cliente].pedidos.push({
-                fecha: v.Fecha || v.B || "Fecha no disponible",
-                producto: v.Producto || v.D || "Producto",
+                fecha: v.Fecha || v.B || "",
+                producto: v.Producto || v.D || "Producto Línea",
                 total: total,
-                estado: v.Estado || v.H || "PENDIENTE"
+                estado: String(v.Estado || v.H || "PENDIENTE").trim().toUpperCase()
             });
             factGlobal += total;
         });
 
-        clientesData = (Array.isArray(clientes) ? clientes : []).map(c => {
-            const nombre = String(c.Nombre || "").trim();
+        clientesData = listaClientesRaw.map(c => {
+            const nombre = String(c.Nombre || "").trim().toUpperCase();
             const s = statsVentas[nombre] || { total: 0, cantidad: 0, pedidos: [] };
+            
+            // Ordenación segura con parser logístico
+            const pedidosOrdenados = s.pedidos.sort((a, b) => parseLogisticaFecha(b.fecha) - parseLogisticaFecha(a.fecha));
+
             return { 
                 ...c, 
+                Nombre: nombre, // Forzar consistencia de mayúsculas
                 montoTotal: s.total, 
                 numVentas: s.cantidad, 
-                pedidos: s.pedidos.sort((a,b) => new Date(b.fecha) - new Date(a.fecha))
+                pedidos: pedidosOrdenados
             };
         });
 
@@ -268,13 +301,14 @@ async function cargarDatos() {
         if (totalClientesElem) totalClientesElem.innerText = clientesData.length;
         if (totalDineroElem) totalDineroElem.innerText = `$${factGlobal.toFixed(2)}`;
     } catch (e) {
-        console.error("Error crítico:", e);
+        console.error("Error crítico en Clientes:", e);
         const container = document.getElementById('lista-clientes');
         if (container) {
-            container.innerHTML = `<div class="text-center py-10 text-red-500 font-bold">❌ Error al conectar: ${e.message}</div>`;
+            container.innerHTML = `<div class="text-center py-10 text-red-500 font-bold text-xs">❌ Fallo de mapeo de base central: ${escapeHtml(e.message)}</div>`;
         }
+    } finally {
+        mostrarLoading(false);
     }
-    mostrarLoading(false);
 }
 
 function renderizar(lista) {
@@ -282,73 +316,73 @@ function renderizar(lista) {
     if (!container) return;
     
     if (!lista || lista.length === 0) {
-        container.innerHTML = `<div class="text-center py-10 text-slate-400 font-bold">📋 No hay clientes registrados</div>`;
+        container.innerHTML = `<div class="text-center py-12 text-slate-400 font-bold text-xs">📋 Ningún cliente coincide con la búsqueda</div>`;
         return;
     }
 
     container.innerHTML = lista.map((c, index) => {
-        let colorMedalla = "bg-slate-50 text-slate-400";
-        if (index === 0 && c.montoTotal > 0) colorMedalla = "bg-yellow-400 text-white shadow-lg";
-        if (index === 1 && c.montoTotal > 0) colorMedalla = "bg-slate-300 text-white shadow-md";
-        if (index === 2 && c.montoTotal > 0) colorMedalla = "bg-orange-300 text-white shadow-md";
+        let colorMedalla = "bg-slate-100 text-slate-500";
+        if (index === 0 && c.montoTotal > 0) colorMedalla = "bg-amber-400 text-white shadow-md font-black";
+        if (index === 1 && c.montoTotal > 0) colorMedalla = "bg-slate-300 text-slate-700 shadow-sm font-black";
+        if (index === 2 && c.montoTotal > 0) colorMedalla = "bg-amber-600 text-white shadow-sm font-black";
 
         const telRaw = String(c.Teléfono || c["Teléfono"] || "").trim();
         const telLimpio = telRaw.replace(/\D/g, '');
         let telWhatsApp = telLimpio;
         if (telLimpio.startsWith('0') && telLimpio.length === 10) {
             telWhatsApp = '593' + telLimpio.substring(1);
-        } else if (telLimpio.length === 9) {
-            telWhatsApp = '593' + telLimpio;
         }
 
-        const nombreEscapado = String(c.Nombre || "").replace(/'/g, "\\'");
+        const nombreEscapadoJS = String(c.Nombre || "").replace(/'/g, "\\'");
 
         return `
-            <div class="bg-white p-5 rounded-[2.5rem] card-premium flex flex-col gap-4 shadow-sm border border-fuchsia-50">
-                <div class="flex items-center gap-5">
-                    <div class="w-16 h-16 rounded-[1.5rem] ${colorMedalla} flex items-center justify-center shrink-0">
-                        <span class="font-black text-xl">${index + 1}</span>
+            <div class="bg-white p-4 rounded-[2rem] card-premium flex flex-col gap-3.5 shadow-sm border border-fuchsia-50/60">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-[1.25rem] ${colorMedalla} flex items-center justify-center shrink-0 text-sm">
+                        <span>#${index + 1}</span>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-start gap-2">
-                            <h3 class="font-extrabold text-slate-900 truncate uppercase text-sm flex-1" title="${c.Nombre || ''}">${c.Nombre || 'Sin Nombre'}</h3>
-                            <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md shrink-0">${c.Sector || 'SUR'}</span>
+                            <h3 class="font-extrabold text-slate-900 truncate uppercase text-xs flex-1">${escapeHtml(c.Nombre || 'Consumidor Final')}</h3>
+                            <span class="text-[8px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md shrink-0 uppercase tracking-wide">${escapeHtml(c.Sector || 'SUR')}</span>
                         </div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span class="text-xl font-black text-secondary">$${(c.montoTotal || 0).toFixed(2)}</span>
-                            <span class="text-[9px] font-black bg-fuchsia-50 text-primary px-2 py-0.5 rounded-full uppercase">${c.numVentas || 0} Ventas</span>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-base font-black text-secondary italic">$${(c.montoTotal || 0).toFixed(2)}</span>
+                            <span class="text-[8px] font-black bg-fuchsia-50 text-primary px-2 py-0.5 rounded-full uppercase">${c.numVentas || 0} Facturas</span>
                         </div>
-                        <div class="text-[8px] text-slate-400 mt-1 truncate">
-                            📍 ${c.Dirección || 'Sin dirección'}
+                        <div class="text-[9px] text-slate-400 mt-1 truncate font-medium">
+                            📍 ${escapeHtml(c.Dirección || 'Dirección sin especificar')}
                         </div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-4 gap-2">
-                    <button onclick="abrirHistorial('${nombreEscapado}')" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-fuchsia-50 text-primary active:scale-95 transition-all">
-                        <span class="material-symbols-outlined text-lg">history</span>
-                        <span class="text-[8px] font-bold uppercase">Ventas</span>
+                    <button onclick="abrirHistorial('${nombreEscapadoJS}')" class="flex flex-col items-center justify-center py-2 rounded-xl bg-fuchsia-50 text-primary active:scale-95 transition-transform">
+                        <span class="material-symbols-outlined text-base">history</span>
+                        <span class="text-[8px] font-black uppercase mt-0.5">Historial</span>
                     </button>
                     ${telLimpio ? `
-                        <a href="https://wa.me/${telWhatsApp}" target="_blank" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-green-50 text-green-600 active:scale-95 transition-all">
-                            <span class="material-symbols-outlined text-lg">chat</span>
-                            <span class="text-[8px] font-bold uppercase">WhatsApp</span>
+                        <a href="https://wa.me/${telWhatsApp}" target="_blank" class="flex flex-col items-center justify-center py-2 rounded-xl bg-green-50 text-green-600 active:scale-95 transition-transform">
+                            <span class="material-symbols-outlined text-base">chat</span>
+                            <span class="text-[8px] font-black uppercase mt-0.5">WhatsApp</span>
                         </a>
-                        <a href="tel:${telLimpio}" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-blue-50 text-blue-600 active:scale-95 transition-all">
-                            <span class="material-symbols-outlined text-lg">call</span>
-                            <span class="text-[8px] font-bold uppercase">Llamar</span>
+                        <a href="tel:${telLimpio}" class="flex flex-col items-center justify-center py-2 rounded-xl bg-blue-50 text-blue-600 active:scale-95 transition-transform">
+                            <span class="material-symbols-outlined text-base">call</span>
+                            <span class="text-[8px] font-black uppercase mt-0.5">Llamar</span>
                         </a>
                     ` : `
-                        <div class="opacity-30 flex flex-col items-center justify-center py-2 bg-slate-50 rounded-2xl">
-                            <span class="material-symbols-outlined text-lg text-slate-400">block</span>
+                        <div class="opacity-25 flex flex-col items-center justify-center py-2 bg-slate-50 rounded-xl">
+                            <span class="material-symbols-outlined text-base text-slate-400">phone_disabled</span>
+                            <span class="text-[8px] font-black uppercase mt-0.5">S/N</span>
                         </div>
-                        <div class="opacity-30 flex flex-col items-center justify-center py-2 bg-slate-50 rounded-2xl">
-                            <span class="material-symbols-outlined text-lg text-slate-400">block</span>
+                        <div class="opacity-25 flex flex-col items-center justify-center py-2 bg-slate-50 rounded-xl">
+                            <span class="material-symbols-outlined text-base text-slate-400">link_off</span>
+                            <span class="text-[8px] font-black uppercase mt-0.5">S/N</span>
                         </div>
                     `}
-                    <button onclick="abrirModalEditar('${nombreEscapado}')" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-slate-50 text-slate-500 active:scale-95 transition-all">
-                        <span class="material-symbols-outlined text-lg">edit</span>
-                        <span class="text-[8px] font-bold uppercase">Perfil</span>
+                    <button onclick="abrirModalEditar('${nombreEscapadoJS}')" class="flex flex-col items-center justify-center py-2 rounded-xl bg-slate-50 text-slate-500 active:scale-95 transition-transform">
+                        <span class="material-symbols-outlined text-base">edit</span>
+                        <span class="text-[8px] font-black uppercase mt-0.5">Perfil</span>
                     </button>
                 </div>
             </div>`;
@@ -359,22 +393,19 @@ function abrirModalNuevo() {
     esEdicion = false;
     const form = document.getElementById('form-cliente');
     if (form) form.reset();
-    const titulo = document.getElementById('modal-titulo');
-    if (titulo) titulo.innerText = "Nuevo Cliente";
-    const btnEliminar = document.getElementById('btn-eliminar');
-    if (btnEliminar) btnEliminar.classList.add('hidden');
-    const modal = document.getElementById('modal-cliente');
-    if (modal) modal.classList.add('active');
+    document.getElementById('modal-titulo').innerText = "Nuevo Cliente";
+    document.getElementById('btn-eliminar').classList.add('hidden');
+    document.getElementById('modal-cliente').classList.add('active');
 }
 
 function abrirModalEditar(nombre) {
     const c = clientesData.find(cli => cli.Nombre === nombre);
     if (!c) return;
     esEdicion = true;
-    const titulo = document.getElementById('modal-titulo');
-    if (titulo) titulo.innerText = "Editar Perfil";
+    document.getElementById('modal-titulo').innerText = "Editar Perfil";
     document.getElementById('edit-id-original').value = c.ID || "";
     document.getElementById('edit-nombre-original').value = c.Nombre || "";
+    document.getElementById('c-fecha-registro-original').value = c["Fecha Registro"] || c.Fecha_Registro || "";
     document.getElementById('c-id').value = c.ID || "";
     document.getElementById('c-nombre').value = c.Nombre || "";
     document.getElementById('c-ruc').value = c.CI_RUC || "";
@@ -396,32 +427,41 @@ document.getElementById('form-cliente')?.addEventListener('submit', async (e) =>
     const ruc = document.getElementById('c-ruc')?.value.trim() || "";
     const tel = document.getElementById('c-tel')?.value.trim() || "";
     const sector = document.getElementById('c-sector')?.value || "";
-    if (ruc.length < 10) return alert("❌ El CI/RUC debe tener al menos 10 dígitos");
-    if (!tel.match(/^09\d{8}$/)) return alert("❌ Teléfono inválido. Debe ser 09XXXXXXXX");
-    if (!sector) return alert("❌ Por favor, seleccione un sector");
+    const nombreNuevo = document.getElementById('c-nombre')?.value.trim().toUpperCase() || "";
+    const nombreOriginal = document.getElementById('edit-nombre-original').value;
+
+    if (ruc.length < 10) return alert("❌ El CI/RUC debe tener entre 10 y 13 dígitos numéricos");
+    if (!tel.match(/^09\d{8}$/)) return alert("❌ Prefijo celular no válido. Formato: 09XXXXXXXX");
+    if (!sector) return alert("❌ Es obligatorio asignar un sector logístico");
+
     const btn = document.getElementById('btn-guardar');
-    if (btn) { btn.disabled = true; btn.innerText = "Sincronizando..."; }
+    if (btn) { btn.disabled = true; btn.innerText = "Sincronizando Hojas..."; }
     mostrarLoading(true);
+
     const ahora = new Date();
-    const fechaHora = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString();
+    const fechaHora = ahora.toLocaleDateString('es-ES') + " " + ahora.toLocaleTimeString('es-ES');
+    
+    // Construcción de Payload sanitizado para proteger metadatos históricos
     const datos = {
         pestaña: "Clientes",
-        ID: esEdicion ? (document.getElementById('c-id')?.value || "") : `C-${Date.now().toString().slice(-6)}`,
-        Nombre: (document.getElementById('c-nombre')?.value || "").trim().toUpperCase(),
+        accion: esEdicion ? "editar" : "crear",
+        ID: esEdicion ? document.getElementById('c-id').value : `C-${Date.now().toString().slice(-6)}`,
+        Nombre: nombreNuevo,
+        Nombre_Original: esEdicion ? nombreOriginal : nombreNuevo, // Mapeo crítico para cascada en Ventas
         CI_RUC: ruc,
         Teléfono: tel,
-        Dirección: document.getElementById('c-dir')?.value.trim() || "",
-        Referencia: document.getElementById('c-ref')?.value.trim() || "",
+        Dirección: document.getElementById('c-dir').value.trim(),
+        Referencia: document.getElementById('c-ref').value.trim(),
         Sector: sector,
-        "Fecha Registro": esEdicion ? "" : fechaHora
+        "Fecha Registro": esEdicion ? document.getElementById('c-fecha-registro-original').value : fechaHora
     };
+
     try {
         await DairyAPI.enviarDatos(datos);
-        alert("✅ Cliente guardado correctamente");
         cerrarModal();
         await cargarDatos();
     } catch (err) {
-        alert("❌ Error de conexión: " + err.message);
+        alert("❌ Caída de transferencia: " + err.message);
     } finally {
         if (btn) { btn.disabled = false; btn.innerText = "Guardar Cliente"; }
         mostrarLoading(false);
@@ -430,49 +470,79 @@ document.getElementById('form-cliente')?.addEventListener('submit', async (e) =>
 
 async function confirmarEliminar() {
     const nombre = document.getElementById('edit-nombre-original')?.value || "";
-    if (!confirm(`⚠️ ¿Desea eliminar definitivamente a ${nombre}?`)) return;
+    const id = document.getElementById('c-id')?.value || "";
+    if (!confirm(`⚠️ ¿Seguro que desea eliminar a ${nombre}?\nEsta acción no removerá sus facturas pasadas pero perderá el perfil.`)) return;
+    
     mostrarLoading(true);
     try {
-        await DairyAPI.eliminarDato("Clientes", document.getElementById('c-id')?.value || "");
-        alert("✅ Cliente eliminado");
+        await DairyAPI.eliminarDato("Clientes", id);
         cerrarModal();
         await cargarDatos();
     } catch (e) { 
-        alert("❌ Error al eliminar: " + e.message);
+        alert("❌ Servidor rechazó la eliminación: " + e.message);
+    } finally {
+        mostrarLoading(false);
     }
-    mostrarLoading(false);
 }
 
 function abrirHistorial(nombre) {
     const c = clientesData.find(cli => cli.Nombre === nombre);
     if (!c) return;
-    document.getElementById('hist-nombre').innerHTML = `${c.Nombre} <span class="text-[10px] text-primary ml-2">$${(c.montoTotal || 0).toFixed(2)}</span>`;
+    
+    document.getElementById('hist-nombre').innerHTML = `${escapeHtml(c.Nombre)} <span class="text-xs text-primary font-black ml-1">$${(c.montoTotal || 0).toFixed(2)}</span>`;
     const histLista = document.getElementById('hist-lista');
+    
     if (!c.pedidos || c.pedidos.length === 0) {
-        histLista.innerHTML = `<div class="text-center py-8 text-slate-400 bg-slate-50 rounded-3xl">📭 No hay ventas registradas</div>`;
+        histLista.innerHTML = `<div class="text-center py-10 text-slate-400 bg-slate-50 rounded-2xl text-xs font-medium">📭 Sin compras registradas en este período</div>`;
     } else {
-        histLista.innerHTML = c.pedidos.map(p => `
-            <div class="bg-slate-50 p-4 rounded-2xl border-l-4 ${p.estado === 'INTERNO' ? 'border-l-amber-500' : 'border-l-primary'}">
-                <div class="flex justify-between items-start">
-                    <div><p class="text-[10px] font-black text-slate-400 uppercase">${new Date(p.fecha).toLocaleDateString()}</p><p class="text-[12px] font-black text-slate-800 uppercase mt-1">${p.producto}</p></div>
-                    <div class="text-right"><p class="text-sm font-black text-primary">$${p.total.toFixed(2)}</p><span class="text-[8px] font-bold ${p.estado === 'INTERNO' ? 'text-amber-600' : 'text-green-600'}">${p.estado}</span></div>
+        histLista.innerHTML = c.pedidos.map(p => {
+            const esInterno = p.estado === 'INTERNO' || p.estado === 'CONSUMO_INTERNO';
+            const esEntregado = p.estado === 'ENTREGADO';
+            
+            let colorBorde = "border-l-primary";
+            if(esInterno) colorBorde = "border-l-amber-500";
+            if(esEntregado) colorBorde = "border-l-green-500";
+
+            return `
+                <div class="bg-slate-50 p-3.5 rounded-xl border-l-4 ${colorBorde}">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-[9px] font-black text-slate-400 uppercase">${p.fecha}</p>
+                            <p class="text-xs font-bold text-slate-800 uppercase mt-0.5 truncate">${escapeHtml(p.producto)}</p>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-xs font-black text-primary">$${p.total.toFixed(2)}</p>
+                            <span class="text-[8px] font-black uppercase ${esEntregado ? 'text-green-600' : 'text-slate-500'}">${escapeHtml(p.estado)}</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }
     document.getElementById('modal-historial').classList.add('active');
 }
 
-function cerrarHistorial() { document.getElementById('modal-historial').classList.remove('active'); }
+function cerrarHistorial() { 
+    document.getElementById('modal-historial').classList.remove('active'); 
+}
+
 function filtrarClientes() {
     const q = document.getElementById('buscador')?.value.toLowerCase().trim() || "";
-    if (!q) renderizar(clientesData);
-    else renderizar(clientesData.filter(c => String(c.Nombre).toLowerCase().includes(q) || String(c.CI_RUC).toLowerCase().includes(q) || String(c.Sector).toLowerCase().includes(q)));
+    if (!q) {
+        renderizar(clientesData);
+    } else {
+        renderizar(clientesData.filter(c => 
+            String(c.Nombre).toLowerCase().includes(q) || 
+            String(c.CI_RUC).toLowerCase().includes(q) || 
+            String(c.Sector).toLowerCase().includes(q)
+        ));
+    }
 }
 
 window.onload = () => {
     cargarDatos();
-    setTimeout(testConnection, 2000);
+    setTimeout(testConnection, 1500);
+    if(typeof renderMenu === 'function') renderMenu();
 };
 </script>
 

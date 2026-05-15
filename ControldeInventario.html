@@ -11,227 +11,144 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-      :root {
-        --primary: #6366f1;
-        --surface: #f8fafc;
-        --outline: #e2e8f0;
-      }
-      body { 
-        background-color: var(--surface); 
-        padding-bottom: 110px; 
-        font-family: system-ui, -apple-system, sans-serif;
-      }
-      
-      .id-card-top {
-        background: white; border-radius: 1.2rem; padding: 12px 5px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        border: 1px solid var(--outline);
-      }
-      .id-card-top .label { font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 2px; }
-      .id-card-top .value { font-size: 15px; font-weight: 900; color: #1f012a; }
-
-      .card-prod { 
-        background: white; border-radius: 1.5rem; border: 1px solid var(--outline); 
-        padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
-        min-height: 145px;
-      }
-      
-      .prod-title { 
-        font-size: 11px; font-weight: 800; color: #1f012a; 
-        line-height: 1.2; text-transform: uppercase; 
-        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; 
-      }
-
-      .modal-custom { 
-        display: none; position: fixed; inset: 0; 
-        background: rgba(31, 1, 42, 0.7); z-index: 1000; 
-        align-items: center; justify-content: center; 
-        padding: 20px; backdrop-filter: blur(8px); 
-      }
-      .modal-custom.active { display: flex; }
-      
-      .input-sutil {
-        width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--outline);
-        outline: none;
-      }
-      .input-sutil:focus { border-color: var(--primary); }
-      .btn-magenta {
-        width: 100%; padding: 14px; background: #d946ef; color: white;
-        border-radius: 15px; font-weight: 800; text-transform: uppercase;
-      }
-
-      #overlay-loading {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-        display: none; align-items: center; justify-content: center; z-index: 1000;
-      }
-      .spinner {
-        width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3);
-        border-top: 4px solid #a21caf; border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      body { background: #f8fafc; padding-bottom: 100px; font-family: system-ui; }
+      .card-prod { background: white; border-radius: 1rem; padding: 12px; border: 1px solid #e2e8f0; margin-bottom: 8px; }
+      .prod-title { font-size: 13px; font-weight: 800; text-transform: uppercase; }
+      .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+      .modal.active { display: flex; }
+      .input-field { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 12px; }
+      .btn-primary { background: #6366f1; color: white; padding: 12px; border-radius: 12px; font-weight: bold; width: 100%; }
+      .loading { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
+      .loading.active { display: flex; }
+      .stats-card { background: white; border-radius: 1rem; padding: 12px; text-align: center; border: 1px solid #e2e8f0; }
     </style>
 </head>
 <body>
 
-<div id="overlay-loading">
-    <div class="bg-white rounded-3xl p-8 text-center">
-        <div class="spinner mx-auto mb-4"></div>
-        <p class="font-bold text-slate-800">Procesando...</p>
+<div class="loading" id="loading">
+    <div class="bg-white p-6 rounded-2xl text-center">
+        <div class="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p>Cargando...</p>
     </div>
 </div>
 
-<header class="fixed top-0 w-full h-16 bg-white/80 backdrop-blur-md border-b flex justify-between items-center px-4 z-50">
-    <div>
-        <h1 class="text-xl font-black text-slate-800">LÓGICA LÁCTEA</h1>
-        <span id="sync-indicator" class="text-[9px] font-black text-green-500">CONECTADO</span>
-    </div>
+<header class="fixed top-0 w-full bg-white/90 backdrop-blur p-4 flex justify-between items-center border-b z-50">
+    <h1 class="text-xl font-black">🥛 LÓGICA LÁCTEA</h1>
     <div class="flex gap-3">
-        <button onclick="descargarPDF()" class="text-indigo-600">
-            <span class="material-symbols-outlined text-3xl">picture_as_pdf</span>
-        </button>
-        <button onclick="location.reload()" class="text-slate-400">
-            <span class="material-symbols-outlined text-3xl">sync</span>
-        </button>
+        <button onclick="descargarPDF()" class="text-indigo-600">📄</button>
+        <button onclick="location.reload()" class="text-gray-400">🔄</button>
     </div>
 </header>
 
 <main class="pt-20 px-4">
-    <section id="stats-header" class="grid grid-cols-3 gap-2 mb-6">
-        <div class="id-card-top"><span class="label">Bodega</span><span class="value" id="totalBodega">$0</span></div>
-        <div class="id-card-top"><span class="label">Críticos</span><span class="value" id="totalCriticos">0</span></div>
-        <div class="id-card-top"><span class="label">Stock</span><span class="value" id="totalStock">0</span></div>
-    </section>
-
-    <div class="relative mb-6">
-        <span class="material-symbols-outlined absolute left-4 top-3.5 text-indigo-500">search</span>
-        <input type="text" id="filtro" oninput="filtrar()" placeholder="Buscar producto..." class="input-sutil pl-12 bg-white">
+    <div class="grid grid-cols-3 gap-2 mb-4">
+        <div class="stats-card"><span class="text-xs text-gray-500">💰 BODEGA</span><br><span id="totalBodega" class="font-bold text-lg">$0</span></div>
+        <div class="stats-card"><span class="text-xs text-gray-500">⚠️ CRÍTICOS</span><br><span id="totalCriticos" class="font-bold text-lg">0</span></div>
+        <div class="stats-card"><span class="text-xs text-gray-500">📦 STOCK</span><br><span id="totalStock" class="font-bold text-lg">0</span></div>
     </div>
 
-    <div id="grid-productos" class="grid grid-cols-2 gap-3 mb-24"></div>
+    <input type="text" id="search" placeholder="🔍 Buscar producto..." class="input-field mb-4" oninput="filtrar()">
+
+    <div id="lista-productos" class="space-y-2"></div>
 </main>
 
-<button onclick="abrirModal('modal-nuevo-prod')" class="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform">
-    <span class="material-symbols-outlined text-3xl">add</span>
-</button>
+<button onclick="abrirModal()" class="fixed bottom-6 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg text-2xl flex items-center justify-center">+</button>
 
-<!-- MODAL: NUEVO PRODUCTO -->
-<div id="modal-nuevo-prod" class="modal-custom">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 space-y-3 shadow-2xl">
-        <h2 class="text-center font-black text-indigo-600 uppercase mb-2">Crear Producto</h2>
-        <input type="text" id="n-nombre" placeholder="NOMBRE" class="input-sutil uppercase text-sm">
-        <input type="number" id="n-dist" placeholder="COSTO $" class="input-sutil text-sm" step="0.01">
-        <input type="number" id="n-pvp" placeholder="PVP $" class="input-sutil text-sm" step="0.01">
-        <input type="number" id="n-stock" placeholder="STOCK" class="input-sutil text-sm">
-        <select id="n-proveedor" class="input-sutil text-sm bg-white">
+<!-- MODAL CREAR PRODUCTO - SIN CAMPO STOCK -->
+<div id="modalProducto" class="modal">
+    <div class="bg-white w-full max-w-sm mx-4 p-6 rounded-2xl">
+        <h2 class="text-xl font-black mb-4">Nuevo Producto</h2>
+        <input type="text" id="prodNombre" placeholder="Nombre del producto *" class="input-field">
+        <input type="number" id="prodCosto" placeholder="Costo distribuidor $" class="input-field" step="0.01">
+        <input type="number" id="prodPvp" placeholder="Precio venta PVP $ *" class="input-field" step="0.01">
+        <select id="prodProveedor" class="input-field">
             <option value="GENERAL">GENERAL</option>
         </select>
-        <button onclick="guardarNuevo()" class="btn-magenta mt-4" style="background: #059669;">GUARDAR</button>
-        <button onclick="cerrarModal('modal-nuevo-prod')" class="w-full text-sm font-bold text-slate-400">Cerrar</button>
+        <button onclick="crearProducto()" class="btn-primary">Guardar Producto</button>
+        <button onclick="cerrarModal()" class="w-full mt-2 text-gray-500">Cancelar</button>
     </div>
 </div>
 
 <script>
-// ==================== CONFIGURACIÓN ====================
-// USA TU NUEVA URL DEL WEB APP (la que implementaste con doGet)
+// ==================== API CONFIG ====================
 const API_URL = "https://script.google.com/macros/s/AKfycbziATkvhWLT263Pa43Eppw8cRuRXW7IyNsGo0r7Ox0ePlb7sX7j0EoRJvyxzImCsLSgRg/exec";
 
-let inventarioLocal = [];
-let proveedoresLista = [];
+let productos = [];
 
-function mostrarLoading(mostrar) {
-    document.getElementById('overlay-loading').style.display = mostrar ? 'flex' : 'none';
+function showLoading(show) {
+    const loading = document.getElementById('loading');
+    show ? loading.classList.add('active') : loading.classList.remove('active');
 }
 
-// ==================== CARGAR DATOS ====================
-async function cargarInventario() {
-    mostrarLoading(true);
+// ==================== CARGAR PRODUCTOS ====================
+async function cargarProductos() {
+    showLoading(true);
     try {
-        const url = `${API_URL}?action=obtener&pestaña=Inventario`;
-        console.log("Cargando inventario desde:", url);
-        const res = await fetch(url);
+        const res = await fetch(`${API_URL}?action=obtener&pestaña=Inventario`);
         const data = await res.json();
-        console.log("Datos recibidos:", data);
         
         if (Array.isArray(data)) {
-            inventarioLocal = data.map(item => ({
-                ID: item.ID,
-                Producto: item.Producto,
-                Stock: Number(item.Stock) || 0,
-                Precio_Venta: Number(item.Precio_Venta) || 0,
-                Ventas: Number(item.Ventas) || 0,
-                Proveedor: item["Proveedor Habitual"] || "GENERAL"
+            productos = data.map(p => ({
+                id: p.ID,
+                nombre: p.Producto,
+                stock: Number(p.Stock) || 0,
+                pvp: Number(p.Precio_Venta) || 0,
+                costo: Number(p.Precio_Distribuidor) || 0,
+                proveedor: p["Proveedor Habitual"] || "GENERAL"
             }));
             renderizar();
-            document.getElementById('sync-indicator').innerText = "CONECTADO ✓";
-            document.getElementById('sync-indicator').className = "text-[9px] font-black text-green-500";
-        } else {
-            throw new Error("Datos no válidos");
         }
-    } catch(e) { 
-        console.error("Error cargando:", e);
-        document.getElementById('sync-indicator').innerText = "ERROR";
-        document.getElementById('sync-indicator').className = "text-[9px] font-black text-red-500";
-        alert("Error al cargar: " + e.message);
+    } catch(e) {
+        console.error(e);
+        alert("Error: " + e.message);
     }
-    mostrarLoading(false);
+    showLoading(false);
 }
 
 async function cargarProveedores() {
     try {
-        const url = `${API_URL}?action=obtener&pestaña=Proveedores`;
-        const res = await fetch(url);
-        const proveedores = await res.json();
-        if (Array.isArray(proveedores) && proveedores.length > 0) {
-            proveedoresLista = proveedores.map(p => p['Nombre del Proveedor'] || p['Proveedor']).filter(v => v && v !== '');
-            if (!proveedoresLista.includes('GENERAL')) proveedoresLista.unshift('GENERAL');
-        } else {
-            proveedoresLista = ['GENERAL'];
+        const res = await fetch(`${API_URL}?action=obtener&pestaña=Proveedores`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+            const proveedores = data.map(p => p['Nombre del Proveedor'] || p['Proveedor']).filter(v => v);
+            if (!proveedores.includes('GENERAL')) proveedores.unshift('GENERAL');
+            const select = document.getElementById('prodProveedor');
+            select.innerHTML = proveedores.map(p => `<option value="${p}">${p}</option>`).join('');
         }
-        const select = document.getElementById('n-proveedor');
-        select.innerHTML = proveedoresLista.map(p => `<option value="${p.replace(/"/g, '&quot;')}">${p}</option>`).join('');
-    } catch(e) { 
-        console.error("Error cargando proveedores:", e);
-        // Si falla, al menos tener GENERAL
-        const select = document.getElementById('n-proveedor');
-        if (select.children.length === 0) {
-            select.innerHTML = '<option value="GENERAL">GENERAL</option>';
-        }
-    }
+    } catch(e) { console.error(e); }
 }
 
 // ==================== RENDERIZAR ====================
 function renderizar() {
-    const container = document.getElementById('grid-productos');
-    const busqueda = document.getElementById('filtro').value.toLowerCase();
-    let filtrados = inventarioLocal.filter(p => p.Producto.toLowerCase().includes(busqueda));
+    const busqueda = document.getElementById('search').value.toLowerCase();
+    const filtrados = productos.filter(p => p.nombre.toLowerCase().includes(busqueda));
     
     let bodega = 0, criticos = 0, stockTotal = 0;
-    container.innerHTML = "";
+    const container = document.getElementById('lista-productos');
+    container.innerHTML = '';
     
     filtrados.forEach(p => {
-        const stock = p.Stock;
-        const pvp = p.Precio_Venta;
-        
-        if(stock <= 5) criticos++;
-        stockTotal += stock;
-        bodega += (pvp * stock);
+        bodega += p.pvp * p.stock;
+        if (p.stock <= 5) criticos++;
+        stockTotal += p.stock;
         
         const card = document.createElement('div');
-        card.className = "card-prod";
-        // SIN onclick - no abre ningún modal de stock
+        card.className = 'card-prod';
         card.innerHTML = `
-            <div class="flex justify-between items-start mb-1">
-                <span class="text-[8px] font-black text-slate-400">ID: ${escapeHtml(p.ID)}</span>
-                <span class="text-[8px] font-black text-indigo-600">V: ${p.Ventas || 0}</span>
+            <div class="flex justify-between items-start">
+                <span class="text-xs text-gray-400">${p.id}</span>
             </div>
-            <h3 class="prod-title">${escapeHtml(p.Producto)}</h3>
-            <div class="flex justify-between items-end mt-auto pt-2">
-                <span class="font-black text-xl ${stock <= 5 ? 'text-red-500' : 'text-indigo-600'}">${stock}<small class="text-[9px] ml-0.5">u</small></span>
-                <span class="font-black text-green-600 text-sm">$${pvp.toFixed(2)}</span>
+            <div class="prod-title mt-1">${escapeHtml(p.nombre)}</div>
+            <div class="flex justify-between items-end mt-2">
+                <div>
+                    <span class="text-2xl font-bold ${p.stock <= 5 ? 'text-red-500' : 'text-indigo-600'}">${p.stock}</span>
+                    <span class="text-xs">u</span>
+                </div>
+                <div class="text-green-600 font-bold">$${p.pvp.toFixed(2)}</div>
             </div>
-            <div class="text-[9px] text-gray-400 mt-1">${escapeHtml(p.Proveedor)}</div>
+            <div class="text-xs text-gray-400 mt-1">${escapeHtml(p.proveedor)}</div>
         `;
+        // SIN onclick - no editar stock
         container.appendChild(card);
     });
     
@@ -247,18 +164,17 @@ function escapeHtml(str) {
 
 function filtrar() { renderizar(); }
 
-// ==================== CREAR PRODUCTO ====================
-async function guardarNuevo() {
-    const nombre = document.getElementById('n-nombre').value.trim().toUpperCase();
-    const costo = parseFloat(document.getElementById('n-dist').value) || 0;
-    const pvp = parseFloat(document.getElementById('n-pvp').value) || 0;
-    const stock = parseInt(document.getElementById('n-stock').value) || 0;
-    const proveedor = document.getElementById('n-proveedor').value;
+// ==================== CREAR PRODUCTO (SIN STOCK) ====================
+async function crearProducto() {
+    const nombre = document.getElementById('prodNombre').value.trim().toUpperCase();
+    const costo = parseFloat(document.getElementById('prodCosto').value) || 0;
+    const pvp = parseFloat(document.getElementById('prodPvp').value) || 0;
+    const proveedor = document.getElementById('prodProveedor').value;
     
     if (!nombre) { alert("⚠️ Nombre requerido"); return; }
-    if (pvp <= 0) { alert("⚠️ PVP debe ser mayor a 0"); return; }
+    if (pvp <= 0) { alert("⚠️ Precio de venta mayor a 0"); return; }
     
-    mostrarLoading(true);
+    showLoading(true);
     
     try {
         const params = new URLSearchParams({
@@ -266,65 +182,51 @@ async function guardarNuevo() {
             pestaña: "Inventario",
             Fecha: new Date().toISOString(),
             Producto: nombre,
-            Stock: stock,
+            Stock: 0,
             Precio_Distribuidor: costo,
             Precio_Venta: pvp,
             Ventas: 0,
             Proveedor_Habitual: proveedor
         });
         
-        const url = `${API_URL}?${params.toString()}`;
-        console.log("Guardando en:", url);
-        const res = await fetch(url);
+        const res = await fetch(`${API_URL}?${params.toString()}`);
         const result = await res.json();
-        console.log("Respuesta:", result);
         
         if (result.success) {
-            alert(`✅ Producto "${nombre}" creado exitosamente con ID ${result.id || ''}`);
-            cerrarModal('modal-nuevo-prod');
-            document.getElementById('n-nombre').value = "";
-            document.getElementById('n-dist').value = "";
-            document.getElementById('n-pvp').value = "";
-            document.getElementById('n-stock').value = "";
-            await cargarInventario();
+            alert(`✅ Producto "${nombre}" creado`);
+            cerrarModal();
+            // Limpiar formulario
+            document.getElementById('prodNombre').value = '';
+            document.getElementById('prodCosto').value = '';
+            document.getElementById('prodPvp').value = '';
+            await cargarProductos();
         } else {
-            throw new Error(result.error || "Error desconocido");
+            throw new Error(result.error || "Error");
         }
     } catch(e) {
-        console.error("Error:", e);
-        alert("❌ Error al crear: " + e.message);
+        alert("❌ Error: " + e.message);
     }
-    
-    mostrarLoading(false);
+    showLoading(false);
 }
 
 // ==================== PDF ====================
 function descargarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-    doc.setFontSize(18);
     doc.text("INVENTARIO LÓGICA LÁCTEA", 14, 20);
-    doc.setFontSize(10);
     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 28);
-    
-    const body = inventarioLocal.map(p => [p.ID, p.Producto, p.Stock, `$${p.Precio_Venta.toFixed(2)}`, p.Proveedor]);
-    doc.autoTable({ 
-        startY: 35, 
-        head: [['ID', 'Producto', 'Stock', 'PVP', 'Proveedor']], 
-        body: body, 
-        theme: 'grid', 
-        headStyles: { fillColor: [99, 102, 241] } 
-    });
-    doc.save('Inventario_Lacteo.pdf');
+    const body = productos.map(p => [p.id, p.nombre, p.stock, `$${p.pvp.toFixed(2)}`, p.proveedor]);
+    doc.autoTable({ startY: 35, head: [['ID', 'Producto', 'Stock', 'PVP', 'Proveedor']], body, theme: 'grid', headStyles: { fillColor: [99, 102, 241] } });
+    doc.save('Inventario.pdf');
 }
 
-function abrirModal(id) { document.getElementById(id).classList.add('active'); }
-function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
+function abrirModal() { document.getElementById('modalProducto').classList.add('active'); }
+function cerrarModal() { document.getElementById('modalProducto').classList.remove('active'); }
 
 // ==================== INICIO ====================
 window.onload = async () => {
     await cargarProveedores();
-    await cargarInventario();
+    await cargarProductos();
 };
 </script>
 

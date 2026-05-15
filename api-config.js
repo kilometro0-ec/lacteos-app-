@@ -4,7 +4,7 @@
 // ============================================================
 
 // ⚠️ ACTUALIZA ESTA URL CON LA NUEVA QUE OBTENGAS
-const API_BASE_URL = "https://script.google.com/macros/s/AKfycby-mbjFWdpbIpNQKVa7Hq8_pD4WH9vaTwDqgZV5ikSO9-EyI2oPT3J1IMfOaImXPxe6uA/exec";
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbxdHI4S_hIDh0J3TL4xIPCX0WlCud6xnTtymMUoyfHn7KPj2LsbkFfmHNZYwizou8fQnA/exec";
 
 const DairyAPI = {
     // ========== GET ==========

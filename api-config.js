@@ -1,19 +1,9 @@
 // ============================================================
 // API CONFIG - LÓGICA LÁCTEA
-// Integración con Google Sheets
+// Versión completa con todas las operaciones CRUD
 // ============================================================
 
-const SPREADSHEET_ID = "1PtM2KA1Ix0qJfUtEpxsYmiviwUKFEBYpT6hbUn1aXck";
-const API_BASE_URL = "https://script.google.com/macros/s/AKfycbxQwvkGSjmkjgIAw001S8MSOxiWS4aqsoWHSyAF18rVPfNIWTcPMBGw6yum83AOEOhX_Q/exec";
-
-// Mapeo de nombres de hojas (por si hay diferencias)
-const HOJAS = {
-    CLIENTES: "Clientes",
-    VENTAS: "Ventas",
-    PROVEEDORES: "Proveedores",
-    COMPRAS: "Compras",
-    INVENTARIO: "Inventario"
-};
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbylcwykYDTyDp6CRTn1BH9pWBIkNjUn7QrZkLVyVyz1CG6_I8apT1utBtZIQ3Jio5NFaw/exec";
 
 const DairyAPI = {
     // ========== GET: Obtener datos ==========
@@ -32,140 +22,152 @@ const DairyAPI = {
             return json.data || [];
         } catch (error) {
             console.error(`❌ Error al obtener ${pestaña}:`, error);
-            // Mostrar error en la interfaz si existe la función
-            if (window.mostrarError) window.mostrarError(error.message);
             throw error;
         }
     },
 
-    // ========== POST: Crear/Enviar datos ==========
+    // ========== POST: Crear o actualizar datos ==========
     async enviarDatos(datos) {
         try {
-            console.log(`📤 Enviando datos a: ${datos.pestaña}`, datos);
+            console.log(`📤 Enviando datos a: ${datos.pestaña}`);
             
             const response = await fetch(API_BASE_URL, {
                 method: 'POST',
                 mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos)
             });
             
             const json = await response.json();
             if (json.error) throw new Error(json.error);
             
-            console.log(`✅ Datos guardados correctamente`);
+            console.log(`✅ Datos guardados: ${json.accion || 'completado'}`);
             return json;
         } catch (error) {
-            console.error(`❌ Error al enviar datos:`, error);
-            if (window.mostrarError) window.mostrarError(error.message);
+            console.error(`❌ Error al enviar:`, error);
             throw error;
         }
     },
 
-    // ========== Crear Cliente ==========
+    // ========== DELETE: Eliminar un registro ==========
+    async eliminarDato(pestaña, id) {
+        try {
+            console.log(`🗑️ Eliminando de ${pestaña}: ${id}`);
+            
+            const response = await fetch(API_BASE_URL, {
+                method: 'DELETE',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pestaña, ID: id })
+            });
+            
+            const json = await response.json();
+            if (json.error) throw new Error(json.error);
+            
+            console.log(`✅ Eliminado correctamente`);
+            return json;
+        } catch (error) {
+            console.error(`❌ Error al eliminar:`, error);
+            throw error;
+        }
+    },
+
+    // ========== CLIENTES ==========
     async crearCliente(cliente) {
         const ahora = new Date();
-        const fechaReg = `${ahora.toLocaleDateString()} ${ahora.toLocaleTimeString()}`;
+        const fechaReg = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString();
         
-        const data = {
-            pestaña: HOJAS.CLIENTES,
+        return this.enviarDatos({
+            pestaña: "Clientes",
             ID: `C-${Date.now().toString().slice(-6)}`,
             Nombre: cliente.Nombre.toUpperCase(),
             CI_RUC: cliente.CI_RUC,
-            Teléfono: cliente.Teléfono || "",
-            Dirección: cliente.Dirección || "",
-            Referencia: cliente.Referencia || "",
-            Sector: cliente.Sector || "CENTRO",
+            Teléfono: cliente.Teléfono,
+            Dirección: cliente.Dirección,
+            Referencia: cliente.Referencia,
+            Sector: cliente.Sector,
             "Fecha Registro": fechaReg
-        };
-        
-        return this.enviarDatos(data);
+        });
     },
 
-    // ========== Crear Venta ==========
-    async crearVenta(venta) {
-        const data = {
-            pestaña: HOJAS.VENTAS,
-            ID_Venta: venta.ID_Venta,
-            Cliente: venta.Cliente,
-            Producto: venta.Producto,
-            Cantidad: venta.Cantidad,
-            Precio_PVP: venta.Precio_PVP || 0,
-            Fecha_Entrega: venta.Fecha_Entrega,
-            Estado_Entrega: venta.Estado_Entrega || "PENDIENTE",
-            Total: venta.Total || (venta.Cantidad * (venta.Precio_PVP || 0))
-        };
-        
-        return this.enviarDatos(data);
+    async actualizarCliente(id, datos) {
+        return this.enviarDatos({
+            pestaña: "Clientes",
+            ID: id,
+            ...datos
+        });
     },
 
-    // ========== Crear Producto en Inventario ==========
+    async eliminarCliente(id) {
+        return this.eliminarDato("Clientes", id);
+    },
+
+    // ========== PRODUCTOS / INVENTARIO ==========
     async crearProducto(producto) {
-        const data = {
-            pestaña: HOJAS.INVENTARIO,
+        return this.enviarDatos({
+            pestaña: "Inventario",
             Fecha: new Date().toISOString().split('T')[0],
             ID: `P-${Date.now().toString().slice(-6)}`,
             Producto: producto.Producto.toUpperCase(),
             Stock: producto.Stock || 0,
             Precio_Distribuidor: producto.Precio_Distribuidor || 0,
-            Precio_Venta: producto.Precio_Venta || 0,
+            Precio_Venta: producto.Precio_Venta,
             Ventas: 0,
             Proveedor: producto.Proveedor || "GENERAL"
-        };
-        
-        return this.enviarDatos(data);
-    },
-
-    // ========== Actualizar Stock ==========
-    async actualizarStock(idProducto, nuevoStock) {
-        // Método simplificado: primero obtener el producto, luego actualizar
-        // Como el script no soporta PUT, usamos un enfoque alternativo
-        const inventario = await this.obtenerDatos(HOJAS.INVENTARIO);
-        const producto = inventario.find(p => p.ID === idProducto);
-        
-        if (!producto) throw new Error("Producto no encontrado");
-        
-        // Registrar el cambio como una compra interna
-        return this.enviarDatos({
-            pestaña: HOJAS.COMPRAS,
-            Fecha: new Date().toISOString().split('T')[0],
-            Proveedor: "AJUSTE_INTERNO",
-            Producto: producto.Producto,
-            Cantidad: nuevoStock - (producto.Stock || 0),
-            Precio_Distribuidor: producto.Precio_Distribuidor || 0,
-            Total: 0,
-            Estado_Entrega: "COMPLETADO",
-            Fecha_Recepción: new Date().toISOString().split('T')[0],
-            ID_Compra: `AJ-${Date.now().toString().slice(-6)}`,
-            Observaciones: "Ajuste de stock manual"
         });
     },
 
-    // ========== Crear Compra ==========
-    async crearCompra(compra) {
-        const data = {
-            pestaña: HOJAS.COMPRAS,
-            Fecha: compra.Fecha || new Date().toISOString().split('T')[0],
-            Proveedor: compra.Proveedor,
-            Producto: compra.Producto,
-            Cantidad: compra.Cantidad,
-            Precio_Distribuidor: compra.Precio_Distribuidor,
-            Total: compra.Cantidad * compra.Precio_Distribuidor,
-            Estado_Entrega: compra.Estado_Entrega || "PENDIENTE",
-            Fecha_Recepción: compra.Fecha_Recepción || "",
-            ID_Compra: `CP-${Date.now().toString().slice(-6)}`,
-            Observaciones: compra.Observaciones || ""
-        };
-        
-        return this.enviarDatos(data);
+    async actualizarProducto(id, datos) {
+        return this.enviarDatos({
+            pestaña: "Inventario",
+            ID: id,
+            ...datos
+        });
     },
 
-    // ========== Crear Proveedor ==========
+    async eliminarProducto(id) {
+        return this.eliminarDato("Inventario", id);
+    },
+
+    async actualizarStock(idProducto, nuevoStock) {
+        return this.enviarDatos({
+            pestaña: "Inventario",
+            ID: idProducto,
+            Stock: nuevoStock
+        });
+    },
+
+    // ========== VENTAS ==========
+    async crearVenta(venta) {
+        return this.enviarDatos({
+            pestaña: "Ventas",
+            ID_Venta: venta.ID_Venta,
+            Cliente: venta.Cliente,
+            Producto: venta.Producto,
+            Cantidad: venta.Cantidad,
+            Precio_PVP: venta.Precio_PVP,
+            Fecha_Entrega: venta.Fecha_Entrega,
+            Estado_Entrega: venta.Estado_Entrega || "PENDIENTE"
+        });
+    },
+
+    async consumoInterno(producto, cantidad, idConsumo = null) {
+        return this.enviarDatos({
+            pestaña: "Ventas",
+            ID_Venta: idConsumo || `CONSUMO-${Date.now().toString().slice(-6)}`,
+            Cliente: "CONSUMO_INTERNO",
+            Producto: producto,
+            Cantidad: cantidad,
+            Precio_PVP: 0,
+            Fecha_Entrega: new Date().toISOString().split('T')[0],
+            Estado_Entrega: "INTERNO"
+        });
+    },
+
+    // ========== PROVEEDORES ==========
     async crearProveedor(proveedor) {
-        const data = {
-            pestaña: HOJAS.PROVEEDORES,
+        return this.enviarDatos({
+            pestaña: "Proveedores",
             "Nombre del Proveedor": proveedor.Nombre.toUpperCase(),
             RUC: proveedor.RUC,
             Provincia: proveedor.Provincia || "",
@@ -174,78 +176,84 @@ const DairyAPI = {
             "Contacto / Teléfono": proveedor.Contacto || "",
             Categoría: proveedor.Categoría || "",
             "Fecha Registro": new Date().toLocaleDateString()
-        };
-        
-        return this.enviarDatos(data);
+        });
     },
 
-    // ========== Obtener productos con stock bajo ==========
-    async obtenerStockCritico(limite = 5) {
-        const inventario = await this.obtenerDatos(HOJAS.INVENTARIO);
-        return inventario.filter(p => (p.Stock || 0) <= limite);
+    async eliminarProveedor(ruc) {
+        return this.eliminarDato("Proveedores", ruc);
     },
 
-    // ========== Obtener resumen de ventas ==========
-    async obtenerResumenVentas() {
-        const ventas = await this.obtenerDatos(HOJAS.VENTAS);
-        const total = ventas.reduce((sum, v) => sum + (v.Total || 0), 0);
-        const hoy = new Date().toISOString().split('T')[0];
-        const ventasHoy = ventas.filter(v => v.Fecha?.split('T')[0] === hoy);
-        const totalHoy = ventasHoy.reduce((sum, v) => sum + (v.Total || 0), 0);
-        
-        return {
-            totalGeneral: total,
-            totalHoy: totalHoy,
-            cantidadVentas: ventas.length,
-            ventasHoy: ventasHoy.length,
-            ultimasVentas: ventas.slice(-10).reverse()
-        };
+    // ========== COMPRAS ==========
+    async crearCompra(compra) {
+        return this.enviarDatos({
+            pestaña: "Compras",
+            Fecha: compra.Fecha || new Date().toISOString().split('T')[0],
+            Proveedor: compra.Proveedor,
+            Producto: compra.Producto,
+            Cantidad: compra.Cantidad,
+            Precio_Distribuidor: compra.Precio_Distribuidor,
+            Total: compra.Cantidad * compra.Precio_Distribuidor,
+            Estado_Entrega: compra.Estado_Entrega || "PENDIENTE",
+            Fecha_Recepción: compra.Fecha_Recepción || "",
+            Observaciones: compra.Observaciones || ""
+        });
     },
 
-    // ========== Obtener dashboard completo ==========
+    // ========== DASHBOARD Y REPORTES ==========
     async obtenerDashboard() {
         try {
-            const [clientes, ventas, inventario, proveedores, compras] = await Promise.all([
-                this.obtenerDatos(HOJAS.CLIENTES),
-                this.obtenerDatos(HOJAS.VENTAS),
-                this.obtenerDatos(HOJAS.INVENTARIO),
-                this.obtenerDatos(HOJAS.PROVEEDORES),
-                this.obtenerDatos(HOJAS.COMPRAS)
+            const [clientes, ventas, inventario, proveedores] = await Promise.all([
+                this.obtenerDatos("Clientes"),
+                this.obtenerDatos("Ventas"),
+                this.obtenerDatos("Inventario"),
+                this.obtenerDatos("Proveedores")
             ]);
             
+            const totalVentas = ventas.reduce((sum, v) => sum + (v.Total || 0), 0);
             const stockTotal = inventario.reduce((sum, p) => sum + (p.Stock || 0), 0);
             const valorBodega = inventario.reduce((sum, p) => sum + ((p.Stock || 0) * (p.Precio_Venta || 0)), 0);
             const productosCriticos = inventario.filter(p => (p.Stock || 0) <= 5).length;
             
             return {
-                clientes: clientes.length,
-                ventasTotales: ventas.length,
-                ventasMonto: ventas.reduce((sum, v) => sum + (v.Total || 0), 0),
-                inventarioTotal: stockTotal,
+                totalClientes: clientes.length,
+                totalVentas: ventas.length,
+                montoVentas: totalVentas,
+                stockTotal: stockTotal,
                 valorBodega: valorBodega,
                 productosCriticos: productosCriticos,
-                proveedores: proveedores.length,
-                compras: compras.length,
-                ultimasVentas: ventas.slice(-5).reverse()
+                totalProveedores: proveedores.length
             };
         } catch (error) {
             console.error("Error obteniendo dashboard:", error);
             throw error;
         }
-    }
-};
+    },
 
-// Función global para mostrar errores (opcional)
-window.mostrarError = function(mensaje) {
-    console.error("ERROR:", mensaje);
-    // Puedes implementar un toast o alert personalizado
-    if (typeof alert === 'function') {
-        alert("❌ " + mensaje);
+    // ========== OBTENER CLIENTES CON RANKING ==========
+    async obtenerRankingClientes() {
+        const [clientes, ventas] = await Promise.all([
+            this.obtenerDatos("Clientes"),
+            this.obtenerDatos("Ventas")
+        ]);
+        
+        const stats = {};
+        ventas.forEach(v => {
+            const cliente = v.Cliente;
+            if (cliente && cliente !== "CONSUMO_INTERNO") {
+                if (!stats[cliente]) stats[cliente] = { total: 0, cantidad: 0 };
+                stats[cliente].total += v.Total || 0;
+                stats[cliente].cantidad += 1;
+            }
+        });
+        
+        return clientes.map(c => ({
+            ...c,
+            montoTotal: stats[c.Nombre]?.total || 0,
+            numVentas: stats[c.Nombre]?.cantidad || 0
+        })).sort((a, b) => b.montoTotal - a.montoTotal);
     }
 };
 
 // Exportar para uso global
 window.DairyAPI = DairyAPI;
-window.HOJAS = HOJAS;
-
-console.log("✅ API Config cargado correctamente");
+console.log("✅ API Config completo cargado");

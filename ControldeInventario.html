@@ -7,7 +7,6 @@
 
     <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <link rel="stylesheet" href="estilos-lacteos.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <script src="api-config.js"></script>
@@ -28,7 +27,7 @@
         padding-bottom: 110px; 
         -webkit-user-select: none; 
         user-select: none;
-        font-family: sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
       }
       
       .id-card-top {
@@ -83,9 +82,28 @@
 
       @keyframes skeleton-pulse { 0% { background-color: #f3e8ff; } 50% { background-color: #e9d5ff; } 100% { background-color: #f3e8ff; } }
       .loading-skeleton { animation: skeleton-pulse 1.5s infinite; }
+      
+      #overlay-loading {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+        display: none; align-items: center; justify-content: center; z-index: 1000;
+        backdrop-filter: blur(8px);
+      }
+      .spinner {
+        width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3);
+        border-top: 4px solid #a21caf; border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+<div id="overlay-loading">
+    <div class="bg-white rounded-3xl p-8 text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <p class="font-bold text-slate-800">Procesando...</p>
+    </div>
+</div>
 
 <header class="fixed top-0 w-full h-16 bg-white/80 backdrop-blur-md border-b border-purple-100 flex justify-between items-center px-4 z-50">
     <div class="flex flex-col">
@@ -161,7 +179,12 @@ let modoSeleccion = false;
 let productoActivo = null;
 let timerHold;
 
+function mostrarLoading(mostrar) {
+    document.getElementById('overlay-loading').style.display = mostrar ? 'flex' : 'none';
+}
+
 async function cargarInventario() {
+    mostrarLoading(true);
     try {
         const res = await DairyAPI.obtenerDatos("Inventario");
         if (Array.isArray(res)) {
@@ -174,7 +197,9 @@ async function cargarInventario() {
     } catch (e) { 
         console.error(e);
         document.getElementById('sync-indicator').innerText = "ERROR DE CONEXIÓN";
+        alert("Error al cargar inventario: " + e.message);
     }
+    mostrarLoading(false);
 }
 
 function renderizar(lista) {
@@ -195,21 +220,20 @@ function renderizar(lista) {
         const card = document.createElement('div');
         card.className = `card-prod ${seleccionados.has(p.ID) ? 'selected' : ''}`;
         
-        // Uso de innerText en elementos sensibles para evitar XSS
         card.innerHTML = `
             <div class="select-check"><span class="material-symbols-outlined text-[14px]">done</span></div>
             <div class="flex justify-between items-start mb-1">
-                <span class="text-[8px] font-black text-slate-400 italic">ID: ${p.ID}</span>
+                <span class="text-[8px] font-black text-slate-400 italic">ID: ${escapeHtml(p.ID)}</span>
                 <span class="text-[8px] font-black text-indigo-600 bg-indigo-50 px-1.5 rounded-full uppercase">V: ${ventas}</span>
             </div>
-            <h3 class="prod-title">${p.Producto.replace(/</g, "&lt;")}</h3>
+            <h3 class="prod-title">${escapeHtml(p.Producto)}</h3>
             <div class="flex justify-between items-end mt-auto pt-2">
                 <span class="font-black text-xl ${stock <= 5 ? 'text-red-500' : 'text-indigo-600'}">${stock}<small class="text-[9px] ml-0.5">u</small></span>
                 <span class="font-black text-green-600 text-sm">$${pvp.toFixed(2)}</span>
             </div>
         `;
 
-        // Lógica de interacción mejorada
+        // Lógica de selección múltiple
         const startHold = (e) => {
             timerHold = setTimeout(() => {
                 modoSeleccion = true;
@@ -224,7 +248,7 @@ function renderizar(lista) {
         card.onmouseup = cancelHold;
         card.onmouseleave = cancelHold;
         card.ontouchend = cancelHold;
-        card.ontouchmove = cancelHold; // Cancela si el usuario hace scroll
+        card.ontouchmove = cancelHold;
 
         card.onclick = (e) => {
             if (modoSeleccion) {
@@ -244,6 +268,16 @@ function renderizar(lista) {
     `;
 }
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
 function toggleSeleccion(id) {
     seleccionados.has(id) ? seleccionados.delete(id) : seleccionados.add(id);
     const btnDel = document.getElementById('btn-bulk-delete');
@@ -261,16 +295,32 @@ function toggleSeleccion(id) {
 }
 
 async function eliminarVarios() {
-    if (confirm(`¿Eliminar ${seleccionados.size} productos?`)) {
+    if (confirm(`¿Eliminar ${seleccionados.size} productos permanentemente?`)) {
+        mostrarLoading(true);
         const ids = Array.from(seleccionados);
+        let errores = 0;
+        
         for (let id of ids) {
-            await DairyAPI.eliminarDato("Inventario", id);
+            try {
+                await DairyAPI.eliminarDato("Inventario", id);
+            } catch(e) {
+                errores++;
+                console.error("Error eliminando", id, e);
+            }
         }
+        
+        if (errores === 0) {
+            alert(`✅ ${ids.length} productos eliminados`);
+        } else {
+            alert(`⚠️ ${ids.length - errores} eliminados, ${errores} errores`);
+        }
+        
         seleccionados.clear();
         modoSeleccion = false;
         document.getElementById('btn-bulk-delete').classList.add('hidden');
         document.getElementById('header-title').innerText = "STOCK";
-        cargarInventario();
+        await cargarInventario();
+        mostrarLoading(false);
     }
 }
 
@@ -294,37 +344,69 @@ async function confirmarStock() {
 
     btn.disabled = true;
     btn.innerText = "GUARDANDO...";
+    mostrarLoading(true);
     
     const nuevoTotal = (Number(productoActivo.Stock) || 0) + suma;
-    await DairyAPI.actualizarDato("Inventario", productoActivo.ID, { Stock: nuevoTotal });
+    
+    try {
+        await DairyAPI.actualizarDato("Inventario", productoActivo.ID, { Stock: nuevoTotal });
+        alert(`✅ Stock actualizado: +${suma} unidades`);
+    } catch(e) {
+        alert("❌ Error al actualizar: " + e.message);
+    }
     
     btn.disabled = false;
     btn.innerText = "ACTUALIZAR";
     cerrarModal('modal-stock');
-    cargarInventario();
+    mostrarLoading(false);
+    await cargarInventario();
 }
 
 async function guardarNuevo() {
     const btn = document.getElementById('btn-guardar-nuevo');
-    const data = {
-        Producto: document.getElementById('n-nombre').value.trim().toUpperCase(),
-        Precio_Distribuidor: parseFloat(document.getElementById('n-dist').value) || 0,
-        Precio_Venta: parseFloat(document.getElementById('n-pvp').value) || 0,
-        Stock: parseInt(document.getElementById('n-stock').value) || 0,
-        Ventas: 0
+    const nombre = document.getElementById('n-nombre').value.trim().toUpperCase();
+    const precioDist = parseFloat(document.getElementById('n-dist').value) || 0;
+    const precioVenta = parseFloat(document.getElementById('n-pvp').value) || 0;
+    const stockInicial = parseInt(document.getElementById('n-stock').value) || 0;
+
+    if (!nombre) {
+        alert("⚠️ Nombre del producto requerido");
+        return;
+    }
+    if (precioVenta <= 0) {
+        alert("⚠️ Precio de venta debe ser mayor a 0");
+        return;
+    }
+
+    const nuevoProducto = {
+        Fecha: new Date().toISOString().split('T')[0],
+        ID: `P-${Date.now().toString().slice(-6)}`,
+        Producto: nombre,
+        Stock: stockInicial,
+        Precio_Distribuidor: precioDist,
+        Precio_Venta: precioVenta,
+        Ventas: 0,
+        Proveedor: "GENERAL"
     };
 
-    if (data.Producto && data.Precio_Venta > 0) {
-        btn.disabled = true;
-        await DairyAPI.crearDato("Inventario", data);
-        btn.disabled = false;
+    btn.disabled = true;
+    mostrarLoading(true);
+    
+    try {
+        await DairyAPI.crearDato("Inventario", nuevoProducto);
+        alert("✅ Producto creado exitosamente");
         cerrarModal('modal-nuevo-prod');
-        // Limpiar campos
-        ['n-nombre', 'n-dist', 'n-pvp', 'n-stock'].forEach(id => document.getElementById(id).value = "");
-        cargarInventario();
-    } else {
-        alert("Nombre y Precio de venta son obligatorios");
+        document.getElementById('n-nombre').value = "";
+        document.getElementById('n-dist').value = "";
+        document.getElementById('n-pvp').value = "";
+        document.getElementById('n-stock').value = "";
+        await cargarInventario();
+    } catch(e) {
+        alert("❌ Error al crear: " + e.message);
     }
+    
+    btn.disabled = false;
+    mostrarLoading(false);
 }
 
 function descargarPDF() {

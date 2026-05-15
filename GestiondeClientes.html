@@ -51,10 +51,20 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #status-banner {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 9999; 
+            background: #f97316; color: white; text-align: center; 
+            padding: 4px; font-size: 10px; font-weight: bold; display: none;
+        }
     </style>
 </head>
 
 <body class="text-slate-800 pb-32">
+
+<div id="status-banner">
+    ⚠️ Sin conexión a internet. Los datos se guardarán localmente.
+</div>
 
 <div id="overlay-loading">
     <div class="bg-white rounded-3xl p-8 text-center">
@@ -120,15 +130,13 @@
         <form id="form-cliente" class="space-y-4">
             <input type="hidden" id="edit-id-original">
             <input type="hidden" id="edit-nombre-original">
-            <input type="hidden" id="c-id">  <!-- CAMPO IMPORTANTE -->
+            <input type="hidden" id="c-id">
 
-            <!-- Nombre -->
             <div class="space-y-1">
                 <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Nombre Completo</label>
                 <input type="text" id="c-nombre" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
             </div>
 
-            <!-- CI y Teléfono -->
             <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase ml-2">CI / RUC (10-13)</label>
@@ -140,13 +148,11 @@
                 </div>
             </div>
 
-            <!-- Dirección -->
             <div class="space-y-1">
                 <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Dirección Principal</label>
                 <input type="text" id="c-dir" required class="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-primary">
             </div>
 
-            <!-- Sector y Referencia -->
             <div class="grid grid-cols-2 gap-4">
                 <div class="space-y-1">
                     <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Sector</label>
@@ -164,7 +170,6 @@
                 </div>
             </div>
 
-            <!-- Botones -->
             <div class="pt-4 space-y-3">
                 <button type="submit" id="btn-guardar" class="w-full py-5 rounded-[2rem] bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
                     Guardar Cliente
@@ -200,7 +205,18 @@ function mostrarLoading(mostrar) {
     if (overlay) overlay.style.display = mostrar ? 'flex' : 'none';
 }
 
-// 1. CARGA DE DATOS DESDE API
+// Probar conexión al cargar
+async function testConnection() {
+    try {
+        const response = await fetch(DairyAPI.API_BASE_URL + '?pestaña=Clientes', { method: 'GET', mode: 'no-cors' });
+        console.log('✅ Conexión OK');
+        document.getElementById('status-banner').style.display = 'none';
+    } catch(e) {
+        console.warn('⚠️ Sin conexión directa');
+        document.getElementById('status-banner').style.display = 'block';
+    }
+}
+
 async function cargarDatos() {
     mostrarLoading(true);
     try {
@@ -261,7 +277,6 @@ async function cargarDatos() {
     mostrarLoading(false);
 }
 
-// 2. RENDERIZADO DE TARJETAS
 function renderizar(lista) {
     const container = document.getElementById('lista-clientes');
     if (!container) return;
@@ -340,93 +355,55 @@ function renderizar(lista) {
     }).join('');
 }
 
-// 3. LÓGICA DE MODALES
 function abrirModalNuevo() {
     esEdicion = false;
     const form = document.getElementById('form-cliente');
     if (form) form.reset();
-    
     const titulo = document.getElementById('modal-titulo');
     if (titulo) titulo.innerText = "Nuevo Cliente";
-    
     const btnEliminar = document.getElementById('btn-eliminar');
     if (btnEliminar) btnEliminar.classList.add('hidden');
-    
     const modal = document.getElementById('modal-cliente');
     if (modal) modal.classList.add('active');
 }
 
 function abrirModalEditar(nombre) {
-    console.log("Editando cliente:", nombre);
     const c = clientesData.find(cli => cli.Nombre === nombre);
-    if (!c) {
-        console.error("Cliente no encontrado:", nombre);
-        return;
-    }
-    
+    if (!c) return;
     esEdicion = true;
-    
     const titulo = document.getElementById('modal-titulo');
     if (titulo) titulo.innerText = "Editar Perfil";
-    
-    // Asignar valores a los campos
-    const setId = document.getElementById('edit-id-original');
-    const setNombreOriginal = document.getElementById('edit-nombre-original');
-    const setIdHidden = document.getElementById('c-id');
-    const setNombre = document.getElementById('c-nombre');
-    const setRuc = document.getElementById('c-ruc');
-    const setTel = document.getElementById('c-tel');
-    const setDir = document.getElementById('c-dir');
-    const setSector = document.getElementById('c-sector');
-    const setRef = document.getElementById('c-ref');
-    
-    if (setId) setId.value = c.ID || "";
-    if (setNombreOriginal) setNombreOriginal.value = c.Nombre || "";
-    if (setIdHidden) setIdHidden.value = c.ID || "";
-    if (setNombre) setNombre.value = c.Nombre || "";
-    if (setRuc) setRuc.value = c.CI_RUC || "";
-    if (setTel) setTel.value = c.Teléfono || "";
-    if (setDir) setDir.value = c.Dirección || "";
-    if (setSector) setSector.value = c.Sector || "";
-    if (setRef) setRef.value = c.Referencia || "";
-    
-    const btnEliminar = document.getElementById('btn-eliminar');
-    if (btnEliminar) btnEliminar.classList.remove('hidden');
-    
-    const modal = document.getElementById('modal-cliente');
-    if (modal) modal.classList.add('active');
+    document.getElementById('edit-id-original').value = c.ID || "";
+    document.getElementById('edit-nombre-original').value = c.Nombre || "";
+    document.getElementById('c-id').value = c.ID || "";
+    document.getElementById('c-nombre').value = c.Nombre || "";
+    document.getElementById('c-ruc').value = c.CI_RUC || "";
+    document.getElementById('c-tel').value = c.Teléfono || "";
+    document.getElementById('c-dir').value = c.Dirección || "";
+    document.getElementById('c-sector').value = c.Sector || "";
+    document.getElementById('c-ref').value = c.Referencia || "";
+    document.getElementById('btn-eliminar').classList.remove('hidden');
+    document.getElementById('modal-cliente').classList.add('active');
 }
 
 function cerrarModal() { 
-    const modal = document.getElementById('modal-cliente');
-    if (modal) modal.classList.remove('active');
-    
-    const form = document.getElementById('form-cliente');
-    if (form) form.reset();
+    document.getElementById('modal-cliente').classList.remove('active');
+    document.getElementById('form-cliente').reset();
 }
 
-// 4. GUARDAR / ACTUALIZAR
 document.getElementById('form-cliente')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
     const ruc = document.getElementById('c-ruc')?.value.trim() || "";
     const tel = document.getElementById('c-tel')?.value.trim() || "";
     const sector = document.getElementById('c-sector')?.value || "";
-
     if (ruc.length < 10) return alert("❌ El CI/RUC debe tener al menos 10 dígitos");
     if (!tel.match(/^09\d{8}$/)) return alert("❌ Teléfono inválido. Debe ser 09XXXXXXXX");
     if (!sector) return alert("❌ Por favor, seleccione un sector");
-
     const btn = document.getElementById('btn-guardar');
-    if (btn) {
-        btn.disabled = true;
-        btn.innerText = "Sincronizando...";
-    }
+    if (btn) { btn.disabled = true; btn.innerText = "Sincronizando..."; }
     mostrarLoading(true);
-
     const ahora = new Date();
     const fechaHora = ahora.toLocaleDateString() + " " + ahora.toLocaleTimeString();
-
     const datos = {
         pestaña: "Clientes",
         ID: esEdicion ? (document.getElementById('c-id')?.value || "") : `C-${Date.now().toString().slice(-6)}`,
@@ -438,7 +415,6 @@ document.getElementById('form-cliente')?.addEventListener('submit', async (e) =>
         Sector: sector,
         "Fecha Registro": esEdicion ? "" : fechaHora
     };
-
     try {
         await DairyAPI.enviarDatos(datos);
         alert("✅ Cliente guardado correctamente");
@@ -447,19 +423,14 @@ document.getElementById('form-cliente')?.addEventListener('submit', async (e) =>
     } catch (err) {
         alert("❌ Error de conexión: " + err.message);
     } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerText = "Guardar Cliente";
-        }
+        if (btn) { btn.disabled = false; btn.innerText = "Guardar Cliente"; }
         mostrarLoading(false);
     }
 });
 
-// 5. ELIMINAR CLIENTE
 async function confirmarEliminar() {
     const nombre = document.getElementById('edit-nombre-original')?.value || "";
-    if (!confirm(`⚠️ ¿Desea eliminar definitivamente a ${nombre}?\n\nEsta acción no se puede deshacer.`)) return;
-    
+    if (!confirm(`⚠️ ¿Desea eliminar definitivamente a ${nombre}?`)) return;
     mostrarLoading(true);
     try {
         await DairyAPI.eliminarDato("Clientes", document.getElementById('c-id')?.value || "");
@@ -472,68 +443,37 @@ async function confirmarEliminar() {
     mostrarLoading(false);
 }
 
-// 6. HISTORIAL DE VENTAS
 function abrirHistorial(nombre) {
     const c = clientesData.find(cli => cli.Nombre === nombre);
     if (!c) return;
-    
-    const histNombre = document.getElementById('hist-nombre');
-    if (histNombre) {
-        histNombre.innerHTML = `${c.Nombre} <span class="text-[10px] text-primary ml-2">$${(c.montoTotal || 0).toFixed(2)}</span>`;
-    }
-    
+    document.getElementById('hist-nombre').innerHTML = `${c.Nombre} <span class="text-[10px] text-primary ml-2">$${(c.montoTotal || 0).toFixed(2)}</span>`;
     const histLista = document.getElementById('hist-lista');
-    if (!histLista) return;
-    
     if (!c.pedidos || c.pedidos.length === 0) {
-        histLista.innerHTML = `<div class="text-center py-8 text-slate-400 bg-slate-50 rounded-3xl">
-            📭 No hay ventas registradas para este cliente
-        </div>`;
+        histLista.innerHTML = `<div class="text-center py-8 text-slate-400 bg-slate-50 rounded-3xl">📭 No hay ventas registradas</div>`;
     } else {
         histLista.innerHTML = c.pedidos.map(p => `
             <div class="bg-slate-50 p-4 rounded-2xl border-l-4 ${p.estado === 'INTERNO' ? 'border-l-amber-500' : 'border-l-primary'}">
                 <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[10px] font-black text-slate-400 uppercase">${new Date(p.fecha).toLocaleDateString() || p.fecha}</p>
-                        <p class="text-[12px] font-black text-slate-800 uppercase mt-1">${p.producto}</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm font-black text-primary">$${p.total.toFixed(2)}</p>
-                        <span class="text-[8px] font-bold ${p.estado === 'INTERNO' ? 'text-amber-600' : 'text-green-600'}">${p.estado}</span>
-                    </div>
+                    <div><p class="text-[10px] font-black text-slate-400 uppercase">${new Date(p.fecha).toLocaleDateString()}</p><p class="text-[12px] font-black text-slate-800 uppercase mt-1">${p.producto}</p></div>
+                    <div class="text-right"><p class="text-sm font-black text-primary">$${p.total.toFixed(2)}</p><span class="text-[8px] font-bold ${p.estado === 'INTERNO' ? 'text-amber-600' : 'text-green-600'}">${p.estado}</span></div>
                 </div>
             </div>
         `).join('');
     }
-    
-    const modalHistorial = document.getElementById('modal-historial');
-    if (modalHistorial) modalHistorial.classList.add('active');
+    document.getElementById('modal-historial').classList.add('active');
 }
 
-function cerrarHistorial() { 
-    const modal = document.getElementById('modal-historial');
-    if (modal) modal.classList.remove('active');
-}
-
-// 7. FILTRO DE CLIENTES
+function cerrarHistorial() { document.getElementById('modal-historial').classList.remove('active'); }
 function filtrarClientes() {
-    const buscador = document.getElementById('buscador');
-    const q = buscador ? buscador.value.toLowerCase().trim() : "";
-    
-    if (!q) {
-        renderizar(clientesData);
-    } else {
-        const filtrados = clientesData.filter(c => 
-            String(c.Nombre).toLowerCase().includes(q) ||
-            String(c.CI_RUC).toLowerCase().includes(q) ||
-            String(c.Sector).toLowerCase().includes(q)
-        );
-        renderizar(filtrados);
-    }
+    const q = document.getElementById('buscador')?.value.toLowerCase().trim() || "";
+    if (!q) renderizar(clientesData);
+    else renderizar(clientesData.filter(c => String(c.Nombre).toLowerCase().includes(q) || String(c.CI_RUC).toLowerCase().includes(q) || String(c.Sector).toLowerCase().includes(q)));
 }
 
-// 8. INICIALIZACIÓN
-window.onload = cargarDatos;
+window.onload = () => {
+    cargarDatos();
+    setTimeout(testConnection, 2000);
+};
 </script>
 
 </body>

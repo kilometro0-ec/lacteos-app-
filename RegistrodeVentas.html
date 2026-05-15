@@ -136,7 +136,7 @@
         </div>
     </main>
 
-    <!-- Inyecciones del core de tu sistema -->
+    <!-- Enlaces a la configuración centralizada de la app -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
@@ -160,6 +160,7 @@
 
         async function inicializarModulo() {
             try {
+                // Leer Cartera de Clientes usando la API Centralizada
                 const datosClientes = await DairyAPI.obtenerDatos("Clientes");
                 const selectCli = document.getElementById("selectCliente");
                 
@@ -175,6 +176,7 @@
                     });
                 }
 
+                // Leer Inventario usando la API Centralizada
                 const datosInventario = await DairyAPI.obtenerDatos("Inventario");
                 const selectProd = document.getElementById("selectProducto");
                 
@@ -341,7 +343,7 @@
             }
         }
 
-        // Envío alineado a tu backend (doPost)
+        // Envío alineado y vinculado a tu api-config.js y doPost
         async function confirmarYEnviarVenta() {
             const rucCliente = document.getElementById("selectCliente").value;
             if(!rucCliente) {
@@ -374,9 +376,10 @@
             const fechaFormat = new Date().toISOString().split('T')[0];
 
             try {
+                // Enviamos cada ítem del carrito de compras recorriendo el bucle de manera asíncrona
                 for (const item of carrito) {
                     const datosParaEnvio = {
-                        action: "registrarVenta",
+                        action: "registrarVenta", // 'action' tal como lo lee el motor Apps Script central
                         fecha: fechaFormat,
                         cliente: nombreCliente,
                         producto: item.producto,
@@ -385,12 +388,8 @@
                         precioPvp: item.precio
                     };
 
-                    await fetch(DairyAPI.url, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(datosParaEnvio)
-                    });
+                    // LLAMADA ENLAZADA CORRECTAMENTE al método centralizado de tu api-config
+                    await DairyAPI.guardarDatos("Ventas", datosParaEnvio);
                 }
 
                 Swal.fire({
@@ -400,6 +399,7 @@
                     confirmButtonColor: '#059669'
                 });
 
+                // Limpieza del flujo local
                 carrito = [];
                 document.getElementById("selectCliente").value = "";
                 if(document.getElementById("chkConsumoInterno").checked) {
@@ -407,7 +407,7 @@
                     alternarConsumoInterno();
                 }
                 renderizarCarrito();
-                setTimeout(() => { inicializarModulo(); }, 1500);
+                setTimeout(() => { inicializarModulo(); }, 1500); // Recarga remota de stocks actualizados
 
             } catch (err) {
                 console.error("Error crítico de red:", err);

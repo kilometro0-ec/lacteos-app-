@@ -1,38 +1,21 @@
-// ======================================================
-// LÓGICA LÁCTEA - API ÚNICA (CORREGIDA)
-// ======================================================
-
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7Xk0TC_18Q5jd0MvtwTddVHkhLnsJ7SraLpwl3i2Ki6ru81OVpsc-zDgf5tfqLFoDbA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwlMnyLLaxTX_N9DQ7SldOs2dlJIfwmeNz940tGahfD49Ba134_UBKRFnL7Pyqc3NGn6Q/exec";
 
 const DairyAPI = {
 
-  // =========================
-  // GET (Inventario / Ventas / Clientes)
-  // =========================
   async obtenerDatos(pestaña) {
     try {
-      const res = await fetch(
-        `${SCRIPT_URL}?pestaña=${encodeURIComponent(pestaña)}`
-      );
-
+      const res = await fetch(`${API_URL}?pestaña=${encodeURIComponent(pestaña)}`);
       const json = await res.json();
-
-      console.log("GET:", pestaña, json);
-
       return json.data || [];
-
     } catch (err) {
-      console.error("ERROR GET:", err);
+      console.error("GET ERROR:", err);
       return [];
     }
   },
 
-  // =========================
-  // POST (Clientes / Ventas / Compras)
-  // =========================
   async enviarDatos(payload) {
     try {
-      const res = await fetch(SCRIPT_URL, {
+      const res = await fetch(API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -40,19 +23,12 @@ const DairyAPI = {
         body: JSON.stringify(payload)
       });
 
-      const json = await res.json();
-
-      console.log("POST:", json);
-
-      return json;
+      return await res.json();
 
     } catch (err) {
-      console.error("ERROR POST:", err);
-      return { success: false, error: err.toString() };
+      console.error("POST ERROR:", err);
+      return { error: true };
     }
   }
 
 };
-
-// GLOBAL
-window.DairyAPI = DairyAPI;

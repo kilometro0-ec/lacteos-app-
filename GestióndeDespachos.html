@@ -3,340 +3,55 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Despachos - Lógica Láctea</title>
-    
-    <!-- Hojas de Estilo y Configuración de Tailwind -->
+    <title>Despachos | Lógica Láctea</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script src="api-config.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
+    <script src="api-config.js?v=1.4"></script>
+    <script src="menu-logic.js?v=1.4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    
     <script>
-        tailwind.config = {
-            theme: { 
-                extend: { 
-                    colors: { 
-                        primary: "#a21caf", 
-                        background: "#f8fafc", 
-                        outline: "#e2e8f0", 
-                        success: "#16a34a",
-                        danger: "#ef4444",
-                        dark: "#1f012a"
-                    } 
-                } 
-            }
-        }
+        tailwind.config = { theme: { extend: { colors: { primary: '#ea580c' } } } }
     </script>
-    <style>
-        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; padding-bottom: 110px; }
-        .card-pro { background: white; border-radius: 2.25rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px -5px rgba(31, 1, 42, 0.04); overflow: hidden; }
-        .btn-mapa-azul { background-color: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; border-radius: 1.25rem; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        .btn-mapa-azul:active { transform: scale(0.95); background-color: #dbeafe; }
-        .btn-verde { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); color: white; font-weight: 900; text-transform: uppercase; border-radius: 1.5rem; transition: all 0.2s; }
-        .btn-verde:active { transform: scale(0.96); opacity: 0.95; }
-        
-        .nav-fija { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 1px solid #f3e8ff; padding: 14px 0; z-index: 9999; box-shadow: 0 -4px 12px rgba(0,0,0,0.03); }
-        .menu-grid { max-width: 500px; margin: 0 auto; display: flex; justify-content: space-around; }
-        .nav-btn { display: flex; flex-direction: column; align-items: center; color: #94a3b8; font-size: 9px; font-weight: 800; text-transform: uppercase; gap: 2px; }
-        .active-btn { color: #a21caf; }
-        
-        .modal-custom { position: fixed; inset: 0; background: rgba(31, 1, 42, 0.6); backdrop-filter: blur(6px); z-index: 10001; display: none; align-items: center; justify-content: center; padding: 24px; }
-        .modal-box { background: white; width: 100%; max-width: 320px; border-radius: 2.5rem; padding: 32px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .spinning { animation: spin 1s linear infinite; }
-    </style>
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-background text-dark antialiased">
-
-<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-20 bg-white/90 backdrop-blur-md border-b border-slate-100">
-    <div class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#a21caf] to-[#db2777] flex items-center justify-center text-white shadow-md">
-            <span class="material-symbols-outlined font-black text-xl">local_shipping</span>
-        </div>
+<body class="pb-32 bg-slate-50 text-slate-800">
+    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 bg-gradient-to-r from-orange-600 to-orange-800 text-white shadow-md">
         <div>
-            <h1 class="font-black text-sm tracking-widest text-slate-800 uppercase italic">Despachos</h1>
-            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Monitoreo de Rutas Activas</p>
+            <h1 class="text-[9px] font-black text-orange-200 uppercase tracking-widest">Distribución</h1>
+            <h2 class="text-base font-black uppercase tracking-tight">Rutas de Despacho</h2>
         </div>
-    </div>
-    <button onclick="cargarDatos()" class="w-11 h-11 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-200 active:scale-95 transition-transform">
-        <span id="refresh-icon" class="material-symbols-outlined text-slate-500 font-bold">sync</span>
-    </button>
-</header>
+        <span class="material-symbols-outlined text-2xl">local_shipping</span>
+    </header>
 
-<main class="pt-24 px-4 max-w-lg mx-auto space-y-4">
-    
-    <!-- CONTADORES LOGÍSTICOS -->
-    <div class="grid grid-cols-2 gap-3.5">
-        <div class="bg-white p-5 rounded-[2.25rem] border border-slate-200 text-center shadow-sm">
-            <p id="cont-pend" class="text-3xl font-black text-orange-500 italic">0</p>
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">En Espera</p>
-        </div>
-        <div class="bg-white p-5 rounded-[2.25rem] border border-slate-200 text-center shadow-sm">
-            <p id="cont-ent" class="text-3xl font-black text-success italic">0</p>
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-wider mt-0.5">Entregados Hoy</p>
-        </div>
-    </div>
+    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
+        <div id="lista-despachos" class="grid gap-3"></div>
+    </main>
+    <nav id="menu-container"></nav>
 
-    <!-- CONTENEDOR DE PEDIDOS -->
-    <div id="contenedor-pedidos" class="space-y-4 pb-12">
-        <div class="flex flex-col items-center py-16 text-slate-400">
-            <span class="material-symbols-outlined text-4xl spinning text-primary">sync</span>
-            <p class="text-[10px] font-black uppercase tracking-widest mt-2">Sincronizando Hoja de Ventas...</p>
-        </div>
-    </div>
-</main>
-
-<!-- MODAL CONFIRMACIÓN RESILIENTE -->
-<div id="modal-confirm" class="modal-custom">
-    <div class="modal-box">
-        <div id="confirm-icon" class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"></div>
-        <h3 id="confirm-title" class="font-black text-slate-800 text-base mb-1"></h3>
-        <p id="confirm-text" class="text-slate-500 text-[11px] mb-6 px-2 leading-relaxed"></p>
-        <div class="flex gap-3" id="modal-actions-container">
-            <button onclick="cerrarModal('modal-confirm')" id="btn-modal-cancelar" class="flex-1 py-3 font-black text-slate-400 text-xs uppercase tracking-wider">No</button>
-            <button id="confirm-ok" class="flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase tracking-widest shadow-md">Confirmar</button>
-        </div>
-    </div>
-</div>
-
-<div id="menu-container"></div>
-
-<script>
-let pedidosLocal = [];
-let statsSesion = JSON.parse(localStorage.getItem('statsDespachos')) || { pedidos: 0 };
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>]/g, m => {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
-
-async function cargarDatos() {
-    const icon = document.getElementById('refresh-icon');
-    icon?.classList.add('spinning');
-    try {
-        const [ventas, clientes] = await Promise.all([
-            DairyAPI.obtenerDatos("Ventas"),
-            DairyAPI.obtenerDatos("Clientes")
-        ]);
-        
-        const listaVentas = Array.isArray(ventas) ? ventas : [];
-        const listaClientes = Array.isArray(clientes) ? clientes : [];
-        const agrupados = {};
-        
-        // Filtro insensible a mayúsculas/espacios para prevenir pérdidas de filas
-        listaVentas.filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE").forEach(v => {
-            const idV = v.ID_Venta || "S/N";
-            if (!agrapados[idV]) {
-                const infoCliente = listaClientes.find(c => String(c.Nombre).trim().toUpperCase() === String(v.Cliente).trim().toUpperCase());
-                
-                agrupados[idV] = {
-                    id: idV, 
-                    cliente: v.Cliente, 
-                    total: 0, 
-                    items: [],
-                    direccion: infoCliente ? (infoCliente.Dirección || infoCliente.Direccion || "Sin Dirección Registrada") : "Sin Dirección"
-                };
+    <script>
+        async function cargar() {
+            try {
+                const ventas = await DairyAPI.obtenerDatos("Ventas");
+                const pendientes = (ventas || []).filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE");
+                renderizar(pendientes);
+            } catch(e) { console.error(e); }
+        }
+        function renderizar(lista) {
+            if(lista.length === 0) {
+                document.getElementById('lista-despachos').innerHTML = `<p class="text-center text-slate-400 font-bold py-10 text-xs uppercase">No hay despachos pendientes.</p>`;
+                return;
             }
-            // Sanitización nativa de montos financieros
-            let stringMonto = String(v.Total || 0).trim();
-            if(stringMonto.includes(',') && stringMonto.includes('.')) {
-                stringMonto = stringMonto.replace(/,/g, '');
-            } else if (stringMonto.includes(',') && !stringMonto.includes('.')) {
-                stringMonto = stringMonto.replace(',', '.');
-            }
-            const sub = parseFloat(stringMonto) || 0;
-            
-            agrupados[idV].items.push({ producto: v.Producto, cant: v.Cantidad, precio: sub });
-            agrupados[idV].total += sub;
-        });
-        
-        pedidosLocal = Object.values(agrupados).reverse();
-        renderizar();
-    } catch (e) { 
-        console.error("Error cargando despachos:", e);
-        document.getElementById('contenedor-pedidos').innerHTML = '<div class="text-center py-12 text-danger font-bold text-xs">Error de conexión con la base central.</div>';
-    } finally { 
-        icon?.classList.remove('spinning'); 
-    }
-}
-
-function renderizar() {
-    const container = document.getElementById('contenedor-pedidos');
-    document.getElementById('cont-pend').innerText = pedidosLocal.length;
-    document.getElementById('cont-ent').innerText = statsSesion.pedidos;
-    
-    if(pedidosLocal.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-20 bg-white rounded-[2.25rem] border border-dashed border-slate-200 p-8">
-                <span class="material-symbols-outlined text-4xl text-success mb-2">task_alt</span>
-                <p class="font-black uppercase text-[10px] tracking-widest text-slate-400">Ruta Finalizada</p>
-                <p class="text-[10px] text-slate-400 italic mt-0.5">No quedan despachos pendientes en la cola.</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = pedidosLocal.map(ped => {
-        const clienteEscapado = escapeHtml(ped.cliente);
-        const dirEscapada = escapeHtml(ped.direccion);
-        const dirEscapadaJS = dirEscapada.replace(/'/g, "\\'");
-        
-        return `
-            <div class="card-pro p-6 space-y-4">
-                <div class="flex justify-between items-start gap-2">
-                    <div class="flex-1">
-                        <span class="bg-fuchsia-50 text-primary text-[9px] font-black px-2.5 py-1 rounded-md tracking-wider">ORDEN: ${escapeHtml(ped.id)}</span>
-                        <h2 class="text-lg font-black text-slate-800 uppercase mt-2.5 leading-tight">${clienteEscapado}</h2>
-                        <p class="text-[10px] text-slate-400 font-bold mt-1 italic uppercase tracking-tight">${dirEscapada}</p>
+            document.getElementById('lista-despachos').innerHTML = lista.map(v => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-2">
+                    <div class="flex justify-between items-center">
+                        <p class="text-[10px] font-black text-orange-600 uppercase">${v.ID_Venta}</p>
+                        <span class="text-[9px] font-black text-orange-700 bg-orange-50 px-2.5 py-1 rounded-md uppercase border border-orange-100">Por Despachar</span>
                     </div>
-                    <button onclick="abrirMapa('${dirEscapadaJS}')" class="btn-mapa-azul shrink-0">
-                        <span class="material-symbols-outlined font-bold text-xl">location_on</span>
-                    </button>
-                </div>
-                
-                <div class="bg-slate-50/70 rounded-2xl p-3.5 space-y-1">
-                    ${ped.items.map(it => `
-                        <div class="flex justify-between items-center py-2 border-b border-slate-200/40 last:border-0">
-                            <span class="text-xs font-bold text-slate-700 uppercase tracking-tight">
-                                ${escapeHtml(it.producto)} <span class="text-primary font-black ml-1">x${it.cant}</span>
-                            </span>
-                            <button onclick="askDelete('${escapeHtml(ped.id)}', '${escapeHtml(it.producto).replace(/'/g, "\\'")}', ${it.cant})" class="w-8 h-8 flex items-center justify-center bg-red-50 text-danger rounded-xl active:scale-90 transition-transform">
-                                <span class="material-symbols-outlined text-sm font-bold">delete</span>
-                            </button>
-                        </div>
-                    `).join('')}
-                </div>
-                
-                <div class="flex justify-between items-center pt-1">
-                    <div>
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Monto Colecta</p>
-                        <p class="text-2xl font-black text-slate-900 italic mt-0.5">$${ped.total.toFixed(2)}</p>
-                    </div>
-                    <button onclick="askEntrega('${escapeHtml(ped.id)}')" class="btn-verde px-7 h-13 text-[10px] tracking-wider shadow-md">Completar</button>
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-function askEntrega(id) {
-    showConfirm("¿Registrar Entrega?", "Se actualizará el estado a Completado y se archivará la venta.", "success", async (bloquearUI) => {
-        try {
-            bloquearUI(true);
-            const hoy = new Date().toLocaleDateString('es-ES');
-            
-            await DairyAPI.enviarDatos({ 
-                pestaña: "Ventas", 
-                accion: "editar_estado", 
-                ID_Venta: id, 
-                Estado: "ENTREGADO", 
-                Fecha_Entrega: hoy 
-            });
-            
-            statsSesion.pedidos++;
-            localStorage.setItem('statsDespachos', JSON.stringify(statsSesion));
-            cerrarModal('modal-confirm');
-            await cargarDatos();
-        } catch (e) { 
-            alert("Error de red: No se pudo actualizar el estado de entrega."); 
-            bloquearUI(false);
+                    <h3 class="text-xs font-black uppercase text-slate-800">${v.Cliente}</h3>
+                    <p class="text-[11px] font-medium text-slate-500">${v.Producto} — <span class="font-extrabold text-slate-800">${v.Cantidad} Uds</span></p>
+                </div>`).join('');
         }
-    });
-}
-
-function askDelete(id, prod, cant) {
-    showConfirm("¿Anular Ítem?", `Se eliminará el producto del pedido y se retornarán ${cant} unidades al inventario maestro.`, "delete", async (bloquearUI) => {
-        try {
-            bloquearUI(true);
-            await DairyAPI.enviarDatos({ 
-                pestaña: "Ventas", 
-                accion: "eliminar_item_y_devolver_stock", 
-                ID_Venta: id, 
-                Producto: prod, 
-                Cantidad: cant 
-            });
-            cerrarModal('modal-confirm');
-            await cargarDatos();
-        } catch (e) { 
-            alert("Fallo al reajustar inventario en el servidor."); 
-            bloquearUI(false);
-        }
-    });
-}
-
-function abrirMapa(dir) {
-    if(!dir || dir === "Sin Dirección") return alert("El cliente no cuenta con geolocalización válida.");
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
-}
-
-function showConfirm(title, text, type, onOk) {
-    const modal = document.getElementById('modal-confirm');
-    const okBtn = document.getElementById('confirm-ok');
-    const cancelBtn = document.getElementById('btn-modal-cancelar');
-    
-    document.getElementById('confirm-title').innerText = title;
-    document.getElementById('confirm-text').innerText = text;
-    modal.style.display = 'flex';
-    
-    const isDelete = type === 'delete';
-    document.getElementById('confirm-icon').className = `w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDelete ? 'bg-red-50 text-danger' : 'bg-green-50 text-success'}`;
-    document.getElementById('confirm-icon').innerHTML = `<span class="material-symbols-outlined text-3xl font-bold">${isDelete ? 'delete' : 'check'}</span>`;
-    okBtn.className = `flex-1 py-4 rounded-2xl font-black text-white text-xs uppercase tracking-wider shadow-md transition-all ${isDelete ? 'bg-danger hover:bg-red-600' : 'bg-success hover:bg-green-700'}`;
-    
-    // Función inyectora para prevenir cierres falsos durante la carga asíncrona
-    const controlarBloqueoCarga = (cargar) => {
-        if(cargar) {
-            okBtn.disabled = true;
-            cancelBtn.disabled = true;
-            okBtn.innerHTML = `<span class="material-symbols-outlined text-sm spinning">sync</span>`;
-        } else {
-            okBtn.disabled = false;
-            cancelBtn.disabled = false;
-            okBtn.innerText = "Confirmar";
-        }
-    };
-
-    okBtn.onclick = () => { onOk(controlarBloqueoCarga); };
-}
-
-function cerrarModal(id) { 
-    document.getElementById(id).style.display = 'none'; 
-}
-
-function renderMenu() {
-    const container = document.getElementById('menu-container');
-    const opciones = [
-        { nombre: 'Panel', icon: 'dashboard', link: 'DashboardLacteo.html' },
-        { nombre: 'Ventas', icon: 'add_shopping_cart', link: 'RegistrodeVentas.html' },
-        { nombre: 'Despachos', icon: 'local_shipping', link: 'GestióndeDespachos.html' }
-    ];
-    let html = '<nav class="nav-fija"><div class="menu-grid">';
-    opciones.forEach(opt => {
-        const active = window.location.pathname.includes(opt.link) ? 'active-btn' : '';
-        html += `
-            <button onclick="location.href='${opt.link}'" class="nav-btn ${active}">
-                <span class="material-symbols-outlined font-bold">${opt.icon}</span>
-                <span>${opt.nombre}</span>
-            </button>
-        `;
-    });
-    container.innerHTML = html + '</div></nav>';
-}
-
-window.onload = () => { 
-    cargarDatos(); 
-    renderMenu(); 
-};
-</script>
+        window.onload = cargar;
+    </script>
 </body>
 </html>

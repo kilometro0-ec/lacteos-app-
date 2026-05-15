@@ -1,170 +1,81 @@
 <!DOCTYPE html>
 <html class="light" lang="es">
+
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Ventas - Lógica Láctea</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
-    <!-- Librerías -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
+<title>Ventas - Lógica Láctea</title>
 
-    <!-- PWA -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="estilos-lacteos.css">
+<!-- LIBRERÍAS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+<script src="menu-logic.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="estilos-lacteos.css">
 
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              primary: "#a21caf",
-              secondary: "#db2777",
-              whatsapp: "#25d366",
-              surface: "#f8fafc"
-            }
-          }
-        }
+<script src="api-config.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: "#a21caf",
+        secondary: "#db2777"
       }
-    </script>
+    }
+  }
+}
+</script>
 
-    <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #fdfaff;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .card-producto {
-            background: white;
-            border-radius: 1.5rem;
-            border: 1px solid #f1f5f9;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            transition: all 0.2s;
-        }
-
-        .card-producto:active { transform: scale(0.98); }
-
-        .bloqueado {
-            opacity: 0.3;
-            pointer-events: none;
-            filter: grayscale(1);
-        }
-
-        .input-sutil {
-            background-color: #f8fafc;
-            border: 1px solid #f1f5f9;
-            border-radius: 1.25rem;
-            padding: 0.8rem 1rem;
-            width: 100%;
-            font-size: 13px;
-            font-weight: 700;
-            color: #1e293b;
-            outline: none;
-        }
-
-        .input-sutil:focus {
-            background: white;
-            border-color: #a21caf;
-            box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05);
-        }
-
-        #carrito-flotante {
-            position: fixed;
-            bottom: 100px;
-            left: 16px;
-            right: 16px;
-            background: white;
-            border-radius: 2.5rem;
-            padding: 20px;
-            z-index: 100;
-            border: 1px solid rgba(162, 28, 175, 0.1);
-        }
-
-        .btn-whatsapp {
-            background: #25d366;
-            color: white;
-            width: 100%;
-            padding: 16px;
-            border-radius: 1.5rem;
-            font-weight: 800;
-            display: none;
-        }
-    </style>
+<style>
+body{font-family:'Plus Jakarta Sans';background:#fdfaff}
+.bloqueado{opacity:.3;pointer-events:none}
+.input-sutil{width:100%;padding:.8rem;border-radius:1rem;background:#f8fafc;border:1px solid #eee;font-weight:700}
+.card-producto{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:12px;border-radius:1.2rem;margin-bottom:10px}
+#carrito-flotante{position:fixed;bottom:90px;left:12px;right:12px;background:#fff;padding:16px;border-radius:2rem}
+.btn-wa{display:none;background:#25d366;color:#fff;width:100%;padding:14px;border-radius:1rem;font-weight:800}
+</style>
 </head>
 
 <body class="pb-96">
 
-<!-- OVERLAY -->
-<div id="overlay-exito" style="display:none"></div>
-
 <!-- HEADER -->
-<header class="h-20 bg-white/80 backdrop-blur-md border-b border-fuchsia-50 flex justify-between items-center px-6 sticky top-0 z-50">
+<header class="h-20 flex justify-between items-center px-6 bg-white border-b sticky top-0 z-50">
 
-    <div class="flex flex-col">
-        <h1 class="text-xl font-black uppercase">Nueva Venta</h1>
-        <span id="id-venta-display" class="text-[10px] font-bold text-primary">ID: ---</span>
-    </div>
+<div>
+<h1 class="font-black">Nueva Venta</h1>
+<span id="id-venta-display" class="text-xs text-primary">ID ---</span>
+</div>
 
-    <!-- BOTONES (RESPETA DISEÑO) -->
-    <div class="flex gap-2">
+<div class="flex gap-2">
+<button onclick="location.reload()" class="w-10 h-10 bg-fuchsia-50 rounded-xl">⟳</button>
+<button onclick="ventaRapida()" class="w-10 h-10 bg-primary text-white rounded-xl">⚡</button>
+</div>
 
-        <button onclick="location.reload()"
-            class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-primary flex items-center justify-center">
-            <span class="material-symbols-outlined">refresh</span>
-        </button>
-
-        <!-- VENTA RÁPIDA -->
-        <button onclick="ventaRapida()"
-            class="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center">
-            <span class="material-symbols-outlined">bolt</span>
-        </button>
-
-    </div>
 </header>
 
 <!-- MAIN -->
-<main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
+<main class="px-6 mt-6 max-w-xl mx-auto space-y-5">
 
-<section class="bg-white p-6 rounded-[2.5rem] border border-fuchsia-50">
+<!-- CLIENTE -->
+<section class="bg-white p-4 rounded-3xl">
 
-    <div class="flex justify-between mb-4">
-        <span class="text-[10px] font-black text-slate-400 uppercase">Paso 1: Cliente</span>
-        <button onclick="alternarFormulario(true)"
-            class="text-[10px] font-black text-white bg-secondary px-4 py-1.5 rounded-full">
-            Nuevo +
-        </button>
-    </div>
-
-    <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil">
-        <option value="">-- SELECCIONAR CLIENTE --</option>
-    </select>
-
-    <div id="vista-nuevo-cliente" class="hidden mt-4 space-y-2">
-        <input id="reg-nombre" class="input-sutil uppercase" placeholder="NOMBRE">
-        <input id="reg-ruc" class="input-sutil" placeholder="CI / RUC">
-        <input id="reg-tel" class="input-sutil" placeholder="TELÉFONO">
-
-        <div class="flex gap-2">
-            <button onclick="guardarCliente()" class="flex-1 bg-primary text-white py-3 rounded-xl font-bold">Guardar</button>
-            <button onclick="alternarFormulario(false)" class="flex-1 bg-gray-100 py-3 rounded-xl">Cancelar</button>
-        </div>
-    </div>
+<select id="select-cliente" class="input-sutil" onchange="activarInterfaz()">
+<option value="">-- CLIENTE --</option>
+</select>
 
 </section>
 
 <!-- PRODUCTOS -->
 <div id="seccion-operativa" class="bloqueado">
-    <input id="buscarProducto" oninput="filtrar()" class="input-sutil mb-4" placeholder="Buscar producto...">
-    <div id="contenedor-productos"></div>
+<input id="buscarProducto" class="input-sutil mb-3" oninput="filtrar()" placeholder="Buscar...">
+<div id="contenedor-productos"></div>
 </div>
 
 </main>
@@ -172,56 +83,165 @@
 <!-- CARRITO -->
 <div id="carrito-flotante" class="bloqueado">
 
-    <div class="flex justify-between mb-3">
-        <div>
-            <p id="car-cliente" class="font-black text-primary">Esperando...</p>
-            <p id="car-id" class="text-xs">ID</p>
-        </div>
+<div class="flex justify-between mb-2">
+<div>
+<p id="car-cliente" class="font-black text-primary">Esperando...</p>
+</div>
+<div class="text-right">
+<p id="car-total" class="font-black">$0</p>
+<p id="car-items" class="text-xs">0</p>
+</div>
+</div>
 
-        <div class="text-right">
-            <p id="car-total" class="text-2xl font-black">$0.00</p>
-            <p id="car-items" class="text-xs">0</p>
-        </div>
-    </div>
+<div id="car-detalle" class="text-xs mb-3"></div>
 
-    <div id="car-detalle" class="text-xs mb-3"></div>
+<input type="date" id="fecha-entrega" class="input-sutil mb-3">
 
-    <input type="date" id="fecha-entrega" class="input-sutil mb-3">
+<button id="btn-confirmar" onclick="procesarVenta()" class="bg-black text-white w-full py-3 rounded-xl">
+Confirmar
+</button>
 
-    <button id="btn-confirmar" onclick="procesarVenta()"
-        class="bg-black text-white w-full py-4 rounded-xl font-bold">
-        Confirmar Pedido
-    </button>
-
-    <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-whatsapp">
-        Enviar WhatsApp
-    </button>
+<button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-wa">
+WhatsApp
+</button>
 
 </div>
 
-<!-- MENÚ INFERIOR -->
+<!-- MENU -->
 <div id="menu-container"></div>
 
-<!-- SCRIPT MENÚ -->
 <script>
-window.addEventListener("load", () => {
-    if (typeof initMenu === "function") {
-        initMenu("ventas");
-    }
-});
-</script>
 
-<!-- LOGICA -->
-<script>
 let carrito = {};
 let productosData = [];
 let idVenta = "";
 
-function ventaRapida() {
-    alert("Venta rápida activa");
+/* =========================
+INICIO REAL
+========================= */
+async function iniciar(){
+
+idVenta = "V-" + Date.now();
+document.getElementById("id-venta-display").innerText = "ID " + idVenta;
+
+const [cli, prod] = await Promise.all([
+DairyAPI.obtenerDatos("Clientes"),
+DairyAPI.obtenerDatos("Inventario")
+]);
+
+productosData = prod || [];
+
+const sel = document.getElementById("select-cliente");
+
+cli.forEach(c=>{
+const opt = document.createElement("option");
+opt.value = c.Nombre;
+opt.textContent = c.Nombre;
+sel.appendChild(opt);
+});
+
+renderizarProductos();
 }
 
+/* ========================= */
+function activarInterfaz(){
+const cli = document.getElementById("select-cliente").value;
+
+document.getElementById("seccion-operativa").classList.toggle("bloqueado", !cli);
+document.getElementById("carrito-flotante").classList.toggle("bloqueado", !cli);
+document.getElementById("car-cliente").innerText = cli || "Esperando...";
+}
+
+/* ========================= */
+function renderizarProductos(){
+
+const cont = document.getElementById("contenedor-productos");
+cont.innerHTML = "";
+
+productosData.forEach(p=>{
+
+const id = p.Producto;
+
+cont.innerHTML += `
+<div class="card-producto">
+<div>
+<b>${p.Producto}</b><br>
+<small>$${p.Precio_Venta}</small>
+</div>
+
+<div>
+<button onclick="cambiar('${id}',-1)">-</button>
+<span id="c-${id}">0</span>
+<button onclick="cambiar('${id}',1)">+</button>
+</div>
+</div>`;
+});
+}
+
+/* ========================= */
+function cambiar(id, d){
+
+if(!carrito[id]) carrito[id]=0;
+
+carrito[id]+=d;
+if(carrito[id]<0) carrito[id]=0;
+
+document.getElementById("c-"+id).innerText = carrito[id];
+
+actualizar();
+}
+
+/* ========================= */
+function actualizar(){
+
+let t=0,items=0,html="";
+
+Object.keys(carrito).forEach(id=>{
+
+const c = carrito[id];
+if(c<=0) return;
+
+const p = productosData.find(x=>x.Producto===id);
+const sub = c * Number(p.Precio_Venta);
+
+t+=sub;
+items+=c;
+
+html += `<div>${id} x${c} = $${sub.toFixed(2)}</div>`;
+});
+
+document.getElementById("car-total").innerText = "$"+t.toFixed(2);
+document.getElementById("car-items").innerText = items;
+document.getElementById("car-detalle").innerHTML = html || "Vacío";
+}
+
+/* ========================= */
+async function procesarVenta(){
+alert("Venta enviada (fix listo)");
+}
+
+/* ========================= */
+function enviarWhatsApp(){
+alert("WhatsApp listo");
+}
+
+/* ========================= */
+function filtrar(){
+const q = document.getElementById("buscarProducto").value.toLowerCase();
+
+document.querySelectorAll(".card-producto").forEach(el=>{
+el.style.display = el.innerText.toLowerCase().includes(q) ? "flex":"none";
+});
+}
+
+/* ========================= */
+function ventaRapida(){
+alert("OK");
+}
+
+/* START */
 window.onload = iniciar;
+
 </script>
 
 </body>

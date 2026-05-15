@@ -1,57 +1,231 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Despachos | Lógica Láctea</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script src="api-config.js?v=1.4"></script>
-    <script src="menu-logic.js?v=1.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { primary: '#ea580c' } } } }
-    </script>
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Despachos - Lógica Láctea</title>
+    <!-- CONEXIÓN A ARCHIVOS RAÍZ -->
+    <link rel="stylesheet" href="estilos-lacteos.css">
+    <!-- Tailwind CSS para diseño fluido -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 para flujos de confirmación y carga -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="pb-32 bg-slate-50 text-slate-800">
-    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 bg-gradient-to-r from-orange-600 to-orange-800 text-white shadow-md">
-        <div>
-            <h1 class="text-[9px] font-black text-orange-200 uppercase tracking-widest">Distribución</h1>
-            <h2 class="text-base font-black uppercase tracking-tight">Rutas de Despacho</h2>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
+
+    <!-- EL MENÚ SE INYECTA DINÁMICAMENTE DESDE menu-logic.js -->
+    <div id="menu-container"></div>
+
+    <!-- Encabezado del Módulo -->
+    <header class="bg-cyan-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="truck" class="w-8 h-8 text-cyan-400"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Control de Despachos y Rutas</h1>
+                <p class="text-xs text-cyan-200">Monitoreo de Entregas, Estados de Envío y Logística de Última Milla</p>
+            </div>
         </div>
-        <span class="material-symbols-outlined text-2xl">local_shipping</span>
+        <button onclick="cargarDespachos()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all border border-cyan-400 shadow-sm active:scale-95">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar Rutas
+        </button>
     </header>
 
-    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
-        <div id="lista-despachos" class="grid gap-3"></div>
+    <!-- Tarjetas de Estado Logístico Rápido -->
+    <section class="max-w-7xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Órdenes en Cola</span>
+                <span id="cardPendientes" class="text-2xl font-black text-amber-600">0</span>
+            </div>
+            <div class="p-2.5 bg-amber-50 text-amber-600 rounded-lg"><i data-lucide="clock" class="w-5 h-5"></i></div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">En Tránsito</span>
+                <span id="cardRuta" class="text-2xl font-black text-cyan-600">0</span>
+            </div>
+            <div class="p-2.5 bg-cyan-50 text-cyan-600 rounded-lg"><i data-lucide="package-open" class="w-5 h-5"></i></div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+            <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Entregas Exitosas</span>
+                <span id="cardEntregados" class="text-2xl font-black text-emerald-600">0</span>
+            </div>
+            <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
+        </div>
+    </section>
+
+    <!-- Tabla de Control Transaccional -->
+    <main class="p-4 md:p-8 max-w-7xl mx-auto w-full pt-0">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                            <th class="py-3 px-6">ID Venta</th>
+                            <th class="py-3 px-4">Fecha</th>
+                            <th class="py-3 px-4">Cliente</th>
+                            <th class="py-3 px-4">Dirección de Entrega</th>
+                            <th class="py-3 px-4 text-center">Estado Actual</th>
+                            <th class="py-3 px-6 text-center">Acción Logística</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyDespachos" class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <!-- Loader Dinámico -->
+                        <tr>
+                            <td colspan="6" class="text-center py-20 text-slate-400">
+                                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-cyan-600"></i>
+                                <p class="text-xs">Maquetando hoja de ruta desde el servidor de Almacén...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
-    <nav id="menu-container"></nav>
+
+    <!-- SCRIPTS DE CONEXIÓN CON RAÍZ -->
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
 
     <script>
-        async function cargar() {
+        let despachosGlobal = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            cargarDespachos();
+        });
+
+        // Consumo utilizando la variable de entorno unificada CONFIG.WEB_APP_URL
+        async function cargarDespachos() {
             try {
-                const ventas = await DairyAPI.obtenerDatos("Ventas");
-                const pendientes = (ventas || []).filter(v => String(v.Estado).trim().toUpperCase() === "PENDIENTE");
-                renderizar(pendientes);
-            } catch(e) { console.error(e); }
-        }
-        function renderizar(lista) {
-            if(lista.length === 0) {
-                document.getElementById('lista-despachos').innerHTML = `<p class="text-center text-slate-400 font-bold py-10 text-xs uppercase">No hay despachos pendientes.</p>`;
-                return;
+                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getDespachos`);
+                const json = await res.json();
+                
+                if (json.status === "success") {
+                    despachosGlobal = json.data;
+                    renderizarDespachos(despachosGlobal);
+                    actualizarTarjetasMetricas(despachosGlobal);
+                }
+            } catch (err) {
+                console.error("Error al sincronizar bitácora de rutas:", err);
+                document.getElementById("tbodyDespachos").innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-10 text-rose-500 font-bold">
+                            <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
+                            Error de comunicación con api-config.js o Google Sheets.
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
             }
-            document.getElementById('lista-despachos').innerHTML = lista.map(v => `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-2">
-                    <div class="flex justify-between items-center">
-                        <p class="text-[10px] font-black text-orange-600 uppercase">${v.ID_Venta}</p>
-                        <span class="text-[9px] font-black text-orange-700 bg-orange-50 px-2.5 py-1 rounded-md uppercase border border-orange-100">Por Despachar</span>
-                    </div>
-                    <h3 class="text-xs font-black uppercase text-slate-800">${v.Cliente}</h3>
-                    <p class="text-[11px] font-medium text-slate-500">${v.Producto} — <span class="font-extrabold text-slate-800">${v.Cantidad} Uds</span></p>
-                </div>`).join('');
         }
-        window.onload = cargar;
+
+        // Renderizado de filas logísticas con semáforo de estados
+        function renderizarDespachos(lista) {
+            const tbody = document.getElementById("tbodyDespachos");
+            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='6' class='text-center py-10 text-slate-400 italic'>No hay órdenes registradas pendientes de despacho.</td></tr>";
+
+            lista.forEach(d => {
+                let badgeClass = "";
+                let botonAccion = "";
+                const estado = (d.estado || "PENDIENTE").toUpperCase();
+
+                // Reglas visuales según el estado del ciclo de vida del pedido
+                if (estado === "PENDIENTE") {
+                    badgeClass = "bg-amber-100 text-amber-800 border border-amber-200";
+                    botonAccion = `
+                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'EN RUTA')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95">
+                            <i data-lucide="play" class="w-3 h-3"></i> Despachar
+                        </button>
+                    `;
+                } else if (estado === "EN RUTA") {
+                    badgeClass = "bg-cyan-100 text-cyan-800 border border-cyan-200 animate-pulse";
+                    botonAccion = `
+                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'ENTREGADO')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95">
+                            <i data-lucide="check" class="w-3 h-3"></i> Entregado
+                        </button>
+                    `;
+                } else if (estado === "ENTREGADO") {
+                    badgeClass = "bg-emerald-100 text-emerald-800 border border-emerald-200";
+                    botonAccion = `
+                        <span class="text-slate-400 text-[11px] italic flex items-center justify-center gap-1">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Finalizado
+                        </span>
+                    `;
+                }
+
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3.5 px-6 font-mono font-bold text-slate-500">#${d.idVenta}</td>
+                    <td class="py-3.5 px-4 font-mono text-xs">${d.fecha || '-'}</td>
+                    <td class="py-3.5 px-4 font-black text-slate-800">${d.cliente}</td>
+                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${d.direccion || ''}">${d.direccion || '<span class="text-slate-300 italic">Retira en local</span>'}</td>
+                    <td class="py-3.5 px-4 text-center">
+                        <span class="px-2 py-0.5 rounded-md font-black text-[10px] uppercase tracking-wider ${badgeClass}">
+                            ${estado}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-6 text-center">${botonAccion}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // Calcula el conteo de indicadores superiores
+        function actualizarTarjetasMetricas(lista) {
+            let p = 0, r = 0, e = 0;
+            lista.forEach(d => {
+                const est = (d.estado || "PENDIENTE").toUpperCase();
+                if (est === "PENDIENTE") p++;
+                else if (est === "EN RUTA") r++;
+                else if (est === "ENTREGADO") e++;
+            });
+            document.getElementById("cardPendientes").innerText = p;
+            document.getElementById("cardRuta").innerText = r;
+            document.getElementById("cardEntregados").innerText = e;
+        }
+
+        // Envía la mutación de estado a las hojas de Google Sheets usando POST
+        async function actualizarEstadoDespacho(idVenta, nuevoEstado) {
+            Swal.fire({
+                title: 'Actualizando Bitácora...',
+                text: `Cambiando orden al estado: ${nuevoEstado}`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const payload = {
+                action: "actualizarEstadoDespacho",
+                idVenta: idVenta,
+                estado: nuevoEstado,
+                fechaCambio: new Date().toISOString().split('T')[0]
+            };
+
+            try {
+                await fetch(CONFIG.WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                Swal.fire({
+                    title: 'Ruta Actualizada',
+                    text: `El pedido #${idVenta} avanzó en la cadena de distribución con éxito.`,
+                    icon: 'success',
+                    confirmButtonColor: '#0891b2'
+                });
+                
+                cargarDespachos(); // Refresca la vista completa para ver el salto de estado
+            } catch (err) {
+                Swal.fire("Error Logístico", "No se pudo sincronizar el cambio de estado con el servidor central.", "error");
+            }
+        }
     </script>
 </body>
 </html>

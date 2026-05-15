@@ -13,7 +13,7 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { primary: '#6b21a8', outline: '#e2e8f0' }
+                    colors: { primary: '#6b21a8', outline: '#e2e8f0', surface: '#ffffff', textPrimary: '#1e293b' }
                 }
             }
         }
@@ -21,8 +21,7 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
         .glass-header { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
-        .card-recepcion { border-left: 6px solid #6b21a8; transition: transform 0.2s; }
-        .card-recepcion:active { transform: scale(0.97); }
+        .card-recepcion { border-left: 5px solid #6b21a8; }
     </style>
 </head>
 <body class="pb-32 bg-slate-50 text-slate-800">
@@ -71,7 +70,7 @@
                 <textarea id="nota-recepcion" placeholder="Ej: Faltó un ítem, el empaque llegó dañado..." class="w-full rounded-xl border-slate-200 text-xs p-3 focus:ring-purple-500" rows="2"></textarea>
             </div>
             <div class="p-6 bg-white">
-                <button id="btn-confirmar" onclick="confirmarIngreso()" class="w-full glass-header text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                <button id="btn-confirmar" onclick="confirmarIngreso()" class="w-full glass-header text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs tracking-widest flex items-center justify-center gap-2 transition-transform active:scale-95">
                     <span class="material-symbols-outlined text-lg">inventory_2</span> Confirmar e Ingresar Stock
                 </button>
             </div>
@@ -100,9 +99,8 @@
             }
             contenedor.innerHTML = Object.keys(grupos).map(id => {
                 const principal = grupos[id][0];
-                const diffDias = Math.floor((new Date() - new Date(principal.Fecha)) / (1000 * 60 * 60 * 24));
                 return `
-                <div onclick="abrirModal('${id}')" class="card-recepcion bg-white p-5 flex justify-between items-center shadow-sm rounded-2xl border border-slate-100">
+                <div onclick="abrirModal('${id}')" class="card-recepcion bg-white p-5 flex justify-between items-center shadow-sm rounded-2xl border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors">
                     <div>
                         <div class="flex items-center gap-2 mb-1">
                             <p class="text-[10px] font-black text-purple-700 uppercase">${id}</p>
@@ -127,22 +125,22 @@
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
                     <div>
                         <p class="text-xs font-black uppercase text-slate-700 leading-tight">${item.Producto}</p>
-                        <p class="text-[10px] text-slate-400 font-medium">Pedido original: ${item.Cantidad} uds</p>
+                        <p class="text-[10px] text-slate-400 font-bold mt-0.5">Pedido original: ${item.Cantidad} uds</p>
                     </div>
-                    <input type="number" oninput="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" class="w-16 text-center font-black text-purple-700 border-purple-700 rounded-xl py-1 text-sm bg-white">
+                    <input type="number" oninput="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" class="w-20 text-center font-black text-purple-700 border-slate-200 rounded-xl py-1.5 text-sm bg-white focus:ring-purple-500 focus:border-purple-500">
                 </div>`).join('');
         }
         function actualizarCantidad(index, val) { itemsEnEdicion[index].Cantidad = parseFloat(val) || 0; }
         async function confirmarIngreso() {
             const btn = document.getElementById('btn-confirmar');
-            btn.disabled = true; btn.innerHTML = `PROCESANDO...`;
+            btn.disabled = true; btn.innerHTML = `PROCESANDO INGRESO...`;
             try {
                 const res = await DairyAPI.guardarDatos("Compras", {
                     pestaña: "Compras", accion: "recepcion_final", id_operacion: idSeleccionado,
                     observaciones: document.getElementById('nota-recepcion').value, datos_actualizados: JSON.stringify(itemsEnEdicion)
                 });
                 if (res === "OK") { cerrarModal(); location.reload(); } else { alert(res); }
-            } catch (e) { alert("Error de comunicación."); } finally { btn.disabled = false; }
+            } catch (e) { alert("Error de comunicación con el servidor."); } finally { btn.disabled = false; }
         }
         function cerrarModal() { document.getElementById('modal-confirmar').classList.add('hidden'); }
         function filtrarPedidos() {

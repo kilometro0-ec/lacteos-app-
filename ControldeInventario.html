@@ -8,9 +8,6 @@
     <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    
-    <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
@@ -142,8 +139,6 @@
     <span class="material-symbols-outlined text-3xl">add</span>
 </button>
 
-<div id="menu-container"></div>
-
 <!-- MODAL: GESTIÓN DE STOCK -->
 <div id="modal-stock" class="modal-custom">
     <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center shadow-2xl">
@@ -173,12 +168,72 @@
 </div>
 
 <script>
+// ==================== API CONFIGURACIÓN ====================
+const API_URL = "https://script.google.com/macros/s/AKfycbxabIAD-6st9we-W1KI6zKPAcFM842eu8RNos23QWAxP0jvzSahbAbEyYgQzAqz0J8c6A/exec";
+
+const DairyAPI = {
+  async obtenerDatos(pestaña) {
+    try {
+      const res = await fetch(`${API_URL}?pestaña=${pestaña}`);
+      const json = await res.json();
+      return json.data || [];
+    } catch (error) {
+      console.error("Error en obtenerDatos:", error);
+      throw error;
+    }
+  },
+
+  async enviarDatos(data) {
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data)
+      });
+      return await res.json();
+    } catch (error) {
+      console.error("Error en enviarDatos:", error);
+      throw error;
+    }
+  },
+
+  async crearDato(pestaña, datos) {
+    const payload = {
+      pestaña: pestaña,
+      ...datos
+    };
+    return await this.enviarDatos(payload);
+  },
+
+  async actualizarDato(pestaña, id, datos) {
+    const payload = {
+      pestaña: pestaña,
+      ID: id,
+      ...datos
+    };
+    return await this.enviarDatos(payload);
+  },
+
+  async eliminarDato(pestaña, id) {
+    const payload = {
+      pestaña: pestaña,
+      accion: "ELIMINAR",
+      ID: id
+    };
+    return await this.enviarDatos(payload);
+  }
+};
+
+// ==================== VARIABLES GLOBALES ====================
 let inventarioLocal = [];
 let seleccionados = new Set();
 let modoSeleccion = false;
 let productoActivo = null;
 let timerHold;
 
+// ==================== FUNCIONES DE CARGA ====================
 function mostrarLoading(mostrar) {
     document.getElementById('overlay-loading').style.display = mostrar ? 'flex' : 'none';
 }
@@ -188,13 +243,26 @@ async function cargarInventario() {
     try {
         const res = await DairyAPI.obtenerDatos("Inventario");
         if (Array.isArray(res)) {
-            inventarioLocal = res;
+            // Mapear correctamente los campos según la hoja de Inventario
+            inventarioLocal = res.map(item => ({
+                Fecha: item.Fecha,
+                ID: item.ID,
+                Producto: item.Producto,
+                Stock: Number(item.Stock) || 0,
+                Precio_Distribuidor: Number(item.Precio_Distribuidor) || 0,
+                Precio_Venta: Number(item.Precio_Venta) || 0,
+                Ventas: Number(item.Ventas) || 0,
+                Proveedor: item["Proveedor Habitual"] || "GENERAL"
+            }));
+            
             const sync = document.getElementById('sync-indicator');
             sync.innerText = "CONECTADO ✓";
             sync.className = "text-[9px] font-black text-green-500";
             renderizar(inventarioLocal);
+        } else {
+            throw new Error("Datos no válidos");
         }
-    } catch (e) { 
+    } catch(e) { 
         console.error(e);
         document.getElementById('sync-indicator').innerText = "ERROR DE CONEXIÓN";
         alert("Error al cargar inventario: " + e.message);
@@ -202,6 +270,7 @@ async function cargarInventario() {
     mostrarLoading(false);
 }
 
+// ==================== RENDERIZADO ====================
 function renderizar(lista) {
     const container = document.getElementById('grid-productos');
     const stats = document.getElementById('stats-header');
@@ -211,7 +280,7 @@ function renderizar(lista) {
     lista.forEach(p => {
         const stock = Number(p.Stock) || 0;
         const ventas = Number(p.Ventas) || 0;
-        const pvp = Number(p.Precio_Venta || 0);
+        const pvp = Number(p.Precio_Venta) || 0;
         
         if(stock <= 5) criticos++;
         stockTotal += stock;
@@ -233,7 +302,7 @@ function renderizar(lista) {
             </div>
         `;
 
-        // Lógica de selección múltiple
+        // Lógica de selección múltiple (hold)
         const startHold = (e) => {
             timerHold = setTimeout(() => {
                 modoSeleccion = true;
@@ -278,6 +347,7 @@ function escapeHtml(str) {
     });
 }
 
+// ==================== SELECCIÓN MÚLTIPLE ====================
 function toggleSeleccion(id) {
     seleccionados.has(id) ? seleccionados.delete(id) : seleccionados.add(id);
     const btnDel = document.getElementById('btn-bulk-delete');
@@ -324,6 +394,7 @@ async function eliminarVarios() {
     }
 }
 
+// ==================== GESTIÓN DE STOCK ====================
 function abrirGestionStock(p) {
     productoActivo = p;
     document.getElementById('stk-prod-name').innerText = p.Producto;
@@ -362,6 +433,7 @@ async function confirmarStock() {
     await cargarInventario();
 }
 
+// ==================== CREAR PRODUCTO ====================
 async function guardarNuevo() {
     const btn = document.getElementById('btn-guardar-nuevo');
     const nombre = document.getElementById('n-nombre').value.trim().toUpperCase();
@@ -379,6 +451,7 @@ async function guardarNuevo() {
     }
 
     const nuevoProducto = {
+        pestaña: "Inventario",
         Fecha: new Date().toISOString().split('T')[0],
         ID: `P-${Date.now().toString().slice(-6)}`,
         Producto: nombre,
@@ -386,22 +459,34 @@ async function guardarNuevo() {
         Precio_Distribuidor: precioDist,
         Precio_Venta: precioVenta,
         Ventas: 0,
-        Proveedor: "GENERAL"
+        "Proveedor Habitual": "GENERAL"
     };
+
+    console.log("Enviando producto:", nuevoProducto);
 
     btn.disabled = true;
     mostrarLoading(true);
     
     try {
-        await DairyAPI.crearDato("Inventario", nuevoProducto);
+        const resultado = await DairyAPI.enviarDatos(nuevoProducto);
+        console.log("Respuesta:", resultado);
+        
+        if (resultado && resultado.error) {
+            throw new Error(resultado.error);
+        }
+        
         alert("✅ Producto creado exitosamente");
         cerrarModal('modal-nuevo-prod');
+        
+        // Limpiar campos
         document.getElementById('n-nombre').value = "";
         document.getElementById('n-dist').value = "";
         document.getElementById('n-pvp').value = "";
         document.getElementById('n-stock').value = "";
+        
         await cargarInventario();
     } catch(e) {
+        console.error("Error detallado:", e);
         alert("❌ Error al crear: " + e.message);
     }
     
@@ -409,6 +494,7 @@ async function guardarNuevo() {
     mostrarLoading(false);
 }
 
+// ==================== REPORTES PDF ====================
 function descargarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
@@ -436,13 +522,22 @@ function descargarPDF() {
     doc.save('Inventario_Lacteo.pdf');
 }
 
-function abrirModal(id) { document.getElementById(id).classList.add('active'); }
-function cerrarModal(id) { document.getElementById(id).classList.remove('active'); }
-function filtrar() { 
-    const b = document.getElementById('filtro').value.toLowerCase();
-    renderizar(inventarioLocal.filter(p => p.Producto.toLowerCase().includes(b))); 
+// ==================== UTILIDADES ====================
+function abrirModal(id) { 
+    document.getElementById(id).classList.add('active'); 
 }
 
+function cerrarModal(id) { 
+    document.getElementById(id).classList.remove('active'); 
+}
+
+function filtrar() { 
+    const busqueda = document.getElementById('filtro').value.toLowerCase();
+    const filtrados = inventarioLocal.filter(p => p.Producto.toLowerCase().includes(busqueda));
+    renderizar(filtrados); 
+}
+
+// ==================== INICIALIZACIÓN ====================
 window.onload = cargarInventario;
 </script>
 

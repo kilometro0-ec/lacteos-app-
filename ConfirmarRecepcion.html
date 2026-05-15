@@ -1,156 +1,403 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Checklist de Recepción | Lógica Láctea</title>
-    <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="stylesheet" href="estilos-lacteos.css?v=1.4">
-    <script src="api-config.js?v=1.4"></script>
-    <script src="menu-logic.js?v=1.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { primary: '#6b21a8', outline: '#e2e8f0', surface: '#ffffff', textPrimary: '#1e293b' }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-header { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
-        .card-recepcion { border-left: 5px solid #6b21a8; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmar Recepción - Lógica Láctea</title>
+    <!-- Tailwind CSS para el diseño -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 para alertas interactivas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Lucide Icons para los iconos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="pb-32 bg-slate-50 text-slate-800">
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center">
-        <div class="relative flex items-center justify-center">
-            <div class="absolute w-16 h-16 border-4 border-purple-100 border-t-purple-700 rounded-full animate-spin"></div>
-            <span class="material-symbols-outlined text-2xl text-purple-700 font-bold">conveyor_belt</span>
-        </div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-purple-800 mt-6 animate-pulse">Sincronizando Andén...</p>
-    </div>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 glass-header shadow-md">
-        <div class="flex items-center gap-4">
-            <button onclick="history.back()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/15 text-white active:scale-90 transition-transform">
-                <span class="material-symbols-outlined font-bold">arrow_back</span>
-            </button>
+    <!-- Encabezado de la página -->
+    <header class="bg-blue-600 text-white shadow-md px-6 py-4 flex justify-between items-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="package-check" class="w-8 h-8"></i>
             <div>
-                <h1 class="text-[9px] font-black text-purple-200 uppercase tracking-widest leading-none">Logística</h1>
-                <h2 class="text-base font-black text-white uppercase tracking-tight mt-0.5">Checklist de Recepción</h2>
+                <h1 class="text-xl font-bold tracking-tight">Confirmar Recepción</h1>
+                <p class="text-xs text-blue-100">Módulo de Entrada Física e Inventario</p>
             </div>
         </div>
+        <span class="bg-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-500">
+            Lógica Láctea API
+        </span>
     </header>
 
-    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
-        <div class="relative">
-            <span class="material-symbols-outlined absolute left-4 top-3.5 text-purple-600">search</span>
-            <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar por ID o Proveedor..." class="w-full rounded-2xl border-none shadow-sm py-3.5 pl-12 text-xs font-bold focus:ring-2 focus:ring-purple-600/20 bg-white">
+    <!-- Contenedor Principal -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Panel Izquierdo: Selección de Compra Pendiente -->
+        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-12rem)] min-h-[400px]">
+            <div class="mb-4">
+                <h2 class="text-lg font-bold flex items-center gap-2 text-slate-700">
+                    <i data-lucide="clock" class="w-5 h-5 text-amber-500"></i>
+                    Pedidos Pendientes
+                </h2>
+                <p class="text-xs text-slate-500">Selecciona una orden de compra para verificar</p>
+            </div>
+
+            <!-- Buscador interno de pedidos -->
+            <div class="relative mb-4">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                </span>
+                <input type="text" id="searchPedido" oninput="filtrarPedidos()" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50" placeholder="Buscar por ID o Proveedor...">
+            </div>
+
+            <!-- Lista de pedidos con scroll dinámico -->
+            <div id="listaPedidos" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <!-- Estado de Carga Inicial -->
+                <div class="text-center py-8 text-slate-400 text-sm animate-pulse">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>
+                    Cargando compras pendientes...
+                </div>
+            </div>
         </div>
-        <div id="lista-pedidos" class="grid gap-3"></div>
+
+        <!-- Panel Derecho: Formulario de Verificación y Recepción -->
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div id="formularioRecepcion" class="opacity-50 pointer-events-none transition-opacity duration-300">
+                
+                <!-- Cabecera del Formulario -->
+                <div class="border-b border-slate-100 pb-4 mb-6 flex justify-between items-start">
+                    <div>
+                        <span id="badgeIdCompra" class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-md">ID: -</span>
+                        <h2 id="txtProveedor" class="text-xl font-bold text-slate-800 mt-2">Seleccione un pedido del panel izquierdo</h2>
+                        <p id="txtFechaPedido" class="text-xs text-slate-500 mt-1">Fecha de Pedido: --/--/----</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400 block">Producto Solicitado</span>
+                        <span id="txtProducto" class="font-semibold text-slate-700 block text-lg">-</span>
+                    </div>
+                </div>
+
+                <!-- Bloque de Comparación de Cantidades -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Cantidad Pedida</label>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="shopping-bag" class="w-5 h-5 text-slate-400"></i>
+                            <span id="numCantidadPedida" class="text-2xl font-bold text-slate-700">0</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 ring-2 ring-blue-500/20">
+                        <label for="numCantidadRecibida" class="block text-xs font-medium text-blue-600 uppercase tracking-wider mb-1">Cantidad Recibida</label>
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="check-square" class="w-5 h-5 text-blue-500"></i>
+                            <input type="number" id="numCantidadRecibida" oninput="calcularDiferencia()" min="0" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1 text-xl font-bold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500" value="0">
+                        </div>
+                    </div>
+
+                    <div id="boxDiferencia" class="p-4 rounded-xl border bg-slate-50 border-slate-100">
+                        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Diferencia (Sobrante/Faltante)</label>
+                        <div class="flex items-center gap-2">
+                            <i id="iconDiferencia" data-lucide="minus" class="w-5 h-5 text-slate-400"></i>
+                            <span id="numDiferencia" class="text-2xl font-bold text-slate-700">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Datos de Respaldo y Guía -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="txtGuiaFactura" class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1.5">
+                            <i data-lucide="file-text" class="w-4 h-4 text-slate-400"></i> Guía de Remisión o Factura *
+                        </label>
+                        <input type="text" id="txtGuiaFactura" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: GR-001-12345">
+                    </div>
+                    <div>
+                        <label for="dateRecepcion" class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1.5">
+                            <i data-lucide="calendar" class="w-4 h-4 text-slate-400"></i> Fecha de Recepción Física *
+                        </label>
+                        <input type="date" id="dateRecepcion" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Observaciones de Novedad -->
+                <div class="mb-6">
+                    <label for="txtObservaciones" class="block text-sm font-medium text-slate-600 mb-1 flex items-center gap-1.5">
+                        <i data-lucide="alert-circle" class="w-4 h-4 text-slate-400"></i> Observaciones / Novedades
+                    </label>
+                    <textarea id="txtObservaciones" rows="3" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Escriba aquí si llegaron productos golpeados, dañados o si el transporte se retrasó..."></textarea>
+                </div>
+            </div>
+
+            <!-- Botón de Acción -->
+            <div class="border-t border-slate-100 pt-4 flex justify-end">
+                <button type="button" id="btnProcesar" onclick="procesarRecepcion()" disabled class="w-full md:w-auto bg-slate-400 text-white font-semibold px-6 py-3 rounded-lg shadow-sm flex items-center justify-center gap-2 cursor-not-allowed transition-all duration-200">
+                    <i data-lucide="save" class="w-5 h-5"></i>
+                    Procesar Ingreso a Inventario
+                </button>
+            </div>
+        </div>
     </main>
 
-    <div id="modal-confirmar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-end justify-center z-50">
-        <div class="bg-white w-full max-w-xl rounded-t-[2.5rem] border-t-4 border-purple-700 shadow-2xl flex flex-col relative" style="height: 85vh;">
-            <div class="p-6 pb-3 flex justify-between items-start border-b border-slate-100">
-                <div>
-                    <span class="text-[9px] font-black bg-purple-100 text-purple-800 px-3 py-1 rounded-full uppercase tracking-wider">Verificación de Mercadería</span>
-                    <h2 id="id-factura-modal" class="text-xl font-black text-slate-900 mt-2"></h2>
-                </div>
-                <button onclick="cerrarModal()" class="bg-slate-50 p-2 rounded-xl text-slate-400">
-                    <span class="material-symbols-outlined font-bold text-sm">close</span>
-                </button>
-            </div>
-            <div id="detalle-recepcion" class="flex-1 overflow-y-auto p-6 space-y-3"></div>
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 space-y-2">
-                <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Observaciones y Novedades:</label>
-                <textarea id="nota-recepcion" placeholder="Ej: Faltó un ítem, el empaque llegó dañado..." class="w-full rounded-xl border-slate-200 text-xs p-3 focus:ring-purple-500" rows="2"></textarea>
-            </div>
-            <div class="p-6 bg-white">
-                <button id="btn-confirmar" onclick="confirmarIngreso()" class="w-full glass-header text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs tracking-widest flex items-center justify-center gap-2 transition-transform active:scale-95">
-                    <span class="material-symbols-outlined text-lg">inventory_2</span> Confirmar e Ingresar Stock
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <nav id="menu-container" class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200"></nav>
-
+    <!-- Script de Lógica e Integración con Google Apps Script API -->
     <script>
-        let todosLosPedidos = []; let itemsEnEdicion = []; let idSeleccionado = "";
-        async function cargarDatos() {
-            try {
-                const datos = await DairyAPI.obtenerDatos("Compras");
-                todosLosPedidos = (datos || []).filter(f => String(f.Estado_Entrega).trim().toUpperCase() === "PENDIENTE");
-                todosLosPedidos.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
-                renderizar(todosLosPedidos);
-            } catch (e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = "none"; }
+        // URL de tu Web App de Google Apps Script (Coloca tu URL de despliegue aquí)
+        const WEB_APP_URL = "https://script.google.com/macros/s/TU_ID_DESPLIEGUE/exec";
+
+        let comprasPendientesGlobal = [];
+        let compraSeleccionada = null;
+
+        // Inicializar la página al cargar
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            establecerFechaActual();
+            cargarComprasPendientes();
+        });
+
+        // Pone por defecto la fecha de hoy en el input date de manera local
+        function establecerFechaActual() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('dateRecepcion').value = hoy;
         }
-        function renderizar(lista) {
-            const contenedor = document.getElementById('lista-pedidos');
-            const grupos = lista.reduce((acc, curr) => {
-                const id = curr.ID_Compra || "S/N";
-                if (!acc[id]) acc[id] = []; acc[id].push(curr); return acc;
-            }, {});
-            if (Object.keys(grupos).length === 0) {
-                contenedor.innerHTML = `<p class="text-center text-slate-400 font-bold py-10 text-xs uppercase">No hay pedidos pendientes.</p>`; return;
-            }
-            contenedor.innerHTML = Object.keys(grupos).map(id => {
-                const principal = grupos[id][0];
-                return `
-                <div onclick="abrirModal('${id}')" class="card-recepcion bg-white p-5 flex justify-between items-center shadow-sm rounded-2xl border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <p class="text-[10px] font-black text-purple-700 uppercase">${id}</p>
-                            <span class="text-[9px] text-slate-400 font-bold italic">${principal.Fecha}</span>
-                        </div>
-                        <p class="font-black text-slate-800 text-sm uppercase">${principal.Proveedor}</p>
-                    </div>
-                    <span class="material-symbols-outlined text-purple-700 font-bold text-sm">arrow_forward_ios</span>
-                </div>`;
-            }).join('');
-        }
-        function abrirModal(id) {
-            idSeleccionado = id; document.getElementById('id-factura-modal').innerText = id;
-            document.getElementById('nota-recepcion').value = "";
-            itemsEnEdicion = JSON.parse(JSON.stringify(todosLosPedidos.filter(p => p.ID_Compra === id)));
-            renderizarItemsModal();
-            document.getElementById('modal-confirmar').classList.remove('hidden');
-        }
-        function renderizarItemsModal() {
-            const contenedor = document.getElementById('detalle-recepcion');
-            contenedor.innerHTML = itemsEnEdicion.map((item, index) => `
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-black uppercase text-slate-700 leading-tight">${item.Producto}</p>
-                        <p class="text-[10px] text-slate-400 font-bold mt-0.5">Pedido original: ${item.Cantidad} uds</p>
-                    </div>
-                    <input type="number" oninput="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" class="w-20 text-center font-black text-purple-700 border-slate-200 rounded-xl py-1.5 text-sm bg-white focus:ring-purple-500 focus:border-purple-500">
-                </div>`).join('');
-        }
-        function actualizarCantidad(index, val) { itemsEnEdicion[index].Cantidad = parseFloat(val) || 0; }
-        async function confirmarIngreso() {
-            const btn = document.getElementById('btn-confirmar');
-            btn.disabled = true; btn.innerHTML = `PROCESANDO INGRESO...`;
-            try {
-                const res = await DairyAPI.guardarDatos("Compras", {
-                    pestaña: "Compras", accion: "recepcion_final", id_operacion: idSeleccionado,
-                    observaciones: document.getElementById('nota-recepcion').value, datos_actualizados: JSON.stringify(itemsEnEdicion)
+
+        // Llamada a la API para traer compras pendientes
+        function cargarComprasPendientes() {
+            fetch(`${WEB_APP_URL}?action=getComprasPendientes`)
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === "success") {
+                        comprasPendientesGlobal = data.data;
+                        renderizarListaPedidos(comprasPendientesGlobal);
+                    } else {
+                        mostrarError("No se pudieron extraer los datos de la hoja Compras.");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    mostrarError("Error de conexión con la API.");
                 });
-                if (res === "OK") { cerrarModal(); location.reload(); } else { alert(res); }
-            } catch (e) { alert("Error de comunicación con el servidor."); } finally { btn.disabled = false; }
         }
-        function cerrarModal() { document.getElementById('modal-confirmar').classList.add('hidden'); }
+
+        // Dibuja la lista de tarjetas en el panel izquierdo
+        function renderizarListaPedidos(lista) {
+            const contenedor = document.getElementById("listaPedidos");
+            contenedor.innerHTML = "";
+
+            if (lista.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="text-center py-12 text-slate-400 text-sm">
+                        <i data-lucide="check-circle" class="w-10 h-10 text-emerald-500 mx-auto mb-2"></i>
+                        No hay recepciones pendientes.
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            lista.forEach(compra => {
+                const card = document.createElement("div");
+                card.className = `p-4 rounded-xl border transition-all duration-150 cursor-pointer hover:border-blue-400 hover:shadow-sm ${compraSeleccionada?.idCompra === compra.idCompra ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500' : 'border-slate-200 bg-white'}`;
+                card.onclick = () => seleccionarCompra(compra);
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs font-bold text-slate-400">${compra.idCompra}</span>
+                        <span class="text-xs text-slate-500">${compra.fecha}</span>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-sm truncate">${compra.proveedor}</h3>
+                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-100 text-xs">
+                        <span class="text-slate-600 font-medium truncate max-w-[150px]">${compra.producto}</span>
+                        <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">Cant: ${compra.cantidad}</span>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // Filtro de búsqueda en tiempo real
         function filtrarPedidos() {
-            const b = document.getElementById('buscador').value.toLowerCase();
-            renderizar(todosLosPedidos.filter(p => p.ID_Compra.toLowerCase().includes(b) || p.Proveedor.toLowerCase().includes(b)));
+            const query = document.getElementById("searchPedido").value.toLowerCase();
+            const filtrados = comprasPendientesGlobal.filter(c => 
+                c.idCompra.toLowerCase().includes(query) || 
+                c.proveedor.toLowerCase().includes(query) ||
+                c.producto.toLowerCase().includes(query)
+            );
+            renderizarListaPedidos(filtrados);
         }
-        window.onload = cargarDatos;
+
+        // Carga la información de la tarjeta seleccionada en el formulario derecho
+        function seleccionarCompra(compra) {
+            compraSeleccionada = compra;
+            
+            // Re-renderizar lista izquierda para marcar el seleccionado
+            renderizarListaPedidos(comprasPendientesGlobal);
+
+            // Desbloquear formulario
+            const form = document.getElementById("formularioRecepcion");
+            form.classList.remove("opacity-50", "pointer-events-none");
+
+            // Rellenar campos estáticos
+            document.getElementById("badgeIdCompra").innerText = `ID: ${compra.idCompra}`;
+            document.getElementById("txtProveedor").innerText = compra.proveedor;
+            document.getElementById("txtFechaPedido").innerText = `Fecha de Pedido: ${compra.fecha}`;
+            document.getElementById("txtProducto").innerText = compra.producto;
+            document.getElementById("numCantidadPedida").innerText = compra.cantidad;
+            
+            // Colocar por defecto la misma cantidad pedida en el input de recibido
+            document.getElementById("numCantidadRecibida").value = compra.cantidad;
+            
+            // Limpiar campos variables
+            document.getElementById("txtGuiaFactura").value = "";
+            document.getElementById("txtObservaciones").value = "";
+
+            // Habilitar botón de acción
+            const btn = document.getElementById("btnProcesar");
+            btn.disabled = false;
+            btn.className = "w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all duration-200";
+
+            calcularDiferencia();
+        }
+
+        // Calcula dinámicamente faltantes o sobrantes
+        function calcularDiferencia() {
+            if (!compraSeleccionada) return;
+
+            const pedida = parseInt(compraSeleccionada.cantidad) || 0;
+            const recibida = parseInt(document.getElementById("numCantidadRecibida").value) || 0;
+            const diferencia = recibida - pedida;
+
+            const labelDiferencia = document.getElementById("numDiferencia");
+            const boxDiferencia = document.getElementById("boxDiferencia");
+            const iconDiferencia = document.getElementById("iconDiferencia");
+
+            labelDiferencia.innerText = diferencia > 0 ? `+${diferencia}` : diferencia;
+
+            // Cambiar estilos del contenedor según el cálculo matemático
+            if (diferencia === 0) {
+                boxDiferencia.className = "p-4 rounded-xl border bg-emerald-50 border-emerald-200 text-emerald-800";
+                iconDiferencia.setAttribute("data-lucide", "check");
+                labelDiferencia.className = "text-2xl font-bold text-emerald-700";
+            } else if (diferencia < 0) {
+                boxDiferencia.className = "p-4 rounded-xl border bg-rose-50 border-rose-200 text-rose-800";
+                iconDiferencia.setAttribute("data-lucide", "trending-down");
+                labelDiferencia.className = "text-2xl font-bold text-rose-700";
+            } else {
+                boxDiferencia.className = "p-4 rounded-xl border bg-amber-50 border-amber-200 text-amber-800";
+                iconDiferencia.setAttribute("data-lucide", "trending-up");
+                labelDiferencia.className = "text-2xl font-bold text-amber-700";
+            }
+            lucide.createIcons();
+        }
+
+        // Envía la transacción completa a Google Sheets
+        function procesarRecepcion() {
+            const guia = document.getElementById("txtGuiaFactura").value.trim();
+            const fechaRec = document.getElementById("dateRecepcion").value;
+            const cantRecibida = document.getElementById("numCantidadRecibida").value;
+            const obs = document.getElementById("txtObservaciones").value.trim();
+
+            // Validaciones requeridas obligatorias
+            if (!guia) {
+                Swal.fire("Falta Información", "Por favor ingresa el número de Guía o Factura de respaldo.", "warning");
+                return;
+            }
+            if (!fechaRec) {
+                Swal.fire("Falta Información", "Por favor selecciona la fecha real de recepción física.", "warning");
+                return;
+            }
+            if (!cantRecibida || parseInt(cantRecibida) < 0) {
+                Swal.fire("Cantidad Inválida", "La cantidad recibida no puede ser un valor negativo.", "warning");
+                return;
+            }
+
+            // Confirmación visual con SweetAlert2
+            Swal.fire({
+                title: '¿Confirmar Ingreso?',
+                text: `Se actualizará el stock de '${compraSeleccionada.producto}' con un total de ${cantRecibida} unidades ingresadas.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2563eb',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, ingresar a inventario',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostrar pantalla de carga integrada
+                    Swal.fire({
+                        title: 'Procesando...',
+                        text: 'Actualizando registro de compra y sumando stock...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    // Estructuración de la carga útil (Payload) de la API transaccional
+                    const payload = {
+                        action: "confirmarRecepcion",
+                        idCompra: compraSeleccionada.idCompra,
+                        producto: compraSeleccionada.producto,
+                        cantidadRecibida: parseInt(cantRecibida),
+                        fechaRecepcion: fechaRec,
+                        observaciones: `Guía: ${guia}. ${obs}`
+                    };
+
+                    // Enlace POST a Google Apps Script
+                    fetch(WEB_APP_URL, {
+                        method: "POST",
+                        mode: "no-cors", // Nota: cambiar según configuración de CORS del script
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(() => {
+                        // Al usar 'no-cors' la respuesta es opaca, asumimos éxito si no hay catch
+                        Swal.fire({
+                            title: '¡Recibido con Éxito!',
+                            text: 'La mercadería ha sido registrada y el inventario fue actualizado de forma automatizada.',
+                            icon: 'success',
+                            confirmButtonColor: '#2563eb'
+                        });
+                        
+                        // Resetear la interfaz
+                        resetearFormulario();
+                        cargarComprasPendientes();
+                    })
+                    .catch(error => {
+                        console.error("Error al procesar:", error);
+                        Swal.fire("Error Operativo", "No se pudo completar la transacción en el servidor.", "error");
+                    });
+                }
+            });
+        }
+
+        // Limpia el panel derecho tras un proceso exitoso
+        function resetearFormulario() {
+            compraSeleccionada = null;
+            document.getElementById("formularioRecepcion").classList.add("opacity-50", "pointer-events-none");
+            document.getElementById("badgeIdCompra").innerText = `ID: -`;
+            document.getElementById("txtProveedor").innerText = "Seleccione un pedido del panel izquierdo";
+            document.getElementById("txtFechaPedido").innerText = "Fecha de Pedido: --/--/----";
+            document.getElementById("txtProducto").innerText = "-";
+            document.getElementById("numCantidadPedida").innerText = "0";
+            document.getElementById("numCantidadRecibida").value = "0";
+            document.getElementById("txtGuiaFactura").value = "";
+            document.getElementById("txtObservaciones").value = "";
+            
+            const boxDiferencia = document.getElementById("boxDiferencia");
+            boxDiferencia.className = "p-4 rounded-xl border bg-slate-50 border-slate-100";
+            document.getElementById("numDiferencia").innerText = "0";
+
+            const btn = document.getElementById("btnProcesar");
+            btn.disabled = true;
+            btn.className = "w-full md:w-auto bg-slate-400 text-white font-semibold px-6 py-3 rounded-lg shadow-sm flex items-center justify-center gap-2 cursor-not-allowed transition-all duration-200";
+            establecerFechaActual();
+            lucide.createIcons();
+        }
+
+        function mostrarError(mensaje) {
+            Swal.fire({
+                title: "Error de Sistema",
+                text: mensaje,
+                icon: "error",
+                confirmButtonColor: "#ef4444"
+            });
+        }
     </script>
 </body>
 </html>

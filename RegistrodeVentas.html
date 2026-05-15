@@ -10,7 +10,7 @@
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght=400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     
     <script>
@@ -325,7 +325,7 @@
     </button>
 </div>
 
-<!-- Contenedor del menú inferior (menu-logic.js lo llena) -->
+<!-- Contenedor del menú inferior -->
 <div id="menu-container"></div>
 
 <script>
@@ -334,8 +334,12 @@ let productosData = [];
 let idVenta = "";
 let contadorConsumo = 1;
 
+// Helper para crear IDs válidos en el DOM sin que rompa por espacios o caracteres raros
+function generarIdElemento(nombreProducto) {
+    return 'cant-' + btoa(encodeURIComponent(nombreProducto)).replace(/=/g, '');
+}
+
 async function iniciar() {
-    // Mostrar pantalla de carga
     const overlayCarga = document.getElementById('overlay-carga');
     overlayCarga.style.display = 'flex';
     
@@ -352,7 +356,7 @@ async function iniciar() {
         
         const listaClientes = Array.isArray(cl) ? cl : [];
         listaClientes.sort((a,b)=>String(a.Nombre).localeCompare(b.Nombre)).forEach(c => { 
-            sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
+            sel.innerHTML += `<option value="${escapeHtml(c.Nombre)}">${escapeHtml(c.Nombre)}</option>`; 
         });
         renderizar();
         
@@ -363,7 +367,6 @@ async function iniciar() {
             contadorConsumo = (Math.max(...numeros, 0)) + 1;
         }
         
-        // Ocultar pantalla de carga
         setTimeout(() => {
             overlayCarga.style.display = 'none';
         }, 800);
@@ -387,10 +390,12 @@ function renderizar() {
     const productosConStock = productosData.filter(p => (parseInt(p.Stock) || 0) > 0);
     
     productosConStock.forEach(p => {
-        const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
+        const idCant = generarIdElemento(p.Producto);
         const stockActual = parseInt(p.Stock) || 0;
+        const nombreEscapadoJS = escapeHtml(p.Producto).replace(/'/g, "\\'");
+        
         cont.innerHTML += `
-            <div class="card-producto shadow-sm fade-in">
+            <div class="card-producto shadow-sm fade-in" data-producto-name="${escapeHtml(p.Producto).toLowerCase()}">
                 <div class="flex-1">
                     <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${escapeHtml(p.Producto)}</h4>
                     <div class="flex items-center gap-2 mt-1">
@@ -399,9 +404,9 @@ function renderizar() {
                     </div>
                 </div>
                 <div class="selector-cantidad flex items-center gap-2 p-1 rounded-2xl">
-                    <button onclick="cambiarCant('${escapeHtml(p.Producto).replace(/'/g, "\\'")}',-1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
+                    <button onclick="cambiarCant('${nombreEscapadoJS}',-1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
                     <span id="${idCant}" class="w-6 text-center font-black text-base text-slate-900">0</span>
-                    <button onclick="cambiarCant('${escapeHtml(p.Producto).replace(/'/g, "\\'")}',1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
+                    <button onclick="cambiarCant('${nombreEscapadoJS}',1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
                 </div>
             </div>`;
     });
@@ -544,7 +549,7 @@ function cambiarCant(n, d) {
     
     if(carrito[n]+d >= 0 && (carrito[n]+d <= stockDisp)) {
         carrito[n] += d;
-        const idCant = `cant-${n.replace(/\s+/g,'-')}`;
+        const idCant = generarIdElemento(n);
         const elem = document.getElementById(idCant);
         if (elem) elem.innerText = carrito[n];
         actualizarCarrito();
@@ -684,7 +689,14 @@ function alternarFormulario(m) {
 
 function filtrar() {
     const q = document.getElementById('buscarProducto').value.toLowerCase();
-    document.querySelectorAll('.card-producto').forEach(c => c.style.display = c.innerText.toLowerCase().includes(q) ? "flex" : "none");
+    document.querySelectorAll('.card-producto').forEach(c => {
+        const name = c.getAttribute('data-producto-name') || '';
+        if(name.includes(q)) {
+            c.style.setProperty('display', 'flex', 'important');
+        } else {
+            c.style.setProperty('display', 'none', 'important');
+        }
+    });
 }
 
 window.onload = iniciar;

@@ -64,12 +64,18 @@
         .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 16px; border-radius: 1.5rem; font-weight: 800; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
         @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
         
-        .btn-rapido {
+        .btn-rapido-cabecera {
             background: #fef3c7;
             color: #d97706;
             transition: all 0.2s;
+            width: 40px;
+            height: 40px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .btn-rapido:active { transform: scale(0.95); background: #fde68a; }
+        .btn-rapido-cabecera:active { transform: scale(0.95); background: #fde68a; }
     </style>
 </head>
 <body class="pb-96"> 
@@ -87,9 +93,14 @@
         <h1 class="text-xl font-black text-slate-900 leading-none uppercase tracking-tighter">Nueva Venta</h1>
         <span id="id-venta-display" class="text-[10px] font-bold text-primary mt-1 tracking-widest">ID: ---</span>
     </div>
-    <button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-primary flex items-center justify-center">
-        <span class="material-symbols-outlined text-xl">refresh</span>
-    </button>
+    <div class="flex gap-2">
+        <button onclick="ventaRapidaConsumo()" class="btn-rapido-cabecera" title="Venta Rápida (Consumo Interno)">
+            <span class="material-symbols-outlined text-xl">dining</span>
+        </button>
+        <button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-primary flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">refresh</span>
+        </button>
+    </div>
 </header>
 
 <main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
@@ -206,7 +217,10 @@ function activarInterfaz() {
 
 function renderizar() {
     const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
-    productosData.forEach(p => {
+    // Solo mostrar productos con stock > 0
+    const productosConStock = productosData.filter(p => (parseInt(p.Stock) || 0) > 0);
+    
+    productosConStock.forEach(p => {
         const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
         const stockActual = parseInt(p.Stock) || 0;
         cont.innerHTML += `
@@ -218,37 +232,63 @@ function renderizar() {
                         <span class="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full uppercase">Stock: ${stockActual}</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button onclick="ventaRapida('${p.Producto.replace(/'/g, "\\'")}')" class="btn-rapido w-10 h-10 rounded-xl flex items-center justify-center shadow-sm" title="Venta Rápida (Consumo Interno)">
-                        <span class="material-symbols-outlined text-xl">dining</span>
-                    </button>
-                    <div class="flex items-center gap-2 bg-fuchsia-50/50 p-1.5 rounded-2xl border border-fuchsia-50">
-                        <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',-1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
-                        <span id="${idCant}" class="w-6 text-center font-black text-lg text-slate-900">0</span>
-                        <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
-                    </div>
+                <div class="flex items-center gap-2 bg-fuchsia-50/50 p-1.5 rounded-2xl border border-fuchsia-50">
+                    <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',-1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
+                    <span id="${idCant}" class="w-6 text-center font-black text-lg text-slate-900">0</span>
+                    <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
                 </div>
             </div>`;
     });
+    
+    if(productosConStock.length === 0) {
+        cont.innerHTML = '<div class="text-center py-8 text-slate-400 italic">No hay productos con stock disponible</div>';
+    }
 }
 
-async function ventaRapida(producto) {
-    const cli = document.getElementById('select-cliente').value;
-    if(!cli) {
-        alert("⚠️ Primero selecciona un cliente");
+async function ventaRapidaConsumo() {
+    const confirmar = confirm(`🍲 ¿Registrar VENTA RÁPIDA (Consumo Interno)?\n\nSelecciona un producto de la lista para registrar consumo interno.\n- ID especial: C-1111\n- Estado: ENTREGADO\n- Total: $0.00`);
+    if(!confirmar) return;
+    
+    const productosConStock = productosData.filter(p => (parseInt(p.Stock) || 0) > 0);
+    if(productosConStock.length === 0) {
+        alert("❌ No hay productos con stock disponible para consumo interno");
         return;
     }
     
+    let listaProductos = "";
+    productosConStock.forEach((p, idx) => {
+        listaProductos += `${idx + 1}. ${p.Producto} (Stock: ${p.Stock})\n`;
+    });
+    
+    const seleccion = prompt(`Selecciona el producto para consumo interno:\n\n${listaProductos}\n\nIngresa el número del producto:`);
+    if(!seleccion) return;
+    
+    const index = parseInt(seleccion) - 1;
+    if(isNaN(index) || index < 0 || index >= productosConStock.length) {
+        alert("❌ Selección inválida");
+        return;
+    }
+    
+    const producto = productosConStock[index].Producto;
     const productoObj = productosData.find(p => p.Producto === producto);
     const stockActual = parseInt(productoObj.Stock) || 0;
     
-    if(stockActual < 1) {
-        alert(`❌ Stock insuficiente de ${producto}`);
+    const cantidad = prompt(`🍲 ¿Cuántas unidades de "${producto}" consumir?\nStock disponible: ${stockActual}`, "1");
+    if(!cantidad) return;
+    
+    const cant = parseInt(cantidad);
+    if(isNaN(cant) || cant < 1) {
+        alert("❌ Cantidad inválida");
         return;
     }
     
-    const confirmar = confirm(`🍲 ¿Registrar VENTA RÁPIDA (Consumo Interno) de 1 x ${producto}?\n\nEsto descontará del stock pero NO generará cobro.`);
-    if(!confirmar) return;
+    if(cant > stockActual) {
+        alert(`❌ Stock insuficiente. Solo hay ${stockActual} unidades disponibles.`);
+        return;
+    }
+    
+    const confirmar2 = confirm(`✅ Confirmar consumo interno:\n\nProducto: ${producto}\nCantidad: ${cant}\n\nTotal: $0.00\nID Venta: C-1111\nEstado: ENTREGADO`);
+    if(!confirmar2) return;
     
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
@@ -259,34 +299,35 @@ async function ventaRapida(producto) {
     try {
         await DairyAPI.enviarDatos({ 
             pestaña: "Ventas",
-            ID_Venta: idVenta, 
-            Cliente: cli, 
+            ID_Venta: "C-1111",
+            Cliente: "CONSUMO_INTERNO", 
             Producto: producto, 
-            Cantidad: 1, 
+            Cantidad: cant, 
             Precio_PVP: parseFloat(productoObj.Precio_Venta), 
             Fecha_Entrega: new Date().toISOString().split('T')[0],
-            Estado_Entrega: "CONSUMO_INTERNO",
+            Estado_Entrega: "ENTREGADO",
             Total: 0
         });
         
-        productoObj.Stock = stockActual - 1;
+        productoObj.Stock = stockActual - cant;
         
-        const index = productosData.findIndex(p => p.Producto === producto);
-        if(index !== -1) productosData[index].Stock = stockActual - 1;
+        const indexProd = productosData.findIndex(p => p.Producto === producto);
+        if(indexProd !== -1) productosData[indexProd].Stock = stockActual - cant;
         
         document.getElementById('icono-estado').classList.remove('animate-spin');
         document.getElementById('icono-estado').innerHTML = "check_circle";
-        document.getElementById('titulo-estado').innerText = "¡Venta Rápida Registrada!";
+        document.getElementById('titulo-estado').innerText = "¡Consumo Registrado!";
         
         setTimeout(() => {
             overlay.style.display = 'none';
             renderizar();
             actualizarCarrito();
+            alert(`✅ Consumo interno registrado:\n- Producto: ${producto}\n- Cantidad: ${cant}\n- ID: C-1111\n- Estado: ENTREGADO`);
         }, 1000);
         
     } catch(e) { 
         overlay.style.display = 'none';
-        alert("❌ Error al registrar venta rápida: " + e.message);
+        alert("❌ Error al registrar consumo interno: " + e.message);
     }
 }
 

@@ -1,48 +1,246 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Proveedores | Lógica Láctea</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script src="api-config.js?v=1.4"></script>
-    <script src="menu-logic.js?v=1.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { primary: '#4f46e5' } } } }
-    </script>
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Proveedores - Lógica Láctea</title>
+    <!-- CONEXIÓN A ARCHIVOS RAÍZ -->
+    <link rel="stylesheet" href="estilos-lacteos.css">
+    <!-- Tailwind CSS para diseño y estructura ágil -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 para alertas y estados de carga -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="pb-32 bg-slate-50 text-slate-800">
-    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 bg-gradient-to-r from-indigo-700 to-indigo-900 text-white shadow-md">
-        <div>
-            <h1 class="text-[9px] font-black text-indigo-200 uppercase tracking-widest">Catálogos</h1>
-            <h2 class="text-base font-black uppercase tracking-tight">Proveedores Aliados</h2>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
+
+    <!-- EL MENÚ SE INYECTA DINÁMICAMENTE DESDE menu-logic.js -->
+    <div id="menu-container"></div>
+
+    <!-- Encabezado del Módulo -->
+    <header class="bg-amber-950 text-white shadow-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="building-2" class="w-8 h-8 text-amber-400"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Directorio de Proveedores</h1>
+                <p class="text-xs text-amber-200">Registro de Fabricantes, Ganaderías y Distribuidores de Materia Prima</p>
+            </div>
         </div>
-        <span class="material-symbols-outlined text-2xl">local_mall</span>
+        <button onclick="abrirModalProveedor()" class="bg-amber-700 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all border border-amber-500 shadow-sm active:scale-95">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Añadir Proveedor
+        </button>
     </header>
 
-    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
-        <div id="lista-proveedores" class="grid gap-3"></div>
+    <!-- Barra de Filtros y Resumen -->
+    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <!-- Buscador -->
+            <div class="relative w-full sm:w-96">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                </span>
+                <input type="text" id="buscarProveedor" oninput="filtrarProveedores()" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-600 bg-slate-50 outline-none" placeholder="Buscar por RUC o Razón Social...">
+            </div>
+            
+            <!-- Contador Resumen -->
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-3 py-2 rounded-lg border border-slate-200">
+                Contactos Activos: <span id="txtContadorProveedores" class="text-amber-800 font-black text-sm ml-1">0</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Tabla Principal de Proveedores -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                            <th class="py-3 px-6">Identificación (RUC / ID)</th>
+                            <th class="py-3 px-4">Razón Social / Nombre</th>
+                            <th class="py-3 px-4">Teléfono</th>
+                            <th class="py-3 px-4">Dirección Fiscal / Planta</th>
+                            <th class="py-3 px-6 text-center">Contacto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyProveedores" class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <!-- Loader Dinámico -->
+                        <tr>
+                            <td colspan="5" class="text-center py-20 text-slate-400">
+                                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-amber-700"></i>
+                                <p class="text-xs">Sincronizando el directorio maestro con Google Sheets...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
-    <nav id="menu-container"></nav>
+
+    <!-- Modal Formulario: Registro de Proveedor -->
+    <div id="modalProveedor" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
+            <div class="bg-amber-950 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold flex items-center gap-2"><i data-lucide="building-2" class="w-4 h-4 text-amber-400"></i> Alta de Proveedor</h3>
+                <button onclick="cerrarModalProveedor()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="formProveedor" onsubmit="guardarProveedorNuevo(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">RUC / Identificación Fiscal *</label>
+                    <input type="text" id="prov_id" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none" placeholder="Ej: 1791234567001">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Razón Social / Nombre Comercial *</label>
+                    <input type="text" id="prov_nombre" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Ej: Queseras del Norte Cía. Ltda.">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Teléfono de Contacto</label>
+                    <input type="text" id="prov_telefono" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Ej: 022999888">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Dirección / Ubicación de Despacho</label>
+                    <textarea id="prov_direccion" rows="2" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Ej: Km 12 Vía a Cayambe, sector San Roque"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" onclick="cerrarModalProveedor()" class="w-full py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50 text-xs uppercase tracking-wider">Cancelar</button>
+                    <button type="submit" class="w-full py-2 bg-amber-700 text-white rounded-lg font-bold hover:bg-amber-600 shadow-md text-xs uppercase tracking-wider">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPTS DE CONEXIÓN CON RAÍZ -->
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
 
     <script>
-        async function cargar() {
+        let proveedoresGlobal = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            cargarProveedores();
+        });
+
+        // Consumo utilizando la constante de entorno unificada de la raíz
+        async function cargarProveedores() {
             try {
-                const datos = await DairyAPI.obtenerDatos("Proveedores");
-                document.getElementById('lista-proveedores').innerHTML = datos.map(p => `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-1">
-                        <span class="text-[8px] font-black bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded uppercase border border-indigo-100">${p.Categoría || 'General'}</span>
-                        <h3 class="text-xs font-black uppercase text-slate-900 mt-1">${p['Nombre del Proveedor']}</h3>
-                        <p class="text-[10px] font-medium text-slate-500 flex items-center gap-1 mt-2">
-                            <span class="material-symbols-outlined text-xs text-indigo-600">location_on</span> ${p.Ciudad}, ${p.Provincia}
-                        </p>
-                    </div>`).join('');
-            } catch(e) { console.error(e); }
+                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getProveedores`);
+                const json = await res.json();
+                
+                if (json.status === "success") {
+                    proveedoresGlobal = json.data;
+                    renderizarProveedores(proveedoresGlobal);
+                    document.getElementById("txtContadorProveedores").innerText = proveedoresGlobal.length;
+                }
+            } catch (err) {
+                console.error("Error al sincronizar directorio:", err);
+                document.getElementById("tbodyProveedores").innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-10 text-rose-500 font-bold">
+                            <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
+                            Fallo al conectar con el archivo api-config.js o Google Sheets.
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
+            }
         }
-        window.onload = cargar;
+
+        // Renderizado dinámico de la cuadrícula de proveedores
+        function renderizarProveedores(lista) {
+            const tbody = document.getElementById("tbodyProveedores");
+            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='5' class='text-center py-10 text-slate-400 italic'>No se encontraron registros en el maestro de proveedores.</td></tr>";
+
+            lista.forEach(p => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-amber-50/20 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3.5 px-6 font-mono font-bold text-amber-900">${p.ruc_id}</td>
+                    <td class="py-3.5 px-4 font-black text-slate-800">${p.nombre}</td>
+                    <td class="py-3.5 px-4 text-slate-600">${p.telefono || '<span class="text-slate-300 italic">No registrado</span>'}</td>
+                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${p.direccion || ''}">${p.direccion || '<span class="text-slate-300 italic">No registrada</span>'}</td>
+                    <td class="py-3.5 px-6 text-center">
+                        <button onclick="abrirDiscador('${p.telefono}')" class="text-amber-700 hover:text-amber-900 p-1 rounded hover:bg-amber-50" title="Llamar proveedor">
+                            <i data-lucide="phone" class="w-4 h-4 mx-auto"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        function filtrarProveedores() {
+            const query = document.getElementById("buscarProveedor").value.toLowerCase();
+            const filtrados = proveedoresGlobal.filter(p => 
+                p.nombre.toLowerCase().includes(query) || 
+                p.ruc_id.toLowerCase().includes(query)
+            );
+            renderizarProveedores(filtrados);
+        }
+
+        // Modales - Control de Flujo de Vista
+        function abrirModalProveedor() {
+            document.getElementById("formProveedor").reset();
+            document.getElementById("modalProveedor").classList.remove("hidden");
+        }
+
+        function cerrarModalProveedor() {
+            document.getElementById("modalProveedor").classList.add("hidden");
+        }
+
+        // Escritura asíncrona hacia el backend centralizado de Google Apps Script
+        async function guardarProveedorNuevo(e) {
+            e.preventDefault();
+
+            const payload = {
+                action: "registrarProveedor",
+                ruc_id: document.getElementById("prov_id").value.trim(),
+                nombre: document.getElementById("prov_nombre").value.trim(),
+                telefono: document.getElementById("prov_telefono").value.trim(),
+                direccion: document.getElementById("prov_direccion").value.trim()
+            };
+
+            Swal.fire({
+                title: 'Almacenando Ficha...',
+                text: 'Registrando proveedor en el maestro central...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                await fetch(CONFIG.WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                Swal.fire({
+                    title: 'Proveedor Guardado',
+                    text: 'Los datos fiscales se han indexado de manera correcta.',
+                    icon: 'success',
+                    confirmButtonColor: '#78350f'
+                });
+                
+                cerrarModalProveedor();
+                cargarProveedores(); // Refresca el listado completo
+            } catch (err) {
+                Swal.fire("Error Operativo", "No se pudo sincronizar la ficha del proveedor.", "error");
+            }
+        }
+
+        function abrirDiscador(telefono) {
+            if(!telefono || telefono.includes("No registrado")) {
+                return Swal.fire("Sin Datos", "Este proveedor no tiene un número telefónico asignado.", "info");
+            }
+            window.location.href = `tel:${telefono.replace(/[^0-9+]/g, '')}`;
+        }
     </script>
 </body>
 </html>

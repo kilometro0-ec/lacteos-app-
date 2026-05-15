@@ -1,77 +1,290 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Nueva Orden de Compra | Lógica Láctea</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script src="api-config.js?v=1.4"></script>
-    <script src="menu-logic.js?v=1.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { primary: '#2563eb' } } } }
-    </script>
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Compra - Lógica Láctea</title>
+    <!-- CONEXIÓN A ARCHIVOS RAÍZ -->
+    <link rel="stylesheet" href="estilos-lacteos.css">
+    <!-- Tailwind CSS para diseño y estructura ágil -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 para alertas transaccionales -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="pb-32 bg-slate-50 text-slate-800">
-    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md">
-        <div>
-            <h1 class="text-[9px] font-black text-blue-200 uppercase tracking-widest">Abastecimiento</h1>
-            <h2 class="text-base font-black uppercase tracking-tight">Nueva Orden de Compra</h2>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
+
+    <!-- EL MENÚ SE INYECTA DINÁMICAMENTE DESDE menu-logic.js -->
+    <div id="menu-container"></div>
+
+    <!-- Encabezado del Módulo -->
+    <header class="bg-amber-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="shopping-bag" class="w-8 h-8 text-amber-400"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Registro de Abastecimiento y Compras</h1>
+                <p class="text-xs text-amber-200">Ingreso de Facturas de Proveedores e Incremento de Stock</p>
+            </div>
         </div>
     </header>
 
-    <main class="pt-24 px-4 max-w-xl mx-auto">
-        <form id="form-compra" onsubmit="guardar(event)" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Proveedor:</label>
-                <select id="proveedor" class="w-full rounded-xl border-slate-200 text-xs font-bold focus:ring-blue-500" required></select>
-            </div>
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Producto:</label>
-                <select id="producto" class="w-full rounded-xl border-slate-200 text-xs font-bold focus:ring-blue-500" required></select>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
+    <!-- Zona de Trabajo Operativa -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Bloque Izquierdo: Datos de la Factura y Selector de Item -->
+        <div class="space-y-6 lg:col-span-1">
+            <!-- Formulario de Cabecera -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider border-b pb-2 flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i> Datos del Proveedor
+                </h2>
                 <div>
-                    <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Cantidad:</label>
-                    <input type="number" id="cantidad" class="w-full rounded-xl border-slate-200 text-xs font-bold focus:ring-blue-500" required>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Factura / Comprobante N° *</label>
+                    <input type="text" id="com_factura" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none" placeholder="Ej: 001-002-0004567">
                 </div>
                 <div>
-                    <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Costo Distribuidor:</label>
-                    <input type="number" step="0.01" id="precio" class="w-full rounded-xl border-slate-200 text-xs font-bold focus:ring-blue-500" required>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Nombre del Proveedor *</label>
+                    <input type="text" id="com_proveedor" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Ej: Ganadería Andina S.A.">
                 </div>
             </div>
-            <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest shadow-md mt-4">Generar Orden</button>
-        </form>
+
+            <!-- Selector de Añadido de Items -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider border-b pb-2 flex items-center gap-2">
+                    <i data-lucide="package-plus" class="w-4 h-4 text-amber-600"></i> Añadir al Carrito
+                </h2>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Producto *</label>
+                    <select id="sel_producto" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-slate-50">
+                        <option value="">Cargando catálogo central...</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Cantidad *</label>
+                        <input type="number" id="txt_cantidad" min="1" value="1" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-bold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Costo Unitario ($) *</label>
+                        <input type="number" id="txt_costo" step="0.01" min="0.01" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none" placeholder="0.00">
+                    </div>
+                </div>
+                <button onclick="agregarItemAlCarrito()" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wider shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Insertar en Detalle
+                </button>
+            </div>
+        </div>
+
+        <!-- Bloque Derecho: Tabla de Items Añadidos y Cierre de Transacción -->
+        <div class="lg:col-span-2 flex flex-col justify-between bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto flex-1">
+                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                            <th class="py-3 px-6">Código</th>
+                            <th class="py-3 px-4">Descripción Producto</th>
+                            <th class="py-3 px-4 text-center">Cantidad</th>
+                            <th class="py-3 px-4 text-right">Costo U.</th>
+                            <th class="py-3 px-4 text-right">Subtotal</th>
+                            <th class="py-3 px-6 text-center">Remover</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyCarrito" class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <tr>
+                            <td colspan="6" class="text-center py-24 text-slate-400 italic">
+                                <i data-lucide="shopping-cart" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                                El detalle de la compra está vacío. Agrega insumos desde la barra lateral.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Panel Inferior de Totales y Liquidación -->
+            <div class="bg-slate-50 p-6 border-t border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div class="text-center sm:text-left">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Total Inversión</span>
+                    <span id="lblTotalCompra" class="text-3xl font-black text-slate-900 font-mono">$0.00</span>
+                </div>
+                <button onclick="procesarOrdenCompraCompleta()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Guardar y Aplicar a Stock
+                </button>
+            </div>
+        </div>
     </main>
-    <nav id="menu-container"></nav>
+
+    <!-- SCRIPTS DE CONEXIÓN CON RAÍZ -->
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
 
     <script>
-        async function inicializar() {
+        let catalogoProductos = [];
+        let carritoDeCompras = [];
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            cargarCatalogoRemoto();
+        });
+
+        // Recupera los productos usando la url global de api-config.js
+        async function cargarCatalogoRemoto() {
             try {
-                const [provs, inv] = await Promise.all([DairyAPI.obtenerDatos("Proveedores"), DairyAPI.obtenerDatos("Inventario")]);
-                document.getElementById('proveedor').innerHTML = provs.map(p => `<option value="${p['Nombre del Proveedor']}">${p['Nombre del Proveedor']}</option>`).join('');
-                document.getElementById('producto').innerHTML = inv.map(i => `<option value="${i.Producto}">${i.Producto}</option>`).join('');
-            } catch(e) { console.error(e); }
-        }
-        async function guardar(e) {
-            e.preventDefault();
-            const payload = {
-                accion: "insertar", pestaña: "Compras",
-                datos: {
-                    Fecha: new Date().toISOString().split('T')[0],
-                    Proveedor: document.getElementById('proveedor').value,
-                    Producto: document.getElementById('producto').value,
-                    Cantidad: parseFloat(document.getElementById('cantidad').value),
-                    Precio_Distribuidor: parseFloat(document.getElementById('precio').value),
-                    Total: parseFloat(document.getElementById('cantidad').value) * parseFloat(document.getElementById('precio').value),
-                    Estado_Entrega: "PENDIENTE", ID_Compra: "CMP-" + Date.now().toString().slice(-6)
+                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getInventario`);
+                const json = await res.json();
+                
+                if (json.status === "success") {
+                    catalogoProductos = json.data;
+                    poblarSelectorProductos(catalogoProductos);
                 }
-            };
-            if(await DairyAPI.guardarDatos("Compras", payload) === "OK") { alert("Orden Generada"); location.reload(); }
+            } catch (err) {
+                console.error("Fallo de comunicación interna:", err);
+                Swal.fire("Error Estructural", "No se pudo leer el inventario desde api-config.js", "error");
+            }
         }
-        window.onload = inicializar;
+
+        function poblarSelectorProductos(lista) {
+            const select = document.getElementById("sel_producto");
+            select.innerHTML = '<option value="">-- Selecciona el Insumo/Lácteo --</option>';
+            lista.forEach(p => {
+                select.innerHTML += `<option value="${p.id}">${p.producto} (ID: ${p.id})</option>`;
+            });
+        }
+
+        // Agregar fila al modelo en memoria del carrito
+        function agregarItemAlCarrito() {
+            const idSel = document.getElementById("sel_producto").value;
+            const cant = parseInt(document.getElementById("txt_cantidad").value) || 0;
+            const costo = parseFloat(document.getElementById("txt_costo").value) || 0;
+
+            if (!idSel || cant <= 0 || costo <= 0) {
+                return Swal.fire("Campos Incompletos", "Por favor ingresa un producto, cantidad y costo válidos.", "warning");
+            }
+
+            const matchProd = catalogoProductos.find(p => p.id === idSel);
+            
+            // Si el item ya fue ingresado, consolidamos montos e incrementamos
+            const existeIndex = carritoDeCompras.findIndex(item => item.id === idSel);
+            if (existeIndex > -1) {
+                carritoDeCompras[existeIndex].cantidad += cant;
+                carritoDeCompras[existeIndex].costo = costo; // Se actualiza al último ingresado
+            } else {
+                carritoDeCompras.push({
+                    id: idSel,
+                    producto: matchProd.producto,
+                    cantidad: cant,
+                    costo: costo
+                });
+            }
+
+            // Reseteo de inputs de línea
+            document.getElementById("txt_cantidad").value = "1";
+            document.getElementById("txt_costo").value = "";
+            document.getElementById("sel_producto").value = "";
+
+            renderizarTablaDetalle();
+        }
+
+        function removerItem(index) {
+            carritoDeCompras.splice(index, 1);
+            renderizarTablaDetalle();
+        }
+
+        // Dibuja las filas del subtotal en pantalla
+        function renderizarTablaDetalle() {
+            const tbody = document.getElementById("tbodyCarrito");
+            let sumadorTotal = 0;
+
+            if (carritoDeCompras.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-24 text-slate-400 italic">
+                            <i data-lucide="shopping-cart" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                            El detalle de la compra está vacío. Agrega insumos desde la barra lateral.
+                        </td>
+                    </tr>
+                `;
+                document.getElementById("lblTotalCompra").innerText = "$0.00";
+                lucide.createIcons();
+                return;
+            }
+
+            tbody.innerHTML = "";
+            carritoDeCompras.forEach((item, index) => {
+                const subtotal = item.cantidad * item.costo;
+                sumadorTotal += subtotal;
+
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-6 font-mono font-bold text-slate-400">#${item.id}</td>
+                    <td class="py-3 px-4 font-bold text-slate-800">${item.producto}</td>
+                    <td class="py-3 px-4 text-center font-black text-slate-800">${item.cantidad}</td>
+                    <td class="py-3 px-4 text-right font-mono text-slate-500">$${item.costo.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-right font-bold font-mono text-slate-900">$${subtotal.toFixed(2)}</td>
+                    <td class="py-3 px-6 text-center">
+                        <button onclick="removerItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50">
+                            <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById("lblTotalCompra").innerText = `$${sumadorTotal.toFixed(2)}`;
+            lucide.createIcons();
+        }
+
+        // Persistencia y escritura mediante POST contra la API Unificada de Google Sheets
+        async function procesarOrdenCompraCompleta() {
+            const nroFactura = document.getElementById("com_factura").value.trim();
+            const proveedor = document.getElementById("com_proveedor").value.trim();
+
+            if (!nroFactura || !proveedor || carritoDeCompras.length === 0) {
+                return Swal.fire("Información Incompleta", "Debes completar los datos de la factura y añadir al menos un item.", "error");
+            }
+
+            Swal.fire({
+                title: 'Impactando Inventarios...',
+                text: 'Registrando lote de abastecimiento en la base de datos...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const payload = {
+                action: "registrarNuevaCompra",
+                factura: nroFactura,
+                proveedor: proveedor,
+                fecha: new Date().toISOString().split('T')[0],
+                items: carritoDeCompras
+            };
+
+            try {
+                await fetch(CONFIG.WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                Swal.fire({
+                    title: 'Abastecimiento Exitoso',
+                    text: 'La compra se procesó correctamente y las existencias han aumentado.',
+                    icon: 'success',
+                    confirmButtonColor: '#059669'
+                });
+
+                // Blanqueo completo de los formularios para una nueva transacción
+                document.getElementById("com_factura").value = "";
+                document.getElementById("com_proveedor").value = "";
+                carritoDeCompras = [];
+                renderizarTablaDetalle();
+                cargarCatalogoRemoto(); // Sincroniza stocks en segundo plano
+
+            } catch (err) {
+                Swal.fire("Error de Red", "No se pudo impactar la transacción en la hoja de cálculo.", "error");
+            }
+        }
     </script>
 </body>
 </html>

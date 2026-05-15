@@ -83,7 +83,7 @@
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
             <div class="bg-indigo-950 p-4 text-white flex justify-between items-center">
                 <h3 class="font-bold flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4 text-indigo-400"></i> Ficha de Registro Comercial</h3>
-                <button onclick="cerrarModalCliente()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" onclick="cerrarModalCliente()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form id="formCliente" onsubmit="guardarClienteNuevo(event)" class="p-6 space-y-4">
                 <div>
@@ -128,16 +128,18 @@
             cargarClientes();
         });
 
-        // Consumo unificado mediante CONFIG.WEB_APP_URL derivado de tu raíz
+        // Consumo unificado usando el estándar unificado de Lógica Láctea
         async function cargarClientes() {
             try {
-                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getClientes`);
-                const json = await res.json();
+                // Consume los datos de la pestaña o dataset "Clientes"
+                const datos = await DairyAPI.obtenerDatos("Clientes");
                 
-                if (json.status === "success") {
-                    clientesGlobal = json.data;
+                if (Array.isArray(datos)) {
+                    clientesGlobal = datos;
                     renderizarClientes(clientesGlobal);
                     document.getElementById("txtContadorClientes").innerText = clientesGlobal.length;
+                } else if (datos && datos.status === "error") {
+                    throw new Error(datos.message);
                 }
             } catch (err) {
                 console.error("Error al enlazar base de datos:", err);
@@ -153,21 +155,26 @@
             }
         }
 
-        // Renderizado dinámico de la grilla de contactos
+        // Renderizado dinámico seguro protegiendo contra nulos o llaves mal nombradas
         function renderizarClientes(lista) {
             const tbody = document.getElementById("tbodyClientes");
             tbody.innerHTML = lista.length ? "" : "<tr><td colspan='5' class='text-center py-10 text-slate-400 italic'>No se encontraron registros en el maestro de clientes.</td></tr>";
 
             lista.forEach(c => {
+                // Homologación de llaves por si vienen como ci_ruc o id
+                const identificacion = c.ci_ruc || c.id || "S/I";
+                const telefono = c.telefono || '';
+                const direccion = c.direccion || '';
+
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-indigo-50/20 transition-colors";
                 tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-mono font-bold text-indigo-900">${c.ci_ruc}</td>
-                    <td class="py-3.5 px-4 font-black text-slate-800">${c.nombre}</td>
-                    <td class="py-3.5 px-4 text-slate-600">${c.telefono || '<span class="text-slate-300 italic">No registrado</span>'}</td>
-                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${c.direccion || ''}">${c.direccion || '<span class="text-slate-300 italic">No registrada</span>'}</td>
+                    <td class="py-3.5 px-6 font-mono font-bold text-indigo-900">${identificacion}</td>
+                    <td class="py-3.5 px-4 font-black text-slate-800">${c.nombre || c.razonSocial}</td>
+                    <td class="py-3.5 px-4 text-slate-600">${telefono ? telefono : '<span class="text-slate-300 italic">No registrado</span>'}</td>
+                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${direccion}">${direccion ? direccion : '<span class="text-slate-300 italic">No registrada</span>'}</td>
                     <td class="py-3.5 px-6 text-center">
-                        <button onclick="contactarCliente('${c.telefono}')" class="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50" title="Contactar">
+                        <button onclick="contactarCliente('${telefono}')" class="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50 transition-colors" title="Contactar WhatsApp">
                             <i data-lucide="phone" class="w-4 h-4 mx-auto"></i>
                         </button>
                     </td>
@@ -179,14 +186,14 @@
 
         function filtrarClientes() {
             const query = document.getElementById("buscarCliente").value.toLowerCase();
-            const filtrados = clientesGlobal.filter(c => 
-                c.nombre.toLowerCase().includes(query) || 
-                c.ci_ruc.toLowerCase().includes(query)
-            );
+            const filtrados = clientesGlobal.filter(c => {
+                const nombre = (c.nombre || c.razonSocial || "").toLowerCase();
+                const id = (c.ci_ruc || c.id || "").toLowerCase();
+                return nombre.includes(query) || id.includes(query);
+            });
             renderizarClientes(filtrados);
         }
 
-        // Ciclo de Vida del Modal
         function abrirModalCliente() {
             document.getElementById("formCliente").reset();
             document.getElementById("modalCliente").classList.remove("hidden");
@@ -196,7 +203,7 @@
             document.getElementById("modalCliente").classList.add("hidden");
         }
 
-        // Envío asíncrono POST directo a la API unificada
+        // Escritura asíncrona segura mediante la API unificada
         async function guardarClienteNuevo(e) {
             e.preventDefault();
 
@@ -216,12 +223,8 @@
             });
 
             try {
-                await fetch(CONFIG.WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+                // Guarda los datos usando la abstracción unificada en la colección "Clientes"
+                await DairyAPI.guardarDatos("Clientes", payload);
 
                 Swal.fire({
                     title: 'Cliente Guardado',
@@ -231,17 +234,20 @@
                 });
                 
                 cerrarModalCliente();
-                cargarClientes(); // Recarga la grilla completa con el registro fresco
+                cargarClientes(); // Recarga la grilla inmediatamente
             } catch (err) {
-                Swal.fire("Error Estructural", "No se pudo sincronizar el alta de cliente.", "error");
+                console.error("Error al persistir el cliente:", err);
+                Swal.fire("Error Estructural", "No se pudo sincronizar el alta de cliente con Google Sheets.", "error");
             }
         }
 
         function contactarCliente(telefono) {
-            if(!telefono || telefono.includes("No registrado")) {
+            if(!telefono || telefono.trim() === "") {
                 return Swal.fire("Datos Incompletos", "Este cliente no tiene un teléfono celular vinculado.", "info");
             }
-            window.open(`https://wa.me/${telefono.replace(/[^0-9]/g, '')}`, '_blank');
+            // Limpia caracteres no numéricos para la URL de WhatsApp
+            const numeroLimpio = telefono.replace(/[^0-9]/g, '');
+            window.open(`https://wa.me/${numeroLimpio}`, '_blank');
         }
     </script>
 </body>

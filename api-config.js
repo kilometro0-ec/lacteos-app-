@@ -5,7 +5,7 @@
 
 const DairyConfig = {
     // ID de implementación web activo en Google Apps Script
-    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwulODNQzXu3yQ2gS0Fo6oyR72KEmWQAxjnsGuGVgHT6HuPUO0nK0nH8TxBufscriknCQ/exec",
+    SCRIPT_URL: "https://script.google.com/macros/s/AKfycby6eRkef5znc1AAljkb7ZcIwKGLuiopwbYljAgDyRujRuznjIVjcUwNAATuWy1jSS-3/exec",
     VERSION: "1.4"
 };
 
@@ -32,17 +32,20 @@ const DairyAPI = {
     },
 
     /**
-     * Envía mutaciones y procesos transaccionales al servidor (A PRUEBA DE ERRORES)
+     * Envía mutaciones y procesos transaccionales al servidor (CORREGIDO PARA GOOGLE APPS SCRIPT)
      * @param {string} pestana Nombre exacto de la pestaña objetivo.
      * @param {Object} payload Datos de la operación incluyendo la acción y variables.
      * @returns {Promise<any>} Respuesta del servidor Apps Script
      */
     async guardarDatos(pestana, payload) {
         try {
-            // Se asegura que la pestaña siempre viaje dentro del cuerpo JSON de forma automática
+            // Combinamos los datos asegurando la pestaña dentro del cuerpo
             const cuerpoEnvio = { pestana: pestana, ...payload };
+            
+            // Forzamos parámetros clave en la URL para evitar pérdidas de lectura en el backend de Google
+            const urlDestino = `${DairyConfig.SCRIPT_URL}?pestana=${encodeURIComponent(pestana)}&accion=${encodeURIComponent(payload.accion)}`;
 
-            const response = await fetch(DairyConfig.SCRIPT_URL, {
+            const response = await fetch(urlDestino, {
                 method: "POST",
                 mode: "cors",
                 headers: { "Content-Type": "text/plain" },
@@ -55,7 +58,7 @@ const DairyAPI = {
             try {
                 return JSON.parse(textoRespuesta);
             } catch (e) {
-                // Si el servidor retorna un texto plano (como un mensaje de confirmación)
+                // Retorno alternativo si viene texto plano del servidor
                 return textoRespuesta;
             }
         } catch (error) {

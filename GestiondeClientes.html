@@ -120,6 +120,7 @@
         <form id="form-cliente" class="space-y-4">
             <input type="hidden" id="edit-id-original">
             <input type="hidden" id="edit-nombre-original">
+            <input type="hidden" id="c-id">  <!-- CAMPO IMPORTANTE -->
 
             <!-- Nombre -->
             <div class="space-y-1">
@@ -195,7 +196,8 @@ let ventasData = [];
 let esEdicion = false;
 
 function mostrarLoading(mostrar) {
-    document.getElementById('overlay-loading').style.display = mostrar ? 'flex' : 'none';
+    const overlay = document.getElementById('overlay-loading');
+    if (overlay) overlay.style.display = mostrar ? 'flex' : 'none';
 }
 
 // 1. CARGA DE DATOS DESDE API
@@ -211,12 +213,10 @@ async function cargarDatos() {
         const statsVentas = {};
         let factGlobal = 0;
 
-        // Procesar TODAS las ventas (no solo ENTREGADAS)
         ventasData.forEach(v => {
             const cliente = String(v.Cliente || "").trim();
             if (!cliente || cliente === "CONSUMO_INTERNO") return;
             
-            // Buscar el total - puede estar en "Total" o "G" dependiendo del header
             const total = parseFloat(v.Total || v.G || 0);
             
             if (!statsVentas[cliente]) {
@@ -233,7 +233,6 @@ async function cargarDatos() {
             factGlobal += total;
         });
 
-        // Unificar con Clientes
         clientesData = (Array.isArray(clientes) ? clientes : []).map(c => {
             const nombre = String(c.Nombre || "").trim();
             const s = statsVentas[nombre] || { total: 0, cantidad: 0, pedidos: [] };
@@ -248,11 +247,16 @@ async function cargarDatos() {
         clientesData.sort((a, b) => b.montoTotal - a.montoTotal);
         renderizar(clientesData);
         
-        document.getElementById('total-clientes').innerText = clientesData.length;
-        document.getElementById('total-dinero').innerText = `$${factGlobal.toFixed(2)}`;
+        const totalClientesElem = document.getElementById('total-clientes');
+        const totalDineroElem = document.getElementById('total-dinero');
+        if (totalClientesElem) totalClientesElem.innerText = clientesData.length;
+        if (totalDineroElem) totalDineroElem.innerText = `$${factGlobal.toFixed(2)}`;
     } catch (e) {
         console.error("Error crítico:", e);
-        document.getElementById('lista-clientes').innerHTML = `<div class="text-center py-10 text-red-500 font-bold">❌ Error al conectar: ${e.message}</div>`;
+        const container = document.getElementById('lista-clientes');
+        if (container) {
+            container.innerHTML = `<div class="text-center py-10 text-red-500 font-bold">❌ Error al conectar: ${e.message}</div>`;
+        }
     }
     mostrarLoading(false);
 }
@@ -260,6 +264,8 @@ async function cargarDatos() {
 // 2. RENDERIZADO DE TARJETAS
 function renderizar(lista) {
     const container = document.getElementById('lista-clientes');
+    if (!container) return;
+    
     if (!lista || lista.length === 0) {
         container.innerHTML = `<div class="text-center py-10 text-slate-400 font-bold">📋 No hay clientes registrados</div>`;
         return;
@@ -271,7 +277,6 @@ function renderizar(lista) {
         if (index === 1 && c.montoTotal > 0) colorMedalla = "bg-slate-300 text-white shadow-md";
         if (index === 2 && c.montoTotal > 0) colorMedalla = "bg-orange-300 text-white shadow-md";
 
-        // Tratamiento de teléfono para WhatsApp
         const telRaw = String(c.Teléfono || c["Teléfono"] || "").trim();
         const telLimpio = telRaw.replace(/\D/g, '');
         let telWhatsApp = telLimpio;
@@ -281,6 +286,8 @@ function renderizar(lista) {
             telWhatsApp = '593' + telLimpio;
         }
 
+        const nombreEscapado = String(c.Nombre || "").replace(/'/g, "\\'");
+
         return `
             <div class="bg-white p-5 rounded-[2.5rem] card-premium flex flex-col gap-4 shadow-sm border border-fuchsia-50">
                 <div class="flex items-center gap-5">
@@ -289,7 +296,7 @@ function renderizar(lista) {
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-start gap-2">
-                            <h3 class="font-extrabold text-slate-900 truncate uppercase text-sm flex-1" title="${c.Nombre}">${c.Nombre || 'Sin Nombre'}</h3>
+                            <h3 class="font-extrabold text-slate-900 truncate uppercase text-sm flex-1" title="${c.Nombre || ''}">${c.Nombre || 'Sin Nombre'}</h3>
                             <span class="text-[9px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md shrink-0">${c.Sector || 'SUR'}</span>
                         </div>
                         <div class="flex items-center gap-2 mt-1">
@@ -303,7 +310,7 @@ function renderizar(lista) {
                 </div>
 
                 <div class="grid grid-cols-4 gap-2">
-                    <button onclick="abrirHistorial('${String(c.Nombre).replace(/'/g, "\\'")}')" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-fuchsia-50 text-primary active:scale-95 transition-all">
+                    <button onclick="abrirHistorial('${nombreEscapado}')" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-fuchsia-50 text-primary active:scale-95 transition-all">
                         <span class="material-symbols-outlined text-lg">history</span>
                         <span class="text-[8px] font-bold uppercase">Ventas</span>
                     </button>
@@ -324,7 +331,7 @@ function renderizar(lista) {
                             <span class="material-symbols-outlined text-lg text-slate-400">block</span>
                         </div>
                     `}
-                    <button onclick="abrirModalEditar('${String(c.Nombre).replace(/'/g, "\\'")}')" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-slate-50 text-slate-500 active:scale-95 transition-all">
+                    <button onclick="abrirModalEditar('${nombreEscapado}')" class="flex flex-col items-center justify-center py-2 rounded-2xl bg-slate-50 text-slate-500 active:scale-95 transition-all">
                         <span class="material-symbols-outlined text-lg">edit</span>
                         <span class="text-[8px] font-bold uppercase">Perfil</span>
                     </button>
@@ -336,50 +343,85 @@ function renderizar(lista) {
 // 3. LÓGICA DE MODALES
 function abrirModalNuevo() {
     esEdicion = false;
-    document.getElementById('form-cliente').reset();
-    document.getElementById('modal-titulo').innerText = "Nuevo Cliente";
-    document.getElementById('btn-eliminar').classList.add('hidden');
-    document.getElementById('modal-cliente').classList.add('active');
+    const form = document.getElementById('form-cliente');
+    if (form) form.reset();
+    
+    const titulo = document.getElementById('modal-titulo');
+    if (titulo) titulo.innerText = "Nuevo Cliente";
+    
+    const btnEliminar = document.getElementById('btn-eliminar');
+    if (btnEliminar) btnEliminar.classList.add('hidden');
+    
+    const modal = document.getElementById('modal-cliente');
+    if (modal) modal.classList.add('active');
 }
 
 function abrirModalEditar(nombre) {
+    console.log("Editando cliente:", nombre);
     const c = clientesData.find(cli => cli.Nombre === nombre);
-    if(!c) return;
+    if (!c) {
+        console.error("Cliente no encontrado:", nombre);
+        return;
+    }
+    
     esEdicion = true;
-    document.getElementById('modal-titulo').innerText = "Editar Perfil";
-    document.getElementById('edit-id-original').value = c.ID || "";
-    document.getElementById('edit-nombre-original').value = c.Nombre || "";
-    document.getElementById('c-id').value = c.ID || "";
-    document.getElementById('c-nombre').value = c.Nombre || "";
-    document.getElementById('c-ruc').value = c.CI_RUC || "";
-    document.getElementById('c-tel').value = c.Teléfono || "";
-    document.getElementById('c-dir').value = c.Dirección || "";
-    document.getElementById('c-sector').value = c.Sector || "";
-    document.getElementById('c-ref').value = c.Referencia || "";
-    document.getElementById('btn-eliminar').classList.remove('hidden');
-    document.getElementById('modal-cliente').classList.add('active');
+    
+    const titulo = document.getElementById('modal-titulo');
+    if (titulo) titulo.innerText = "Editar Perfil";
+    
+    // Asignar valores a los campos
+    const setId = document.getElementById('edit-id-original');
+    const setNombreOriginal = document.getElementById('edit-nombre-original');
+    const setIdHidden = document.getElementById('c-id');
+    const setNombre = document.getElementById('c-nombre');
+    const setRuc = document.getElementById('c-ruc');
+    const setTel = document.getElementById('c-tel');
+    const setDir = document.getElementById('c-dir');
+    const setSector = document.getElementById('c-sector');
+    const setRef = document.getElementById('c-ref');
+    
+    if (setId) setId.value = c.ID || "";
+    if (setNombreOriginal) setNombreOriginal.value = c.Nombre || "";
+    if (setIdHidden) setIdHidden.value = c.ID || "";
+    if (setNombre) setNombre.value = c.Nombre || "";
+    if (setRuc) setRuc.value = c.CI_RUC || "";
+    if (setTel) setTel.value = c.Teléfono || "";
+    if (setDir) setDir.value = c.Dirección || "";
+    if (setSector) setSector.value = c.Sector || "";
+    if (setRef) setRef.value = c.Referencia || "";
+    
+    const btnEliminar = document.getElementById('btn-eliminar');
+    if (btnEliminar) btnEliminar.classList.remove('hidden');
+    
+    const modal = document.getElementById('modal-cliente');
+    if (modal) modal.classList.add('active');
 }
 
 function cerrarModal() { 
-    document.getElementById('modal-cliente').classList.remove('active');
-    document.getElementById('form-cliente').reset();
+    const modal = document.getElementById('modal-cliente');
+    if (modal) modal.classList.remove('active');
+    
+    const form = document.getElementById('form-cliente');
+    if (form) form.reset();
 }
 
 // 4. GUARDAR / ACTUALIZAR
-document.getElementById('form-cliente').onsubmit = async (e) => {
+document.getElementById('form-cliente')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const ruc = document.getElementById('c-ruc').value.trim();
-    const tel = document.getElementById('c-tel').value.trim();
-    const sector = document.getElementById('c-sector').value;
+    const ruc = document.getElementById('c-ruc')?.value.trim() || "";
+    const tel = document.getElementById('c-tel')?.value.trim() || "";
+    const sector = document.getElementById('c-sector')?.value || "";
 
-    if(ruc.length < 10) return alert("❌ El CI/RUC debe tener al menos 10 dígitos");
-    if(!tel.match(/^09\d{8}$/)) return alert("❌ Teléfono inválido. Debe ser 09XXXXXXXX");
-    if(!sector) return alert("❌ Por favor, seleccione un sector");
+    if (ruc.length < 10) return alert("❌ El CI/RUC debe tener al menos 10 dígitos");
+    if (!tel.match(/^09\d{8}$/)) return alert("❌ Teléfono inválido. Debe ser 09XXXXXXXX");
+    if (!sector) return alert("❌ Por favor, seleccione un sector");
 
     const btn = document.getElementById('btn-guardar');
-    btn.disabled = true;
-    btn.innerText = "Sincronizando...";
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Sincronizando...";
+    }
     mostrarLoading(true);
 
     const ahora = new Date();
@@ -387,12 +429,12 @@ document.getElementById('form-cliente').onsubmit = async (e) => {
 
     const datos = {
         pestaña: "Clientes",
-        ID: esEdicion ? document.getElementById('c-id').value : `C-${Date.now().toString().slice(-6)}`,
-        Nombre: document.getElementById('c-nombre').value.trim().toUpperCase(),
+        ID: esEdicion ? (document.getElementById('c-id')?.value || "") : `C-${Date.now().toString().slice(-6)}`,
+        Nombre: (document.getElementById('c-nombre')?.value || "").trim().toUpperCase(),
         CI_RUC: ruc,
         Teléfono: tel,
-        Dirección: document.getElementById('c-dir').value.trim(),
-        Referencia: document.getElementById('c-ref').value.trim(),
+        Dirección: document.getElementById('c-dir')?.value.trim() || "",
+        Referencia: document.getElementById('c-ref')?.value.trim() || "",
         Sector: sector,
         "Fecha Registro": esEdicion ? "" : fechaHora
     };
@@ -405,20 +447,22 @@ document.getElementById('form-cliente').onsubmit = async (e) => {
     } catch (err) {
         alert("❌ Error de conexión: " + err.message);
     } finally {
-        btn.disabled = false;
-        btn.innerText = "Guardar Cliente";
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = "Guardar Cliente";
+        }
         mostrarLoading(false);
     }
-};
+});
 
 // 5. ELIMINAR CLIENTE
 async function confirmarEliminar() {
-    const nombre = document.getElementById('edit-nombre-original').value;
-    if(!confirm(`⚠️ ¿Desea eliminar definitivamente a ${nombre}?\n\nEsta acción no se puede deshacer.`)) return;
+    const nombre = document.getElementById('edit-nombre-original')?.value || "";
+    if (!confirm(`⚠️ ¿Desea eliminar definitivamente a ${nombre}?\n\nEsta acción no se puede deshacer.`)) return;
     
     mostrarLoading(true);
     try {
-        await DairyAPI.eliminarDato("Clientes", document.getElementById('c-id').value);
+        await DairyAPI.eliminarDato("Clientes", document.getElementById('c-id')?.value || "");
         alert("✅ Cliente eliminado");
         cerrarModal();
         await cargarDatos();
@@ -431,16 +475,22 @@ async function confirmarEliminar() {
 // 6. HISTORIAL DE VENTAS
 function abrirHistorial(nombre) {
     const c = clientesData.find(cli => cli.Nombre === nombre);
-    if(!c) return;
+    if (!c) return;
     
-    document.getElementById('hist-nombre').innerHTML = `${c.Nombre} <span class="text-[10px] text-primary ml-2">$${(c.montoTotal || 0).toFixed(2)}</span>`;
+    const histNombre = document.getElementById('hist-nombre');
+    if (histNombre) {
+        histNombre.innerHTML = `${c.Nombre} <span class="text-[10px] text-primary ml-2">$${(c.montoTotal || 0).toFixed(2)}</span>`;
+    }
+    
+    const histLista = document.getElementById('hist-lista');
+    if (!histLista) return;
     
     if (!c.pedidos || c.pedidos.length === 0) {
-        document.getElementById('hist-lista').innerHTML = `<div class="text-center py-8 text-slate-400 bg-slate-50 rounded-3xl">
+        histLista.innerHTML = `<div class="text-center py-8 text-slate-400 bg-slate-50 rounded-3xl">
             📭 No hay ventas registradas para este cliente
         </div>`;
     } else {
-        document.getElementById('hist-lista').innerHTML = c.pedidos.map(p => `
+        histLista.innerHTML = c.pedidos.map(p => `
             <div class="bg-slate-50 p-4 rounded-2xl border-l-4 ${p.estado === 'INTERNO' ? 'border-l-amber-500' : 'border-l-primary'}">
                 <div class="flex justify-between items-start">
                     <div>
@@ -455,16 +505,21 @@ function abrirHistorial(nombre) {
             </div>
         `).join('');
     }
-    document.getElementById('modal-historial').classList.add('active');
+    
+    const modalHistorial = document.getElementById('modal-historial');
+    if (modalHistorial) modalHistorial.classList.add('active');
 }
 
 function cerrarHistorial() { 
-    document.getElementById('modal-historial').classList.remove('active');
+    const modal = document.getElementById('modal-historial');
+    if (modal) modal.classList.remove('active');
 }
 
 // 7. FILTRO DE CLIENTES
 function filtrarClientes() {
-    const q = document.getElementById('buscador').value.toLowerCase().trim();
+    const buscador = document.getElementById('buscador');
+    const q = buscador ? buscador.value.toLowerCase().trim() : "";
+    
     if (!q) {
         renderizar(clientesData);
     } else {

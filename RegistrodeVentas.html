@@ -154,6 +154,7 @@
 
     <script>
         let catalogoProductos = [];
+        let clientesGlobal = [];
         let carrito = [];
         let esConsumoInterno = false;
 
@@ -162,7 +163,14 @@
             inicializarModulo();
         });
 
-        // Consumo unificado usando DairyAPI para encapsular la comunicación con Sheets
+        // Saneador reutilizable para formatos de moneda complejos (ej: "$ 1,5")
+        const limpiarMoneda = (valor) => {
+            if (valor === undefined || valor === null || valor === "") return 0;
+            let texto = String(valor).replace(/[^0-9.,-]/g, '').replace(',', '.');
+            let numero = parseFloat(texto);
+            return isNaN(numero) ? 0 : numero;
+        };
+
         async function inicializarModulo() {
             try {
                 // 1. Obtener Cartera de Clientes
@@ -170,12 +178,14 @@
                 const selectCli = document.getElementById("selectCliente");
                 
                 if (Array.isArray(datosClientes)) {
+                    clientesGlobal = datosClientes;
                     selectCli.innerHTML = '<option value="">-- Seleccione un Cliente --</option>';
                     datosClientes.forEach(c => {
-                        // Tolerancia a variaciones de mayúsculas/minúsculas en propiedades
-                        const ruc = c.ci_ruc || c.CI_RUC || c.ruc || c.id;
-                        const nombre = c.nombre || c.Nombre || c.razon_social;
-                        selectCli.innerHTML += `<option value="${ruc}">${nombre} (${ruc})</option>`;
+                        const ruc = String(c.ci_ruc || c.CI_RUC || c.ruc || c.id || "").trim();
+                        const nombre = c.nombre || c.Nombre || c.razon_social || "Cliente Desconocido";
+                        if(ruc) {
+                            selectCli.innerHTML += `<option value="${ruc}">${nombre} (${ruc})</option>`;
+                        }
                     });
                 }
 
@@ -187,9 +197,11 @@
                     catalogoProductos = datosInventario;
                     selectProd.innerHTML = '<option value="">-- Seleccione un ítem --</option>';
                     catalogoProductos.forEach(p => {
-                        const id = p.id || p.ID || p.codigo;
+                        const id = String(p.id || p.ID || p.codigo || "").trim();
                         const producto = p.producto || p.Producto || p.nombre;
-                        selectProd.innerHTML += `<option value="${id}">${producto}</option>`;
+                        if(id) {
+                            selectProd.innerHTML += `<option value="${id}">${producto}</option>`;
+                        }
                     });
                 }
             } catch (err) {
@@ -198,7 +210,6 @@
             }
         }
 
-        // Monitoreo dinámico del stock antes de permitir la inserción
         function verificarStockDisponible() {
             const selectP = document.getElementById("selectProducto");
             const idProd = selectP.value;
@@ -210,12 +221,11 @@
                 return;
             }
 
-            // Ubicar ítem tolerando diferencias de mayúsculas/minúsculas en el ID
-            const prod = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === idProd);
+            const prod = catalogoProductos.find(p => String(p.id || p.ID || p.codigo).trim() === idProd);
             if(!prod) return;
 
             const stockActual = parseInt(prod.stock || prod.Stock || 0);
-            const precioVenta = parseFloat(prod.precioVenta || prod.PrecioVenta || prod.precio || 0);
+            const precioVenta = limpiarMoneda(prod.precioVenta || prod.PrecioVenta || prod.Precio_Venta || prod.precio || 0);
             
             wrapper.classList.remove("hidden");
             document.getElementById("txtStockMinimo").innerText = `${stockActual} Unidades`;
@@ -234,7 +244,6 @@
             }
         }
 
-        // Alterna las reglas de precio según el switch de Consumo Interno
         function alternarConsumoInterno() {
             esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
             const badgeTipo = document.getElementById("badgeTipoVenta");
@@ -249,10 +258,9 @@
 
             verificarStockDisponible();
             
-            // Recalcular dinámicamente el carrito en caso de cambios a mitad de orden
             carrito.forEach(item => {
-                const original = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === item.id);
-                const precioOrig = parseFloat(original.precioVenta || original.PrecioVenta || original.precio || 0);
+                const original = catalogoProductos.find(p => String(p.id || p.ID || p.codigo).trim() === item.id);
+                const precioOrig = limpiarMoneda(original.precioVenta || original.PrecioVenta || original.Precio_Venta || original.precio || 0);
                 
                 item.precio = esConsumoInterno ? 0.00 : precioOrig;
                 item.subtotal = item.precio * item.cantidad;
@@ -260,7 +268,6 @@
             renderizarCarrito();
         }
 
-        // Valida existencias y previene duplicados inconsistentes
         function agregarItemAlCarrito() {
             const idProd = document.getElementById("selectProducto").value;
             const cant = parseInt(document.getElementById("numCantidadVenta").value) || 0;
@@ -269,7 +276,7 @@
                 return Swal.fire("Campos Incompletos", "Selecciona un producto y define una cantidad válida.", "warning");
             }
 
-            const prod = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === idProd);
+            const prod = catalogoProductos.find(p => String(p.id || p.ID || p.codigo).trim() === idProd);
             const stockActual = parseInt(prod.stock || prod.Stock || 0);
 
             const yaEnCarrito = carrito.find(item => item.id === idProd);
@@ -284,7 +291,7 @@
                 yaEnCarrito.subtotal = yaEnCarrito.cantidad * yaEnCarrito.precio;
             } else {
                 const nombreProd = prod.producto || prod.Producto || prod.nombre;
-                const precioUnidad = esConsumoInterno ? 0.00 : parseFloat(prod.precioVenta || prod.PrecioVenta || prod.precio || 0);
+                const precioUnidad = esConsumoInterno ? 0.00 : limpiarMoneda(prod.precioVenta || prod.PrecioVenta || prod.Precio_Venta || prod.precio || 0);
                 
                 carrito.push({
                     id: idProd,
@@ -297,7 +304,6 @@
 
             renderizarCarrito();
             
-            // Limpieza y reseteo suave del bloque de selección
             document.getElementById("selectProducto").value = "";
             document.getElementById("numCantidadVenta").value = "1";
             document.getElementById("wrapperStock").classList.add("hidden");
@@ -353,12 +359,16 @@
             }
         }
 
-        // Escritura asíncrona robusta hacia Google Sheets sin pérdida de estado
+        // CONTROL DE ESCRITURA TOTALMENTE ADAPTADO A LAS COLUMNAS EXACTAS DE TU HOJA VENTAS
         async function confirmarYEnviarVenta() {
-            const clienteId = document.getElementById("selectCliente").value;
-            if(!clienteId) {
+            const rucCliente = document.getElementById("selectCliente").value;
+            if(!rucCliente) {
                 return Swal.fire("Cliente Requerido", "Por favor, asigne un cliente válido para esta transacción.", "warning");
             }
+
+            // Ubicar el nombre legible del cliente
+            const objCliente = clientesGlobal.find(c => String(c.ci_ruc || c.CI_RUC || c.ruc || c.id || "").trim() === rucCliente);
+            const nombreCliente = objCliente ? (objCliente.nombre || objCliente.Nombre || objCliente.razon_social) : rucCliente;
 
             const confirmacion = await Swal.fire({
                 title: '¿Confirmar Despacho?',
@@ -375,32 +385,44 @@
 
             Swal.fire({
                 title: 'Procesando Operación...',
-                text: 'Deduciendo inventarios y asentando transacciones fiscales...',
+                text: 'Deduciendo inventarios y asentando transacciones en Google Sheets...',
                 allowOutsideClick: false,
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            // Preparación del payload unificado
-            const payload = {
-                action: "registrarVenta",
-                clienteId: clienteId,
-                esConsumoInterno: esConsumoInterno,
-                fecha: new Date().toISOString().split('T')[0],
-                items: carrito
-            };
+            // Generador de clave correlativa única para agrupar la orden
+            const idVentaUnico = `V-${Math.floor(100000 + Math.random() * 900000)}`;
+            const fechaActual = new Date().toLocaleDateString('es-EC');
 
+            // Enviamos un arreglo plano fila por fila para impactar directamente las columnas de la hoja
             try {
-                // Escritura centralizada controlada a través de DairyAPI
-                await DairyAPI.guardarDatos("Ventas", payload);
+                for (const item of carrito) {
+                    const payloadfijo = {
+                        pestana: "Ventas",
+                        accion: "escribir", // Forzado en español para match con api-config
+                        ID_Venta: idVentaUnico,
+                        Fecha: fechaActual,
+                        Cliente: nombreCliente,
+                        Producto: item.producto,
+                        Cantidad: parseInt(item.cantidad),
+                        Precio_PVP: parseFloat(item.precio),
+                        Total: parseFloat(item.subtotal),
+                        Estado: "PAGADO",
+                        Fecha_Entrega: fechaActual
+                    };
+
+                    // Ejecución secuencial controlada para evitar colisiones en la API de Sheets
+                    await DairyAPI.guardarDatos("Ventas", payloadfijo);
+                }
 
                 Swal.fire({
                     title: '¡Operación Exitosa!',
-                    text: 'Venta asentada y stock deducido correctamente.',
+                    text: 'Venta asentada columna por columna en Google Sheets sin errores.',
                     icon: 'success',
                     confirmButtonColor: '#059669'
                 });
 
-                // Reseteo limpio de la interfaz y el estado local
+                // Limpieza absoluta de la interfaz
                 carrito = [];
                 document.getElementById("selectCliente").value = "";
                 if(document.getElementById("chkConsumoInterno").checked) {
@@ -408,12 +430,11 @@
                     alternarConsumoInterno();
                 }
                 renderizarCarrito();
+                inicializarModulo(); // Sincroniza en caliente nuevos stocks
                 
-                // Forzar sincronización en caliente para reflejar los nuevos balances de Kárdex
-                inicializarModulo();
             } catch (err) {
                 console.error("Error al asentar orden de salida:", err);
-                Swal.fire("Error Operativo", "No se pudo sincronizar la transacción con las hojas de cálculo centralizadas.", "error");
+                Swal.fire("Error Operativo", "Se perdió la comunicación. Verifica si algunas filas se guardaron de manera parcial en Sheets.", "error");
             }
         }
     </script>

@@ -195,7 +195,7 @@
             cargarProveedoresDesplegable();
         });
 
-        // 👥 CARGAR PROVEEDORES DESDE LA HOJA "Proveedores" COLUMNA "Nombre del Proveedor"
+        // CARGAR PROVEEDORES DESDE LA HOJA CENTRAL
         async function cargarProveedoresDesplegable() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Proveedores");
@@ -222,12 +222,11 @@
             }
         }
 
-        // 🔄 CARGA E INTERPRETACIÓN DE COLUMNAS EXACTAS DE TU EXCEL
+        // CARGA E INTERPRETACIÓN DE COLUMNAS EXACTAS DE TU EXCEL
         async function cargarInventario() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
                 if (Array.isArray(datos)) {
-                    // Mapeo defensivo para homogeneizar mayúsculas/minúsculas y guiones bajos
                     const normalizados = datos.map(p => ({
                         Fecha: p.Fecha || p.fecha || "",
                         ID: String(p.ID || p.id || "").trim(),
@@ -258,7 +257,7 @@
             }
         }
 
-        // 🎨 RENDERIZADO EN TABLA HTML
+        // RENDERIZADO EN TABLA HTML
         function renderizarInventario(lista) {
             const tbody = document.getElementById("tbodyInventario");
             tbody.innerHTML = lista.length ? "" : "<tr><td colspan='7' class='text-center py-10 text-slate-400'>No se encontraron productos.</td></tr>";
@@ -294,7 +293,7 @@
             lucide.createIcons();
         }
 
-        // 📊 CONTADORES LOGÍSTICOS
+        // CONTADORES LOGÍSTICOS
         function calcularResumenContadores(lista) {
             let criticos = 0, porAgotar = 0, optimos = 0;
             lista.forEach(p => {
@@ -307,7 +306,7 @@
             document.getElementById("lblOptimos").innerText = `${optimos} Óptimos`;
         }
 
-        // 🔍 FILTRADO INTERNO
+        // FILTRADO INTERNO
         function procesarFiltrosYBusqueda() {
             const query = document.getElementById("buscarProducto").value.toLowerCase();
             const selector = document.getElementById("filtroEstadoLogistico").value;
@@ -364,13 +363,12 @@
             document.getElementById("modalProducto").classList.add("hidden");
         }
 
-        // 💾 ESCRITURA CON MAPEO INTEGRAL AL EXCEL
+        // ESCRITURA EN GOOGLE SHEETS
         async function guardarEstructuraProducto(e) {
             e.preventDefault();
             const idInterno = document.getElementById("prod_id_interno").value;
             const esEdicion = idInterno !== "";
 
-            // Payload formateado con las propiedades tal como están en tus encabezados de Google Sheets
             const payload = {
                 pestana: "Inventario",
                 accion: esEdicion ? "editar" : "escribir",
@@ -397,7 +395,7 @@
             }
         }
 
-        // ❌ ELIMINACIÓN DE FILA INTEGRAL POR ID SKU (Corregida y unificada)
+        // ELIMINACIÓN DE FILA INTEGRAL POR ID SKU
         function eliminarProductoIntegridad(idProducto) {
             Swal.fire({
                 title: '¿Eliminar Fila de Raíz?',
@@ -430,7 +428,7 @@
             });
         }
 
-        // 🕒 HISTORIAL DE MOVIMIENTOS KÁRDEX
+        // HISTORIAL DE MOVIMIENTOS KÁRDEX
         async function verMovimientosKardex(idProducto, nombreProducto) {
             document.getElementById("kardexProductoNombre").innerText = `Producto: ${nombreProducto} (#${idProducto})`;
             const tbody = document.getElementById("tbodyKardex");
@@ -468,7 +466,7 @@
 
         function cerrarModalKardex() { document.getElementById("modalKardex").classList.add("hidden"); }
 
-        // EXPORTACIONES A ARCHIVOS LOCALES
+        // EXPORTACIONES A EXCEL Y PDF
         function solicitarFormatoExportacion() {
             Swal.fire({
                 title: 'Exportar Reporte de Inventario',

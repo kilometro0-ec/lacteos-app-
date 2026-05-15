@@ -1,156 +1,23 @@
-<!DOCTYPE html>
-<html class="light" lang="es">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Checklist de Recepción | Lógica Láctea</title>
-    <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="stylesheet" href="estilos-lacteos.css?v=1.4">
-    <script src="api-config.js?v=1.4"></script>
-    <script src="menu-logic.js?v=1.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { primary: '#6b21a8', outline: '#e2e8f0', surface: '#ffffff', textPrimary: '#1e293b' }
-                }
+<script>
+    // FUNCIÓN CLAVE: Procesa la entrada física de productos al almacén
+    async function confirmarIngreso() {
+        const btn = document.getElementById('btn-confirmar');
+        const notas = document.getElementById('nota-recepcion').value;
+        
+        btn.disabled = true;
+        try {
+            // Enviamos los items modificados (por si llegó menos cantidad)
+            const res = await DairyAPI.guardarDatos("Compras", {
+                pestaña: "Compras", 
+                accion: "recepcion_final", // Trigger en Apps Script para subir stock
+                id_operacion: idSeleccionado,
+                observaciones: notas,
+                datos_actualizados: JSON.stringify(itemsEnEdicion)
+            });
+            if (res === "OK") { 
+                alert("¡Stock actualizado e ingreso registrado!");
+                location.reload(); 
             }
-        }
-    </script>
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .glass-header { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
-        .card-recepcion { border-left: 5px solid #6b21a8; }
-    </style>
-</head>
-<body class="pb-32 bg-slate-50 text-slate-800">
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center">
-        <div class="relative flex items-center justify-center">
-            <div class="absolute w-16 h-16 border-4 border-purple-100 border-t-purple-700 rounded-full animate-spin"></div>
-            <span class="material-symbols-outlined text-2xl text-purple-700 font-bold">conveyor_belt</span>
-        </div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-purple-800 mt-6 animate-pulse">Sincronizando Andén...</p>
-    </div>
-
-    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 glass-header shadow-md">
-        <div class="flex items-center gap-4">
-            <button onclick="history.back()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/15 text-white active:scale-90 transition-transform">
-                <span class="material-symbols-outlined font-bold">arrow_back</span>
-            </button>
-            <div>
-                <h1 class="text-[9px] font-black text-purple-200 uppercase tracking-widest leading-none">Logística</h1>
-                <h2 class="text-base font-black text-white uppercase tracking-tight mt-0.5">Checklist de Recepción</h2>
-            </div>
-        </div>
-    </header>
-
-    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
-        <div class="relative">
-            <span class="material-symbols-outlined absolute left-4 top-3.5 text-purple-600">search</span>
-            <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar por ID o Proveedor..." class="w-full rounded-2xl border-none shadow-sm py-3.5 pl-12 text-xs font-bold focus:ring-2 focus:ring-purple-600/20 bg-white">
-        </div>
-        <div id="lista-pedidos" class="grid gap-3"></div>
-    </main>
-
-    <div id="modal-confirmar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-end justify-center z-50">
-        <div class="bg-white w-full max-w-xl rounded-t-[2.5rem] border-t-4 border-purple-700 shadow-2xl flex flex-col relative" style="height: 85vh;">
-            <div class="p-6 pb-3 flex justify-between items-start border-b border-slate-100">
-                <div>
-                    <span class="text-[9px] font-black bg-purple-100 text-purple-800 px-3 py-1 rounded-full uppercase tracking-wider">Verificación de Mercadería</span>
-                    <h2 id="id-factura-modal" class="text-xl font-black text-slate-900 mt-2"></h2>
-                </div>
-                <button onclick="cerrarModal()" class="bg-slate-50 p-2 rounded-xl text-slate-400">
-                    <span class="material-symbols-outlined font-bold text-sm">close</span>
-                </button>
-            </div>
-            <div id="detalle-recepcion" class="flex-1 overflow-y-auto p-6 space-y-3"></div>
-            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 space-y-2">
-                <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Observaciones y Novedades:</label>
-                <textarea id="nota-recepcion" placeholder="Ej: Faltó un ítem, el empaque llegó dañado..." class="w-full rounded-xl border-slate-200 text-xs p-3 focus:ring-purple-500" rows="2"></textarea>
-            </div>
-            <div class="p-6 bg-white">
-                <button id="btn-confirmar" onclick="confirmarIngreso()" class="w-full glass-header text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs tracking-widest flex items-center justify-center gap-2 transition-transform active:scale-95">
-                    <span class="material-symbols-outlined text-lg">inventory_2</span> Confirmar e Ingresar Stock
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <nav id="menu-container" class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200"></nav>
-
-    <script>
-        let todosLosPedidos = []; let itemsEnEdicion = []; let idSeleccionado = "";
-        async function cargarDatos() {
-            try {
-                const datos = await DairyAPI.obtenerDatos("Compras");
-                todosLosPedidos = (datos || []).filter(f => String(f.Estado_Entrega).trim().toUpperCase() === "PENDIENTE");
-                todosLosPedidos.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
-                renderizar(todosLosPedidos);
-            } catch (e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = "none"; }
-        }
-        function renderizar(lista) {
-            const contenedor = document.getElementById('lista-pedidos');
-            const grupos = lista.reduce((acc, curr) => {
-                const id = curr.ID_Compra || "S/N";
-                if (!acc[id]) acc[id] = []; acc[id].push(curr); return acc;
-            }, {});
-            if (Object.keys(grupos).length === 0) {
-                contenedor.innerHTML = `<p class="text-center text-slate-400 font-bold py-10 text-xs uppercase">No hay pedidos pendientes.</p>`; return;
-            }
-            contenedor.innerHTML = Object.keys(grupos).map(id => {
-                const principal = grupos[id][0];
-                return `
-                <div onclick="abrirModal('${id}')" class="card-recepcion bg-white p-5 flex justify-between items-center shadow-sm rounded-2xl border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <p class="text-[10px] font-black text-purple-700 uppercase">${id}</p>
-                            <span class="text-[9px] text-slate-400 font-bold italic">${principal.Fecha}</span>
-                        </div>
-                        <p class="font-black text-slate-800 text-sm uppercase">${principal.Proveedor}</p>
-                    </div>
-                    <span class="material-symbols-outlined text-purple-700 font-bold text-sm">arrow_forward_ios</span>
-                </div>`;
-            }).join('');
-        }
-        function abrirModal(id) {
-            idSeleccionado = id; document.getElementById('id-factura-modal').innerText = id;
-            document.getElementById('nota-recepcion').value = "";
-            itemsEnEdicion = JSON.parse(JSON.stringify(todosLosPedidos.filter(p => p.ID_Compra === id)));
-            renderizarItemsModal();
-            document.getElementById('modal-confirmar').classList.remove('hidden');
-        }
-        function renderizarItemsModal() {
-            const contenedor = document.getElementById('detalle-recepcion');
-            contenedor.innerHTML = itemsEnEdicion.map((item, index) => `
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-black uppercase text-slate-700 leading-tight">${item.Producto}</p>
-                        <p class="text-[10px] text-slate-400 font-bold mt-0.5">Pedido original: ${item.Cantidad} uds</p>
-                    </div>
-                    <input type="number" oninput="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" class="w-20 text-center font-black text-purple-700 border-slate-200 rounded-xl py-1.5 text-sm bg-white focus:ring-purple-500 focus:border-purple-500">
-                </div>`).join('');
-        }
-        function actualizarCantidad(index, val) { itemsEnEdicion[index].Cantidad = parseFloat(val) || 0; }
-        async function confirmarIngreso() {
-            const btn = document.getElementById('btn-confirmar');
-            btn.disabled = true; btn.innerHTML = `PROCESANDO INGRESO...`;
-            try {
-                const res = await DairyAPI.guardarDatos("Compras", {
-                    pestaña: "Compras", accion: "recepcion_final", id_operacion: idSeleccionado,
-                    observaciones: document.getElementById('nota-recepcion').value, datos_actualizados: JSON.stringify(itemsEnEdicion)
-                });
-                if (res === "OK") { cerrarModal(); location.reload(); } else { alert(res); }
-            } catch (e) { alert("Error de comunicación con el servidor."); } finally { btn.disabled = false; }
-        }
-        function cerrarModal() { document.getElementById('modal-confirmar').classList.add('hidden'); }
-        function filtrarPedidos() {
-            const b = document.getElementById('buscador').value.toLowerCase();
-            renderizar(todosLosPedidos.filter(p => p.ID_Compra.toLowerCase().includes(b) || p.Proveedor.toLowerCase().includes(b)));
-        }
-        window.onload = cargarDatos;
-    </script>
-</body>
-</html>
+        } catch (e) { alert("Error en el servidor"); }
+    }
+</script>

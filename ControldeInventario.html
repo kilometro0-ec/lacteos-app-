@@ -92,10 +92,10 @@
 
     <!-- Modal Formulario: Ajuste Manual de Inventario -->
     <div id="modalAjuste" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
             <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
                 <h3 class="font-bold flex items-center gap-2"><i data-lucide="sliders-horizontal" class="w-4 h-4 text-blue-400"></i> Ajuste Físico de Stock</h3>
-                <button onclick="cerrarModalAjuste()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" onclick="cerrarModalAjuste()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form id="formAjuste" onsubmit="guardarAjusteManual(event)" class="p-6 space-y-4">
                 <div>
@@ -144,17 +144,19 @@
             cargarInventario();
         });
 
-        // Consumo de datos utilizando CONFIG.WEB_APP_URL de tu api-config.js
+        // Consumo unificado usando tu api-config unificada
         async function cargarInventario() {
             try {
-                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getInventario`);
-                const json = await res.json();
+                // Lee de la hoja central de "Inventario"
+                const datos = await DairyAPI.obtenerDatos("Inventario");
                 
-                if (json.status === "success") {
-                    inventarioGlobal = json.data;
+                if (Array.isArray(datos)) {
+                    inventarioGlobal = datos;
                     renderizarInventario(inventarioGlobal);
                     calcularResumenContadores(inventarioGlobal);
                     llenarSelectProductos(inventarioGlobal);
+                } else if (datos && datos.status === "error") {
+                    throw new Error(datos.message);
                 }
             } catch (err) {
                 console.error("Error al conectar con la API de Lógica Láctea:", err);
@@ -162,7 +164,7 @@
                     <tr>
                         <td colspan="6" class="text-center py-10 text-rose-500 font-bold">
                             <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
-                            Fallo de vinculación con api-config.js o Google Sheets.
+                            Fallo de sincronización con api-config.js o Google Sheets.
                         </td>
                     </tr>
                 `;
@@ -177,7 +179,7 @@
 
             lista.forEach(p => {
                 const stock = parseInt(p.stock) || 0;
-                const min = parseInt(p.stockMinimo) || 10; // Límite por defecto si no viene mapeado
+                const min = parseInt(p.stockMinimo) || 10; 
                 
                 let badgeClass = "";
                 let badgeText = "";
@@ -200,7 +202,7 @@
                 const tr = document.createElement("tr");
                 tr.className = `transition-colors ${rowAlertClass}`;
                 tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-mono text-[11px] text-slate-400 font-bold">#${p.id}</td>
+                    <td class="py-3.5 px-6 font-mono text-[11px] text-slate-400 font-bold">#${p.id || p.codigo || 'S/N'}</td>
                     <td class="py-3.5 px-4 font-bold text-slate-800">${p.producto}</td>
                     <td class="py-3.5 px-4 text-right text-slate-500 font-mono">$${parseFloat(p.precioCompra || 0).toFixed(2)}</td>
                     <td class="py-3.5 px-4 text-right text-blue-700 font-bold font-mono">$${parseFloat(p.precioVenta || 0).toFixed(2)}</td>
@@ -216,7 +218,7 @@
             lucide.createIcons();
         }
 
-        // Calcula dinámicamente los contadores superiores de la barra de filtros
+        // Calcula contadores superiores de la barra de filtros
         function calcularResumenContadores(lista) {
             let criticos = 0;
             let porAgotar = 0;
@@ -239,13 +241,12 @@
         function filtrarInventario() {
             const query = document.getElementById("buscarProducto").value.toLowerCase();
             const filtrados = inventarioGlobal.filter(p => 
-                p.producto.toLowerCase().includes(query) || 
-                p.id.toLowerCase().includes(query)
+                (p.producto && p.producto.toLowerCase().includes(query)) || 
+                (p.id && p.id.toLowerCase().includes(query))
             );
             renderizarInventario(filtrados);
         }
 
-        // Llena el selector del Modal de ajuste manual
         function llenarSelectProductos(lista) {
             const select = document.getElementById("adj_producto");
             select.innerHTML = '<option value="">-- Elige un Producto --</option>';
@@ -254,18 +255,17 @@
             });
         }
 
-        // Funciones del Ciclo de Vida del Modal
         function abrirModalAjuste() {
             document.getElementById("formAjuste").reset();
             document.getElementById("modalAjuste").classList.remove("hidden");
+            lucide.createIcons();
         }
 
-        document.getElementById("modalAjuste").classList.add("hidden");
         function cerrarModalAjuste() {
             document.getElementById("modalAjuste").classList.add("hidden");
         }
 
-        // Escritura asíncrona hacia el backend central de Google Apps Script
+        // Escritura asíncrona hacia el backend de Google Sheets usando DairyAPI
         async function guardarAjusteManual(e) {
             e.preventDefault();
 
@@ -286,12 +286,8 @@
             });
 
             try {
-                await fetch(CONFIG.WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+                // Guarda la transacción directamente en la pestaña de Kárdex/Ajustes
+                await DairyAPI.guardarDatos("KardexMovimientos", payload);
 
                 Swal.fire({
                     title: 'Ajuste Aplicado',
@@ -301,8 +297,9 @@
                 });
                 
                 cerrarModalAjuste();
-                cargarInventario(); // Recarga y refresca la cuadrícula
+                cargarInventario(); // Recarga local e inmediata de la cuadrícula
             } catch (err) {
+                console.error(err);
                 Swal.fire("Error", "No se pudo sincronizar el ajuste manual con la base de datos.", "error");
             }
         }

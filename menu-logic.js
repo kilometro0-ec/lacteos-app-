@@ -1,145 +1,323 @@
-/**
- * LÓGICA LÁCTEA - CONTROL DE NAVEGACIÓN v3.0 (Premium Edition)
- * Sistema de navegación con identidad de marca Magenta/Púrpura.
- */
-
-window.navegarA = function(url) {
-    // Efecto de salida suave (Smooth Out)
-    document.body.style.transition = "opacity 0.25s ease";
-    document.body.style.opacity = "0";
-    setTimeout(() => { window.location.href = url; }, 250);
-};
-
-const MenuLogic = {
-    opciones: [
-        { nombre: 'Panel', icon: 'dashboard', link: 'DashboardLacteo.html' },
-        { nombre: 'Ventas', icon: 'add_shopping_cart', link: 'RegistrodeVentas.html' },
-        { nombre: 'Stock', icon: 'inventory', link: 'ControldeInventario.html' },
-        { nombre: 'Clientes', icon: 'group', link: 'GestiondeClientes.html' },
-        { nombre: 'Rutas', icon: 'local_shipping', link: 'GestióndeDespachos.html' }
-    ],
-
-    render() {
-        const container = document.getElementById('menu-container');
-        if (!container) return;
-
-        // Detectar página actual para marcar el estado activo
-        const pathActual = decodeURIComponent(window.location.pathname.split("/").pop()) || 'DashboardLacteo.html';
-
-        // Inyección de Estilos Premium
-        const style = document.createElement('style');
-        style.innerHTML = `
-            body { 
-                padding-bottom: 85px !important; 
-            }
-
-            .nav-fija {
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(15px);
-                -webkit-backdrop-filter: blur(15px);
-                border-top: 1px solid #e9d5ff;
-                padding: 10px 0 20px 0;
-                z-index: 999999;
-                box-shadow: 0 -10px 25px rgba(162, 28, 175, 0.08);
-            }
-
-            .menu-grid {
-                max-width: 500px;
-                margin: 0 auto;
-                display: flex;
-                justify-content: space-around;
-                align-items: center;
-                padding: 0 12px;
-            }
-
-            .nav-btn {
-                position: relative;
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 4px;
-                color: #94a3b8; /* Slate 400 */
-                background: none;
-                border: none;
-                outline: none;
-                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                cursor: pointer;
-            }
-
-            .nav-btn .material-symbols-outlined {
-                font-size: 24px !important;
-                font-variation-settings: 'wght' 300, 'FILL' 0;
-            }
-
-            .nav-btn span:last-child {
-                font-size: 9px !important;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-            }
-
-            /* --- ESTADO ACTIVO (MARCA PREMIUM) --- */
-            .active-btn {
-                color: #a21caf !important; /* Primary Púrpura */
-            }
-
-            .active-btn .material-symbols-outlined {
-                font-variation-settings: 'wght' 500, 'FILL' 1 !important;
-                transform: translateY(-4px);
-                color: #db2777; /* Secondary Magenta */
-            }
-
-            /* Indicador de píldora inferior */
-            .active-btn::after {
-                content: '';
-                position: absolute;
-                bottom: -8px;
-                width: 20px;
-                height: 4px;
-                background: linear-gradient(90deg, #a21caf, #db2777);
-                border-radius: 10px;
-                box-shadow: 0 2px 8px rgba(219, 39, 119, 0.4);
-            }
-
-            /* Feedback táctil */
-            .nav-btn:active {
-                transform: scale(0.9);
-                opacity: 0.7;
-            }
-        `;
-        document.head.appendChild(style);
-
-        // Generación del HTML del menú
-        let html = `<nav class="nav-fija"><div class="menu-grid">`;
-
-        this.opciones.forEach(opt => {
-            const esActivo = (pathActual === opt.link);
-            html += `
-                <button onclick="navegarA('${opt.link}')" class="nav-btn ${esActivo ? 'active-btn' : ''}">
-                    <span class="material-symbols-outlined">${opt.icon}</span>
-                    <span>${opt.nombre}</span>
-                </button>
-            `;
-        });
-
-        html += `</div></nav>`;
-        container.innerHTML = html;
-    }
-};
-
-// Ejecución automática al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-    MenuLogic.render();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lógica Láctea | Inventario</title>
     
-    // Suavizado de entrada (Fade In)
-    document.body.style.opacity = "0";
-    document.body.style.transition = "opacity 0.4s ease";
-    requestAnimationFrame(() => {
-        document.body.style.opacity = "1";
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- TUS ARCHIVOS EXISTENTES -->
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; padding-bottom: 85px !important; }
+        
+        /* Header */
+        .header { position: fixed; top: 0; width: 100%; background: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; z-index: 50; }
+        .logo { font-size: 1.25rem; font-weight: 900; color: #1e1b4b; }
+        .logo span { color: #a21caf; }
+        .sync-status { font-size: 0.7rem; font-weight: 700; color: #10b981; }
+        .sync-status.error { color: #ef4444; }
+        .icon-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; padding: 8px; border-radius: 50%; transition: all 0.2s; }
+        .icon-btn:active { background: #e2e8f0; transform: scale(0.95); }
+        
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 1rem; padding: 12px; text-align: center; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .stat-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: #a21caf; display: block; }
+        .stat-value { font-size: 1.25rem; font-weight: 900; color: #1e1b4b; display: block; margin-top: 4px; }
+        
+        /* Search */
+        .search-box { position: relative; margin-bottom: 16px; }
+        .search-box span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.25rem; }
+        .search-box input { width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #e2e8f0; border-radius: 1rem; outline: none; font-size: 0.9rem; background: white; }
+        .search-box input:focus { border-color: #a21caf; }
+        
+        /* Product Grid */
+        .productos-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .product-card { background: white; border-radius: 1rem; padding: 12px; border: 1px solid #e2e8f0; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .product-card:active { transform: scale(0.98); }
+        .product-id { font-size: 0.65rem; font-weight: 800; color: #94a3b8; }
+        .product-name { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #1e1b4b; margin: 8px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .card-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 8px; }
+        .stock-info { display: flex; align-items: baseline; gap: 2px; }
+        .stock-number { font-size: 1.5rem; font-weight: 900; color: #a21caf; }
+        .stock-number.critical { color: #ef4444; }
+        .stock-unit { font-size: 0.7rem; font-weight: 700; color: #94a3b8; }
+        .price-info { font-size: 0.9rem; font-weight: 900; color: #10b981; }
+        .product-provider { font-size: 0.6rem; color: #94a3b8; margin-top: 8px; padding-top: 6px; border-top: 1px solid #f1f5f9; }
+        
+        /* FAB */
+        .fab { position: fixed; bottom: 90px; right: 16px; width: 56px; height: 56px; background: #a21caf; color: white; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; cursor: pointer; box-shadow: 0 4px 12px rgba(162,28,175,0.4); transition: all 0.2s; z-index: 60; }
+        .fab:active { transform: scale(0.92); background: #db2777; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; width: 90%; max-width: 320px; border-radius: 2rem; padding: 24px; }
+        .modal-title { font-size: 1.25rem; font-weight: 900; color: #a21caf; text-align: center; margin-bottom: 16px; text-transform: uppercase; }
+        .modal-input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 0.75rem; margin-bottom: 12px; outline: none; font-size: 0.85rem; }
+        .modal-input:focus { border-color: #a21caf; }
+        .modal-select { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 0.75rem; margin-bottom: 12px; outline: none; background: white; }
+        .btn-save { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 0.75rem; font-weight: 800; text-transform: uppercase; margin-top: 8px; cursor: pointer; }
+        .btn-cancel { width: 100%; padding: 10px; background: transparent; color: #94a3b8; border: none; font-weight: 600; margin-top: 8px; cursor: pointer; }
+        
+        /* Loading */
+        .loading { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; }
+        .loading.active { display: flex; }
+        .spinner { width: 48px; height: 48px; border: 4px solid #e2e8f0; border-top-color: #a21caf; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .error-msg { text-align: center; padding: 40px; color: #ef4444; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+    <div class="spinner"></div>
+</div>
+
+<header class="header">
+    <div>
+        <div class="logo">🥛 <span>LÓGICA</span> LÁCTEA</div>
+        <div class="sync-status" id="syncStatus">CONECTANDO...</div>
+    </div>
+    <div>
+        <button class="icon-btn" id="btnPDF">📄</button>
+        <button class="icon-btn" id="btnSync">🔄</button>
+    </div>
+</header>
+
+<main style="padding-top: 85px; padding-left: 16px; padding-right: 16px;">
+    <div class="stats-grid" id="statsGrid"></div>
+    
+    <div class="search-box">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" id="searchInput" placeholder="Buscar producto..." oninput="filtrarProductos()">
+    </div>
+    
+    <div class="productos-grid" id="productosGrid"></div>
+</main>
+
+<button class="fab" id="fabBtn">+</button>
+
+<!-- MODAL NUEVO PRODUCTO - SIN CAMPO STOCK -->
+<div class="modal" id="modalProducto">
+    <div class="modal-content">
+        <div class="modal-title">NUEVO PRODUCTO</div>
+        <input type="text" id="prodNombre" class="modal-input" placeholder="Nombre del producto *">
+        <input type="number" id="prodCosto" class="modal-input" placeholder="Costo distribuidor $" step="0.01">
+        <input type="number" id="prodPvp" class="modal-input" placeholder="Precio venta PVP * $" step="0.01">
+        <select id="prodProveedor" class="modal-select">
+            <option value="GENERAL">GENERAL</option>
+        </select>
+        <button class="btn-save" id="btnGuardar">GUARDAR</button>
+        <button class="btn-cancel" onclick="cerrarModal()">CANCELAR</button>
+    </div>
+</div>
+
+<!-- CONTENEDOR DEL MENÚ INFERIOR (menu-logic.js lo llena) -->
+<div id="menu-container"></div>
+
+<script>
+// ==================== CONFIGURACIÓN ====================
+// Usando DairyAPI de api-config.js
+let inventario = [];
+let proveedoresLista = [];
+
+// ==================== UTILS ====================
+function showLoading(show) {
+    const loading = document.getElementById('loading');
+    show ? loading.classList.add('active') : loading.classList.remove('active');
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[m]);
+}
+
+// ==================== CARGAR DATOS ====================
+async function cargarInventario() {
+    showLoading(true);
+    try {
+        const data = await DairyAPI.obtenerDatos("Inventario");
+        
+        if (Array.isArray(data)) {
+            inventario = data.map(item => ({
+                id: item.ID,
+                nombre: item.Producto,
+                stock: Number(item.Stock) || 0,
+                pvp: Number(item.Precio_Venta) || 0,
+                costo: Number(item.Precio_Distribuidor) || 0,
+                proveedor: item["Proveedor Habitual"] || "GENERAL"
+            }));
+            renderizarTodo();
+            document.getElementById('syncStatus').innerHTML = "✅ CONECTADO";
+            document.getElementById('syncStatus').classList.remove('error');
+        } else {
+            throw new Error("Datos inválidos");
+        }
+    } catch(e) {
+        console.error(e);
+        document.getElementById('syncStatus').innerHTML = "⚠️ ERROR";
+        document.getElementById('syncStatus').classList.add('error');
+        document.getElementById('productosGrid').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
+    }
+    showLoading(false);
+}
+
+async function cargarProveedores() {
+    try {
+        const data = await DairyAPI.obtenerDatos("Proveedores");
+        if (Array.isArray(data) && data.length > 0) {
+            proveedoresLista = data.map(p => p['Nombre del Proveedor'] || p['Proveedor']).filter(v => v);
+        }
+        if (!proveedoresLista.includes('GENERAL')) proveedoresLista.unshift('GENERAL');
+        
+        const select = document.getElementById('prodProveedor');
+        select.innerHTML = proveedoresLista.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
+    } catch(e) {
+        console.error("Error cargando proveedores:", e);
+    }
+}
+
+// ==================== RENDERIZAR ====================
+function renderizarTodo() {
+    renderizarStats();
+    renderizarProductos(inventario);
+}
+
+function renderizarStats() {
+    let bodega = 0, criticos = 0, stockTotal = 0;
+    
+    inventario.forEach(p => {
+        bodega += p.pvp * p.stock;
+        if (p.stock <= 5) criticos++;
+        stockTotal += p.stock;
     });
-});
+    
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><span class="stat-label">💰 BODEGA</span><span class="stat-value">$${bodega.toFixed(0)}</span></div>
+        <div class="stat-card"><span class="stat-label">⚠️ CRÍTICOS</span><span class="stat-value">${criticos}</span></div>
+        <div class="stat-card"><span class="stat-label">📦 STOCK</span><span class="stat-value">${stockTotal}</span></div>
+    `;
+}
+
+function renderizarProductos(lista) {
+    const grid = document.getElementById('productosGrid');
+    grid.innerHTML = '';
+    
+    lista.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+            <div class="product-id">${escapeHtml(p.id)}</div>
+            <div class="product-name">${escapeHtml(p.nombre)}</div>
+            <div class="card-footer">
+                <div class="stock-info">
+                    <span class="stock-number ${p.stock <= 5 ? 'critical' : ''}">${p.stock}</span>
+                    <span class="stock-unit">u</span>
+                </div>
+                <div class="price-info">$${p.pvp.toFixed(2)}</div>
+            </div>
+            <div class="product-provider">📦 ${escapeHtml(p.proveedor)}</div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function filtrarProductos() {
+    const busqueda = document.getElementById('searchInput').value.toLowerCase();
+    const filtrados = inventario.filter(p => p.nombre.toLowerCase().includes(busqueda));
+    renderizarProductos(filtrados);
+}
+
+// ==================== CREAR PRODUCTO ====================
+async function crearProducto() {
+    const nombre = document.getElementById('prodNombre').value.trim().toUpperCase();
+    const costo = parseFloat(document.getElementById('prodCosto').value) || 0;
+    const pvp = parseFloat(document.getElementById('prodPvp').value) || 0;
+    const proveedor = document.getElementById('prodProveedor').value;
+    
+    if (!nombre) { alert("⚠️ Nombre requerido"); return; }
+    if (pvp <= 0) { alert("⚠️ Precio de venta mayor a 0"); return; }
+    
+    showLoading(true);
+    
+    try {
+        const resultado = await DairyAPI.enviarDatos({
+            pestaña: "Inventario",
+            Fecha: new Date().toISOString(),
+            Producto: nombre,
+            Stock: 0,
+            Precio_Distribuidor: costo,
+            Precio_Venta: pvp,
+            Ventas: 0,
+            "Proveedor Habitual": proveedor
+        });
+        
+        if (resultado && resultado.success !== false) {
+            alert(`✅ Producto "${nombre}" creado`);
+            cerrarModal();
+            document.getElementById('prodNombre').value = '';
+            document.getElementById('prodCosto').value = '';
+            document.getElementById('prodPvp').value = '';
+            await cargarInventario();
+        } else {
+            throw new Error(resultado?.error || "Error desconocido");
+        }
+    } catch(e) {
+        alert("❌ Error: " + e.message);
+    }
+    showLoading(false);
+}
+
+// ==================== PDF ====================
+function descargarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("LÓGICA LÁCTEA - INVENTARIO", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${new Date().toLocaleString()}`, 14, 30);
+    
+    const body = inventario.map(p => [p.id, p.nombre, p.stock, `$${p.pvp.toFixed(2)}`, p.proveedor]);
+    doc.autoTable({
+        startY: 40,
+        head: [['ID', 'Producto', 'Stock', 'PVP', 'Proveedor']],
+        body: body,
+        theme: 'grid',
+        headStyles: { fillColor: [162, 28, 175] }
+    });
+    doc.save('inventario_logica_lactea.pdf');
+}
+
+// ==================== MODAL ====================
+function abrirModal() {
+    document.getElementById('modalProducto').classList.add('active');
+}
+function cerrarModal() {
+    document.getElementById('modalProducto').classList.remove('active');
+}
+
+// ==================== EVENTOS ====================
+document.getElementById('fabBtn').onclick = abrirModal;
+document.getElementById('btnGuardar').onclick = crearProducto;
+document.getElementById('btnPDF').onclick = descargarPDF;
+document.getElementById('btnSync').onclick = () => cargarInventario();
+
+// ==================== INICIO ====================
+window.onload = async () => {
+    await cargarProveedores();
+    await cargarInventario();
+};
+</script>
+
+</body>
+</html>

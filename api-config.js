@@ -4,7 +4,7 @@
  */
 
 const DairyConfig = {
-    // Reemplazar por el ID de implementación web generado en Google Apps Script
+    // ID de implementación web activo en Google Apps Script
     SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwulODNQzXu3yQ2gS0Fo6oyR72KEmWQAxjnsGuGVgHT6HuPUO0nK0nH8TxBufscriknCQ/exec",
     VERSION: "1.4"
 };
@@ -32,19 +32,21 @@ const DairyAPI = {
     },
 
     /**
-     * Envía mutaciones y procesos transaccionales al servidor.
+     * Envía mutaciones y procesos transaccionales al servidor (A PRUEBA DE ERRORES)
      * @param {string} pestana Nombre exacto de la pestaña objetivo.
      * @param {Object} payload Datos de la operación incluyendo la acción y variables.
      * @returns {Promise<any>} Respuesta del servidor Apps Script
      */
     async guardarDatos(pestana, payload) {
         try {
-            // Estructuramos el envío mediante el método POST
+            // Se asegura que la pestaña siempre viaje dentro del cuerpo JSON de forma automática
+            const cuerpoEnvio = { pestana: pestana, ...payload };
+
             const response = await fetch(DairyConfig.SCRIPT_URL, {
                 method: "POST",
                 mode: "cors",
                 headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(cuerpoEnvio) 
             });
             
             if (!response.ok) throw new Error(`Error HTTP en servidor: ${response.status}`);
@@ -53,7 +55,7 @@ const DairyAPI = {
             try {
                 return JSON.parse(textoRespuesta);
             } catch (e) {
-                // Si el servidor retorna un string plano como "OK"
+                // Si el servidor retorna un texto plano (como un mensaje de confirmación)
                 return textoRespuesta;
             }
         } catch (error) {

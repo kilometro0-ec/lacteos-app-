@@ -126,16 +126,17 @@
             cargarProveedores();
         });
 
-        // Consumo utilizando la constante de entorno unificada de la raíz
+        // Consumo utilizando la API unificada (DairyAPI) en lugar de fetch crudo
         async function cargarProveedores() {
             try {
-                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getProveedores`);
-                const json = await res.json();
+                const datos = await DairyAPI.obtenerDatos("Proveedores");
                 
-                if (json.status === "success") {
-                    proveedoresGlobal = json.data;
+                if (Array.isArray(datos)) {
+                    proveedoresGlobal = datos;
                     renderizarProveedores(proveedoresGlobal);
                     document.getElementById("txtContadorProveedores").innerText = proveedoresGlobal.length;
+                } else if (datos && datos.status === "error") {
+                    throw new Error(datos.message);
                 }
             } catch (err) {
                 console.error("Error al sincronizar directorio:", err);
@@ -143,7 +144,7 @@
                     <tr>
                         <td colspan="5" class="text-center py-10 text-rose-500 font-bold">
                             <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
-                            Fallo al conectar con el archivo api-config.js o Google Sheets.
+                            Fallo al conectar con la base central de Google Sheets.
                         </td>
                     </tr>
                 `;
@@ -151,21 +152,27 @@
             }
         }
 
-        // Renderizado dinámico de la cuadrícula de proveedores
+        // Renderizado dinámico adaptivo a mayúsculas/minúsculas de las propiedades del JSON
         function renderizarProveedores(lista) {
             const tbody = document.getElementById("tbodyProveedores");
             tbody.innerHTML = lista.length ? "" : "<tr><td colspan='5' class='text-center py-10 text-slate-400 italic'>No se encontraron registros en el maestro de proveedores.</td></tr>";
 
             lista.forEach(p => {
+                // Mapeo seguro contra el mapeo de columnas del spreadsheet
+                const ruc = p.ruc_id || p.RUC_ID || p.ruc || p.id || p.ID;
+                const nombre = p.nombre || p.Nombre || p.razon_social;
+                const telefono = p.telefono || p.Telefono || '';
+                const direccion = p.direccion || p.Dirección || p.Direccion || '';
+
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-amber-50/20 transition-colors";
                 tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-mono font-bold text-amber-900">${p.ruc_id}</td>
-                    <td class="py-3.5 px-4 font-black text-slate-800">${p.nombre}</td>
-                    <td class="py-3.5 px-4 text-slate-600">${p.telefono || '<span class="text-slate-300 italic">No registrado</span>'}</td>
-                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${p.direccion || ''}">${p.direccion || '<span class="text-slate-300 italic">No registrada</span>'}</td>
+                    <td class="py-3.5 px-6 font-mono font-bold text-amber-900">${ruc || '---'}</td>
+                    <td class="py-3.5 px-4 font-black text-slate-800">${nombre || 'Sin nombre'}</td>
+                    <td class="py-3.5 px-4 text-slate-600">${telefono || '<span class="text-slate-300 italic">No registrado</span>'}</td>
+                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${direccion}">${direccion || '<span class="text-slate-300 italic">No registrada</span>'}</td>
                     <td class="py-3.5 px-6 text-center">
-                        <button onclick="abrirDiscador('${p.telefono}')" class="text-amber-700 hover:text-amber-900 p-1 rounded hover:bg-amber-50" title="Llamar proveedor">
+                        <button onclick="abrirDiscador('${telefono}')" class="text-amber-700 hover:text-amber-900 p-1 rounded hover:bg-amber-50 transition-all" title="Llamar proveedor">
                             <i data-lucide="phone" class="w-4 h-4 mx-auto"></i>
                         </button>
                     </td>
@@ -177,10 +184,11 @@
 
         function filtrarProveedores() {
             const query = document.getElementById("buscarProveedor").value.toLowerCase();
-            const filtrados = proveedoresGlobal.filter(p => 
-                p.nombre.toLowerCase().includes(query) || 
-                p.ruc_id.toLowerCase().includes(query)
-            );
+            const filtrados = proveedoresGlobal.filter(p => {
+                const ruc = (p.ruc_id || p.RUC_ID || p.ruc || p.id || '').toLowerCase();
+                const nombre = (p.nombre || p.Nombre || p.razon_social || '').toLowerCase();
+                return nombre.includes(query) || ruc.includes(query);
+            });
             renderizarProveedores(filtrados);
         }
 
@@ -194,7 +202,7 @@
             document.getElementById("modalProveedor").classList.add("hidden");
         }
 
-        // Escritura asíncrona hacia el backend centralizado de Google Apps Script
+        // Escritura unificada hacia la base centralizada sin 'no-cors'
         async function guardarProveedorNuevo(e) {
             e.preventDefault();
 
@@ -214,12 +222,8 @@
             });
 
             try {
-                await fetch(CONFIG.WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+                // Persistencia controlada por medio de DairyAPI
+                await DairyAPI.guardarDatos("Proveedores", payload);
 
                 Swal.fire({
                     title: 'Proveedor Guardado',
@@ -229,14 +233,15 @@
                 });
                 
                 cerrarModalProveedor();
-                cargarProveedores(); // Refresca el listado completo
+                cargarProveedores(); // Recarga asíncrona limpia
             } catch (err) {
-                Swal.fire("Error Operativo", "No se pudo sincronizar la ficha del proveedor.", "error");
+                console.error("Error al registrar el proveedor:", err);
+                Swal.fire("Error Operativo", "No se pudo sincronizar la ficha del proveedor en Google Sheets.", "error");
             }
         }
 
         function abrirDiscador(telefono) {
-            if(!telefono || telefono.includes("No registrado")) {
+            if(!telefono || telefono.trim() === "" || telefono.includes("No registrado")) {
                 return Swal.fire("Sin Datos", "Este proveedor no tiene un número telefónico asignado.", "info");
             }
             window.location.href = `tel:${telefono.replace(/[^0-9+]/g, '')}`;

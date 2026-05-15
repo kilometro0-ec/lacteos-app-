@@ -1,9 +1,9 @@
 /**
- * LÓGICA LÁCTEA - CLIENTE API v4.0 (CORREGIDA)
+ * LÓGICA LÁCTEA - CLIENTE API v4.0 (COMPLETO)
  * Mejoras: manejo de errores, reintentos, normalización de textos
  */
 
-const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbxDHh95YZbQluJq10JmkmuZFLg88J4i9jPAnyhlfbfvI0flu6QwxVLd_T7IlblwNF_DKg/exec";
+const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbyhuid6wQS8RM74_ZAKbzgC-2ZOpI3BgE2ZsDFZS22ffs9a7Usy1VZQDc5SwpgR5eoPBw/exec";
 
 const DairyAPI = {
     // 1. LECTURA DE DATOS (doGet)
@@ -21,7 +21,7 @@ const DairyAPI = {
                     console.error("Error al obtener:", pestaña, error);
                     return [];
                 }
-                await new Promise(r => setTimeout(r, 1000 * intento)); // Espera progresiva
+                await new Promise(r => setTimeout(r, 1000 * intento));
             }
         }
         return [];
@@ -40,7 +40,7 @@ const DairyAPI = {
                 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const resultado = await response.json();
-                if (resultado.error) throw new Error(resultado.error);
+                if (!resultado.success) throw new Error(resultado.error || "Error desconocido");
                 return resultado;
             } catch (error) {
                 console.error(`Intento ${intento}/${reintentos} falló:`, error);

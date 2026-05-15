@@ -4,7 +4,7 @@
 // ============================================================
 
 const SPREADSHEET_ID = "1PtM2KA1Ix0qJfUtEpxsYmiviwUKFEBYpT6hbUn1aXck";
-const API_BASE_URL = "https://script.google.com/macros/s/AKfycbwV-o3eEVzSSTmLwaJu6PXlShWzFLNxVWTvEP3x9XtEZ48K7V-_XQxhosiEdx1_z9hkNA/exec";
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbxQwvkGSjmkjgIAw001S8MSOxiWS4aqsoWHSyAF18rVPfNIWTcPMBGw6yum83AOEOhX_Q/exec";
 
 // Mapeo de nombres de hojas (por si hay diferencias)
 const HOJAS = {

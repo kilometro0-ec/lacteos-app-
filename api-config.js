@@ -2,39 +2,58 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyz4hORwNYw0dc0VsUyl
 
 const DairyAPI = {
 
-  obtenerDatos: async (pestaña) => {
+  // =========================
+  // OBTENER DATOS (GET)
+  // =========================
+  async obtenerDatos(pestaña) {
     try {
       const res = await fetch(
-        `${SCRIPT_URL}?pestaña=${encodeURIComponent(pestaña)}`
+        `${SCRIPT_URL}?sheet=${encodeURIComponent(pestaña)}`
       );
 
       const json = await res.json();
 
-      console.log("API OK:", pestaña, json);
+      console.log("GET OK:", pestaña, json);
 
-      return json.data || [];
+      return Array.isArray(json) ? json : [];
 
     } catch (err) {
-      console.error("ERROR API:", err);
+      console.error("ERROR GET:", err);
       return [];
     }
   },
 
-  enviarDatos: async (payload) => {
+  // =========================
+  // ENVIAR DATOS (POST SIN CORS)
+  // =========================
+  async enviarDatos(payload) {
+
     try {
+
+      const formData = new FormData();
+
+      for (const key in payload) {
+        formData.append(key, payload[key]);
+      }
+
       const res = await fetch(SCRIPT_URL, {
         method: "POST",
-        body: JSON.stringify(payload),
-        headers: {
-          "Content-Type": "application/json"
-        }
+        body: formData
       });
 
-      return await res.json();
+      const text = await res.text();
+
+      console.log("POST OK:", text);
+
+      try {
+        return JSON.parse(text);
+      } catch {
+        return { success: true, raw: text };
+      }
 
     } catch (err) {
       console.error("ERROR POST:", err);
-      return { status: "ERROR" };
+      return { success: false };
     }
   }
 

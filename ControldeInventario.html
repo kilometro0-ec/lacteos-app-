@@ -15,7 +15,6 @@
         --primary: #6366f1;
         --surface: #f8fafc;
         --outline: #e2e8f0;
-        --magenta: #d946ef;
       }
       body { 
         background-color: var(--surface); 
@@ -34,9 +33,8 @@
       .card-prod { 
         background: white; border-radius: 1.5rem; border: 1px solid var(--outline); 
         padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
-        min-height: 145px; cursor: pointer;
+        min-height: 145px;
       }
-      .card-prod:active { transform: scale(0.98); }
       
       .prod-title { 
         font-size: 11px; font-weight: 800; color: #1f012a; 
@@ -58,7 +56,7 @@
       }
       .input-sutil:focus { border-color: var(--primary); }
       .btn-magenta {
-        width: 100%; padding: 14px; background: var(--magenta); color: white;
+        width: 100%; padding: 14px; background: #d946ef; color: white;
         border-radius: 15px; font-weight: 800; text-transform: uppercase;
       }
 
@@ -100,9 +98,9 @@
 
 <main class="pt-20 px-4">
     <section id="stats-header" class="grid grid-cols-3 gap-2 mb-6">
-        <div class="id-card-top"><span class="label">Bodega</span><span class="value">$0</span></div>
-        <div class="id-card-top"><span class="label">Críticos</span><span class="value">0</span></div>
-        <div class="id-card-top"><span class="label">Stock</span><span class="value">0</span></div>
+        <div class="id-card-top"><span class="label">Bodega</span><span class="value" id="totalBodega">$0</span></div>
+        <div class="id-card-top"><span class="label">Críticos</span><span class="value" id="totalCriticos">0</span></div>
+        <div class="id-card-top"><span class="label">Stock</span><span class="value" id="totalStock">0</span></div>
     </section>
 
     <div class="relative mb-6">
@@ -135,9 +133,8 @@
 
 <script>
 // ==================== CONFIGURACIÓN ====================
-// ⚠️ IMPORTANTE: Tienes que desplegar tu propio Web App de Apps Script
-// y pegar la URL de "Implementar como aplicación web" aquí:
-const API_URL = "https://script.google.com/macros/s/AKfycbxabIAD-6st9we-W1KI6zKPAcFM842eu8RNos23QWAxP0jvzSahbAbEyYgQzAqz0J8c6A/exec";
+// USA TU NUEVA URL DEL WEB APP (la que implementaste con doGet)
+const API_URL = "https://script.google.com/macros/s/AKfycbziATkvhWLT263Pa43Eppw8cRuRXW7IyNsGo0r7Ox0ePlb7sX7j0EoRJvyxzImCsLSgRg/exec";
 
 let inventarioLocal = [];
 let proveedoresLista = [];
@@ -146,13 +143,15 @@ function mostrarLoading(mostrar) {
     document.getElementById('overlay-loading').style.display = mostrar ? 'flex' : 'none';
 }
 
-// ==================== CARGAR DATOS (SOLO GET) ====================
+// ==================== CARGAR DATOS ====================
 async function cargarInventario() {
     mostrarLoading(true);
     try {
-        const url = `${API_URL}?pestaña=Inventario`;
+        const url = `${API_URL}?action=obtener&pestaña=Inventario`;
+        console.log("Cargando inventario desde:", url);
         const res = await fetch(url);
         const data = await res.json();
+        console.log("Datos recibidos:", data);
         
         if (Array.isArray(data)) {
             inventarioLocal = data.map(item => ({
@@ -164,25 +163,41 @@ async function cargarInventario() {
                 Proveedor: item["Proveedor Habitual"] || "GENERAL"
             }));
             renderizar();
+            document.getElementById('sync-indicator').innerText = "CONECTADO ✓";
+            document.getElementById('sync-indicator').className = "text-[9px] font-black text-green-500";
+        } else {
+            throw new Error("Datos no válidos");
         }
     } catch(e) { 
-        console.error(e);
-        alert("Error: " + e.message);
+        console.error("Error cargando:", e);
+        document.getElementById('sync-indicator').innerText = "ERROR";
+        document.getElementById('sync-indicator').className = "text-[9px] font-black text-red-500";
+        alert("Error al cargar: " + e.message);
     }
     mostrarLoading(false);
 }
 
 async function cargarProveedores() {
     try {
-        const res = await fetch(`${API_URL}?pestaña=Proveedores`);
+        const url = `${API_URL}?action=obtener&pestaña=Proveedores`;
+        const res = await fetch(url);
         const proveedores = await res.json();
-        if (Array.isArray(proveedores)) {
-            proveedoresLista = proveedores.map(p => p['Nombre del Proveedor'] || p['Proveedor']).filter(v => v);
+        if (Array.isArray(proveedores) && proveedores.length > 0) {
+            proveedoresLista = proveedores.map(p => p['Nombre del Proveedor'] || p['Proveedor']).filter(v => v && v !== '');
             if (!proveedoresLista.includes('GENERAL')) proveedoresLista.unshift('GENERAL');
+        } else {
+            proveedoresLista = ['GENERAL'];
         }
         const select = document.getElementById('n-proveedor');
-        select.innerHTML = proveedoresLista.map(p => `<option value="${p}">${p}</option>`).join('');
-    } catch(e) { console.error(e); }
+        select.innerHTML = proveedoresLista.map(p => `<option value="${p.replace(/"/g, '&quot;')}">${p}</option>`).join('');
+    } catch(e) { 
+        console.error("Error cargando proveedores:", e);
+        // Si falla, al menos tener GENERAL
+        const select = document.getElementById('n-proveedor');
+        if (select.children.length === 0) {
+            select.innerHTML = '<option value="GENERAL">GENERAL</option>';
+        }
+    }
 }
 
 // ==================== RENDERIZAR ====================
@@ -204,25 +219,25 @@ function renderizar() {
         
         const card = document.createElement('div');
         card.className = "card-prod";
+        // SIN onclick - no abre ningún modal de stock
         card.innerHTML = `
             <div class="flex justify-between items-start mb-1">
-                <span class="text-[8px] font-black text-slate-400">ID: ${p.ID}</span>
+                <span class="text-[8px] font-black text-slate-400">ID: ${escapeHtml(p.ID)}</span>
                 <span class="text-[8px] font-black text-indigo-600">V: ${p.Ventas || 0}</span>
             </div>
             <h3 class="prod-title">${escapeHtml(p.Producto)}</h3>
             <div class="flex justify-between items-end mt-auto pt-2">
-                <span class="font-black text-xl ${stock <= 5 ? 'text-red-500' : 'text-indigo-600'}">${stock}<small>u</small></span>
-                <span class="font-black text-green-600">$${pvp.toFixed(2)}</span>
+                <span class="font-black text-xl ${stock <= 5 ? 'text-red-500' : 'text-indigo-600'}">${stock}<small class="text-[9px] ml-0.5">u</small></span>
+                <span class="font-black text-green-600 text-sm">$${pvp.toFixed(2)}</span>
             </div>
+            <div class="text-[9px] text-gray-400 mt-1">${escapeHtml(p.Proveedor)}</div>
         `;
         container.appendChild(card);
     });
     
-    document.getElementById('stats-header').innerHTML = `
-        <div class="id-card-top"><span class="label">Bodega</span><span class="value">$${bodega.toFixed(0)}</span></div>
-        <div class="id-card-top"><span class="label">Críticos</span><span class="value">${criticos}</span></div>
-        <div class="id-card-top"><span class="label">Stock</span><span class="value">${stockTotal}</span></div>
-    `;
+    document.getElementById('totalBodega').innerText = `$${bodega.toFixed(0)}`;
+    document.getElementById('totalCriticos').innerText = criticos;
+    document.getElementById('totalStock').innerText = stockTotal;
 }
 
 function escapeHtml(str) {
@@ -232,37 +247,75 @@ function escapeHtml(str) {
 
 function filtrar() { renderizar(); }
 
-// ==================== CREAR PRODUCTO (REDIRECT A FORM) ====================
-// Para evitar CORS, redirigimos a Google Forms o abrimos en nueva pestaña
-// Pero mejor: usamos submit a un Google Form
-function guardarNuevo() {
+// ==================== CREAR PRODUCTO ====================
+async function guardarNuevo() {
     const nombre = document.getElementById('n-nombre').value.trim().toUpperCase();
-    const dist = document.getElementById('n-dist').value;
-    const pvp = document.getElementById('n-pvp').value;
-    const stock = document.getElementById('n-stock').value;
+    const costo = parseFloat(document.getElementById('n-dist').value) || 0;
+    const pvp = parseFloat(document.getElementById('n-pvp').value) || 0;
+    const stock = parseInt(document.getElementById('n-stock').value) || 0;
     const proveedor = document.getElementById('n-proveedor').value;
     
-    if (!nombre) { alert("Nombre requerido"); return; }
-    if (!pvp || parseFloat(pvp) <= 0) { alert("PVP mayor a 0"); return; }
+    if (!nombre) { alert("⚠️ Nombre requerido"); return; }
+    if (pvp <= 0) { alert("⚠️ PVP debe ser mayor a 0"); return; }
     
-    // Abrir Google Form en nueva pestaña para agregar producto
-    // Tienes que crear un Google Form y usar su URL de prellenado
-    const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLSdEjemplo/viewform?usp=pp_url&entry.123456789=${encodeURIComponent(nombre)}&entry.987654321=${dist}&entry.555555555=${pvp}&entry.444444444=${stock}&entry.333333333=${proveedor}`;
+    mostrarLoading(true);
     
-    window.open(formUrl, '_blank');
-    alert("📝 Se abrirá un formulario. Completa los datos para guardar el producto.");
-    cerrarModal('modal-nuevo-prod');
+    try {
+        const params = new URLSearchParams({
+            action: "guardar",
+            pestaña: "Inventario",
+            Fecha: new Date().toISOString(),
+            Producto: nombre,
+            Stock: stock,
+            Precio_Distribuidor: costo,
+            Precio_Venta: pvp,
+            Ventas: 0,
+            Proveedor_Habitual: proveedor
+        });
+        
+        const url = `${API_URL}?${params.toString()}`;
+        console.log("Guardando en:", url);
+        const res = await fetch(url);
+        const result = await res.json();
+        console.log("Respuesta:", result);
+        
+        if (result.success) {
+            alert(`✅ Producto "${nombre}" creado exitosamente con ID ${result.id || ''}`);
+            cerrarModal('modal-nuevo-prod');
+            document.getElementById('n-nombre').value = "";
+            document.getElementById('n-dist').value = "";
+            document.getElementById('n-pvp').value = "";
+            document.getElementById('n-stock').value = "";
+            await cargarInventario();
+        } else {
+            throw new Error(result.error || "Error desconocido");
+        }
+    } catch(e) {
+        console.error("Error:", e);
+        alert("❌ Error al crear: " + e.message);
+    }
+    
+    mostrarLoading(false);
 }
 
 // ==================== PDF ====================
 function descargarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+    doc.setFontSize(18);
     doc.text("INVENTARIO LÓGICA LÁCTEA", 14, 20);
+    doc.setFontSize(10);
     doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 28);
+    
     const body = inventarioLocal.map(p => [p.ID, p.Producto, p.Stock, `$${p.Precio_Venta.toFixed(2)}`, p.Proveedor]);
-    doc.autoTable({ startY: 35, head: [['ID', 'Producto', 'Stock', 'PVP', 'Proveedor']], body, theme: 'grid', headStyles: { fillColor: [99, 102, 241] } });
-    doc.save('Inventario.pdf');
+    doc.autoTable({ 
+        startY: 35, 
+        head: [['ID', 'Producto', 'Stock', 'PVP', 'Proveedor']], 
+        body: body, 
+        theme: 'grid', 
+        headStyles: { fillColor: [99, 102, 241] } 
+    });
+    doc.save('Inventario_Lacteo.pdf');
 }
 
 function abrirModal(id) { document.getElementById(id).classList.add('active'); }

@@ -4,286 +4,152 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Checklist de Recepción | Lógica Láctea</title>
-    
-    <!-- Librerías del Núcleo -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js?v=1.4"></script>
     <script src="menu-logic.js?v=1.4"></script>
-    
-    <link rel="stylesheet" href="estilos-lacteos.css?v=1.4">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#6b21a8', outline: '#e2e8f0' }
+                }
+            }
+        }
+    </script>
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        #loading-overlay { display: flex; position: fixed; inset: 0; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
-        .card-recepcion { background: white; border-radius: 1.75rem; border: 1px solid #e2e8f0; border-left: 6px solid #6b21a8; transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden; cursor: pointer; }
-        .card-recepcion:active { transform: scale(0.97); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .glass-card-header { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
-        .badge-retraso { position: absolute; top: 0; right: 0; background: #ef4444; color: white; font-size: 8px; font-weight: 800; padding: 4px 12px; border-bottom-left-radius: 12px; text-transform: uppercase; tracking-wider; }
-        
-        .textarea-novedades {
-            width: 100%; border-radius: 1.25rem; border: 1px solid #e2e8f0; font-size: 12px; font-weight: 600; padding: 1rem;
-            transition: all 0.2s; background: white; resize: none;
-        }
-        .textarea-novedades:focus { border-color: #6b21a8; ring: 0; outline: none; box-shadow: 0 0 0 4px rgba(107, 33, 168, 0.1); }
-        
-        .modal-sheet { animation: sheetUp 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .glass-header { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
+        .card-recepcion { border-left: 6px solid #6b21a8; transition: transform 0.2s; }
+        .card-recepcion:active { transform: scale(0.97); }
     </style>
 </head>
 <body class="pb-32 bg-slate-50 text-slate-800">
-
-<!-- CAPA DE BLOQUEO Y CARGA -->
-<div id="loading-overlay">
-    <div class="relative flex items-center justify-center">
-        <div class="absolute w-16 h-16 border-4 border-purple-200 border-t-purple-700 rounded-full animate-spin"></div>
-        <span class="material-symbols-outlined text-2xl text-purple-700 font-bold">conveyor_belt</span>
-    </div>
-    <p class="text-[10px] font-black uppercase tracking-widest text-purple-800 mt-6 animate-pulse">Sincronizando Andén...</p>
-</div>
-
-<!-- PANEL SUPERIOR -->
-<header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 glass-card-header shadow-md">
-    <div class="flex items-center gap-4">
-        <button onclick="window.location.href='index.html'" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/15 text-white active:scale-90 transition-transform">
-            <span class="material-symbols-outlined font-bold">arrow_back</span>
-        </button>
-        <div>
-            <h1 class="text-[9px] font-black text-purple-200 uppercase tracking-widest leading-none">Logística de Ingresos</h1>
-            <h2 class="text-base font-black text-white uppercase tracking-tight mt-0.5">Checklist de Recepción</h2>
+    <div id="loading-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center">
+        <div class="relative flex items-center justify-center">
+            <div class="absolute w-16 h-16 border-4 border-purple-100 border-t-purple-700 rounded-full animate-spin"></div>
+            <span class="material-symbols-outlined text-2xl text-purple-700 font-bold">conveyor_belt</span>
         </div>
+        <p class="text-[10px] font-black uppercase tracking-widest text-purple-800 mt-6 animate-pulse">Sincronizando Andén...</p>
     </div>
-</header>
 
-<!-- CONTENEDOR DE CONTENIDO -->
-<main class="pt-26 px-4 max-w-xl mx-auto space-y-5">
-    <div class="relative">
-        <span class="material-symbols-outlined absolute left-4 top-3.5 text-purple-600">search</span>
-        <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar por ID o Proveedor..." 
-            class="w-full rounded-2xl border-none shadow-sm py-3.5 pl-12 text-xs font-bold focus:ring-2 focus:ring-purple-600/20 placeholder:text-slate-400 bg-white">
-    </div>
-    
-    <div id="lista-pedidos" class="grid gap-3">
-        <!-- Inyección dinámica de órdenes pendientes -->
-    </div>
-</main>
-
-<!-- MODAL HOJA DE VERIFICACIÓN (DESLIZAMIENTO INFERIOR) -->
-<div id="modal-confirmar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-end justify-center z-50" onclick="event.target === this && cerrarModal()">
-    <div class="bg-white w-full max-w-xl rounded-t-[2.5rem] border-t-4 border-purple-700 shadow-2xl flex flex-col relative modal-sheet" style="height: 88vh;">
-        
-        <!-- Cabecera del Modal -->
-        <div class="p-6 pb-3 flex justify-between items-start border-b border-slate-50">
+    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 glass-header shadow-md">
+        <div class="flex items-center gap-4">
+            <button onclick="history.back()" class="w-10 h-10 flex items-center justify-center rounded-xl bg-white/15 text-white active:scale-90 transition-transform">
+                <span class="material-symbols-outlined font-bold">arrow_back</span>
+            </button>
             <div>
-                <span class="text-[9px] font-black bg-purple-100 text-purple-800 px-3 py-1 rounded-full uppercase tracking-wider">Control de Calidad Físico</span>
-                <h2 id="id-factura-modal" class="text-xl font-black text-slate-900 mt-2 tracking-tight"></h2>
+                <h1 class="text-[9px] font-black text-purple-200 uppercase tracking-widest leading-none">Logística</h1>
+                <h2 class="text-base font-black text-white uppercase tracking-tight mt-0.5">Checklist de Recepción</h2>
             </div>
-            <button onclick="cerrarModal()" class="bg-slate-50 p-2.5 rounded-xl text-slate-400 active:scale-90 transition-transform border border-slate-100">
-                <span class="material-symbols-outlined font-bold text-sm">close</span>
-            </button>
         </div>
-        
-        <!-- Lista de Productos en el pedido -->
-        <div id="detalle-recepcion" class="flex-1 overflow-y-auto p-6 space-y-3">
-            <!-- Cargado por Javascript -->
-        </div>
+    </header>
 
-        <!-- SECCIÓN DE OBSERVACIONES Y NOVEDADES -->
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 space-y-2">
-            <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-base text-purple-700">edit_note</span>
-                <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider">Reporte de Novedades en Custodia:</label>
+    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
+        <div class="relative">
+            <span class="material-symbols-outlined absolute left-4 top-3.5 text-purple-600">search</span>
+            <input type="text" id="buscador" oninput="filtrarPedidos()" placeholder="Buscar por ID o Proveedor..." class="w-full rounded-2xl border-none shadow-sm py-3.5 pl-12 text-xs font-bold focus:ring-2 focus:ring-purple-600/20 bg-white">
+        </div>
+        <div id="lista-pedidos" class="grid gap-3"></div>
+    </main>
+
+    <div id="modal-confirmar" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-end justify-center z-50">
+        <div class="bg-white w-full max-w-xl rounded-t-[2.5rem] border-t-4 border-purple-700 shadow-2xl flex flex-col relative" style="height: 85vh;">
+            <div class="p-6 pb-3 flex justify-between items-start border-b border-slate-100">
+                <div>
+                    <span class="text-[9px] font-black bg-purple-100 text-purple-800 px-3 py-1 rounded-full uppercase tracking-wider">Verificación de Mercadería</span>
+                    <h2 id="id-factura-modal" class="text-xl font-black text-slate-900 mt-2"></h2>
+                </div>
+                <button onclick="cerrarModal()" class="bg-slate-50 p-2 rounded-xl text-slate-400">
+                    <span class="material-symbols-outlined font-bold text-sm">close</span>
+                </button>
             </div>
-            <textarea id="nota-recepcion" 
-                placeholder="Indique fallas de empaque, pérdidas físicas, roturas de cadena de frío o sustituciones acordadas..." 
-                class="textarea-novedades shadow-inner placeholder:text-slate-400 font-medium" rows="2"></textarea>
-        </div>
-
-        <!-- Botón de Envío -->
-        <div class="p-6 bg-white border-t border-slate-50">
-            <button id="btn-confirmar" onclick="confirmarIngreso()" 
-                class="w-full glass-card-header text-white font-black py-4 rounded-2xl shadow-lg uppercase text-xs tracking-widest active:scale-95 flex items-center justify-center gap-2 transition-all">
-                <span class="material-symbols-outlined text-lg">inventory_2</span>
-                <span>Confirmar e Ingresar Stock</span>
-            </button>
+            <div id="detalle-recepcion" class="flex-1 overflow-y-auto p-6 space-y-3"></div>
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 space-y-2">
+                <label class="text-[9px] font-black text-slate-500 uppercase tracking-wider block">Observaciones y Novedades:</label>
+                <textarea id="nota-recepcion" placeholder="Ej: Faltó un ítem, el empaque llegó dañado..." class="w-full rounded-xl border-slate-200 text-xs p-3 focus:ring-purple-500" rows="2"></textarea>
+            </div>
+            <div class="p-6 bg-white">
+                <button id="btn-confirmar" onclick="confirmarIngreso()" class="w-full glass-header text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs tracking-widest flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg">inventory_2</span> Confirmar e Ingresar Stock
+                </button>
+            </div>
         </div>
     </div>
-</div>
+    <nav id="menu-container"></nav>
 
-<nav id="menu-container"></nav>
-
-<script>
-    let todosLosPedidos = [];
-    let itemsEnEdicion = [];
-    let idSeleccionado = "";
-
-    async function cargarDatos() {
-        try {
-            // Invocación segura mediante controlador global configurado
-            const datos = await DairyAPI.obtenerDatos("Compras");
-            
-            todosLosPedidos = (datos || []).filter(f => String(f.Estado_Entrega).trim().toUpperCase() === "PENDIENTE");
-            todosLosPedidos.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
-            renderizar(todosLosPedidos);
-        } catch (e) { 
-            console.error("Error crítico de lectura en Compras:", e); 
-        } finally { 
-            document.getElementById('loading-overlay').style.display = "none"; 
+    <script>
+        let todosLosPedidos = []; let itemsEnEdicion = []; let idSeleccionado = "";
+        async function cargarDatos() {
+            try {
+                const datos = await DairyAPI.obtenerDatos("Compras");
+                todosLosPedidos = (datos || []).filter(f => String(f.Estado_Entrega).trim().toUpperCase() === "PENDIENTE");
+                todosLosPedidos.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+                renderizar(todosLosPedidos);
+            } catch (e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = "none"; }
         }
-    }
-
-    function renderizar(lista) {
-        const contenedor = document.getElementById('lista-pedidos');
-        
-        const grupos = lista.reduce((acc, curr) => {
-            const id = String(curr.ID_Compra || "S/N").trim();
-            if (!acc[id]) acc[id] = [];
-            acc[id].push(curr);
-            return acc;
-        }, {});
-
-        if (Object.keys(grupos).length === 0) {
-            contenedor.innerHTML = `
-                <div class="text-center py-16 bg-white rounded-3xl border border-dashed border-slate-200 p-6">
-                    <span class="material-symbols-outlined text-3xl text-slate-300">done_all</span>
-                    <p class="text-slate-400 font-extrabold text-xs mt-2 uppercase tracking-wide">No hay órdenes pendientes de ingreso</p>
-                </div>`;
-            return;
-        }
-
-        contenedor.innerHTML = Object.keys(grupos).map(id => {
-            const principal = grupos[id][0];
-            const fechaFormateada = principal.Fecha ? principal.Fecha.split('T')[0] : 'S/F';
-            const diffDias = Math.floor((new Date() - new Date(principal.Fecha)) / (1000 * 60 * 60 * 24));
-            
-            return `
-            <div onclick="abrirModal('${escapeHtml(id)}')" class="card-recepcion p-5 flex justify-between items-center shadow-sm">
-                ${diffDias > 2 ? `<div class="badge-retraso animate-pulse">${diffDias} DÍAS ALERTA</div>` : ''}
-                <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                        <p class="text-[10px] font-black text-purple-700 uppercase tracking-tight">${escapeHtml(id)}</p>
-                        <span class="text-[9px] text-slate-400 font-bold">${fechaFormateada}</span>
-                    </div>
-                    <p class="font-black text-slate-800 text-sm uppercase tracking-tight">${escapeHtml(principal.Proveedor)}</p>
-                </div>
-                <span class="material-symbols-outlined text-purple-700 font-bold text-sm">arrow_forward_ios</span>
-            </div>`;
-        }).join('');
-    }
-
-    function abrirModal(id) {
-        idSeleccionado = id;
-        document.getElementById('id-factura-modal').innerText = id;
-        document.getElementById('nota-recepcion').value = ""; 
-        
-        // Clonación profunda de seguridad para prevenir mutación colateral de hilos
-        itemsEnEdicion = JSON.parse(JSON.stringify(todosLosPedidos.filter(p => String(p.ID_Compra).trim() === id)));
-        renderizarItemsModal();
-        
-        document.getElementById('modal-confirmar').classList.remove('hidden');
-    }
-
-    function renderizarItemsModal() {
-        const contenedor = document.getElementById('detalle-recepcion');
-        contenedor.innerHTML = itemsEnEdicion.map((item, index) => `
-            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center gap-3">
-                <button onclick="marcarComoFaltante(${index})" class="text-rose-500 p-2.5 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors flex items-center justify-center" title="Marcar como no recibido">
-                    <span class="material-symbols-outlined text-lg font-bold">block</span>
-                </button>
-                <div class="flex-1 min-w-0">
-                    <p class="text-[11px] font-black uppercase text-slate-800 leading-tight truncate">${escapeHtml(item.Producto)}</p>
-                    <p class="text-[9px] text-slate-400 font-bold mt-0.5">Pedido Base: <span class="text-slate-600">${item.Cantidad} uds</span></p>
-                </div>
-                <div class="text-right shrink-0">
-                    <span class="block text-[8px] font-black text-purple-700 uppercase mb-1">Recibido:</span>
-                    <input type="number" min="0" oninput="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" 
-                        class="w-16 text-center font-black text-purple-700 border-slate-200 rounded-xl py-1.5 text-xs bg-white focus:ring-1 focus:ring-purple-700 focus:border-purple-700">
-                </div>
-            </div>`).join('');
-    }
-
-    function marcarComoFaltante(index) {
-        if(confirm(`¿Confirmar que el ítem "${itemsEnEdicion[index].Producto}" NO arribó en el camión de despacho?`)) {
-            const txtNota = document.getElementById('nota-recepcion');
-            txtNota.value += ` [FALTANTE TOTAL: ${itemsEnEdicion[index].Producto}]`;
-            itemsEnEdicion[index].Cantidad = 0; // Se setea a 0 para preservar la fila contable
-            renderizarItemsModal();
-        }
-    }
-
-    function actualizarCantidad(index, val) { 
-        const numero = parseFloat(val);
-        itemsEnEdicion[index].Cantidad = (!isNaN(numero) && numero >= 0) ? numero : 0; 
-    }
-
-    async function confirmarIngreso() {
-        const btn = document.getElementById('btn-confirmar');
-        const nota = document.getElementById('nota-recepcion').value.trim();
-        
-        if (itemsEnEdicion.length === 0) {
-            alert("No se registran datos válidos de entrega en esta sesión.");
-            return;
-        }
-
-        btn.disabled = true;
-        btn.innerHTML = `<span class="animate-spin material-symbols-outlined text-lg">sync</span> <span>PROCESANDO INGRESO...</span>`;
-        
-        // Estructura aplanada compatible con URLSearchParams para Apps Script
-        const queryParams = {
-            pestaña: "Compras", 
-            accion: "recepcion_final",
-            id_operacion: idSeleccionado,
-            observaciones: nota
-        };
-
-        try {
-            // El backend recibe la instrucción por URL y el lote transformado por parámetro controlado
-            const res = await DairyAPI.guardarDatos("Compras", {
-                ...queryParams,
-                datos_actualizados: JSON.stringify(itemsEnEdicion)
-            });
-            
-            if (res === "OK" || res.success || res.resultado === "Éxito") {
-                cerrarModal();
-                window.location.reload();
-            } else {
-                alert("Respuesta del controlador central: " + (res.error || res));
+        function renderizar(lista) {
+            const contenedor = document.getElementById('lista-pedidos');
+            const grupos = lista.reduce((acc, curr) => {
+                const id = curr.ID_Compra || "S/N";
+                if (!acc[id]) acc[id] = []; acc[id].push(curr); return acc;
+            }, {});
+            if (Object.keys(grupos).length === 0) {
+                contenedor.innerHTML = `<p class="text-center text-slate-400 font-bold py-10 text-xs uppercase">No hay pedidos pendientes.</p>`; return;
             }
-        } catch (e) { 
-            alert("Fallo de comunicación con el motor de Google Sheets: " + e.message); 
-        } finally { 
-            btn.disabled = false; 
-            btn.innerHTML = `<span class="material-symbols-outlined text-xl">inventory_2</span> <span>Confirmar e Ingresar Stock</span>`;
+            contenedor.innerHTML = Object.keys(grupos).map(id => {
+                const principal = grupos[id][0];
+                const diffDias = Math.floor((new Date() - new Date(principal.Fecha)) / (1000 * 60 * 60 * 24));
+                return `
+                <div onclick="abrirModal('${id}')" class="card-recepcion bg-white p-5 flex justify-between items-center shadow-sm rounded-2xl border border-slate-100">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <p class="text-[10px] font-black text-purple-700 uppercase">${id}</p>
+                            <span class="text-[9px] text-slate-400 font-bold italic">${principal.Fecha}</span>
+                        </div>
+                        <p class="font-black text-slate-800 text-sm uppercase">${principal.Proveedor}</p>
+                    </div>
+                    <span class="material-symbols-outlined text-purple-700 font-bold text-sm">arrow_forward_ios</span>
+                </div>`;
+            }).join('');
         }
-    }
-
-    function cerrarModal() { 
-        document.getElementById('modal-confirmar').classList.add('hidden'); 
-    }
-
-    function filtrarPedidos() {
-        const q = document.getElementById('buscador').value.toLowerCase().trim();
-        if(!q) {
-            renderizar(todosLosPedidos);
-            return;
+        function abrirModal(id) {
+            idSeleccionado = id; document.getElementById('id-factura-modal').innerText = id;
+            document.getElementById('nota-recepcion').value = "";
+            itemsEnEdicion = JSON.parse(JSON.stringify(todosLosPedidos.filter(p => p.ID_Compra === id)));
+            renderizarItemsModal();
+            document.getElementById('modal-confirmar').classList.remove('hidden');
         }
-        
-        const filtrados = todosLosPedidos.filter(p => 
-            String(p.ID_Compra).toLowerCase().includes(q) || 
-            String(p.Proveedor).toLowerCase().includes(q)
-        );
-        renderizar(filtrados);
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>'"\/]/g, m => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;'
-        })[m]);
-    }
-
-    window.onload = cargarDatos;
-</script>
+        function renderizarItemsModal() {
+            const contenedor = document.getElementById('detalle-recepcion');
+            contenedor.innerHTML = itemsEnEdicion.map((item, index) => `
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-black uppercase text-slate-700 leading-tight">${item.Producto}</p>
+                        <p class="text-[10px] text-slate-400 font-medium">Pedido original: ${item.Cantidad} uds</p>
+                    </div>
+                    <input type="number" oninput="actualizarCantidad(${index}, this.value)" value="${item.Cantidad}" class="w-16 text-center font-black text-purple-700 border-purple-700 rounded-xl py-1 text-sm bg-white">
+                </div>`).join('');
+        }
+        function actualizarCantidad(index, val) { itemsEnEdicion[index].Cantidad = parseFloat(val) || 0; }
+        async function confirmarIngreso() {
+            const btn = document.getElementById('btn-confirmar');
+            btn.disabled = true; btn.innerHTML = `PROCESANDO...`;
+            try {
+                const res = await DairyAPI.guardarDatos("Compras", {
+                    pestaña: "Compras", accion: "recepcion_final", id_operacion: idSeleccionado,
+                    observaciones: document.getElementById('nota-recepcion').value, datos_actualizados: JSON.stringify(itemsEnEdicion)
+                });
+                if (res === "OK") { cerrarModal(); location.reload(); } else { alert(res); }
+            } catch (e) { alert("Error de comunicación."); } finally { btn.disabled = false; }
+        }
+        function cerrarModal() { document.getElementById('modal-confirmar').classList.add('hidden'); }
+        function filtrarPedidos() {
+            const b = document.getElementById('buscador').value.toLowerCase();
+            renderizar(todosLosPedidos.filter(p => p.ID_Compra.toLowerCase().includes(b) || p.Proveedor.toLowerCase().includes(b)));
+        }
+        window.onload = cargarDatos;
+    </script>
 </body>
 </html>

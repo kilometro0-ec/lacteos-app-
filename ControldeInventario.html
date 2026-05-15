@@ -12,6 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS para la Exportación a Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
@@ -19,41 +21,59 @@
     <div id="menu-container"></div>
 
     <!-- Encabezado del Módulo -->
-    <header class="bg-slate-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
+    <header class="bg-slate-900 text-white shadow-md px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div class="flex items-center gap-3">
             <i data-lucide="boxes" class="w-8 h-8 text-blue-400"></i>
             <div>
                 <h1 class="text-xl font-bold tracking-tight">Kárdex y Control de Inventario</h1>
-                <p class="text-xs text-slate-400">Existencias en Tiempo Real y Alertas de Reabastecimiento</p>
+                <p class="text-xs text-slate-400">Existencias en Tiempo Real y Gestión Maestra de Catálogo</p>
             </div>
         </div>
-        <button onclick="abrirModalAjuste()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all border border-blue-400 shadow-sm active:scale-95">
-            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Ajustar Stock Manual
-        </button>
+        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+            <button onclick="abrirModalProducto()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> Agregar Producto
+            </button>
+            <button onclick="abrirModalAjuste()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Ajustar Stock Manual
+            </button>
+            <button onclick="exportarAExcel()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+                <i data-lucide="download" class="w-4 h-4"></i> Exportar
+            </button>
+        </div>
     </header>
 
     <!-- Barra de Filtros y Resumen Rápido -->
-    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 justify-between items-center">
-            <!-- Buscador -->
-            <div class="relative w-full md:w-96">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
-                </span>
-                <input type="text" id="buscarProducto" oninput="filtrarInventario()" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-slate-50 outline-none" placeholder="Buscar por código o producto...">
+    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm space-y-3">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 justify-between items-center">
+            
+            <!-- Bloque de Búsqueda y Filtro por Estado -->
+            <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto flex-1">
+                <div class="relative flex-1 max-w-md">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                    </span>
+                    <input type="text" id="buscarProducto" oninput="procesarFiltrosYBusqueda()" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-slate-50 outline-none" placeholder="Buscar por código o descripción...">
+                </div>
+                
+                <select id="filtroEstadoLogistico" onchange="procesarFiltrosYBusqueda()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 outline-none text-slate-600 font-medium">
+                    <option value="TODOS">🔍 Todos los Estados</option>
+                    <option value="CRITICO">🚨 Críticos / Agotados</option>
+                    <option value="BAJO">⚠️ Stock Bajo</option>
+                    <option value="OPTIMO">✅ Óptimos</option>
+                </select>
             </div>
             
-            <!-- Indicadores de Estado Rápidos -->
-            <div class="flex gap-4 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                <div class="bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
+            <!-- Indicadores de Estado Rápidos (Clickables para filtrado rápido) -->
+            <div class="flex gap-4 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
+                <div onclick="filtrarPorBadge('CRITICO')" class="cursor-pointer hover:opacity-80 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
                     <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
                     <span class="text-[11px] font-bold text-rose-700 uppercase" id="lblCriticos">0 Críticos</span>
                 </div>
-                <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
+                <div onclick="filtrarPorBadge('BAJO')" class="cursor-pointer hover:opacity-80 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
                     <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                     <span class="text-[11px] font-bold text-amber-700 uppercase" id="lblPorAgotar">0 Por Agotar</span>
                 </div>
-                <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
+                <div onclick="filtrarPorBadge('OPTIMO')" class="cursor-pointer hover:opacity-80 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span class="text-[11px] font-bold text-emerald-700 uppercase" id="lblOptimos">0 Óptimos</span>
                 </div>
@@ -74,12 +94,13 @@
                             <th class="py-3 px-4 text-right">Precio Venta</th>
                             <th class="py-3 px-4 text-center">Stock Actual</th>
                             <th class="py-3 px-6 text-center">Estado Logístico</th>
+                            <th class="py-3 px-6 text-center text-slate-500">Acciones Estructurales</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyInventario" class="divide-y divide-slate-100 font-medium text-slate-700">
                         <!-- Loader Dinámico -->
                         <tr>
-                            <td colspan="6" class="text-center py-20 text-slate-400">
+                            <td colspan="7" class="text-center py-20 text-slate-400">
                                 <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-blue-600"></i>
                                 <p class="text-xs">Sincronizando estados con la base central de Almacén...</p>
                             </td>
@@ -90,7 +111,56 @@
         </div>
     </main>
 
-    <!-- Modal Formulario: Ajuste Manual de Inventario -->
+    <!-- MÓDULO 1: Modal de Producto (Sirve para [Agregar] y [Editar]) -->
+    <div id="modalProducto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold flex items-center gap-2" id="modalProductoTitulo">
+                    <i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i> Ficha Técnica del Producto
+                </h3>
+                <button type="button" onclick="cerrarModalProducto()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="formProducto" onsubmit="guardarEstructuraProducto(event)" class="p-6 space-y-4">
+                <input type="hidden" id="prod_id_interno"> <!-- Campo oculto para saber si editamos -->
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Código SKU / Identificador *</label>
+                    <input type="text" id="prod_codigo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50 font-mono" placeholder="Ej: LAC-001">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Descripción / Nombre del Producto *</label>
+                    <input type="text" id="prod_nombre" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50" placeholder="Ej: Queso Mozzarella 1Kg">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Precio Compra ($) *</label>
+                        <input type="number" step="0.01" id="prod_costo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-mono text-right" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Precio Venta ($) *</label>
+                        <input type="number" step="0.01" id="prod_venta" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-mono text-right text-blue-600 font-bold" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div id="container_stock_inicial">
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Stock Inicial *</label>
+                        <input type="number" id="prod_stock" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Stock Mínimo Alerta *</label>
+                        <input type="number" id="prod_minimo" min="1" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" placeholder="10">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" onclick="cerrarModalProducto()" class="w-full py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50 text-xs uppercase">Cancelar</button>
+                    <button type="submit" class="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 shadow-md text-xs uppercase">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MÓDULO 2: Modal de Ajuste Manual de Inventario (Suma/Resta de existencias directas) -->
     <div id="modalAjuste" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
             <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
@@ -99,36 +169,64 @@
             </div>
             <form id="formAjuste" onsubmit="guardarAjusteManual(event)" class="p-6 space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Seleccionar Producto *</label>
-                    <select id="adj_producto" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Seleccionar Producto *</label>
+                    <select id="adj_producto" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50">
                         <!-- Se llena dinámicamente -->
                     </select>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Tipo de Ajuste *</label>
-                        <select id="adj_tipo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-slate-50">
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Tipo de Ajuste *</label>
+                        <select id="adj_tipo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50">
                             <option value="INGRESO">Suma (+) Ingreso</option>
                             <option value="EGRESO">Resta (-) Merma/Baja</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Cantidad Unidades *</label>
-                        <input type="number" id="adj_cantidad" min="1" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 font-bold outline-none" placeholder="Ej: 5">
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Cantidad Unidades *</label>
+                        <input type="number" id="adj_cantidad" min="1" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold outline-none" placeholder="Ej: 5">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Motivo / Justificación *</label>
-                    <textarea id="adj_motivo" required rows="2" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ej: Auditoría física de inventario / Producto roto"></textarea>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Motivo / Justificación *</label>
+                    <textarea id="adj_motivo" required rows="2" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" placeholder="Ej: Auditoría física de inventario / Producto vencido"></textarea>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button type="button" onclick="cerrarModalAjuste()" class="w-full py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50 text-xs uppercase tracking-wider">Cancelar</button>
-                    <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md text-xs uppercase tracking-wider">Aplicar Cambio</button>
+                    <button type="button" onclick="cerrarModalAjuste()" class="w-full py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50 text-xs uppercase">Cancelar</button>
+                    <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md text-xs uppercase">Aplicar Cambio</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MÓDULO 3: Modal de Historial Visor de Movimientos de Kárdex -->
+    <div id="modalKardex" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden">
+            <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-amber-400"></i> Historial Kárdex del Producto</h3>
+                <button type="button" onclick="cerrarModalKardex()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-sm text-slate-500 mb-4 font-bold" id="kardexProductoNombre">Producto: ...</p>
+                <div class="overflow-y-auto max-h-72 border border-slate-100 rounded-lg">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 text-slate-500 sticky top-0">
+                            <tr>
+                                <th class="p-2.5">Fecha</th>
+                                <th class="p-2.5">Acción</th>
+                                <th class="p-2.5 text-center">Cantidad</th>
+                                <th class="p-2.5">Justificación / Origen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyKardex" class="divide-y divide-slate-100 font-medium text-slate-600">
+                            <!-- Inyección dinámica de movimientos de kárdex -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -144,15 +242,13 @@
             cargarInventario();
         });
 
-        // Consumo unificado usando tu api-config unificada
+        // 🔄 CONSUMO CENTRALIZADO DE DATOS
         async function cargarInventario() {
             try {
-                // Lee de la hoja central de "Inventario"
                 const datos = await DairyAPI.obtenerDatos("Inventario");
-                
                 if (Array.isArray(datos)) {
                     inventarioGlobal = datos;
-                    renderizarInventario(inventarioGlobal);
+                    procesarFiltrosYBusqueda();
                     calcularResumenContadores(inventarioGlobal);
                     llenarSelectProductos(inventarioGlobal);
                 } else if (datos && datos.status === "error") {
@@ -162,7 +258,7 @@
                 console.error("Error al conectar con la API de Lógica Láctea:", err);
                 document.getElementById("tbodyInventario").innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center py-10 text-rose-500 font-bold">
+                        <td colspan="7" class="text-center py-10 text-rose-500 font-bold">
                             <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
                             Fallo de sincronización con api-config.js o Google Sheets.
                         </td>
@@ -172,10 +268,10 @@
             }
         }
 
-        // Renderizado de tabla con lógicas de semáforo de criticidad
+        // 🎨 RENDERIZADO CONTROLADO CON BOTONES ESTRUCTURALES
         function renderizarInventario(lista) {
             const tbody = document.getElementById("tbodyInventario");
-            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='6' class='text-center py-10 text-slate-400'>No se encontraron productos coincidentes.</td></tr>";
+            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='7' class='text-center py-10 text-slate-400'>No se encontraron productos coincidentes.</td></tr>";
 
             lista.forEach(p => {
                 const stock = parseInt(p.stock) || 0;
@@ -212,39 +308,65 @@
                             ${badgeText}
                         </span>
                     </td>
+                    <td class="py-3.5 px-6 flex justify-center gap-1.5">
+                        <button onclick='abrirModalProducto(${JSON.stringify(p)})' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-blue-100 hover:text-blue-700 transition" title="Editar Ficha Técnica">
+                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick='verMovimientosKardex("${p.id}", "${p.producto}")' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-amber-100 hover:text-amber-700 transition" title="Ver Historial Kárdex">
+                            <i data-lucide="history" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick='eliminarProductoIntegridad("${p.id}")' class="p-1.5 bg-slate-100 text-slate-400 rounded hover:bg-rose-100 hover:text-rose-600 transition" title="Eliminar Producto">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
             lucide.createIcons();
         }
 
-        // Calcula contadores superiores de la barra de filtros
+        // 📊 CONTADORES SUPERIORES
         function calcularResumenContadores(lista) {
-            let criticos = 0;
-            let porAgotar = 0;
-            let optimos = 0;
-
+            let criticos = 0, porAgotar = 0, optimos = 0;
             lista.forEach(p => {
                 const stock = parseInt(p.stock) || 0;
                 const min = parseInt(p.stockMinimo) || 10;
-
                 if (stock <= 0) criticos++;
                 else if (stock <= min) porAgotar++;
                 else optimos++;
             });
-
             document.getElementById("lblCriticos").innerText = `${criticos} Críticos`;
             document.getElementById("lblPorAgotar").innerText = `${porAgotar} Por Agotar`;
             document.getElementById("lblOptimos").innerText = `${optimos} Óptimos`;
         }
 
-        function filtrarInventario() {
+        // 🔍 FILTRADO INTEGRADO (Busqueda + Select)
+        function procesarFiltrosYBusqueda() {
             const query = document.getElementById("buscarProducto").value.toLowerCase();
-            const filtrados = inventarioGlobal.filter(p => 
-                (p.producto && p.producto.toLowerCase().includes(query)) || 
-                (p.id && p.id.toLowerCase().includes(query))
-            );
+            const selector = document.getElementById("filtroEstadoLogistico").value;
+
+            const filtrados = inventarioGlobal.filter(p => {
+                const stock = parseInt(p.stock) || 0;
+                const min = parseInt(p.stockMinimo) || 10;
+                
+                // Filtro de texto
+                const cumpleTexto = (p.producto && p.producto.toLowerCase().includes(query)) || (p.id && p.id.toLowerCase().includes(query));
+                
+                // Filtro de Estado Logístico
+                let cumpleEstado = true;
+                if (selector === "CRITICO") cumpleEstado = (stock <= 0);
+                else if (selector === "BAJO") cumpleEstado = (stock > 0 && stock <= min);
+                else if (selector === "OPTIMO") cumpleEstado = (stock > min);
+
+                return cumpleTexto && cumpleEstado;
+            });
+
             renderizarInventario(filtrados);
+        }
+
+        function filtrarPorBadge(estado) {
+            document.getElementById("filtroEstadoLogistico").value = estado;
+            procesarFiltrosYBusqueda();
         }
 
         function llenarSelectProductos(lista) {
@@ -255,6 +377,72 @@
             });
         }
 
+        // 📦 GESTIÓN DE MODAL DE PRODUCTO (AGREGAR / EDITAR)
+        function abrirModalProducto(producto = null) {
+            document.getElementById("formProducto").reset();
+            const containerStock = document.getElementById("container_stock_inicial");
+
+            if (producto) {
+                // Configuración modo Edición
+                document.getElementById("modalProductoTitulo").innerHTML = `<i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i> Editar Producto Maestro`;
+                document.getElementById("prod_id_interno").value = producto.id;
+                document.getElementById("prod_codigo").value = producto.id;
+                document.getElementById("prod_codigo").disabled = true; // El ID no debe cambiarse
+                document.getElementById("prod_nombre").value = producto.producto;
+                document.getElementById("prod_costo").value = producto.precioCompra;
+                document.getElementById("prod_venta").value = producto.precioVenta;
+                document.getElementById("prod_minimo").value = producto.stockMinimo;
+                containerStock.classList.add("hidden"); // El stock estructural se edita vía ajuste manual
+                document.getElementById("prod_stock").required = false;
+            } else {
+                // Configuración modo Creación
+                document.getElementById("modalProductoTitulo").innerHTML = `<i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i> Agregar Nuevo Producto`;
+                document.getElementById("prod_id_interno").value = "";
+                document.getElementById("prod_codigo").disabled = false;
+                containerStock.classList.remove("hidden");
+                document.getElementById("prod_stock").required = true;
+            }
+            document.getElementById("modalProducto").classList.remove("hidden");
+            lucide.createIcons();
+        }
+
+        function cerrarModalProducto() {
+            document.getElementById("modalProducto").classList.add("hidden");
+        }
+
+        // 💾 GUARDAR CAMBIOS DE MAESTRO PRODUCTOS
+        async function guardarEstructuraProducto(e) {
+            e.preventDefault();
+            const idInterno = document.getElementById("prod_id_interno").value;
+            const esEdicion = idInterno !== "";
+
+            const payload = {
+                action: esEdicion ? "editarProducto" : "agregarProducto",
+                id: document.getElementById("prod_codigo").value,
+                producto: document.getElementById("prod_nombre").value,
+                precioCompra: parseFloat(document.getElementById("prod_costo").value),
+                precioVenta: parseFloat(document.getElementById("prod_venta").value),
+                stockMinimo: parseInt(document.getElementById("prod_minimo").value)
+            };
+
+            if (!esEdicion) {
+                payload.stock = parseInt(document.getElementById("prod_stock").value) || 0;
+            }
+
+            Swal.fire({ title: 'Sincronizando Catálogo...', text: 'Modificando bases maestras...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+            try {
+                await DairyAPI.guardarDatos("Inventario", payload);
+                Swal.fire({ title: 'Procesado', text: 'El catálogo maestro ha sido actualizado.', icon: 'success', confirmButtonColor: '#2563eb'});
+                cerrarModalProducto();
+                cargarInventario();
+            } catch (err) {
+                console.error(err);
+                Swal.fire("Error", "Error al procesar la actualización en Google Sheets.", "error");
+            }
+        }
+
+        // 🛠️ MODAL DE AJUSTE MANUAL DE STOCK
         function abrirModalAjuste() {
             document.getElementById("formAjuste").reset();
             document.getElementById("modalAjuste").classList.remove("hidden");
@@ -265,43 +453,120 @@
             document.getElementById("modalAjuste").classList.add("hidden");
         }
 
-        // Escritura asíncrona hacia el backend de Google Sheets usando DairyAPI
         async function guardarAjusteManual(e) {
             e.preventDefault();
-
             const payload = {
                 action: "ajusteInventarioManual",
                 idProducto: document.getElementById("adj_producto").value,
                 tipoMovimiento: document.getElementById("adj_tipo").value,
-                cantidad: document.getElementById("adj_cantidad").value,
+                cantidad: parseInt(document.getElementById("adj_cantidad").value),
                 motivo: document.getElementById("adj_motivo").value,
                 fecha: new Date().toISOString().split('T')[0]
             };
 
-            Swal.fire({
-                title: 'Impactando Kárdex...',
-                text: 'Procesando movimiento en la base central...',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
+            Swal.fire({ title: 'Impactando Kárdex...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
 
             try {
-                // Guarda la transacción directamente en la pestaña de Kárdex/Ajustes
                 await DairyAPI.guardarDatos("KardexMovimientos", payload);
-
-                Swal.fire({
-                    title: 'Ajuste Aplicado',
-                    text: 'El stock se ha recalculado y actualizado con éxito.',
-                    icon: 'success',
-                    confirmButtonColor: '#2563eb'
-                });
-                
+                Swal.fire({ title: 'Ajuste Aplicado', text: 'Stock recalculado.', icon: 'success', confirmButtonColor: '#2563eb'});
                 cerrarModalAjuste();
-                cargarInventario(); // Recarga local e inmediata de la cuadrícula
+                cargarInventario();
             } catch (err) {
-                console.error(err);
-                Swal.fire("Error", "No se pudo sincronizar el ajuste manual con la base de datos.", "error");
+                Swal.fire("Error", "Error al registrar movimiento.", "error");
             }
+        }
+
+        // 🕒 VER MOVIMIENTOS KÁRDEX
+        async function verMovimientosKardex(idProducto, nombreProducto) {
+            document.getElementById("kardexProductoNombre").innerText = `Producto: ${nombreProducto} (#${idProducto})`;
+            const tbody = document.getElementById("tbodyKardex");
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500"></i>Buscando historial...</td></tr>`;
+            document.getElementById("modalKardex").classList.remove("hidden");
+            lucide.createIcons();
+
+            try {
+                const todosLosMovimientos = await DairyAPI.obtenerDatos("KardexMovimientos");
+                tbody.innerHTML = "";
+                
+                // Filtramos por el ID del producto seleccionado
+                const filtrados = todosLosMovimientos.filter(m => String(m.idProducto) === String(idProducto));
+
+                if (!filtrados.length) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">Sin movimientos registrados para este ítem.</td></tr>`;
+                    return;
+                }
+
+                filtrados.forEach(m => {
+                    const esIngreso = m.tipoMovimiento === "INGRESO" || m.tipoMovimiento === "COMPRA";
+                    const colorCantidad = esIngreso ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
+                    const signo = esIngreso ? "+" : "-";
+
+                    const tr = document.createElement("tr");
+                    tr.className = "border-b border-slate-50 hover:bg-slate-50/50";
+                    tr.innerHTML = `
+                        <td class="p-2.5 whitespace-nowrap text-slate-400 font-mono">${m.fecha || 'S/F'}</td>
+                        <td class="p-2.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider ${esIngreso ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}">${m.tipoMovimiento}</span></td>
+                        <td class="p-2.5 text-center ${colorCantidad}">${signo}${m.cantidad}</td>
+                        <td class="p-2.5 text-slate-500 max-w-xs truncate" title="${m.motivo || m.origen || ''}">${m.motivo || m.origen || 'Ajuste operativo'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-rose-500 font-bold">Imposible recuperar el kárdex actual.</td></tr>`;
+            }
+        }
+
+        function cerrarModalKardex() {
+            document.getElementById("modalKardex").classList.add("hidden");
+        }
+
+        // ❌ ELIMINAR PRODUCTO (CON PROTECCIÓN DE INTEGRIDAD)
+        function eliminarProductoIntegridad(idProducto) {
+            Swal.fire({
+                title: '¿Eliminar de Catálogo?',
+                text: "Esta acción quitará el producto del maestro de Almacén. No se recomienda si tiene histórico de ventas.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Sí, Eliminar de raíz',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'Borrando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+                    try {
+                        await DairyAPI.guardarDatos("Inventario", { action: "eliminarProducto", id: idProducto });
+                        Swal.fire('Eliminado', 'Producto removido de la base unificada.', 'success');
+                        cargarInventario();
+                    } catch (err) {
+                        Swal.fire('Error', 'No se pudo eliminar el registro.', 'error');
+                    }
+                }
+            });
+        }
+
+        // 🟢 EXPORTAR A EXCEL (USANDO SHEETJS)
+        function exportarAExcel() {
+            if (!inventarioGlobal.length) {
+                Swal.fire("Atención", "No hay datos en stock para exportar.", "info");
+                return;
+            }
+
+            const datosLimpios = inventarioGlobal.map(p => ({
+                "Código SKU": p.id || p.codigo,
+                "Descripción": p.producto,
+                "Precio Distribuidor ($)": parseFloat(p.precioCompra || 0),
+                "Precio Venta Público ($)": parseFloat(p.precioVenta || 0),
+                "Existencia Física (Uds)": parseInt(p.stock || 0),
+                "Stock Mínimo": parseInt(p.stockMinimo || 10)
+            }));
+
+            const libro = XLSX.utils.book_new();
+            const hoja = XLSX.utils.json_to_sheet(datosLimpios);
+            XLSX.utils.book_append_sheet(libro, hoja, "Inventario Real");
+            
+            // Descarga automática del archivo plano procesado
+            XLSX.writeFile(libro, `Inventario_LogicaLactea_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
     </script>
 </body>

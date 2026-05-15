@@ -3,339 +3,75 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Nueva Compra - Lógica Láctea</title>
-    
-    <!-- Scripts de Ecosistema Unificado -->
+    <title>Nueva Orden de Compra | Lógica Láctea</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script src="api-config.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;800;900&display=swap" rel="stylesheet"/>
+    <script src="api-config.js?v=1.4"></script>
+    <script src="menu-logic.js?v=1.4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    
     <script>
-        tailwind.config = {
-            theme: { 
-                extend: { 
-                    colors: { 
-                        primary: "#a21caf", 
-                        background: "#faf5ff", 
-                        outline: "#e9d5ff", 
-                        success: "#16a34a",
-                        danger: "#ef4444",
-                        dark: "#1f012a"
-                    } 
-                } 
-            }
-        }
+        tailwind.config = { theme: { extend: { colors: { primary: '#2563eb' } } } }
     </script>
-    <style>
-        body { font-family: 'Work Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        input, select { font-size: 16px !important; }
-        .scroll-custom::-webkit-scrollbar { width: 0; }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .spinning { animation: spin 1s linear infinite; }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-    </style>
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="bg-background text-dark antialiased pb-44">
-
-<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-16 bg-white border-b border-outline shadow-sm">
-    <div class="flex items-center gap-3" onclick="window.location.href='Proveedores.html'">
-        <span class="material-symbols-outlined text-primary font-bold cursor-pointer">arrow_back_ios</span>
+<body class="pb-32 bg-slate-50 text-slate-800">
+    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 bg-gradient-to-r from-blue-700 to-blue-900 text-white shadow-md">
         <div>
-            <h1 class="text-[10px] font-black text-slate-400 uppercase leading-none">Nueva Factura</h1>
-            <p id="display-id-compra" class="text-xs font-bold text-primary italic">Generando ID...</p>
+            <h1 class="text-[9px] font-black text-blue-200 uppercase tracking-widest">Abastecimiento</h1>
+            <h2 class="text-base font-black uppercase tracking-tight">Nueva Orden de Compra</h2>
         </div>
-    </div>
-    <div class="bg-fuchsia-100 px-3 py-1 rounded-full">
-        <span id="items-count" class="text-[10px] font-black text-primary uppercase">0 Productos</span>
-    </div>
-</header>
+    </header>
 
-<main class="pt-20 px-4 max-w-lg mx-auto space-y-4">
-    
-    <!-- CABECERA DE FACTURA -->
-    <section class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm space-y-3">
-        <div class="flex gap-3">
-            <div class="flex-1">
-                <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Proveedor</label>
-                <input type="text" id="prov-nombre" readonly class="w-full bg-slate-50 border-none rounded-xl p-2 font-bold text-xs text-primary focus:ring-0 uppercase">
-            </div>
-            <div class="w-1/3">
-                <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Pago</label>
-                <select id="metodo-pago" class="w-full bg-slate-50 border-none rounded-xl p-2 font-bold text-xs focus:ring-primary">
-                    <option value="Contado">Contado</option>
-                    <option value="Crédito">Crédito</option>
-                </select>
-            </div>
-        </div>
-        <div>
-            <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Estado de Recepción</label>
-            <select id="estado-entrega" class="w-full bg-slate-50 border-none rounded-xl p-2 font-bold text-xs focus:ring-primary text-success">
-                <option value="Recibido Completo">✅ Recibido Completo</option>
-                <option value="Pendiente">⏳ Pendiente por Llegar</option>
-                <option value="Incompleto">⚠️ Recibido con Faltantes</option>
-            </select>
-        </div>
-    </section>
-
-    <!-- AGREGAR PRODUCTO -->
-    <section class="bg-white p-5 rounded-[2rem] border border-outline shadow-sm space-y-4">
-        <div class="relative">
-            <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Seleccionar Ítem</label>
-            <select id="producto" onchange="analizarPrecioAnterior()" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-bold text-sm mt-1">
-                <option value="">Cargando catálogo de proveedor...</option>
-            </select>
-        </div>
-
-        <div id="alerta-precio" class="hidden p-2.5 rounded-xl border flex items-center justify-between transition-all duration-300">
-            <span id="p-mensaje" class="text-[9px] font-black uppercase italic ml-2 tracking-wider"></span>
-            <span id="p-valor" class="text-[10px] font-black mr-2"></span>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
+    <main class="pt-24 px-4 max-w-xl mx-auto">
+        <form id="form-compra" onsubmit="guardar(event)" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
             <div>
-                <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Cantidad</label>
-                <input type="number" id="cantidad" placeholder="0" min="0.1" step="any" class="w-full border-none bg-slate-50 rounded-2xl p-4 focus:ring-2 focus:ring-primary shadow-inner font-black text-center mt-1">
+                <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Proveedor:</label>
+                <select id="proveedor" class="w-full rounded-xl border-slate-200 text-xs font-bold focus:ring-blue-500" required></select>
             </div>
             <div>
-                <label class="text-[9px] font-black uppercase text-slate-400 ml-2">Costo U. Distribuidor</label>
-                <div class="relative mt-1">
-                    <span class="absolute left-4 top-4 text-slate-400 text-sm font-black">$</span>
-                    <input type="number" step="0.001" id="precio" oninput="compararAhora()" placeholder="0.00" class="w-full border-none bg-slate-50 rounded-2xl p-4 pl-8 focus:ring-2 focus:ring-primary shadow-inner font-black text-center">
+                <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Producto:</label>
+                <select id="producto" class="w-full rounded-xl border-slate-200 text-xs font-bold focus:ring-blue-500" required></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Cantidad:</label>
+                    <input type="number" id="cantidad" class="w-full rounded-xl border-slate-200 text-xs font-bold focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black text-slate-500 uppercase block mb-1">Costo Distribuidor:</label>
+                    <input type="number" step="0.01" id="precio" class="w-full rounded-xl border-slate-200 text-xs font-bold focus:ring-blue-500" required>
                 </div>
             </div>
-        </div>
+            <button type="submit" class="w-full bg-blue-600 text-white font-black py-4 rounded-xl text-xs uppercase tracking-widest shadow-md mt-4">Generar Orden</button>
+        </form>
+    </main>
+    <nav id="menu-container"></nav>
 
-        <button onclick="agregarAlCarrito()" class="w-full bg-dark text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 flex justify-center items-center gap-2 text-[10px] uppercase tracking-widest transition-transform mt-2">
-            <span class="material-symbols-outlined text-sm">add_shopping_cart</span> Añadir a la Lista
-        </button>
-    </section>
-
-    <!-- DETALLE DE LA FACTURA -->
-    <div id="carrito-container" class="space-y-2 !mt-6">
-        <!-- Contenedor Dinámico -->
-    </div>
-
-    <!-- RESUMEN Y ENVÍO -->
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-outline p-4 flex flex-col gap-3 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] z-40">
-        <div class="flex justify-between items-center px-2">
-            <p class="text-[10px] font-black uppercase text-slate-400">Total Neto Factura</p>
-            <h2 id="total-factura" class="text-2xl font-black text-primary">$0.00</h2>
-        </div>
-        <button onclick="finalizarCompra()" id="btn-finalizar" class="w-full bg-primary text-white font-black py-4 rounded-2xl shadow-xl active:scale-95 transition-all flex justify-center items-center gap-3 uppercase text-xs tracking-widest">
-            <span class="material-symbols-outlined">description</span> Guardar Factura Completa
-        </button>
-    </div>
-
-</main>
-
-<script>
-    let comprasHistorial = [];
-    let ultimoPrecioPagado = 0;
-    let carrito = [];
-    let idCompra = "";
-
-    function generarID() {
-        const timestamp = Date.now().toString().slice(-5);
-        const random = Math.floor(100 + Math.random() * 900);
-        idCompra = `FAC-${timestamp}${random}`;
-        document.getElementById('display-id-compra').innerText = idCompra;
-    }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>]/g, m => {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
-    }
-
-    async function inicializar() {
-        generarID();
-        const urlParams = new URLSearchParams(window.location.search);
-        const provParam = urlParams.get('prov');
-        
-        if(provParam) {
-            document.getElementById('prov-nombre').value = decodeURIComponent(provParam).trim().toUpperCase();
+    <script>
+        async function inicializar() {
+            try {
+                const [provs, inv] = await Promise.all([DairyAPI.obtenerDatos("Proveedores"), DairyAPI.obtenerDatos("Inventario")]);
+                document.getElementById('proveedor').innerHTML = provs.map(p => `<option value="${p['Nombre del Proveedor']}">${p['Nombre del Proveedor']}</option>`).join('');
+                document.getElementById('producto').innerHTML = inv.map(i => `<option value="${i.Producto}">${i.Producto}</option>`).join('');
+            } catch(e) { console.error(e); }
         }
-
-        try {
-            const [inventario, compras] = await Promise.all([
-                DairyAPI.obtenerDatos("Inventario"),
-                DairyAPI.obtenerDatos("Compras")
-            ]);
-            
-            comprasHistorial = Array.isArray(compras) ? compras : [];
-            const provActual = document.getElementById('prov-nombre').value.trim().toUpperCase();
-            
-            const listaInventario = Array.isArray(inventario) ? inventario : [];
-            const filtrados = listaInventario.filter(p => String(p["Proveedor Habitual"]).trim().toUpperCase() === provActual);
-            
-            const select = document.getElementById('producto');
-            if(filtrados.length === 0) {
-                select.innerHTML = `<option value="" disabled selected>Sin ítems para este proveedor</option>`;
-                return;
-            }
-
-            select.innerHTML = `<option value="" disabled selected>-- SELECCIONAR ÍTEM --</option>` + 
-                filtrados.map(p => `<option value="${escapeHtml(p.Producto)}">${escapeHtml(p.Producto)}</option>`).join('');
-        } catch (e) { 
-            console.error("Error inicializando catálogo:", e); 
+        async function guardar(e) {
+            e.preventDefault();
+            const payload = {
+                accion: "insertar", pestaña: "Compras",
+                datos: {
+                    Fecha: new Date().toISOString().split('T')[0],
+                    Proveedor: document.getElementById('proveedor').value,
+                    Producto: document.getElementById('producto').value,
+                    Cantidad: parseFloat(document.getElementById('cantidad').value),
+                    Precio_Distribuidor: parseFloat(document.getElementById('precio').value),
+                    Total: parseFloat(document.getElementById('cantidad').value) * parseFloat(document.getElementById('precio').value),
+                    Estado_Entrega: "PENDIENTE", ID_Compra: "CMP-" + Date.now().toString().slice(-6)
+                }
+            };
+            if(await DairyAPI.guardarDatos("Compras", payload) === "OK") { alert("Orden Generada"); location.reload(); }
         }
-    }
-
-    function analizarPrecioAnterior() {
-        const prod = document.getElementById('producto').value;
-        const alerta = document.getElementById('alerta-precio');
-        const pMensaje = document.getElementById('p-mensaje');
-        const pValor = document.getElementById('p-valor');
-        
-        // Buscar el último registro inverso exacto de este producto
-        const registro = [...comprasHistorial].reverse().find(c => String(c.Producto).trim() === String(prod).trim());
-
-        if (registro) {
-            ultimoPrecioPagado = parseFloat(registro.Precio_Distribuidor || 0);
-            alerta.classList.remove('hidden');
-            alerta.className = "p-2.5 rounded-xl border flex items-center justify-between bg-slate-50 border-slate-200 text-slate-500 fade-in";
-            pMensaje.innerText = "Costo de Adquisición Anterior:";
-            pValor.innerText = `$${ultimoPrecioPagado.toFixed(2)}`;
-            document.getElementById('precio').value = ultimoPrecioPagado.toFixed(2);
-        } else {
-            alerta.classList.add('hidden');
-            ultimoPrecioPagado = 0;
-            document.getElementById('precio').value = "";
-        }
-    }
-
-    function compararAhora() {
-        const precioActual = parseFloat(document.getElementById('precio').value) || 0;
-        const alerta = document.getElementById('alerta-precio');
-        const pMensaje = document.getElementById('p-mensaje');
-
-        if (ultimoPrecioPagado === 0) return;
-        
-        if (precioActual > ultimoPrecioPagado) {
-            alerta.className = "p-2.5 rounded-xl border flex items-center justify-between bg-red-50 border-red-200 text-danger font-bold";
-            pMensaje.innerText = "⚠️ El precio de costo subió";
-        } else if (precioActual < ultimoPrecioPagado && precioActual > 0) {
-            alerta.className = "p-2.5 rounded-xl border flex items-center justify-between bg-green-50 border-green-200 text-success font-bold";
-            pMensaje.innerText = "📉 El precio de costo bajó";
-        } else {
-            alerta.className = "p-2.5 rounded-xl border flex items-center justify-between bg-slate-50 border-slate-200 text-slate-500";
-            pMensaje.innerText = "Costo de Adquisición Anterior:";
-        }
-    }
-
-    function agregarAlCarrito() {
-        const prod = document.getElementById('producto').value;
-        const cant = parseFloat(document.getElementById('cantidad').value) || 0;
-        const prec = parseFloat(document.getElementById('precio').value) || 0;
-
-        if (!prod || cant <= 0 || prec <= 0) {
-            return alert("Por favor complete campos válidos de Producto, Cantidad y Costo Distribuidor");
-        }
-
-        carrito.push({
-            Producto: prod,
-            Cantidad: cant,
-            Precio: prec,
-            Subtotal: cant * prec
-        });
-
-        actualizarUI();
-        
-        // Reset del formulario para el siguiente ítem
-        document.getElementById('producto').value = "";
-        document.getElementById('cantidad').value = "";
-        document.getElementById('precio').value = "";
-        document.getElementById('alerta-precio').classList.add('hidden');
-    }
-
-    function actualizarUI() {
-        const container = document.getElementById('carrito-container');
-        container.innerHTML = "";
-        let total = 0;
-
-        carrito.forEach((item, index) => {
-            total += item.Subtotal;
-            container.innerHTML += `
-                <div class="bg-white p-4 rounded-2xl border border-outline flex justify-between items-center shadow-sm fade-in">
-                    <div>
-                        <p class="text-[10px] font-black uppercase text-dark tracking-tight">${escapeHtml(item.Producto)}</p>
-                        <p class="text-[9px] font-bold text-slate-400 mt-0.5">${item.Cantidad} U. x $${item.Precio.toFixed(2)}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <p class="font-black text-xs text-dark">$${item.Subtotal.toFixed(2)}</p>
-                        <button onclick="eliminarDelCarrito(${index})" class="text-danger w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center transition-colors">
-                            <span class="material-symbols-outlined text-sm">delete</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-
-        document.getElementById('total-factura').innerText = `$${total.toFixed(2)}`;
-        document.getElementById('items-count').innerText = `${carrito.length} Productos`;
-    }
-
-    function eliminarDelCarrito(index) {
-        carrito.splice(index, 1);
-        actualizarUI();
-    }
-
-    async function finalizarCompra() {
-        if (carrito.length === 0) return alert("❌ Añada al menos un producto al detalle antes de guardar.");
-        
-        const btn = document.getElementById('btn-finalizar');
-        btn.disabled = true;
-        btn.innerHTML = `<span class="material-symbols-outlined spinning mr-2">sync</span> PROCESANDO FACTURA...`;
-
-        const metodo = document.getElementById('metodo-pago').value;
-        const estado = document.getElementById('estado-entrega').value;
-        const prov = document.getElementById('prov-nombre').value;
-        const fecha = new Date().toLocaleDateString();
-
-        // Estructuración paralela optimizada mediante Promise.all para prevenir huelgas de hilos
-        const promesasDeEnvio = carrito.map(item => {
-            return DairyAPI.enviarDatos({
-                pestaña: "Compras",
-                ID_Compra: idCompra,
-                Fecha: fecha,
-                Proveedor: prov,
-                Producto: item.Producto,
-                Cantidad: item.Cantidad,
-                Precio_Distribuidor: item.Precio,
-                Total: item.Subtotal.toFixed(2),
-                Metodo_Pago: metodo,
-                Estado_Entrega: estado
-            });
-        });
-
-        try {
-            await Promise.all(promesasDeEnvio);
-            alert(`✅ Factura ${idCompra} guardada con éxito de forma unificada.`);
-            window.location.href = "Proveedores.html";
-        } catch (e) {
-            console.error(e);
-            alert("❌ Fallo crítico al guardar la transacción en Google Sheets");
-            btn.disabled = false;
-            btn.innerHTML = `<span class="material-symbols-outlined">description</span> Guardar Factura Completa`;
-        }
-    }
-
-    window.onload = inicializar;
-</script>
+        window.onload = inicializar;
+    </script>
 </body>
 </html>

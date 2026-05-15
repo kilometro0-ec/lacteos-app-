@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwo5wOYZXzMRP_frRGQze0MydQC-pPaQQFLW67ipByMO9jvrVH9xZf_fSLMYFhw-xGb/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbzSE9PGLvpUCMSu31BsXJwOSntaJmtYjfOIlrthFTEUkAMCNDuaZKFC8tW15NwT7_Dkcg/exec";
 
 const DairyAPI = {
 

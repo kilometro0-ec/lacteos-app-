@@ -63,6 +63,13 @@
         }
         .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 16px; border-radius: 1.5rem; font-weight: 800; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
         @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+        
+        .btn-rapido {
+            background: #fef3c7;
+            color: #d97706;
+            transition: all 0.2s;
+        }
+        .btn-rapido:active { transform: scale(0.95); background: #fde68a; }
     </style>
 </head>
 <body class="pb-96"> 
@@ -201,22 +208,86 @@ function renderizar() {
     const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
     productosData.forEach(p => {
         const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
+        const stockActual = parseInt(p.Stock) || 0;
         cont.innerHTML += `
             <div class="card-producto shadow-sm">
                 <div class="flex-1">
                     <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${p.Producto}</h4>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
-                        <span class="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full uppercase">Stock: ${p.Stock}</span>
+                        <span class="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full uppercase">Stock: ${stockActual}</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 bg-fuchsia-50/50 p-1.5 rounded-2xl border border-fuchsia-50">
-                    <button onclick="cambiarCant('${p.Producto}',-1)" class="w-10 h-10 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
-                    <span id="${idCant}" class="w-6 text-center font-black text-lg text-slate-900">0</span>
-                    <button onclick="cambiarCant('${p.Producto}',1)" class="w-10 h-10 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
+                <div class="flex items-center gap-2">
+                    <button onclick="ventaRapida('${p.Producto.replace(/'/g, "\\'")}')" class="btn-rapido w-10 h-10 rounded-xl flex items-center justify-center shadow-sm" title="Venta Rápida (Consumo Interno)">
+                        <span class="material-symbols-outlined text-xl">dining</span>
+                    </button>
+                    <div class="flex items-center gap-2 bg-fuchsia-50/50 p-1.5 rounded-2xl border border-fuchsia-50">
+                        <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',-1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
+                        <span id="${idCant}" class="w-6 text-center font-black text-lg text-slate-900">0</span>
+                        <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
+                    </div>
                 </div>
             </div>`;
     });
+}
+
+async function ventaRapida(producto) {
+    const cli = document.getElementById('select-cliente').value;
+    if(!cli) {
+        alert("⚠️ Primero selecciona un cliente");
+        return;
+    }
+    
+    const productoObj = productosData.find(p => p.Producto === producto);
+    const stockActual = parseInt(productoObj.Stock) || 0;
+    
+    if(stockActual < 1) {
+        alert(`❌ Stock insuficiente de ${producto}`);
+        return;
+    }
+    
+    const confirmar = confirm(`🍲 ¿Registrar VENTA RÁPIDA (Consumo Interno) de 1 x ${producto}?\n\nEsto descontará del stock pero NO generará cobro.`);
+    if(!confirmar) return;
+    
+    const overlay = document.getElementById('overlay-exito');
+    overlay.style.display = 'flex';
+    document.getElementById('titulo-estado').innerText = "Registrando...";
+    document.getElementById('icono-estado').innerHTML = "sync";
+    document.getElementById('icono-estado').classList.add('animate-spin');
+    
+    try {
+        await DairyAPI.enviarDatos({ 
+            pestaña: "Ventas",
+            ID_Venta: idVenta, 
+            Cliente: cli, 
+            Producto: producto, 
+            Cantidad: 1, 
+            Precio_PVP: parseFloat(productoObj.Precio_Venta), 
+            Fecha_Entrega: new Date().toISOString().split('T')[0],
+            Estado_Entrega: "CONSUMO_INTERNO",
+            Total: 0
+        });
+        
+        productoObj.Stock = stockActual - 1;
+        
+        const index = productosData.findIndex(p => p.Producto === producto);
+        if(index !== -1) productosData[index].Stock = stockActual - 1;
+        
+        document.getElementById('icono-estado').classList.remove('animate-spin');
+        document.getElementById('icono-estado').innerHTML = "check_circle";
+        document.getElementById('titulo-estado').innerText = "¡Venta Rápida Registrada!";
+        
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            renderizar();
+            actualizarCarrito();
+        }, 1000);
+        
+    } catch(e) { 
+        overlay.style.display = 'none';
+        alert("❌ Error al registrar venta rápida: " + e.message);
+    }
 }
 
 function cambiarCant(n, d) {
@@ -256,7 +327,7 @@ async function procesarVenta() {
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
     document.getElementById('titulo-estado').innerText = "Guardando Pedido...";
-    document.getElementById('icono-estado').innerText = "sync";
+    document.getElementById('icono-estado').innerHTML = "sync";
     document.getElementById('icono-estado').classList.add('animate-spin');
 
     try {
@@ -273,17 +344,20 @@ async function procesarVenta() {
                     Fecha_Entrega: fec,
                     Estado_Entrega: "PENDIENTE"
                 });
+                
+                p.Stock = parseInt(p.Stock) - carrito[n];
             }
         }
         
         document.getElementById('icono-estado').classList.remove('animate-spin');
-        document.getElementById('icono-estado').innerText = "check_circle";
+        document.getElementById('icono-estado').innerHTML = "check_circle";
         document.getElementById('titulo-estado').innerText = "¡Venta Exitosa!";
 
         setTimeout(() => {
             overlay.style.display = 'none';
             document.getElementById('btn-confirmar').style.display = 'none';
             document.getElementById('btn-whatsapp').style.display = 'flex';
+            renderizar();
         }, 1500);
     } catch(e) { 
         overlay.style.display = 'none';

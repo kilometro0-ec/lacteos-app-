@@ -1,595 +1,875 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>Inventario Pro | Lógica Láctea</title>
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+<meta charset="utf-8"/>
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 
-    <style>
-      :root {
-        --primary: #6366f1;
-        --surface: #f8fafc;
-        --outline: #e2e8f0;
-        --magenta: #d946ef;
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-      }
-      body { 
-        background-color: var(--surface); 
-        padding-bottom: 110px; 
-        -webkit-user-select: none; 
-        user-select: none;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-      }
-      
-      .id-card-top {
-        background: white; border-radius: 1.2rem; padding: 12px 5px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        border: 1px solid var(--outline); box-shadow: var(--shadow-sm);
-        transition: all 0.3s ease;
-      }
-      .id-card-top .label { font-size: 9px; font-weight: 800; text-transform: uppercase; color: var(--primary); margin-bottom: 2px; }
-      .id-card-top .value { font-size: 15px; font-weight: 900; color: #1f012a; }
+<title>Inventario Pro | Lógica Láctea</title>
 
-      .card-prod { 
-        background: white; border-radius: 1.5rem; border: 1px solid var(--outline); 
-        padding: 12px; display: flex; flex-direction: column; justify-content: space-between;
-        min-height: 145px; position: relative; transition: all 0.2s;
-        cursor: pointer; box-shadow: var(--shadow-sm);
-      }
-      .card-prod:active { transform: scale(0.98); }
-      .card-prod.selected { border: 3px solid #ef4444; background: #fef2f2; transform: scale(0.95); }
-      
-      .select-check { 
-        position: absolute; top: -5px; right: -5px; background: #ef4444; 
-        color: white; border-radius: 50%; width: 22px; height: 22px; 
-        display: none; align-items: center; justify-content: center; 
-        font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      }
-      .selected .select-check { display: flex; }
+<link rel="manifest" href="manifest.json">
 
-      .prod-title { 
-        font-size: 11px; font-weight: 800; color: #1f012a; 
-        line-height: 1.2; text-transform: uppercase; 
-        overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; 
-      }
+<link rel="icon" href="data:,">
 
-      .modal-custom { 
-        display: none; position: fixed; inset: 0; 
-        background: rgba(31, 1, 42, 0.7); z-index: 1000; 
-        align-items: center; justify-content: center; 
-        padding: 20px; backdrop-filter: blur(8px); 
-      }
-      .modal-custom.active { display: flex; }
-      
-      .input-sutil {
-        width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--outline);
-        outline: none; transition: border 0.3s;
-      }
-      .input-sutil:focus { border-color: var(--primary); }
-      .btn-magenta {
-        width: 100%; padding: 14px; background: var(--magenta); color: white;
-        border-radius: 15px; font-weight: 800; text-transform: uppercase;
-      }
+<link
+href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+rel="stylesheet"/>
 
-      @keyframes skeleton-pulse { 0% { background-color: #f3e8ff; } 50% { background-color: #e9d5ff; } 100% { background-color: #f3e8ff; } }
-      .loading-skeleton { animation: skeleton-pulse 1.5s infinite; }
-      
-      #overlay-loading {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-        display: none; align-items: center; justify-content: center; z-index: 1000;
-        backdrop-filter: blur(8px);
-      }
-      .spinner {
-        width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.3);
-        border-top: 4px solid #a21caf; border-radius: 50%;
-        animation: spin 1s linear infinite;
-      }
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      
-      /* Ocultar spinners de inputs number */
-      input[type=number]::-webkit-inner-spin-button, 
-      input[type=number]::-webkit-outer-spin-button { 
-        -webkit-appearance: none; 
-        margin: 0; 
-      }
-      input[type=number] { -moz-appearance: textfield; }
-    </style>
+<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+<link rel="stylesheet" href="estilos-lacteos.css">
+
+<style>
+
+:root{
+--primary:#6366f1;
+--surface:#f8fafc;
+--outline:#e2e8f0;
+--magenta:#d946ef;
+--shadow-sm:0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+body{
+background-color:var(--surface);
+padding-bottom:110px;
+font-family:'Plus Jakarta Sans',sans-serif;
+-webkit-user-select:none;
+user-select:none;
+}
+
+.id-card-top{
+background:white;
+border-radius:1.2rem;
+padding:12px 5px;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+border:1px solid var(--outline);
+box-shadow:var(--shadow-sm);
+}
+
+.id-card-top .label{
+font-size:9px;
+font-weight:800;
+text-transform:uppercase;
+color:var(--primary);
+margin-bottom:2px;
+}
+
+.id-card-top .value{
+font-size:15px;
+font-weight:900;
+color:#1f012a;
+}
+
+.card-prod{
+background:white;
+border-radius:1.5rem;
+border:1px solid var(--outline);
+padding:12px;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+min-height:145px;
+position:relative;
+transition:all .2s;
+cursor:pointer;
+box-shadow:var(--shadow-sm);
+}
+
+.card-prod:active{
+transform:scale(.98);
+}
+
+.card-prod.selected{
+border:3px solid #ef4444;
+background:#fef2f2;
+transform:scale(.95);
+}
+
+.select-check{
+position:absolute;
+top:-5px;
+right:-5px;
+background:#ef4444;
+color:white;
+border-radius:50%;
+width:22px;
+height:22px;
+display:none;
+align-items:center;
+justify-content:center;
+font-size:14px;
+box-shadow:0 2px 4px rgba(0,0,0,.2);
+}
+
+.selected .select-check{
+display:flex;
+}
+
+.prod-title{
+font-size:11px;
+font-weight:800;
+color:#1f012a;
+line-height:1.2;
+text-transform:uppercase;
+overflow:hidden;
+display:-webkit-box;
+-webkit-line-clamp:3;
+-webkit-box-orient:vertical;
+}
+
+.modal-custom{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(31,1,42,.7);
+z-index:1000;
+align-items:center;
+justify-content:center;
+padding:20px;
+backdrop-filter:blur(8px);
+}
+
+.modal-custom.active{
+display:flex;
+}
+
+.input-sutil{
+width:100%;
+padding:12px;
+border-radius:12px;
+border:1px solid var(--outline);
+outline:none;
+transition:border .3s;
+}
+
+.input-sutil:focus{
+border-color:var(--primary);
+}
+
+.btn-magenta{
+width:100%;
+padding:14px;
+background:var(--magenta);
+color:white;
+border-radius:15px;
+font-weight:800;
+text-transform:uppercase;
+}
+
+#overlay-loading{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.8);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:1000;
+backdrop-filter:blur(8px);
+}
+
+.spinner{
+width:50px;
+height:50px;
+border:4px solid rgba(255,255,255,.3);
+border-top:4px solid #a21caf;
+border-radius:50%;
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{
+-webkit-appearance:none;
+margin:0;
+}
+
+input[type=number]{
+-moz-appearance:textfield;
+}
+
+</style>
+
 </head>
+
 <body>
 
 <div id="overlay-loading">
-    <div class="bg-white rounded-3xl p-8 text-center">
-        <div class="spinner mx-auto mb-4"></div>
-        <p class="font-bold text-slate-800">Procesando...</p>
-    </div>
+
+<div class="bg-white rounded-3xl p-8 text-center">
+
+<div class="spinner mx-auto mb-4"></div>
+
+<p class="font-bold text-slate-800">
+Procesando...
+</p>
+
 </div>
 
-<header class="fixed top-0 w-full h-16 bg-white/80 backdrop-blur-md border-b border-purple-100 flex justify-between items-center px-4 z-50">
-    <div class="flex flex-col">
-        <h1 id="header-title" class="text-xl font-black text-slate-800 leading-none">STOCK</h1>
-        <span id="sync-indicator" class="text-[9px] font-black text-orange-500">SINCRONIZANDO...</span>
-    </div>
-    <div class="flex gap-3">
-        <button id="btn-bulk-delete" class="hidden text-red-600 animate-pulse" onclick="eliminarVarios()">
-            <span class="material-symbols-outlined text-3xl">delete_sweep</span>
-        </button>
-        <button onclick="descargarPDF()" class="text-indigo-600 active:scale-90 transition-transform">
-            <span class="material-symbols-outlined text-3xl">picture_as_pdf</span>
-        </button>
-        <button onclick="window.location.reload()" class="text-slate-400 active:rotate-180 transition-transform">
-            <span class="material-symbols-outlined text-3xl">sync</span>
-        </button>
-    </div>
+</div>
+
+<header
+class="fixed top-0 w-full h-16 bg-white/80 backdrop-blur-md border-b border-purple-100 flex justify-between items-center px-4 z-50">
+
+<div class="flex flex-col">
+
+<h1
+id="header-title"
+class="text-xl font-black text-slate-800 leading-none">
+STOCK
+</h1>
+
+<span
+id="sync-indicator"
+class="text-[9px] font-black text-orange-500">
+SINCRONIZANDO...
+</span>
+
+</div>
+
+<div class="flex gap-3">
+
+<button
+id="btn-bulk-delete"
+class="hidden text-red-600 animate-pulse">
+
+<span class="material-symbols-outlined text-3xl">
+delete_sweep
+</span>
+
+</button>
+
+<button
+id="btn-pdf"
+class="text-indigo-600 active:scale-90 transition-transform">
+
+<span class="material-symbols-outlined text-3xl">
+picture_as_pdf
+</span>
+
+</button>
+
+<button
+id="btn-refresh"
+class="text-slate-400 active:rotate-180 transition-transform">
+
+<span class="material-symbols-outlined text-3xl">
+sync
+</span>
+
+</button>
+
+</div>
+
 </header>
 
 <main class="pt-20 px-4">
-    <section id="stats-header" class="grid grid-cols-3 gap-2 mb-6">
-        <div class="id-card-top loading-skeleton h-16"></div>
-        <div class="id-card-top loading-skeleton h-16"></div>
-        <div class="id-card-top loading-skeleton h-16"></div>
-    </section>
 
-    <div class="relative mb-6">
-        <span class="material-symbols-outlined absolute left-4 top-3.5 text-indigo-500">search</span>
-        <input type="text" id="filtro" oninput="filtrar()" placeholder="Buscar producto..." class="input-sutil pl-12 bg-white">
-    </div>
+<section
+id="stats-header"
+class="grid grid-cols-3 gap-2 mb-6">
 
-    <div id="grid-productos" class="grid grid-cols-2 gap-3 mb-24"></div>
+<div class="id-card-top">
+<span class="label">Bodega</span>
+<span class="value">$0</span>
+</div>
+
+<div class="id-card-top">
+<span class="label">Críticos</span>
+<span class="value">0</span>
+</div>
+
+<div class="id-card-top">
+<span class="label">Stock</span>
+<span class="value">0</span>
+</div>
+
+</section>
+
+<div class="relative mb-6">
+
+<span
+class="material-symbols-outlined absolute left-4 top-3.5 text-indigo-500">
+search
+</span>
+
+<input
+type="text"
+id="filtro"
+placeholder="Buscar producto..."
+class="input-sutil pl-12 bg-white">
+
+</div>
+
+<div
+id="grid-productos"
+class="grid grid-cols-2 gap-3 mb-24">
+</div>
+
 </main>
 
-<button onclick="abrirModal('modal-nuevo-prod')" class="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform">
-    <span class="material-symbols-outlined text-3xl">add</span>
+<button
+id="btn-add"
+class="fixed bottom-24 right-6 w-14 h-14 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center z-[60] active:scale-90 transition-transform">
+
+<span class="material-symbols-outlined text-3xl">
+add
+</span>
+
 </button>
 
-<!-- MODAL: GESTIÓN DE STOCK -->
+<!-- MODAL STOCK -->
+
 <div id="modal-stock" class="modal-custom">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center shadow-2xl">
-        <p id="stk-prod-name" class="text-xs font-bold text-slate-400 mb-2 uppercase"></p>
-        <h2 class="text-xl font-black text-indigo-600 mb-6 uppercase tracking-tight">Sumar Stock</h2>
-        <div class="flex items-center justify-between mb-8 px-2">
-            <button onclick="cambiarQty(-1)" class="w-14 h-14 rounded-2xl bg-slate-100 text-indigo-600 font-black text-3xl">-</button>
-            <input type="number" id="input-sumar" value="1" class="w-20 text-center text-4xl font-black text-indigo-600 outline-none bg-transparent">
-            <button onclick="cambiarQty(1)" class="w-14 h-14 rounded-2xl bg-slate-100 text-indigo-600 font-black text-3xl">+</button>
-        </div>
-        <button id="btn-confirmar-stock" onclick="confirmarStock()" class="btn-magenta mb-4">ACTUALIZAR</button>
-        <button onclick="cerrarModal('modal-stock')" class="text-sm font-bold text-slate-400">Cancelar</button>
-    </div>
+
+<div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 text-center shadow-2xl">
+
+<p
+id="stk-prod-name"
+class="text-xs font-bold text-slate-400 mb-2 uppercase">
+</p>
+
+<h2
+class="text-xl font-black text-indigo-600 mb-6 uppercase tracking-tight">
+Sumar Stock
+</h2>
+
+<div class="flex items-center justify-between mb-8 px-2">
+
+<button
+id="btn-restar"
+class="w-14 h-14 rounded-2xl bg-slate-100 text-indigo-600 font-black text-3xl">
+-
+</button>
+
+<input
+type="number"
+id="input-sumar"
+value="1"
+class="w-20 text-center text-4xl font-black text-indigo-600 outline-none bg-transparent">
+
+<button
+id="btn-sumar"
+class="w-14 h-14 rounded-2xl bg-slate-100 text-indigo-600 font-black text-3xl">
++
+</button>
+
 </div>
 
-<!-- MODAL: NUEVO PRODUCTO -->
-<div id="modal-nuevo-prod" class="modal-custom">
-    <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 space-y-3 shadow-2xl">
-        <h2 class="text-center font-black text-indigo-600 uppercase mb-2">Crear Producto</h2>
-        <input type="text" id="n-nombre" placeholder="NOMBRE DEL PRODUCTO" class="input-sutil uppercase text-sm">
-        <input type="number" id="n-dist" placeholder="COSTO DISTRIBUIDOR $" class="input-sutil text-sm">
-        <input type="number" id="n-pvp" placeholder="PRECIO VENTA (PVP) $" class="input-sutil text-sm">
-        <input type="number" id="n-stock" placeholder="STOCK INICIAL" class="input-sutil text-sm">
-        <button id="btn-guardar-nuevo" onclick="guardarNuevo()" class="btn-magenta mt-4" style="background: #059669;">GUARDAR ITEM</button>
-        <button onclick="cerrarModal('modal-nuevo-prod')" class="w-full text-sm font-bold text-slate-400 text-center mt-2">Cerrar</button>
-    </div>
+<button
+id="btn-confirmar-stock"
+class="btn-magenta mb-4">
+ACTUALIZAR
+</button>
+
+<button
+id="cerrar-stock"
+class="text-sm font-bold text-slate-400">
+Cancelar
+</button>
+
 </div>
+
+</div>
+
+<!-- MODAL NUEVO -->
+
+<div id="modal-nuevo-prod" class="modal-custom">
+
+<div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 space-y-3 shadow-2xl">
+
+<h2
+class="text-center font-black text-indigo-600 uppercase mb-2">
+Crear Producto
+</h2>
+
+<input
+type="text"
+id="n-nombre"
+placeholder="NOMBRE DEL PRODUCTO"
+class="input-sutil uppercase text-sm">
+
+<input
+type="number"
+id="n-dist"
+placeholder="COSTO DISTRIBUIDOR $"
+class="input-sutil text-sm">
+
+<input
+type="number"
+id="n-pvp"
+placeholder="PRECIO VENTA (PVP) $"
+class="input-sutil text-sm">
+
+<input
+type="number"
+id="n-stock"
+placeholder="STOCK INICIAL"
+class="input-sutil text-sm">
+
+<button
+id="btn-guardar-nuevo"
+class="btn-magenta mt-4"
+style="background:#059669;">
+GUARDAR ITEM
+</button>
+
+<button
+id="cerrar-nuevo"
+class="w-full text-sm font-bold text-slate-400 text-center mt-2">
+Cerrar
+</button>
+
+</div>
+
+</div>
+
+<script src="api-config.js"></script>
 
 <script>
-// ==================== API CONFIGURACIÓN ====================
-const API_URL = "https://script.google.com/macros/s/AKfycbxabIAD-6st9we-W1KI6zKPAcFM842eu8RNos23QWAxP0jvzSahbAbEyYgQzAqz0J8c6A/exec";
 
-const DairyAPI = {
-  async obtenerDatos(pestaña) {
-    try {
-      // Usar modo no-cors para evitar errores de CORS
-      const res = await fetch(`${API_URL}?pestaña=${pestaña}`, {
-        mode: 'no-cors',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      const json = await res.json();
-      return json.data || [];
-    } catch (error) {
-      console.error("Error en obtenerDatos:", error);
-      // Fallback: intentar con método GET directo
-      try {
-        const res = await fetch(`${API_URL}?pestaña=${pestaña}`);
-        const json = await res.json();
-        return json.data || [];
-      } catch (e) {
-        throw error;
-      }
-    }
-  },
+let inventarioLocal = [];
+let productoActivo = null;
 
-  async enviarDatos(data) {
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        mode: 'no-cors',
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data)
-      });
-      
-      // Con no-cors, no podemos leer la respuesta, asumimos éxito
-      return { success: true };
-    } catch (error) {
-      console.error("Error en enviarDatos:", error);
-      throw error;
-    }
-  },
+const overlay =
+document.getElementById("overlay-loading");
 
-  async crearDato(pestaña, datos) {
-    const payload = {
-      pestaña: pestaña,
-      ...datos
-    };
-    return await this.enviarDatos(payload);
-  },
+function mostrarLoading(mostrar){
+overlay.style.display =
+mostrar ? "flex" : "none";
+}
 
-  async actualizarDato(pestaña, id, datos) {
-    const payload = {
-      pestaña: pestaña,
-      ID: id,
-      ...datos
-    };
-    return await this.enviarDatos(payload);
-  },
+function abrirModal(id){
+document
+.getElementById(id)
+.classList.add("active");
+}
 
-  async eliminarDato(pestaña, id) {
-    const payload = {
-      pestaña: pestaña,
-      accion: "ELIMINAR",
-      ID: id
-    };
-    return await this.enviarDatos(payload);
-  }
+function cerrarModal(id){
+document
+.getElementById(id)
+.classList.remove("active");
+}
+
+function escapeHtml(str){
+
+if(!str) return '';
+
+return str
+.replace(/&/g,'&amp;')
+.replace(/</g,'&lt;')
+.replace(/>/g,'&gt;');
+
+}
+
+async function cargarInventario(){
+
+mostrarLoading(true);
+
+try{
+
+const data =
+await DairyAPI.obtenerDatos("Inventario");
+
+inventarioLocal = data || [];
+
+renderizar(inventarioLocal);
+
+document.getElementById("sync-indicator")
+.innerText = "CONECTADO ✓";
+
+document.getElementById("sync-indicator")
+.className =
+"text-[9px] font-black text-green-500";
+
+}catch(error){
+
+console.error(error);
+
+document.getElementById("sync-indicator")
+.innerText = "ERROR API";
+
+document.getElementById("sync-indicator")
+.className =
+"text-[9px] font-black text-red-500";
+
+}
+
+mostrarLoading(false);
+
+}
+
+function renderizar(lista){
+
+const grid =
+document.getElementById("grid-productos");
+
+grid.innerHTML = "";
+
+let bodega = 0;
+let criticos = 0;
+let total = 0;
+
+lista.forEach(p=>{
+
+const stock =
+Number(p.Stock) || 0;
+
+const precio =
+Number(p.Precio_Venta) || 0;
+
+bodega += stock * precio;
+total += stock;
+
+if(stock <= 5 && stock > 0){
+criticos++;
+}
+
+const div =
+document.createElement("div");
+
+div.className = "card-prod";
+
+div.innerHTML = `
+<div class="select-check">
+<span class="material-symbols-outlined text-[14px]">
+done
+</span>
+</div>
+
+<div class="flex justify-between items-start mb-1">
+
+<span class="text-[8px] font-black text-slate-400 italic">
+ID: ${escapeHtml(p.ID)}
+</span>
+
+<span class="text-[8px] font-black text-indigo-600 bg-indigo-50 px-1.5 rounded-full uppercase">
+V: ${Number(p.Ventas)||0}
+</span>
+
+</div>
+
+<h3 class="prod-title">
+${escapeHtml(p.Producto)}
+</h3>
+
+<div class="flex justify-between items-end mt-auto pt-2">
+
+<span class="font-black text-xl ${stock<=5?'text-red-500':'text-indigo-600'}">
+${stock}
+<small class="text-[9px] ml-0.5">
+u
+</small>
+</span>
+
+<span class="font-black text-green-600 text-sm">
+$${precio.toFixed(2)}
+</span>
+
+</div>
+`;
+
+div.onclick = ()=>{
+abrirGestionStock(p);
 };
 
-// ==================== VARIABLES GLOBALES ====================
-let inventarioLocal = [];
-let seleccionados = new Set();
-let modoSeleccion = false;
-let productoActivo = null;
-let timerHold;
+grid.appendChild(div);
 
-// ==================== FUNCIONES DE CARGA ====================
-function mostrarLoading(mostrar) {
-    const overlay = document.getElementById('overlay-loading');
-    if (overlay) overlay.style.display = mostrar ? 'flex' : 'none';
+});
+
+document.getElementById("stats-header")
+.innerHTML = `
+<div class="id-card-top">
+<span class="label">Bodega</span>
+<span class="value">$${bodega.toFixed(0)}</span>
+</div>
+
+<div class="id-card-top border-red-100">
+<span class="label text-red-500">Críticos</span>
+<span class="value text-red-600">${criticos}</span>
+</div>
+
+<div class="id-card-top border-green-100">
+<span class="label text-green-500">Stock</span>
+<span class="value text-green-700">${total}</span>
+</div>
+`;
+
 }
 
-async function cargarInventario() {
-    mostrarLoading(true);
-    try {
-        const res = await DairyAPI.obtenerDatos("Inventario");
-        if (Array.isArray(res) && res.length > 0) {
-            inventarioLocal = res.map(item => ({
-                Fecha: item.Fecha,
-                ID: item.ID,
-                Producto: item.Producto,
-                Stock: Number(item.Stock) || 0,
-                Precio_Distribuidor: Number(item.Precio_Distribuidor) || 0,
-                Precio_Venta: Number(item.Precio_Venta) || 0,
-                Ventas: Number(item.Ventas) || 0,
-                Proveedor: item["Proveedor Habitual"] || "GENERAL"
-            }));
-        } else {
-            // Datos de ejemplo si no hay conexión
-            inventarioLocal = [];
-        }
-        
-        const sync = document.getElementById('sync-indicator');
-        sync.innerText = inventarioLocal.length > 0 ? "CONECTADO ✓" : "MODO DEMO";
-        sync.className = inventarioLocal.length > 0 ? "text-[9px] font-black text-green-500" : "text-[9px] font-black text-orange-500";
-        renderizar(inventarioLocal);
-    } catch(e) { 
-        console.error(e);
-        document.getElementById('sync-indicator').innerText = "MODO LOCAL";
-        document.getElementById('sync-indicator').className = "text-[9px] font-black text-orange-500";
-        inventarioLocal = [];
-        renderizar(inventarioLocal);
-    }
-    mostrarLoading(false);
+function abrirGestionStock(producto){
+
+productoActivo = producto;
+
+document.getElementById("stk-prod-name")
+.innerText = producto.Producto;
+
+document.getElementById("input-sumar")
+.value = 1;
+
+abrirModal("modal-stock");
+
 }
 
-// ==================== RENDERIZADO ====================
-function renderizar(lista) {
-    const container = document.getElementById('grid-productos');
-    const stats = document.getElementById('stats-header');
-    if (!container) return;
-    
-    container.innerHTML = "";
-    let bodega = 0, criticos = 0, stockTotal = 0;
+document.getElementById("btn-restar")
+.onclick = ()=>{
 
-    lista.forEach(p => {
-        const stock = Number(p.Stock) || 0;
-        const ventas = Number(p.Ventas) || 0;
-        const pvp = Number(p.Precio_Venta) || 0;
-        
-        if(stock <= 5 && stock > 0) criticos++;
-        stockTotal += stock;
-        bodega += (pvp * stock);
+const input =
+document.getElementById("input-sumar");
 
-        const card = document.createElement('div');
-        card.className = `card-prod ${seleccionados.has(p.ID) ? 'selected' : ''}`;
-        
-        card.innerHTML = `
-            <div class="select-check"><span class="material-symbols-outlined text-[14px]">done</span></div>
-            <div class="flex justify-between items-start mb-1">
-                <span class="text-[8px] font-black text-slate-400 italic">ID: ${escapeHtml(p.ID)}</span>
-                <span class="text-[8px] font-black text-indigo-600 bg-indigo-50 px-1.5 rounded-full uppercase">V: ${ventas}</span>
-            </div>
-            <h3 class="prod-title">${escapeHtml(p.Producto) || 'Sin nombre'}</h3>
-            <div class="flex justify-between items-end mt-auto pt-2">
-                <span class="font-black text-xl ${stock <= 5 && stock > 0 ? 'text-red-500' : stock === 0 ? 'text-gray-400' : 'text-indigo-600'}">${stock}<small class="text-[9px] ml-0.5">u</small></span>
-                <span class="font-black text-green-600 text-sm">$${pvp.toFixed(2)}</span>
-            </div>
-        `;
+let valor =
+parseInt(input.value) || 1;
 
-        // Lógica de selección múltiple
-        const startHold = (e) => {
-            timerHold = setTimeout(() => {
-                modoSeleccion = true;
-                toggleSeleccion(p.ID);
-            }, 700);
-        };
+valor--;
 
-        const cancelHold = () => clearTimeout(timerHold);
-
-        card.onmousedown = startHold;
-        card.ontouchstart = startHold;
-        card.onmouseup = cancelHold;
-        card.onmouseleave = cancelHold;
-        card.ontouchend = cancelHold;
-        card.ontouchmove = cancelHold;
-
-        card.onclick = (e) => {
-            if (modoSeleccion) {
-                toggleSeleccion(p.ID);
-            } else {
-                abrirGestionStock(p);
-            }
-        };
-
-        container.appendChild(card);
-    });
-
-    if (stats) {
-        stats.innerHTML = `
-            <div class="id-card-top"> <span class="label">Bodega</span> <span class="value">$${bodega.toFixed(0)}</span> </div>
-            <div class="id-card-top border-red-100"> <span class="label text-red-500">Críticos</span> <span class="value text-red-600">${criticos}</span> </div>
-            <div class="id-card-top border-green-100"> <span class="label text-green-500">Stock</span> <span class="value text-green-700">${stockTotal}</span> </div>
-        `;
-    }
+if(valor < 1){
+valor = 1;
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
+input.value = valor;
+
+};
+
+document.getElementById("btn-sumar")
+.onclick = ()=>{
+
+const input =
+document.getElementById("input-sumar");
+
+let valor =
+parseInt(input.value) || 1;
+
+valor++;
+
+input.value = valor;
+
+};
+
+document
+.getElementById("btn-confirmar-stock")
+.onclick = async ()=>{
+
+if(!productoActivo) return;
+
+const suma =
+parseInt(
+document.getElementById("input-sumar").value
+) || 1;
+
+mostrarLoading(true);
+
+try{
+
+await DairyAPI.actualizarDato(
+"Inventario",
+productoActivo.ID,
+{
+Stock:
+(Number(productoActivo.Stock)||0)
++ suma
+}
+);
+
+cerrarModal("modal-stock");
+
+await cargarInventario();
+
+alert("✅ Stock actualizado");
+
+}catch(error){
+
+console.error(error);
+
+alert("❌ Error actualizando");
+
 }
 
-// ==================== SELECCIÓN MÚLTIPLE ====================
-function toggleSeleccion(id) {
-    seleccionados.has(id) ? seleccionados.delete(id) : seleccionados.add(id);
-    const btnDel = document.getElementById('btn-bulk-delete');
-    const title = document.getElementById('header-title');
+mostrarLoading(false);
 
-    if (seleccionados.size > 0) {
-        if (btnDel) btnDel.classList.remove('hidden');
-        if (title) title.innerText = `${seleccionados.size} SELECCIONADOS`;
-    } else {
-        if (btnDel) btnDel.classList.add('hidden');
-        modoSeleccion = false;
-        if (title) title.innerText = "STOCK";
-    }
-    renderizar(inventarioLocal);
+};
+
+document
+.getElementById("btn-add")
+.onclick = ()=>{
+
+abrirModal("modal-nuevo-prod");
+
+};
+
+document
+.getElementById("btn-guardar-nuevo")
+.onclick = async ()=>{
+
+const nombre =
+document.getElementById("n-nombre")
+.value
+.trim()
+.toUpperCase();
+
+const dist =
+parseFloat(
+document.getElementById("n-dist").value
+) || 0;
+
+const pvp =
+parseFloat(
+document.getElementById("n-pvp").value
+) || 0;
+
+const stock =
+parseInt(
+document.getElementById("n-stock").value
+) || 0;
+
+if(!nombre){
+alert("Ingrese nombre");
+return;
 }
 
-async function eliminarVarios() {
-    if (seleccionados.size === 0) return;
-    
-    if (confirm(`¿Eliminar ${seleccionados.size} productos permanentemente?`)) {
-        mostrarLoading(true);
-        const ids = Array.from(seleccionados);
-        let errores = 0;
-        
-        for (let id of ids) {
-            try {
-                await DairyAPI.eliminarDato("Inventario", id);
-            } catch(e) {
-                errores++;
-                console.error("Error eliminando", id, e);
-            }
-        }
-        
-        if (errores === 0) {
-            alert(`✅ ${ids.length} productos eliminados`);
-        } else {
-            alert(`⚠️ ${ids.length - errores} eliminados, ${errores} errores`);
-        }
-        
-        seleccionados.clear();
-        modoSeleccion = false;
-        const btnDel = document.getElementById('btn-bulk-delete');
-        const title = document.getElementById('header-title');
-        if (btnDel) btnDel.classList.add('hidden');
-        if (title) title.innerText = "STOCK";
-        await cargarInventario();
-        mostrarLoading(false);
-    }
+mostrarLoading(true);
+
+try{
+
+await DairyAPI.enviarDatos({
+
+pestaña:"Inventario",
+
+Fecha:
+new Date()
+.toISOString()
+.split("T")[0],
+
+ID:`P-${Date.now()}`,
+
+Producto:nombre,
+
+Stock:stock,
+
+Precio_Distribuidor:dist,
+
+Precio_Venta:pvp,
+
+Ventas:0,
+
+"Proveedor Habitual":"GENERAL"
+
+});
+
+cerrarModal("modal-nuevo-prod");
+
+await cargarInventario();
+
+alert("✅ Producto creado");
+
+}catch(error){
+
+console.error(error);
+
+alert("❌ Error creando");
+
 }
 
-// ==================== GESTIÓN DE STOCK ====================
-function abrirGestionStock(p) {
-    productoActivo = p;
-    const nameElem = document.getElementById('stk-prod-name');
-    if (nameElem) nameElem.innerText = p.Producto || '';
-    const inputSumar = document.getElementById('input-sumar');
-    if (inputSumar) inputSumar.value = 1;
-    abrirModal('modal-stock');
-}
+mostrarLoading(false);
 
-function cambiarQty(val) {
-    const input = document.getElementById('input-sumar');
-    if (!input) return;
-    let v = parseInt(input.value) + val;
-    if (isNaN(v)) v = 1;
-    input.value = v < 1 ? 1 : v;
-}
+};
 
-async function confirmarStock() {
-    if (!productoActivo) return;
-    
-    const btn = document.getElementById('btn-confirmar-stock');
-    const suma = parseInt(document.getElementById('input-sumar')?.value || '1');
-    if(isNaN(suma) || suma <= 0) return;
+document
+.getElementById("cerrar-stock")
+.onclick = ()=>{
 
-    if (btn) btn.disabled = true;
-    if (btn) btn.innerText = "GUARDANDO...";
-    mostrarLoading(true);
-    
-    const nuevoTotal = (Number(productoActivo.Stock) || 0) + suma;
-    
-    try {
-        await DairyAPI.actualizarDato("Inventario", productoActivo.ID, { Stock: nuevoTotal });
-        alert(`✅ Stock actualizado: +${suma} unidades`);
-    } catch(e) {
-        alert("❌ Error al actualizar: " + e.message);
-    }
-    
-    if (btn) {
-        btn.disabled = false;
-        btn.innerText = "ACTUALIZAR";
-    }
-    cerrarModal('modal-stock');
-    mostrarLoading(false);
-    await cargarInventario();
-}
+cerrarModal("modal-stock");
 
-// ==================== CREAR PRODUCTO ====================
-async function guardarNuevo() {
-    const btn = document.getElementById('btn-guardar-nuevo');
-    const nombre = document.getElementById('n-nombre')?.value.trim().toUpperCase() || '';
-    const precioDist = parseFloat(document.getElementById('n-dist')?.value) || 0;
-    const precioVenta = parseFloat(document.getElementById('n-pvp')?.value) || 0;
-    const stockInicial = parseInt(document.getElementById('n-stock')?.value) || 0;
+};
 
-    if (!nombre) {
-        alert("⚠️ Nombre del producto requerido");
-        return;
-    }
-    if (precioVenta <= 0) {
-        alert("⚠️ Precio de venta debe ser mayor a 0");
-        return;
-    }
+document
+.getElementById("cerrar-nuevo")
+.onclick = ()=>{
 
-    const nuevoProducto = {
-        pestaña: "Inventario",
-        Fecha: new Date().toISOString().split('T')[0],
-        ID: `P-${Date.now().toString().slice(-6)}`,
-        Producto: nombre,
-        Stock: stockInicial,
-        Precio_Distribuidor: precioDist,
-        Precio_Venta: precioVenta,
-        Ventas: 0,
-        "Proveedor Habitual": "GENERAL"
-    };
+cerrarModal("modal-nuevo-prod");
 
-    console.log("Enviando producto:", nuevoProducto);
+};
 
-    if (btn) btn.disabled = true;
-    mostrarLoading(true);
-    
-    try {
-        await DairyAPI.enviarDatos(nuevoProducto);
-        
-        alert("✅ Producto creado exitosamente");
-        cerrarModal('modal-nuevo-prod');
-        
-        // Limpiar campos
-        const nNombre = document.getElementById('n-nombre');
-        const nDist = document.getElementById('n-dist');
-        const nPvp = document.getElementById('n-pvp');
-        const nStock = document.getElementById('n-stock');
-        if (nNombre) nNombre.value = "";
-        if (nDist) nDist.value = "";
-        if (nPvp) nPvp.value = "";
-        if (nStock) nStock.value = "";
-        
-        await cargarInventario();
-    } catch(e) {
-        console.error("Error detallado:", e);
-        alert("❌ Error al crear: " + e.message);
-    }
-    
-    if (btn) btn.disabled = false;
-    mostrarLoading(false);
-}
+document
+.getElementById("btn-refresh")
+.onclick = ()=>{
 
-// ==================== REPORTES PDF ====================
-function descargarPDF() {
-    if (!window.jspdf) {
-        alert("Librería PDF no cargada");
-        return;
-    }
-    
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    doc.setFontSize(18);
-    doc.text("INVENTARIO LÓGICA LÁCTEA", 14, 20);
-    doc.setFontSize(10);
-    doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 14, 28);
+window.location.reload();
 
-    const body = inventarioLocal.map(p => [
-        p.ID || '', 
-        p.Producto || '', 
-        p.Stock || 0, 
-        `$${Number(p.Precio_Venta || 0).toFixed(2)}`
-    ]);
+};
 
-    if (window.jspdf && window.jspdf.autoTable) {
-        doc.autoTable({
-            startY: 35,
-            head: [['ID', 'Producto', 'Stock', 'Precio PVP']],
-            body: body,
-            theme: 'grid',
-            headStyles: { fillColor: [99, 102, 241] }
-        });
-    }
+document
+.getElementById("filtro")
+.addEventListener("input", e=>{
 
-    doc.save('Inventario_Lacteo.pdf');
-}
+const valor =
+e.target.value.toLowerCase();
 
-// ==================== UTILIDADES ====================
-function abrirModal(id) { 
-    const modal = document.getElementById(id);
-    if (modal) modal.classList.add('active'); 
-}
+const filtrados =
+inventarioLocal.filter(p=>
+(p.Producto || "")
+.toLowerCase()
+.includes(valor)
+);
 
-function cerrarModal(id) { 
-    const modal = document.getElementById(id);
-    if (modal) modal.classList.remove('active'); 
-}
+renderizar(filtrados);
 
-function filtrar() { 
-    const busqueda = document.getElementById('filtro')?.value.toLowerCase() || '';
-    const filtrados = inventarioLocal.filter(p => p.Producto?.toLowerCase().includes(busqueda));
-    renderizar(filtrados); 
-}
+});
 
-// ==================== INICIALIZACIÓN ====================
-window.onload = cargarInventario;
+document
+.getElementById("btn-pdf")
+.onclick = ()=>{
+
+const { jsPDF } = window.jspdf;
+
+const doc = new jsPDF();
+
+doc.setFontSize(18);
+
+doc.text(
+"INVENTARIO LÓGICA LÁCTEA",
+14,
+20
+);
+
+const body =
+inventarioLocal.map(p=>[
+p.ID || '',
+p.Producto || '',
+p.Stock || 0,
+`$${Number(p.Precio_Venta||0).toFixed(2)}`
+]);
+
+doc.autoTable({
+startY:30,
+head:[['ID','Producto','Stock','PVP']],
+body:body
+});
+
+doc.save("inventario.pdf");
+
+};
+
+window.onload = ()=>{
+
+cargarInventario();
+
+};
+
 </script>
+
+<script src="menu-logic.js"></script>
 
 </body>
 </html>

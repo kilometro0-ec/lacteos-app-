@@ -1,57 +1,44 @@
 /**
- * LÓGICA LÁCTEA - CLIENTE API v3.8 (VERSIÓN FUNCIONAL)
- * Usa no-cors y text/plain para evitar bloqueos CORS
+ * LÓGICA LÁCTEA - CLIENTE API v3.7 (VERSIÓN ORIGINAL FUNCIONAL)
  */
-
 const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbxdHI4S_hIDh0J3TL4xIPCX0WlCud6xnTtymMUoyfHn7KPj2LsbkFfmHNZYwizou8fQnA/exec";
 
 const DairyAPI = {
-    // ========== 1. LECTURA DE DATOS (GET) ==========
+    // 1. LECTURA DE DATOS (doGet)
     obtenerDatos: async (pestaña) => {
         try {
-            const url = `${DAIRY_API_URL}?pestaña=${encodeURIComponent(pestaña)}&t=${Date.now()}`;
-            console.log(`📡 Obteniendo: ${pestaña}`);
-            
-            const response = await fetch(url, {
-                method: 'GET',
-                mode: 'cors',
-                headers: { 'Accept': 'application/json' }
-            });
-            
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
-            const data = await response.json();
-            return data.data || [];
+            const response = await fetch(`${DAIRY_API_URL}?pestaña=${pestaña}`);
+            if (!response.ok) throw new Error("Error en red");
+            return await response.json();
         } catch (error) {
-            console.error(`❌ Error en ${pestaña}:`, error);
+            console.error("Error al obtener:", error);
             return [];
         }
     },
 
-    // ========== 2. ENVÍO DE DATOS (POST con no-cors) ==========
+    // 2. ENVÍO DE DATOS (doPost con no-cors)
     enviarDatos: async (datos) => {
         try {
-            console.log(`📤 Enviando a: ${datos.pestaña}`, datos);
-            
-            // Usar no-cors y text/plain para evitar preflight request
             await fetch(DAIRY_API_URL, {
                 method: 'POST',
-                mode: 'no-cors',
+                mode: 'no-cors', 
                 headers: { 'Content-Type': 'text/plain' },
                 body: JSON.stringify(datos)
             });
-            
-            // Con no-cors asumimos éxito si no hay error de red
-            console.log(`✅ Datos enviados`);
-            return { success: true };
+            return "OK";
         } catch (error) {
-            console.error(`❌ Error al enviar:`, error);
+            console.error("Error al enviar:", error);
             throw error;
         }
     },
 
-    // ========== 3. FUNCIONES ESPECÍFICAS ==========
-    // Clientes
+    // 3. ALIAS PARA COMPATIBILIDAD
+    guardarDatos: async (pestaña, datos) => {
+        const payload = { pestaña: pestaña, ...datos };
+        return await DairyAPI.enviarDatos(payload);
+    },
+
+    // 4. FUNCIONES ESPECÍFICAS (AGREGADAS PARA TUS OTRAS PANTALLAS)
     crearCliente: async (cliente) => {
         return DairyAPI.enviarDatos({
             pestaña: "Clientes",
@@ -66,14 +53,6 @@ const DairyAPI = {
         });
     },
 
-    actualizarCliente: async (id, datos) => {
-        return DairyAPI.enviarDatos({
-            pestaña: "Clientes",
-            ID: id,
-            ...datos
-        });
-    },
-
     eliminarCliente: async (id) => {
         return DairyAPI.enviarDatos({
             pestaña: "Clientes",
@@ -82,7 +61,6 @@ const DairyAPI = {
         });
     },
 
-    // Ventas
     crearVenta: async (venta) => {
         return DairyAPI.enviarDatos({
             pestaña: "Ventas",
@@ -96,7 +74,6 @@ const DairyAPI = {
         });
     },
 
-    // Despachos
     marcarEntregado: async (idVenta, fechaEntrega) => {
         return DairyAPI.enviarDatos({
             pestaña: "Ventas",
@@ -117,7 +94,6 @@ const DairyAPI = {
         });
     },
 
-    // Productos / Inventario
     crearProducto: async (producto) => {
         return DairyAPI.enviarDatos({
             pestaña: "Inventario",
@@ -132,14 +108,6 @@ const DairyAPI = {
         });
     },
 
-    actualizarStock: async (idProducto, nuevoStock) => {
-        return DairyAPI.enviarDatos({
-            pestaña: "Inventario",
-            ID: idProducto,
-            Stock: nuevoStock
-        });
-    },
-
     eliminarProducto: async (id) => {
         return DairyAPI.enviarDatos({
             pestaña: "Inventario",
@@ -148,7 +116,6 @@ const DairyAPI = {
         });
     },
 
-    // Proveedores
     crearProveedor: async (proveedor) => {
         return DairyAPI.enviarDatos({
             pestaña: "Proveedores",
@@ -171,7 +138,6 @@ const DairyAPI = {
         });
     },
 
-    // Compras
     crearCompra: async (compra) => {
         return DairyAPI.enviarDatos({
             pestaña: "Compras",
@@ -185,20 +151,17 @@ const DairyAPI = {
         });
     },
 
-    // Dashboard
     obtenerDashboard: async () => {
         try {
-            const [clientes, ventas, inventario, proveedores] = await Promise.all([
+            const [clientes, ventas, inventario] = await Promise.all([
                 DairyAPI.obtenerDatos("Clientes"),
                 DairyAPI.obtenerDatos("Ventas"),
-                DairyAPI.obtenerDatos("Inventario"),
-                DairyAPI.obtenerDatos("Proveedores")
+                DairyAPI.obtenerDatos("Inventario")
             ]);
             
             const totalVentas = Array.isArray(ventas) ? ventas.reduce((sum, v) => sum + (Number(v.Total) || 0), 0) : 0;
             const stockTotal = Array.isArray(inventario) ? inventario.reduce((sum, p) => sum + (Number(p.Stock) || 0), 0) : 0;
             const valorBodega = Array.isArray(inventario) ? inventario.reduce((sum, p) => sum + ((Number(p.Stock) || 0) * (Number(p.Precio_Venta) || 0)), 0) : 0;
-            const productosCriticos = Array.isArray(inventario) ? inventario.filter(p => (Number(p.Stock) || 0) <= 5).length : 0;
             
             return {
                 totalClientes: Array.isArray(clientes) ? clientes.length : 0,
@@ -206,23 +169,14 @@ const DairyAPI = {
                 montoVentas: totalVentas,
                 stockTotal: stockTotal,
                 valorBodega: valorBodega,
-                productosCriticos: productosCriticos,
-                totalProveedores: Array.isArray(proveedores) ? proveedores.length : 0
+                productosCriticos: Array.isArray(inventario) ? inventario.filter(p => (Number(p.Stock) || 0) <= 5).length : 0
             };
         } catch (error) {
             console.error("Error en dashboard:", error);
-            return {
-                totalClientes: 0,
-                totalVentas: 0,
-                montoVentas: 0,
-                stockTotal: 0,
-                valorBodega: 0,
-                productosCriticos: 0,
-                totalProveedores: 0
-            };
+            return { totalClientes: 0, totalVentas: 0, montoVentas: 0, stockTotal: 0, valorBodega: 0, productosCriticos: 0 };
         }
     }
 };
 
 window.DairyAPI = DairyAPI;
-console.log("✅ API v3.8 cargada - Modo no-cors");
+console.log("✅ API v3.7 cargada - Modo original funcional");

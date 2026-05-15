@@ -127,19 +127,20 @@
             cargarCatalogoRemoto();
         });
 
-        // Recupera los productos usando la url global de api-config.js
+        // Consulta de inventario mediante la capa unificada de DairyAPI
         async function cargarCatalogoRemoto() {
             try {
-                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getInventario`);
-                const json = await res.json();
+                const datos = await DairyAPI.obtenerDatos("Inventario");
                 
-                if (json.status === "success") {
-                    catalogoProductos = json.data;
+                if (Array.isArray(datos)) {
+                    catalogoProductos = datos;
                     poblarSelectorProductos(catalogoProductos);
+                } else if (datos && datos.status === "error") {
+                    throw new Error(datos.message);
                 }
             } catch (err) {
                 console.error("Fallo de comunicación interna:", err);
-                Swal.fire("Error Estructural", "No se pudo leer el inventario desde api-config.js", "error");
+                Swal.fire("Error Estructural", "No se pudo leer el inventario desde la base central de Google Sheets.", "error");
             }
         }
 
@@ -147,7 +148,12 @@
             const select = document.getElementById("sel_producto");
             select.innerHTML = '<option value="">-- Selecciona el Insumo/Lácteo --</option>';
             lista.forEach(p => {
-                select.innerHTML += `<option value="${p.id}">${p.producto} (ID: ${p.id})</option>`;
+                // Validación para soportar tanto minúsculas como mayúsculas en las llaves del JSON
+                const idProd = p.id || p.ID || p.codigo;
+                const nombreProd = p.producto || p.Producto || p.descripcion;
+                if (idProd && nombreProd) {
+                    select.innerHTML += `<option value="${idProd}">${nombreProd} (ID: ${idProd})</option>`;
+                }
             });
         }
 
@@ -161,23 +167,25 @@
                 return Swal.fire("Campos Incompletos", "Por favor ingresa un producto, cantidad y costo válidos.", "warning");
             }
 
-            const matchProd = catalogoProductos.find(p => p.id === idSel);
+            const matchProd = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === idSel);
+            const nombreProd = matchProd ? (matchProd.producto || matchProd.Producto || "Producto") : "Insumo";
             
-            // Si el item ya fue ingresado, consolidamos montos e incrementamos
+            // Consolidación de existencias si el ítem ya existe en el detalle actual
             const existeIndex = carritoDeCompras.findIndex(item => item.id === idSel);
             if (existeIndex > -1) {
                 carritoDeCompras[existeIndex].cantidad += cant;
-                carritoDeCompras[existeIndex].costo = costo; // Se actualiza al último ingresado
+                carritoDeCompras[existeIndex].costo = costo; // Prevalece el último costo de adquisición ingresado
             } else {
                 carritoDeCompras.push({
                     id: idSel,
-                    producto: matchProd.producto,
+                    producto: nombreProd,
+                    shadowId: idSel,
                     cantidad: cant,
                     costo: costo
                 });
             }
 
-            // Reseteo de inputs de línea
+            // Reseteo de controles de línea
             document.getElementById("txt_cantidad").value = "1";
             document.getElementById("txt_costo").value = "";
             document.getElementById("sel_producto").value = "";
@@ -190,7 +198,7 @@
             renderizarTablaDetalle();
         }
 
-        // Dibuja las filas del subtotal en pantalla
+        // Renderizado reactivo del detalle de transacciones
         function renderizarTablaDetalle() {
             const tbody = document.getElementById("tbodyCarrito");
             let sumadorTotal = 0;
@@ -223,7 +231,7 @@
                     <td class="py-3 px-4 text-right font-mono text-slate-500">$${item.costo.toFixed(2)}</td>
                     <td class="py-3 px-4 text-right font-bold font-mono text-slate-900">$${subtotal.toFixed(2)}</td>
                     <td class="py-3 px-6 text-center">
-                        <button onclick="removerItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50">
+                        <button onclick="removerItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-all">
                             <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
                         </button>
                     </td>
@@ -235,18 +243,18 @@
             lucide.createIcons();
         }
 
-        // Persistencia y escritura mediante POST contra la API Unificada de Google Sheets
+        // Persistencia y mutación de inventario usando la API abstracta y segura de la aplicación
         async function procesarOrdenCompraCompleta() {
             const nroFactura = document.getElementById("com_factura").value.trim();
             const proveedor = document.getElementById("com_proveedor").value.trim();
 
             if (!nroFactura || !proveedor || carritoDeCompras.length === 0) {
-                return Swal.fire("Información Incompleta", "Debes completar los datos de la factura y añadir al menos un item.", "error");
+                return Swal.fire("Información Incompleta", "Debes completar los datos de la factura y añadir al menos un ítem al detalle.", "error");
             }
 
             Swal.fire({
                 title: 'Impactando Inventarios...',
-                text: 'Registrando lote de abastecimiento en la base de datos...',
+                text: 'Registrando lote de abastecimiento en el servidor central...',
                 allowOutsideClick: false,
                 didOpen: () => { Swal.showLoading(); }
             });
@@ -260,12 +268,8 @@
             };
 
             try {
-                await fetch(CONFIG.WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+                // Enviamos el payload mediante el método unificado de guardado
+                await DairyAPI.guardarDatos("Compras", payload);
 
                 Swal.fire({
                     title: 'Abastecimiento Exitoso',
@@ -274,15 +278,16 @@
                     confirmButtonColor: '#059669'
                 });
 
-                // Blanqueo completo de los formularios para una nueva transacción
+                // Blanqueo total de controles tras la transacción exitosa
                 document.getElementById("com_factura").value = "";
                 document.getElementById("com_proveedor").value = "";
                 carritoDeCompras = [];
                 renderizarTablaDetalle();
-                cargarCatalogoRemoto(); // Sincroniza stocks en segundo plano
+                cargarCatalogoRemoto(); // Recarga asíncrona de los nuevos stocks del catálogo
 
             } catch (err) {
-                Swal.fire("Error de Red", "No se pudo impactar la transacción en la hoja de cálculo.", "error");
+                console.error("Error al procesar el abastecimiento:", err);
+                Swal.fire("Error de Red", "No se pudo impactar la transacción en la hoja de cálculo de Google Sheets.", "error");
             }
         }
     </script>

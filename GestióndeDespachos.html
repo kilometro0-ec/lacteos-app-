@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Despachos - Lógica Láctea</title>
-    <!-- CONEXIÓN A ARCHIVOS RAÍZ -->
-    <link rel="stylesheet" href="estilos-lacteos.css">
     <!-- Tailwind CSS para diseño fluido -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SweetAlert2 para flujos de confirmación y carga -->
@@ -67,7 +65,7 @@
                             <th class="py-3 px-6">ID Venta</th>
                             <th class="py-3 px-4">Fecha</th>
                             <th class="py-3 px-4">Cliente</th>
-                            <th class="py-3 px-4">Dirección de Entrega</th>
+                            <th class="py-3 px-4">Items / Total</th>
                             <th class="py-3 px-4 text-center">Estado Actual</th>
                             <th class="py-3 px-6 text-center">Acción Logística</th>
                         </tr>
@@ -77,7 +75,7 @@
                         <tr>
                             <td colspan="6" class="text-center py-20 text-slate-400">
                                 <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-cyan-600"></i>
-                                <p class="text-xs">Maquetando hoja de ruta desde el servidor de Almacén...</p>
+                                <p class="text-xs">Maquetando hoja de ruta desde el servidor de Ventas...</p>
                             </td>
                         </tr>
                     </tbody>
@@ -98,11 +96,11 @@
             cargarDespachos();
         });
 
-        // Consumo utilizando el estándar global de Lógica Láctea
+        // Consumo utilizando el estándar global de Lógica Láctea apuntando a la hoja Ventas
         async function cargarDespachos() {
             try {
-                // Se solicitan los registros de la colección u hoja "Despachos" (o "Ventas" según tu esquema)
-                const datos = await DairyAPI.obtenerDatos("Despachos");
+                // Modificado para consumir directamente de la hoja física "Ventas"
+                const datos = await DairyAPI.obtenerDatos("Ventas");
                 
                 if (Array.isArray(datos)) {
                     despachosGlobal = datos;
@@ -117,7 +115,8 @@
                     <tr>
                         <td colspan="6" class="text-center py-10 text-rose-500 font-bold">
                             <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
-                            Error de comunicación con api-config.js o Google Sheets.
+                            Error de comunicación con api-config.js o Google Sheets.<br>
+                            <span class="text-xs font-normal text-slate-400">${err.message}</span>
                         </td>
                     </tr>
                 `;
@@ -125,33 +124,56 @@
             }
         }
 
-        // Renderizado de filas logísticas con semáforo de estados y protección de llaves nulas
+        // Renderizado consolidado por ID_Venta
         function renderizarDespachos(lista) {
             const tbody = document.getElementById("tbodyDespachos");
-            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='6' class='text-center py-10 text-slate-400 italic'>No hay órdenes registradas pendientes de despacho.</td></tr>";
+            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='6' class='text-center py-10 text-slate-400 italic'>No hay ventas registradas.</td></tr>";
 
-            lista.forEach(d => {
+            // Agrupamos filas repetidas por ID_Venta para no duplicar filas visuales por producto
+            const pedidosAgrupados = {};
+
+            lista.forEach(item => {
+                const idVenta = item.ID_Venta || item.id_venta || item.id || "S/I";
+                if(idVenta === "S/I" || idVenta === "ID_Venta") return; // Ignora cabeceras accidentales
+
+                const totalFila = parseFloat(item.Total || item.total || 0);
+                const descProducto = `${item.Producto || 'Producto'} (x${item.Cantidad || 1})`;
+
+                if (!pedidosAgrupados[idVenta]) {
+                    pedidosAgrupados[idVenta] = {
+                        idVenta: idVenta,
+                        fecha: item.Fecha || item.fecha || '-',
+                        cliente: item.Cliente || item.cliente || "Consumidor Final",
+                        productos: [descProducto],
+                        montoTotal: totalFila,
+                        estado: (item.Estado || item.estado || "PENDIENTE").toUpperCase()
+                    };
+                } else {
+                    // Si ya existe el ID, agregamos el producto a la lista e incrementamos el monto
+                    pedidosAgrupados[idVenta].productos.push(descProducto);
+                    pedidosAgrupados[idVenta].montoTotal += totalFila;
+                }
+            });
+
+            const despachosUnicos = Object.values(pedidosAgrupados);
+
+            despachosUnicos.forEach(d => {
                 let badgeClass = "";
                 let botonAccion = "";
-                
-                // Homologación de llaves seguras e ID transaccional
-                const idVenta = d.idVenta || d.id || d.codigo || "S/I";
-                const estado = (d.estado || "PENDIENTE").toUpperCase();
-                const cliente = d.cliente || d.nombreCliente || d.razonSocial || "Cliente Genérico";
-                const direccion = d.direccion || d.direccionEntrega || '';
+                const estado = d.estado;
 
-                // Reglas visuales según el estado del ciclo de vida del pedido
+                // Control del ciclo de estados exacto en base a tus requerimientos
                 if (estado === "PENDIENTE") {
                     badgeClass = "bg-amber-100 text-amber-800 border border-amber-200";
                     botonAccion = `
-                        <button onclick="actualizarEstadoDespacho('${idVenta}', 'EN RUTA')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95 shadow-sm">
+                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'EN RUTA')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95 shadow-sm">
                             <i data-lucide="play" class="w-3 h-3"></i> Despachar
                         </button>
                     `;
                 } else if (estado === "EN RUTA") {
                     badgeClass = "bg-cyan-100 text-cyan-800 border border-cyan-200 animate-pulse";
                     botonAccion = `
-                        <button onclick="actualizarEstadoDespacho('${idVenta}', 'ENTREGADO')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95 shadow-sm">
+                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'ENTREGADO')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95 shadow-sm">
                             <i data-lucide="check" class="w-3 h-3"></i> Entregado
                         </button>
                     `;
@@ -159,22 +181,26 @@
                     badgeClass = "bg-emerald-100 text-emerald-800 border border-emerald-200";
                     botonAccion = `
                         <span class="text-slate-400 text-[11px] italic flex items-center justify-center gap-1">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Finalizado
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Entregado
                         </span>
                     `;
                 } else {
-                    // Estado de contingencia por si manejan cancelaciones u otros estados
                     badgeClass = "bg-slate-100 text-slate-700 border border-slate-200";
                     botonAccion = `<span class="text-slate-400 text-[11px] italic">${estado}</span>`;
                 }
 
+                const listaProductosToolTip = d.productos.join(', ');
+
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50/60 transition-colors";
                 tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-mono font-bold text-slate-600">#${idVenta}</td>
-                    <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${d.fecha || '-'}</td>
-                    <td class="py-3.5 px-4 font-black text-slate-800">${cliente}</td>
-                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${direccion}">${direccion ? direccion : '<span class="text-slate-300 italic">Retira en planta</span>'}</td>
+                    <td class="py-3.5 px-6 font-mono font-bold text-slate-600">#${d.idVenta}</td>
+                    <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${d.fecha}</td>
+                    <td class="py-3.5 px-4 font-black text-slate-800">${d.cliente}</td>
+                    <td class="py-3.5 px-4 text-slate-600" title="${listaProductosToolTip}">
+                        <div class="text-xs truncate max-w-[200px] font-semibold text-slate-500">${listaProductosToolTip}</div>
+                        <div class="text-xs font-bold text-cyan-700">$${d.montoTotal.toFixed(2)}</div>
+                    </td>
                     <td class="py-3.5 px-4 text-center">
                         <span class="px-2 py-0.5 rounded-md font-black text-[10px] uppercase tracking-wider ${badgeClass}">
                             ${estado}
@@ -187,51 +213,60 @@
             lucide.createIcons();
         }
 
-        // Calcula el conteo de indicadores superiores de manera reactiva
+        // Métrica reactiva calculada en base a órdenes únicas agrupadas
         function actualizarTarjetasMetricas(lista) {
             let p = 0, r = 0, e = 0;
-            lista.forEach(d => {
-                const est = (d.estado || "PENDIENTE").toUpperCase();
+            const visitados = new Set();
+
+            lista.forEach(item => {
+                const idVenta = item.ID_Venta || item.id_venta || item.id;
+                if (!idVenta || idVenta === "ID_Venta" || visitados.has(idVenta)) return;
+                
+                visitados.add(idVenta);
+                const est = (item.Estado || item.estado || "PENDIENTE").toUpperCase();
+                
                 if (est === "PENDIENTE") p++;
                 else if (est === "EN RUTA") r++;
                 else if (est === "ENTREGADO") e++;
             });
+
             document.getElementById("cardPendientes").innerText = p;
             document.getElementById("cardRuta").innerText = r;
             document.getElementById("cardEntregados").innerText = e;
         }
 
-        // Envía la mutación de estado de forma asíncrona y segura a la API unificada
+        // Guarda la mutación directo en Google Sheets afectando al ID_Venta correspondiente
         async function actualizarEstadoDespacho(idVenta, nuevoEstado) {
             Swal.fire({
-                title: 'Actualizando Bitácora...',
-                text: `Cambiando orden al estado: ${nuevoEstado}`,
+                title: 'Sincronizando Estado...',
+                text: `Modificando Pedido #${idVenta} a: ${nuevoEstado}`,
                 allowOutsideClick: false,
                 didOpen: () => { Swal.showLoading(); }
             });
 
+            // Parámetros estructurados para tu Web App Script (API unificada)
             const payload = {
                 action: "actualizarEstadoDespacho",
                 idVenta: idVenta,
                 estado: nuevoEstado,
-                fechaCambio: new Date().toISOString().split('T')[0]
+                fechaEntrega: nuevoEstado === "ENTREGADO" ? new Date().toISOString().split('T')[0] : ""
             };
 
             try {
-                // Se envía la mutación mediante el método global de guardado/actualización
-                await DairyAPI.guardarDatos("Despachos", payload);
+                // Mutación apuntando a la hoja física de "Ventas"
+                await DairyAPI.guardarDatos("Ventas", payload);
 
                 Swal.fire({
-                    title: 'Ruta Actualizada',
-                    text: `El pedido #${idVenta} avanzó en la cadena de distribución con éxito.`,
+                    title: 'Cambio Confirmado',
+                    text: `La orden #${idVenta} cambió a ${nuevoEstado} con éxito en Google Sheets.`,
                     icon: 'success',
                     confirmButtonColor: '#0891b2'
                 });
                 
-                cargarDespachos(); // Actualización en caliente de la vista completa
+                cargarDespachos(); // Refrescar interfaz
             } catch (err) {
                 console.error("Error al actualizar estado logístico:", err);
-                Swal.fire("Error Logístico", "No se pudo sincronizar el cambio de estado con el servidor central de Google Sheets.", "error");
+                Swal.fire("Error de Conexión", "No se pudo impactar el cambio en la base de datos de Google Sheets.", "error");
             }
         }
     </script>

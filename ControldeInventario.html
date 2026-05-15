@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Inventario - Lógica Láctea</title>
-    <!-- CONEXIÓN A ARCHIVOS RAÍZ -->
-    <link rel="stylesheet" href="estilos-lacteos.css">
     <!-- Tailwind CSS para diseño y maquetación -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SweetAlert2 para notificaciones de stock y confirmaciones -->
@@ -17,6 +15,35 @@
     <!-- jspdf y jspdf-autotable para Exportación a PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    
+    <style>
+        /* Estilos personalizados */
+        .transition-all {
+            transition: all 0.2s ease;
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
@@ -63,15 +90,15 @@
             </div>
             
             <div class="flex gap-4 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
-                <div onclick="filtrarPorBadge('CRITICO')" class="cursor-pointer hover:opacity-80 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
+                <div onclick="filtrarPorBadge('CRITICO')" class="cursor-pointer hover:opacity-80 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap transition-all">
                     <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
                     <span class="text-[11px] font-bold text-rose-700 uppercase" id="lblCriticos">0 Críticos</span>
                 </div>
-                <div onclick="filtrarPorBadge('BAJO')" class="cursor-pointer hover:opacity-80 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
+                <div onclick="filtrarPorBadge('BAJO')" class="cursor-pointer hover:opacity-80 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap transition-all">
                     <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                     <span class="text-[11px] font-bold text-amber-700 uppercase" id="lblPorAgotar">0 Por Agotar</span>
                 </div>
-                <div onclick="filtrarPorBadge('OPTIMO')" class="cursor-pointer hover:opacity-80 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
+                <div onclick="filtrarPorBadge('OPTIMO')" class="cursor-pointer hover:opacity-80 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap transition-all">
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span class="text-[11px] font-bold text-emerald-700 uppercase" id="lblOptimos">0 Óptimos</span>
                 </div>
@@ -82,7 +109,7 @@
     <!-- Tabla de Existencias -->
     <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto scrollbar-thin">
                 <table class="w-full text-left border-collapse text-xs md:text-sm" id="tablaInventarioFormatos">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
@@ -92,7 +119,7 @@
                             <th class="py-3 px-4 text-right">Precio Venta</th>
                             <th class="py-3 px-4 text-center">Stock</th>
                             <th class="py-3 px-4">Proveedor Habitual</th>
-                            <th class="py-3 px-6 text-center text-slate-500">Acciones</th>
+                            <th class="py-3 px-6 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyInventario" class="divide-y divide-slate-100 font-medium text-slate-700">
@@ -115,7 +142,9 @@
                 <h3 class="font-bold flex items-center gap-2" id="modalProductoTitulo">
                     <i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i> Ficha del Producto
                 </h3>
-                <button type="button" onclick="cerrarModalProducto()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" onclick="cerrarModalProducto()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
             <form id="formProducto" onsubmit="guardarEstructuraProducto(event)" class="p-6 space-y-4">
                 <input type="hidden" id="prod_id_interno">
@@ -128,28 +157,28 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Nombre / Descripción del Producto *</label>
-                    <input type="text" id="prod_nombre" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50" placeholder="Ej: Queso Mozzarella 1Kg">
+                    <input type="text" id="prod_nombre" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50 focus:ring-2 focus:ring-blue-500" placeholder="Ej: Queso Mozzarella 1Kg">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Precio Distribuidor ($) *</label>
-                        <input type="number" step="0.01" id="prod_costo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-mono text-right" placeholder="0.00">
+                        <input type="number" step="0.01" id="prod_costo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-mono text-right focus:ring-2 focus:ring-blue-500" placeholder="0.00">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Precio Venta ($) *</label>
-                        <input type="number" step="0.01" id="prod_venta" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-mono text-right text-blue-600 font-bold" placeholder="0.00">
+                        <input type="number" step="0.01" id="prod_venta" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-mono text-right text-blue-600 font-bold focus:ring-2 focus:ring-blue-500" placeholder="0.00">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Proveedor Habitual *</label>
-                    <select id="prod_proveedor" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50 text-slate-700">
+                    <select id="prod_proveedor" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50 text-slate-700 focus:ring-2 focus:ring-blue-500">
                         <option value="" disabled selected>Cargando proveedores...</option>
                     </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button type="button" onclick="cerrarModalProducto()" class="w-full py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50 text-xs uppercase">Cancelar</button>
-                    <button type="submit" class="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 shadow-md text-xs uppercase">Guardar Registro</button>
+                    <button type="button" onclick="cerrarModalProducto()" class="w-full py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50 text-xs uppercase transition-all">Cancelar</button>
+                    <button type="submit" class="w-full py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 shadow-md text-xs uppercase transition-all">Guardar Registro</button>
                 </div>
             </form>
         </div>
@@ -160,11 +189,13 @@
         <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden">
             <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
                 <h3 class="font-bold flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-amber-400"></i> Historial Kárdex</h3>
-                <button type="button" onclick="cerrarModalKardex()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button type="button" onclick="cerrarModalKardex()" class="text-slate-400 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
             <div class="p-6">
                 <p class="text-sm text-slate-500 mb-4 font-bold" id="kardexProductoNombre">Producto: ...</p>
-                <div class="overflow-y-auto max-h-72 border border-slate-100 rounded-lg">
+                <div class="overflow-y-auto max-h-72 border border-slate-100 rounded-lg scrollbar-thin">
                     <table class="w-full text-left text-xs">
                         <thead class="bg-slate-100 text-slate-500 sticky top-0">
                             <tr>
@@ -186,27 +217,54 @@
     <script src="menu-logic.js"></script>
 
     <script>
+        // Variables globales
         let inventarioGlobal = [];
         let proveedoresGlobal = [];
 
+        // Esperar a que el DOM esté completamente cargado
         document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
+            inicializarIconos();
             cargarInventario();
             cargarProveedoresDesplegable();
         });
 
+        // Función para inicializar íconos de Lucide
+        function inicializarIconos() {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        }
+
+        // Verificar si DairyAPI existe
+        function verificarDairyAPI() {
+            if (typeof DairyAPI === 'undefined') {
+                Swal.fire({
+                    title: 'Error de Configuración',
+                    text: 'No se encontró la configuración de la API. Verifica que api-config.js esté en la carpeta raíz.',
+                    icon: 'error',
+                    confirmButtonText: 'Entendido'
+                });
+                return false;
+            }
+            return true;
+        }
+
         // CARGAR PROVEEDORES DESDE LA HOJA CENTRAL
         async function cargarProveedoresDesplegable() {
+            if (!verificarDairyAPI()) return;
+            
             try {
                 const datos = await DairyAPI.obtenerDatos("Proveedores");
                 const selectProveedor = document.getElementById("prod_proveedor");
+                
+                if (!selectProveedor) return;
                 
                 if (Array.isArray(datos) && datos.length > 0) {
                     proveedoresGlobal = datos;
                     selectProveedor.innerHTML = '<option value="" disabled selected>-- Seleccione un Proveedor --</option>';
                     datos.forEach(prov => {
-                        const nombreProv = prov["Nombre del Proveedor"] || prov["Nombre"] || prov["nombre"];
-                        if (nombreProv) {
+                        const nombreProv = prov["Nombre del Proveedor"] || prov["Nombre"] || prov["nombre"] || prov["proveedor"];
+                        if (nombreProv && nombreProv.trim()) {
                             const opt = document.createElement("option");
                             opt.value = nombreProv;
                             opt.textContent = nombreProv;
@@ -214,19 +272,25 @@
                         }
                     });
                 } else {
-                    selectProveedor.innerHTML = '<option value="" disabled>No se hallaron proveedores</option>';
+                    selectProveedor.innerHTML = '<option value="" disabled>No se hallaron proveedores registrados</option>';
                 }
             } catch (err) {
                 console.error("Error al colectar lista de proveedores:", err);
-                document.getElementById("prod_proveedor").innerHTML = '<option value="" disabled>Error al enlazar proveedores</option>';
+                const select = document.getElementById("prod_proveedor");
+                if (select) {
+                    select.innerHTML = '<option value="" disabled>Error al cargar proveedores</option>';
+                }
             }
         }
 
-        // CARGA E INTERPRETACIÓN DE COLUMNAS EXACTAS DE TU EXCEL
+        // CARGA E INTERPRETACIÓN DE COLUMNAS EXACTAS
         async function cargarInventario() {
+            if (!verificarDairyAPI()) return;
+            
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
-                if (Array.isArray(datos)) {
+                
+                if (Array.isArray(datos) && datos.length > 0) {
                     const normalizados = datos.map(p => ({
                         Fecha: p.Fecha || p.fecha || "",
                         ID: String(p.ID || p.id || "").trim(),
@@ -243,6 +307,10 @@
                     
                     procesarFiltrosYBusqueda();
                     calcularResumenContadores(inventarioGlobal);
+                } else {
+                    inventarioGlobal = [];
+                    renderizarInventario([]);
+                    calcularResumenContadores([]);
                 }
             } catch (err) {
                 console.error("Fallo general de lectura:", err);
@@ -251,46 +319,64 @@
                         <td colspan="7" class="text-center py-10 text-rose-500 font-bold">
                             <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
                             Fallo de sincronización con la Base Central de Google Sheets.
+                            <br>
+                            <span class="text-xs text-slate-500">${err.message || 'Error desconocido'}</span>
                         </td>
                     </tr>
                 `;
+                inicializarIconos();
             }
         }
 
         // RENDERIZADO EN TABLA HTML
         function renderizarInventario(lista) {
             const tbody = document.getElementById("tbodyInventario");
-            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='7' class='text-center py-10 text-slate-400'>No se encontraron productos.</td></tr>";
+            if (!tbody) return;
+            
+            tbody.innerHTML = "";
+            
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-slate-400">No se encontraron productos.</td></tr>';
+            } else {
+                lista.forEach(p => {
+                    let rowAlertClass = "hover:bg-slate-50 transition-colors";
+                    if (p.Stock <= 0) rowAlertClass = "bg-rose-50/40 hover:bg-rose-50";
+                    else if (p.Stock <= 5) rowAlertClass = "bg-amber-50/30 hover:bg-amber-50/60";
 
-            lista.forEach(p => {
-                let rowAlertClass = "hover:bg-slate-50";
-                if (p.Stock <= 0) rowAlertClass = "bg-rose-50/40 hover:bg-rose-50";
-                else if (p.Stock <= 5) rowAlertClass = "bg-amber-50/30 hover:bg-amber-50/60";
+                    const tr = document.createElement("tr");
+                    tr.className = rowAlertClass;
+                    tr.innerHTML = `
+                        <td class="py-3.5 px-6 font-mono text-[11px] text-slate-500 font-bold">#${p.ID}</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-800">${escapeHtml(p.Producto)}</td>
+                        <td class="py-3.5 px-4 text-right text-slate-500 font-mono">$${p.Precio_Distribuidor.toFixed(2)}</td>
+                        <td class="py-3.5 px-4 text-right text-blue-700 font-bold font-mono">$${p.Precio_Venta.toFixed(2)}</td>
+                        <td class="py-3.5 px-4 text-center font-black text-slate-800 text-base">${p.Stock}</td>
+                        <td class="py-3.5 px-4 text-slate-500 text-xs">${escapeHtml(p.Proveedor_Habitual || 'No Asignado')}</td>
+                        <td class="py-3.5 px-6 flex justify-center gap-1.5">
+                            <button onclick='abrirModalProducto(${JSON.stringify(p).replace(/'/g, "&#39;")})' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-blue-100 hover:text-blue-700 transition" title="Editar Ficha">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick='verMovimientosKardex("${p.ID}", "${escapeHtml(p.Producto)}")' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-amber-100 hover:text-amber-700 transition" title="Ver Kárdex">
+                                <i data-lucide="history" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick='eliminarProductoIntegridad("${p.ID}")' class="p-1.5 bg-slate-100 text-slate-400 rounded hover:bg-rose-100 hover:text-rose-600 transition" title="Eliminar Permanente">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            setTimeout(() => inicializarIconos(), 50);
+        }
 
-                const tr = document.createElement("tr");
-                tr.className = `transition-colors ${rowAlertClass}`;
-                tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-mono text-[11px] text-slate-500 font-bold">#${p.ID}</td>
-                    <td class="py-3.5 px-4 font-bold text-slate-800">${p.Producto}</td>
-                    <td class="py-3.5 px-4 text-right text-slate-500 font-mono">$${p.Precio_Distribuidor.toFixed(2)}</td>
-                    <td class="py-3.5 px-4 text-right text-blue-700 font-bold font-mono">$${p.Precio_Venta.toFixed(2)}</td>
-                    <td class="py-3.5 px-4 text-center font-black text-slate-800 text-base">${p.Stock}</td>
-                    <td class="py-3.5 px-4 text-slate-500 text-xs">${p.Proveedor_Habitual || 'No Asignado'}</td>
-                    <td class="py-3.5 px-6 flex justify-center gap-1.5">
-                        <button onclick='abrirModalProducto(${JSON.stringify(p)})' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-blue-100 hover:text-blue-700 transition" title="Editar Ficha">
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button onclick='verMovimientosKardex("${p.ID}", "${p.Producto}")' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-amber-100 hover:text-amber-700 transition" title="Ver Kárdex">
-                            <i data-lucide="history" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button onclick='eliminarProductoIntegridad("${p.ID}")' class="p-1.5 bg-slate-100 text-slate-400 rounded hover:bg-rose-100 hover:text-rose-600 transition" title="Eliminar Permanente">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-            lucide.createIcons();
+        // Función para escapar HTML y prevenir XSS
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // CONTADORES LOGÍSTICOS
@@ -330,7 +416,8 @@
 
         // MODAL DE REGISTRO
         function abrirModalProducto(p = null) {
-            document.getElementById("formProducto").reset();
+            const form = document.getElementById("formProducto");
+            if (form) form.reset();
 
             if (p) {
                 document.getElementById("modalProductoTitulo").innerHTML = `<i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i> Editar Producto Maestro`;
@@ -340,7 +427,7 @@
                 document.getElementById("prod_costo").value = p.Precio_Distribuidor;
                 document.getElementById("prod_venta").value = p.Precio_Venta;
                 document.getElementById("prod_stock_actual").value = p.Stock;
-                document.getElementById("prod_ventas_actual").value = p.Ventas;
+                document.getElementById("prod_ventas_actual").value = p.Ventas || 0;
                 document.getElementById("prod_proveedor").value = p.Proveedor_Habitual;
             } else {
                 document.getElementById("modalProductoTitulo").innerHTML = `<i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i> Agregar Nuevo Producto`;
@@ -354,9 +441,11 @@
                     if (!isNaN(num) && num > maxNum) maxNum = num;
                 });
                 document.getElementById("prod_codigo").value = `PROD-${String(maxNum + 1).padStart(3, '0')}`;
+                document.getElementById("prod_proveedor").value = "";
             }
+            
             document.getElementById("modalProducto").classList.remove("hidden");
-            lucide.createIcons();
+            setTimeout(() => inicializarIconos(), 50);
         }
 
         function cerrarModalProducto() {
@@ -366,12 +455,14 @@
         // ESCRITURA EN GOOGLE SHEETS
         async function guardarEstructuraProducto(e) {
             e.preventDefault();
+            
+            if (!verificarDairyAPI()) return;
+            
             const idInterno = document.getElementById("prod_id_interno").value;
-            const esEdicion = idInterno !== "";
+            const esEdicion = idInterno && idInterno !== "";
 
             const payload = {
                 pestana: "Inventario",
-                accion: esEdicion ? "editar" : "escribir",
                 Fecha: new Date().toLocaleDateString('es-EC'),
                 ID: document.getElementById("prod_codigo").value,
                 Producto: document.getElementById("prod_nombre").value,
@@ -381,17 +472,41 @@
                 Ventas: parseInt(document.getElementById("prod_ventas_actual").value),
                 "Proveedor Habitual": document.getElementById("prod_proveedor").value
             };
+            
+            // Si es edición, incluir el ID original
+            if (esEdicion) {
+                payload.accion = "editar";
+                payload.ID_Original = idInterno;
+            } else {
+                payload.accion = "escribir";
+            }
+            
+            // Validar datos
+            if (!payload.Producto || !payload.Precio_Distribuidor || !payload.Precio_Venta) {
+                Swal.fire("Error", "Todos los campos obligatorios deben estar llenos", "error");
+                return;
+            }
 
-            Swal.fire({ title: 'Actualizando Almacén Central...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+            Swal.fire({ 
+                title: 'Actualizando Almacén Central...', 
+                allowOutsideClick: false, 
+                didOpen: () => { Swal.showLoading(); }
+            });
 
             try {
                 await DairyAPI.guardarDatos("Inventario", payload);
-                Swal.fire({ title: '¡Sincronizado!', text: 'Los datos impactaron la hoja de cálculo de inmediato.', icon: 'success'});
+                Swal.fire({ 
+                    title: '¡Sincronizado!', 
+                    text: 'Los datos impactaron la hoja de cálculo de inmediato.', 
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
                 cerrarModalProducto();
-                cargarInventario();
+                await cargarInventario();
             } catch (err) {
                 console.error(err);
-                Swal.fire("Error de Red", "La API central rechazó los parámetros del objeto.", "error");
+                Swal.fire("Error de Red", "La API central rechazó los parámetros del objeto: " + (err.message || 'Error desconocido'), "error");
             }
         }
 
@@ -408,6 +523,8 @@
                 cancelButtonText: 'Cancelar'
             }).then(async (result) => {
                 if (result.isConfirmed) {
+                    if (!verificarDairyAPI()) return;
+                    
                     Swal.fire({ title: 'Borrando registro...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
                     
                     const payload = { 
@@ -419,10 +536,10 @@
                     try {
                         await DairyAPI.guardarDatos("Inventario", payload);
                         Swal.fire('Eliminado con éxito', 'La fila fue removida del libro de cálculo.', 'success');
-                        cargarInventario();
+                        await cargarInventario();
                     } catch (err) {
                         console.error(err);
-                        Swal.fire('Error', 'No se pudo completar la purga de datos.', 'error');
+                        Swal.fire('Error', 'No se pudo completar la purga de datos: ' + (err.message || 'Error desconocido'), 'error');
                     }
                 }
             });
@@ -430,11 +547,13 @@
 
         // HISTORIAL DE MOVIMIENTOS KÁRDEX
         async function verMovimientosKardex(idProducto, nombreProducto) {
-            document.getElementById("kardexProductoNombre").innerText = `Producto: ${nombreProducto} (#${idProducto})`;
+            if (!verificarDairyAPI()) return;
+            
+            document.getElementById("kardexProductoNombre").innerHTML = `Producto: ${nombreProducto} (#${idProducto})`;
             const tbody = document.getElementById("tbodyKardex");
             tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500"></i>Buscando historial...</td></tr>`;
             document.getElementById("modalKardex").classList.remove("hidden");
-            lucide.createIcons();
+            setTimeout(() => inicializarIconos(), 50);
 
             try {
                 const todosLosMovimientos = await DairyAPI.obtenerDatos("KardexMovimientos");
@@ -460,14 +579,21 @@
                     tbody.appendChild(tr);
                 });
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-rose-500 text-xs">No se pudo leer el histórico de movimientos.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-rose-500 text-xs">No se pudo leer el histórico de movimientos: ${err.message || 'Error desconocido'}</td></tr>`;
             }
         }
 
-        function cerrarModalKardex() { document.getElementById("modalKardex").classList.add("hidden"); }
+        function cerrarModalKardex() { 
+            document.getElementById("modalKardex").classList.add("hidden"); 
+        }
 
         // EXPORTACIONES A EXCEL Y PDF
         function solicitarFormatoExportacion() {
+            if (!inventarioGlobal.length) {
+                Swal.fire("Sin datos", "No hay productos para exportar", "warning");
+                return;
+            }
+            
             Swal.fire({
                 title: 'Exportar Reporte de Inventario',
                 text: 'Selecciona el formato de salida deseado para tu informe:',
@@ -500,6 +626,8 @@
             const ws = XLSX.utils.json_to_sheet(filas);
             XLSX.utils.book_append_sheet(wb, ws, "Stock Activo");
             XLSX.writeFile(wb, `Inventario_Lacteo_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            Swal.fire("Exportación exitosa", "El archivo Excel se ha descargado", "success");
         }
 
         function exportarAPDF() {
@@ -523,7 +651,16 @@
                 headStyles: { fillColor: [15, 23, 42] }
             });
             doc.save(`Inventario_Lacteo_${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            Swal.fire("Exportación exitosa", "El archivo PDF se ha descargado", "success");
         }
+
+        // Manejo de errores global
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error("Error global:", msg, "en", url, "línea", lineNo);
+            console.error("Detalles del error:", error);
+            return false;
+        };
     </script>
 </body>
 </html>

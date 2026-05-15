@@ -1,613 +1,1034 @@
 <!DOCTYPE html>
 <html class="light" lang="es">
-<head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Lógica Láctea - Dashboard Total</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="api-config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: { 
-            primary: "#a21caf", 
-            secondary: "#db2777", 
-            success: "#16a34a", 
-            electric: "#0055ff", 
-            background: "#faf5ff", 
-            outline: "#e9d5ff" 
-          }
-        }
-      }
-    }
-    </script>
 
-    <script>
+<head>
+
+<meta charset="utf-8"/>
+
+<meta
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+name="viewport"/>
+
+<title>Lógica Láctea - Dashboard Total</title>
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<script src="api-config.js"></script>
+
+<link
+href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap"
+rel="stylesheet"/>
+
+<link
+href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+rel="stylesheet"/>
+
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primary: "#a21caf",
+secondary: "#db2777",
+success: "#16a34a",
+electric: "#0055ff",
+background: "#faf5ff",
+outline: "#e9d5ff"
+}
+}
+}
+}
+</script>
+
+<style>
+
+.material-symbols-outlined{
+font-variation-settings:
+'FILL' 0,
+'wght' 400,
+'GRAD' 0,
+'opsz' 24;
+}
+
+.rotate-animation{
+animation: spin 1s linear infinite;
+}
+
+@keyframes spin{
+from{
+transform: rotate(0deg);
+}
+to{
+transform: rotate(360deg);
+}
+}
+
+#loading-overlay{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(255,255,255,0.85);
+backdrop-filter:blur(4px);
+z-index:9999;
+justify-content:center;
+align-items:center;
+}
+
+.glass-card{
+background:linear-gradient(
+135deg,
+#a21caf 0%,
+#6b21a8 100%
+);
+}
+
+.pulse-notif{
+animation:shadow-pulse 1.5s infinite;
+}
+
+@keyframes shadow-pulse{
+0%{
+box-shadow:0 0 0 0px rgba(0,85,255,.4);
+}
+70%{
+box-shadow:0 0 0 8px rgba(0,85,255,0);
+}
+100%{
+box-shadow:0 0 0 0px rgba(0,85,255,0);
+}
+}
+
+</style>
+
+</head>
+
+<body class="bg-background text-[#1f012a] font-[Work_Sans] antialiased pb-10">
+
+<!-- LOADING -->
+<div id="loading-overlay">
+
+<div class="flex flex-col items-center gap-2">
+
+<span class="material-symbols-outlined text-5xl text-primary rotate-animation">
+sync
+</span>
+
+<span class="text-[10px] font-black uppercase tracking-widest text-primary italic">
+Sincronizando...
+</span>
+
+</div>
+
+</div>
+
+<!-- HEADER -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-24 bg-white border-b border-outline shadow-sm">
+
+<div class="flex items-center gap-2">
+
+<div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary border border-purple-200">
+
+<span class="material-symbols-outlined text-3xl">
+analytics
+</span>
+
+</div>
+
+<div class="flex flex-col">
+
+<h1 class="text-xs font-black text-primary tracking-tight uppercase italic leading-none mb-1">
+Lógica Láctea
+</h1>
+
+<select
+id="periodo-filtro"
+onchange="cargarDatos()"
+class="text-[11px] font-black border-none p-0 bg-transparent text-slate-600 focus:ring-0 uppercase">
+
+<option value="hoy">Hoy</option>
+<option value="semana">Esta Semana</option>
+<option value="mes">Este Mes</option>
+<option value="mes-1">Mes Pasado</option>
+<option value="mes-2">Hace 2 Meses</option>
+<option value="mes-3">Hace 3 Meses</option>
+<option value="personalizado">Día Específico</option>
+
+</select>
+
+<input
+type="date"
+id="filtro-fecha"
+onchange="cargarDatos()"
+class="hidden text-[10px] font-bold border-none p-0 bg-transparent text-gray-500 focus:ring-0">
+
+</div>
+
+</div>
+
+<button
+onclick="cargarDatos()"
+class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:scale-90 transition-transform">
+
+<span class="material-symbols-outlined text-slate-500">
+sync
+</span>
+
+</button>
+
+</header>
+
+<!-- MAIN -->
+<main class="pt-28 px-4 max-w-7xl mx-auto space-y-5">
+
+<!-- CARD PRINCIPAL -->
+<div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
+
+<div class="relative z-10 space-y-4">
+
+<div class="flex justify-between items-start">
+
+<div>
+
+<p
+id="label-dinero"
+class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-200 italic">
+
+Ventas Totales
+
+</p>
+
+<p
+id="comparativa-ventas"
+class="text-[10px] text-purple-100 font-bold italic mt-1">
+
+Comparando ventas...
+
+</p>
+
+<h2
+id="ventas-total-hoy"
+class="text-5xl font-black tracking-tighter">
+
+$0.00
+
+</h2>
+
+</div>
+
+<div class="bg-white/20 p-2 rounded-xl backdrop-blur-md border border-white/30">
+
+<span class="material-symbols-outlined text-3xl">
+payments
+</span>
+
+</div>
+
+</div>
+
+<div class="grid grid-cols-2 gap-4 border-t border-white/20 pt-4">
+
+<div>
+
+<p class="text-[9px] font-bold uppercase text-purple-200">
+Utilidad Actual
+</p>
+
+<p
+id="ganancia-real"
+class="text-xl font-black text-green-300">
+
+$0.00
+
+</p>
+
+<p
+id="porcentaje-ventas"
+class="text-[10px] font-black italic text-green-200 mt-1">
+
+0%
+
+</p>
+
+</div>
+
+<div class="text-right">
+
+<p class="text-[9px] font-bold uppercase text-purple-200 italic text-amber-200">
+Ganancia Proyectada
+</p>
+
+<p
+id="ganancia-proyectada"
+class="text-xl font-black text-amber-300">
+
+$0.00
+
+</p>
+
+</div>
+
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+
+<div class="bg-black/20 p-2 rounded-xl flex flex-col border border-white/10">
+
+<span class="text-[8px] font-bold uppercase text-white/70">
+Costo en Bodega
+</span>
+
+<span id="valor-invertido" class="font-black text-xs">
+$0.00
+</span>
+
+</div>
+
+<div class="bg-black/20 p-2 rounded-xl flex flex-col border border-white/10">
+
+<span class="text-[8px] font-bold uppercase text-white/70">
+Cuentas por Cobrar
+</span>
+
+<span id="por-recaudar" class="font-black text-xs">
+$0.00
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- BOTONES -->
+<div class="grid grid-cols-2 gap-3">
+
+<button
+onclick="location.href='RegistrodeVentas.html'"
+class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95 transition-all">
+
+<div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1">
+
+<span class="material-symbols-outlined text-3xl">
+add_shopping_cart
+</span>
+
+</div>
+
+<span class="text-[11px] font-black uppercase text-slate-800">
+Vender
+</span>
+
+</button>
+
+<button
+id="btn-ruta"
+onclick="location.href='GestióndeDespachos.html'"
+class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95 transition-all">
+
+<span
+id="badge-ruta"
+class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">
+
+0
+
+</span>
+
+<div class="w-12 h-12 rounded-2xl bg-green-100 text-success flex items-center justify-center mb-1">
+
+<span class="material-symbols-outlined text-3xl font-bold">
+local_shipping
+</span>
+
+</div>
+
+<span class="text-[11px] font-black uppercase text-slate-800">
+En Ruta
+</span>
+
+</button>
+
+<button
+id="btn-stock"
+onclick="location.href='ControldeInventario.html'"
+class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95 transition-all">
+
+<span
+id="badge-stock"
+class="absolute top-3 right-5 bg-primary text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">
+
+0
+
+</span>
+
+<div class="w-12 h-12 rounded-2xl bg-pink-100 text-secondary flex items-center justify-center mb-1">
+
+<span class="material-symbols-outlined text-3xl">
+inventory
+</span>
+
+</div>
+
+<span class="text-[11px] font-black uppercase text-slate-800">
+Stock
+</span>
+
+</button>
+
+<button
+id="btn-recepcion"
+onclick="location.href='ConfirmarRecepcion.html'"
+class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95 transition-all">
+
+<span
+id="badge-recepcion"
+class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">
+
+0
+
+</span>
+
+<div class="w-12 h-12 rounded-2xl bg-blue-100 text-electric flex items-center justify-center mb-1">
+
+<span class="material-symbols-outlined text-3xl font-bold">
+inventory_2
+</span>
+
+</div>
+
+<span class="text-[11px] font-black uppercase text-electric">
+Recibir
+</span>
+
+</button>
+
+<button
+onclick="location.href='Proveedores.html'"
+class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95 transition-all">
+
+<div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-1">
+
+<span class="material-symbols-outlined text-3xl">
+factory
+</span>
+
+</div>
+
+<span class="text-[11px] font-black uppercase text-slate-800">
+Proveedores
+</span>
+
+</button>
+
+<button
+onclick="location.href='GestiondeClientes.html'"
+class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95 transition-all">
+
+<div class="w-12 h-12 rounded-2xl bg-purple-50 text-primary flex items-center justify-center mb-1">
+
+<span class="material-symbols-outlined text-3xl">
+groups
+</span>
+
+</div>
+
+<span class="text-[11px] font-black uppercase text-slate-800">
+Clientes
+</span>
+
+</button>
+
+</div>
+
+<!-- PEDIDOS -->
+<section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+
+<h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center justify-between italic">
+
+<span class="flex items-center gap-2">
+
+<span class="material-symbols-outlined text-sm font-bold">
+priority_high
+</span>
+
+Prioridad de Despacho
+
+</span>
+
+<span class="text-[8px] text-slate-400">
+ORDEN: MÁS ANTIGUO PRIMERO
+</span>
+
+</h3>
+
+<div id="lista-pedidos" class="space-y-3"></div>
+
+</section>
+
+<!-- RANKING -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+<section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+
+<h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.1em] italic">
+Top Ventas
+</h3>
+
+<div id="ranking-productos" class="space-y-2"></div>
+
+</section>
+
+<section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
+
+<h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest italic">
+Agotándose (Stock 1-5)
+</h3>
+
+<div id="cont-criticos" class="grid grid-cols-1 gap-2"></div>
+
+</section>
+
+</div>
+
+</main>
+
+<!-- SCRIPT -->
+<script>
 
 const fInput = document.getElementById('filtro-fecha');
 
 const hoy = new Date();
 
 fInput.value = new Date(
-  hoy - (hoy.getTimezoneOffset() * 60000)
+hoy - (hoy.getTimezoneOffset() * 60000)
 ).toISOString().split('T')[0];
 
 function mostrarCargando(show){
-  document.getElementById('loading-overlay').style.display =
-    show ? 'flex' : 'none';
+document.getElementById('loading-overlay').style.display =
+show ? 'flex' : 'none';
 }
 
 function norm(t){
-  return (t || "")
-    .toString()
-    .trim()
-    .toUpperCase();
+return (t || "")
+.toString()
+.trim()
+.toUpperCase();
 }
-
-/* =========================
-   FILTROS
-========================= */
 
 function cumpleFiltro(fechaVenta, periodo, fechaSeleccionada){
 
-  if(!fechaVenta) return false;
+if(!fechaVenta) return false;
 
-  const fV = new Date(fechaVenta);
+const fV = new Date(fechaVenta);
 
-  if(isNaN(fV)) return false;
+if(isNaN(fV)) return false;
 
-  const hoy = new Date();
+const hoy = new Date();
 
-  if(periodo === 'hoy'){
-    return fV.toDateString() === hoy.toDateString();
-  }
-
-  if(periodo === 'semana'){
-
-    const inicioSemana = new Date(hoy);
-
-    inicioSemana.setDate(
-      hoy.getDate() - hoy.getDay() + 1
-    );
-
-    inicioSemana.setHours(0,0,0,0);
-
-    return fV >= inicioSemana;
-  }
-
-  if(periodo === 'mes'){
-
-    return (
-      fV.getMonth() === hoy.getMonth() &&
-      fV.getFullYear() === hoy.getFullYear()
-    );
-  }
-
-  if(periodo.startsWith("mes-")){
-
-    const resta = Number(periodo.split("-")[1]);
-
-    const fechaMes = new Date(
-      hoy.getFullYear(),
-      hoy.getMonth() - resta,
-      1
-    );
-
-    return (
-      fV.getMonth() === fechaMes.getMonth() &&
-      fV.getFullYear() === fechaMes.getFullYear()
-    );
-  }
-
-  if(periodo === 'personalizado'){
-
-    return (
-      fV.toISOString().split('T')[0]
-      === fechaSeleccionada
-    );
-  }
-
-  return true;
+if(periodo === 'hoy'){
+return fV.toDateString() === hoy.toDateString();
 }
 
-/* =========================
-   MAIN
-========================= */
+if(periodo === 'semana'){
+
+const inicioSemana = new Date(hoy);
+
+inicioSemana.setDate(
+hoy.getDate() - hoy.getDay() + 1
+);
+
+inicioSemana.setHours(0,0,0,0);
+
+return fV >= inicioSemana;
+}
+
+if(periodo === 'mes'){
+
+return (
+fV.getMonth() === hoy.getMonth() &&
+fV.getFullYear() === hoy.getFullYear()
+);
+}
+
+if(periodo.startsWith("mes-")){
+
+const resta = Number(periodo.split("-")[1]);
+
+const fechaMes = new Date(
+hoy.getFullYear(),
+hoy.getMonth() - resta,
+1
+);
+
+return (
+fV.getMonth() === fechaMes.getMonth() &&
+fV.getFullYear() === fechaMes.getFullYear()
+);
+}
+
+if(periodo === 'personalizado'){
+
+return (
+fV.toISOString().split('T')[0]
+=== fechaSeleccionada
+);
+}
+
+return true;
+}
 
 async function cargarDatos(){
 
-  mostrarCargando(true);
+mostrarCargando(true);
 
-  const periodo =
-    document.getElementById('periodo-filtro').value;
+const periodo =
+document.getElementById('periodo-filtro').value;
 
-  const fSel = fInput.value;
+const fSel = fInput.value;
 
-  fInput.classList.toggle(
-    'hidden',
-    periodo !== 'personalizado'
-  );
+fInput.classList.toggle(
+'hidden',
+periodo !== 'personalizado'
+);
 
-  try{
+try{
 
-    const [inventario, ventas, compras] =
-      await Promise.all([
+const [inventario, ventas, compras] =
+await Promise.all([
 
-      DairyAPI.obtenerDatos("Inventario"),
-      DairyAPI.obtenerDatos("Ventas"),
-      DairyAPI.obtenerDatos("Compras")
+DairyAPI.obtenerDatos("Inventario"),
+DairyAPI.obtenerDatos("Ventas"),
+DairyAPI.obtenerDatos("Compras")
 
-    ]);
+]);
 
-    const inv = inventario || [];
-    const ven = ventas || [];
-    const com = compras || [];
+const inv = inventario || [];
+const ven = ventas || [];
+const com = compras || [];
 
-    /* =========================
-       INVENTARIO
-    ========================= */
+const costos = {};
 
-    const costos = {};
+let valorBodega = 0;
+let proyeccion = 0;
 
-    let valorBodega = 0;
-    let proyeccion = 0;
+inv.forEach(p=>{
 
-    inv.forEach(p=>{
+const prod = norm(p.Producto);
 
-      const prod = norm(p.Producto);
+const costo =
+Number(p.Precio_Distribuidor) || 0;
 
-      const costo =
-        Number(p.Precio_Distribuidor) || 0;
+const venta =
+Number(p.Precio_Venta) || 0;
 
-      const venta =
-        Number(p.Precio_Venta) || 0;
+const stock =
+Number(p.Stock) || 0;
 
-      const stock =
-        Number(p.Stock) || 0;
+costos[prod] = costo;
 
-      costos[prod] = costo;
+valorBodega += costo * stock;
 
-      valorBodega += costo * stock;
+proyeccion +=
+(venta - costo) * stock;
+});
 
-      proyeccion +=
-        (venta - costo) * stock;
-    });
+document.getElementById(
+'valor-invertido'
+).innerText =
+`$${valorBodega.toFixed(2)}`;
 
-    document.getElementById(
-      'valor-invertido'
-    ).innerText =
-      `$${valorBodega.toFixed(2)}`;
+document.getElementById(
+'ganancia-proyectada'
+).innerText =
+`$${proyeccion.toFixed(2)}`;
 
-    document.getElementById(
-      'ganancia-proyectada'
-    ).innerText =
-      `$${proyeccion.toFixed(2)}`;
+const badgeStock =
+document.getElementById('badge-stock');
 
-    /* =========================
-       STOCK TOTAL
-    ========================= */
+badgeStock.innerText = inv.length;
 
-    const badgeStock =
-      document.getElementById('badge-stock');
+badgeStock.classList.remove('hidden');
 
-    badgeStock.innerText = inv.length;
+if(inv.length > 0){
 
-    badgeStock.classList.remove('hidden');
+document
+.getElementById('btn-stock')
+.classList.add('pulse-notif');
+}
 
-    if(inv.length > 0){
-      document
-        .getElementById('btn-stock')
-        .classList.add('pulse-notif');
-    }
+let totalVentas = 0;
+let utilidad = 0;
+let porCobrar = 0;
+let totalAnterior = 0;
 
-    /* =========================
-       VENTAS
-    ========================= */
+const ranking = {};
+const pedidos = {};
 
-    let totalVentas = 0;
-    let utilidad = 0;
-    let porCobrar = 0;
+ven.forEach(v=>{
 
-    let totalAnterior = 0;
+const prod = norm(v.Producto);
 
-    const ranking = {};
-    const pedidos = {};
+const cantidad =
+Number(v.Cantidad) || 0;
 
-    ven.forEach(v=>{
+const total =
+Number(v.Total) || 0;
 
-      const prod = norm(v.Producto);
+const estado =
+norm(v.Estado);
 
-      const cantidad =
-        Number(v.Cantidad) || 0;
+const fecha =
+new Date(v.Fecha);
 
-      const total =
-        Number(v.Total) || 0;
+if(
+cumpleFiltro(
+fecha,
+periodo,
+fSel
+)
+){
 
-      const estado =
-        norm(v.Estado);
+totalVentas += total;
 
-      const fecha = new Date(v.Fecha);
+utilidad += total -
+((costos[prod] || 0) * cantidad);
 
-      if(
-        cumpleFiltro(
-          fecha,
-          periodo,
-          fSel
-        )
-      ){
+ranking[prod] =
+(ranking[prod] || 0)
++ cantidad;
+}
 
-        totalVentas += total;
-
-        utilidad += total -
-          ((costos[prod] || 0) * cantidad);
+const hoyNow = new Date();
 
-        ranking[prod] =
-          (ranking[prod] || 0)
-          + cantidad;
-      }
+if(periodo === "hoy"){
+
+const ayer = new Date();
 
-      /* =========================
-         COMPARATIVA
-      ========================= */
+ayer.setDate(hoyNow.getDate()-1);
+
+if(
+fecha.toDateString()
+=== ayer.toDateString()
+){
+totalAnterior += total;
+}
+}
+
+if(periodo === "semana"){
 
-      const hoyNow = new Date();
+const inicioActual =
+new Date(hoyNow);
+
+inicioActual.setDate(
+hoyNow.getDate()
+- hoyNow.getDay() + 1
+);
 
-      if(periodo === "hoy"){
+const inicioAnterior =
+new Date(inicioActual);
+
+inicioAnterior.setDate(
+inicioActual.getDate()-7
+);
 
-        const ayer = new Date();
-        ayer.setDate(hoyNow.getDate()-1);
+const finAnterior =
+new Date(inicioActual);
+
+if(
+fecha >= inicioAnterior &&
+fecha < finAnterior
+){
+totalAnterior += total;
+}
+}
+
+if(periodo === "mes"){
+
+const mesAnterior =
+new Date(
+hoyNow.getFullYear(),
+hoyNow.getMonth()-1,
+1
+);
+
+if(
+fecha.getMonth()
+=== mesAnterior.getMonth()
+&&
+fecha.getFullYear()
+=== mesAnterior.getFullYear()
+){
+totalAnterior += total;
+}
+}
+
+if(estado === "PENDIENTE"){
+
+porCobrar += total;
+
+if(v.ID_Venta){
+
+if(!pedidos[v.ID_Venta]){
+
+const dias =
+Math.floor(
+(hoyNow - fecha)
+/ (1000*60*60*24)
+);
+
+pedidos[v.ID_Venta] = {
+cliente: v.Cliente,
+dias,
+total: 0
+};
+}
+
+pedidos[v.ID_Venta].total += total;
+}
+}
+
+});
+
+let porcentaje = 0;
+
+if(totalAnterior > 0){
+
+porcentaje =
+(
+(
+totalVentas - totalAnterior
+)
+/
+totalAnterior
+) * 100;
+}
+
+const txt =
+porcentaje >= 0
+? `▲ +${porcentaje.toFixed(1)}%`
+: `▼ ${porcentaje.toFixed(1)}%`;
 
-        if(
-          fecha.toDateString()
-          === ayer.toDateString()
-        ){
-          totalAnterior += total;
-        }
-      }
+document.getElementById(
+'porcentaje-ventas'
+).innerText = txt;
 
-      if(periodo === "semana"){
+if(periodo === "hoy"){
+
+document.getElementById(
+'comparativa-ventas'
+).innerText =
+`Ayer: $${totalAnterior.toFixed(2)}`;
+}
 
-        const inicioActual =
-          new Date(hoyNow);
+if(periodo === "semana"){
 
-        inicioActual.setDate(
-          hoyNow.getDate()
-          - hoyNow.getDay() + 1
-        );
+document.getElementById(
+'comparativa-ventas'
+).innerText =
+`Semana pasada: $${totalAnterior.toFixed(2)}`;
+}
 
-        const inicioAnterior =
-          new Date(inicioActual);
+if(periodo === "mes"){
+
+document.getElementById(
+'comparativa-ventas'
+).innerText =
+`Mes pasado: $${totalAnterior.toFixed(2)}`;
+}
 
-        inicioAnterior.setDate(
-          inicioActual.getDate()-7
-        );
-
-        const finAnterior =
-          new Date(inicioActual);
+document.getElementById(
+'ventas-total-hoy'
+).innerText =
+`$${totalVentas.toFixed(2)}`;
+
+document.getElementById(
+'ganancia-real'
+).innerText =
+`$${utilidad.toFixed(2)}`;
 
-        if(
-          fecha >= inicioAnterior &&
-          fecha < finAnterior
-        ){
-          totalAnterior += total;
-        }
-      }
+document.getElementById(
+'por-recaudar'
+).innerText =
+`$${porCobrar.toFixed(2)}`;
 
-      if(periodo === "mes"){
+document.getElementById(
+'label-dinero'
+).innerText =
+`Ventas ${periodo.toUpperCase()}`;
 
-        const mesAnterior =
-          new Date(
-            hoyNow.getFullYear(),
-            hoyNow.getMonth()-1,
-            1
-          );
-
-        if(
-          fecha.getMonth()
-            === mesAnterior.getMonth()
-          &&
-          fecha.getFullYear()
-            === mesAnterior.getFullYear()
-        ){
-          totalAnterior += total;
-        }
-      }
-
-      if(estado === "PENDIENTE"){
-
-        porCobrar += total;
-
-        if(v.ID_Venta){
-
-          if(!pedidos[v.ID_Venta]){
-
-            const dias =
-              Math.floor(
-                (hoyNow - fecha)
-                / (1000*60*60*24)
-              );
-
-            pedidos[v.ID_Venta] = {
-              cliente: v.Cliente,
-              dias,
-              total: 0
-            };
-          }
-
-          pedidos[v.ID_Venta].total += total;
-        }
-      }
-
-    });
-
-    /* =========================
-       COMPARATIVA %
-    ========================= */
-
-    let porcentaje = 0;
-
-    if(totalAnterior > 0){
-
-      porcentaje =
-        (
-          (
-            totalVentas - totalAnterior
-          )
-          / totalAnterior
-        ) * 100;
-    }
+const lista =
+document.getElementById(
+'lista-pedidos'
+);
 
-    const txt =
-      porcentaje >= 0
-      ? `▲ +${porcentaje.toFixed(1)}%`
-      : `▼ ${porcentaje.toFixed(1)}%`;
-
-    document.getElementById(
-      'porcentaje-ventas'
-    ).innerText = txt;
-
-    if(periodo === "hoy"){
+const ordenados =
+Object.entries(pedidos)
+.sort((a,b)=>
+b[1].dias - a[1].dias
+);
 
-      document.getElementById(
-        'comparativa-ventas'
-      ).innerText =
-        `Ayer: $${totalAnterior.toFixed(2)}`;
-    }
+lista.innerHTML =
+ordenados.length
+?
+ordenados.map(([id,p])=>`
 
-    if(periodo === "semana"){
+<div class="p-3 bg-white rounded-2xl border flex justify-between items-center">
 
-      document.getElementById(
-        'comparativa-ventas'
-      ).innerText =
-        `Semana pasada: $${totalAnterior.toFixed(2)}`;
-    }
+<div>
 
-    if(periodo === "mes"){
+<div class="text-[10px] font-black uppercase">
+${p.cliente}
+</div>
 
-      document.getElementById(
-        'comparativa-ventas'
-      ).innerText =
-        `Mes pasado: $${totalAnterior.toFixed(2)}`;
-    }
+<div class="text-[9px] text-red-600 font-bold">
+RETRASO ${p.dias} DÍAS
+</div>
 
-    /* =========================
-       UI PRINCIPAL
-    ========================= */
+</div>
 
-    document.getElementById(
-      'ventas-total-hoy'
-    ).innerText =
-      `$${totalVentas.toFixed(2)}`;
+<div class="text-xs font-black text-amber-600">
+$${p.total.toFixed(2)}
+</div>
 
-    document.getElementById(
-      'ganancia-real'
-    ).innerText =
-      `$${utilidad.toFixed(2)}`;
+</div>
 
-    document.getElementById(
-      'por-recaudar'
-    ).innerText =
-      `$${porCobrar.toFixed(2)}`;
+`).join('')
+:
+'<p class="text-center text-slate-300">Sin pedidos</p>';
 
-    document.getElementById(
-      'label-dinero'
-    ).innerText =
-      `Ventas ${periodo.toUpperCase()}`;
+const badgeRuta =
+document.getElementById(
+'badge-ruta'
+);
 
-    /* =========================
-       PEDIDOS
-    ========================= */
+badgeRuta.innerText =
+ordenados.length;
 
-    const lista =
-      document.getElementById(
-        'lista-pedidos'
-      );
+if(ordenados.length > 0){
 
-    const ordenados =
-      Object.entries(pedidos)
-      .sort((a,b)=>
-        b[1].dias - a[1].dias
-      );
+badgeRuta.classList.remove(
+'hidden'
+);
 
-    lista.innerHTML =
-      ordenados.length
-      ?
-      ordenados.map(([id,p])=>`
+document
+.getElementById('btn-ruta')
+.classList.add('pulse-notif');
 
-      <div class="p-3 bg-white rounded-2xl border flex justify-between items-center">
+}else{
 
-        <div>
+badgeRuta.classList.add(
+'hidden'
+);
+}
 
-          <div class="text-[10px] font-black uppercase">
-            ${p.cliente}
-          </div>
+const pendientesCompras =
+com.filter(c=>
+norm(c.Estado_Entrega)
+=== "PENDIENTE"
+);
 
-          <div class="text-[9px] text-red-600 font-bold">
-            RETRASO ${p.dias} DÍAS
-          </div>
+const badgeRecepcion =
+document.getElementById(
+'badge-recepcion'
+);
 
-        </div>
+badgeRecepcion.innerText =
+pendientesCompras.length;
 
-        <div class="text-xs font-black text-amber-600">
-          $${p.total.toFixed(2)}
-        </div>
+if(pendientesCompras.length > 0){
 
-      </div>
+badgeRecepcion.classList.remove(
+'hidden'
+);
 
-      `).join('')
-      :
-      '<p class="text-center text-slate-300">Sin pedidos</p>';
+document
+.getElementById('btn-recepcion')
+.classList.add('pulse-notif');
 
-    /* =========================
-       BADGE RUTA
-    ========================= */
+}else{
 
-    const badgeRuta =
-      document.getElementById(
-        'badge-ruta'
-      );
+badgeRecepcion.classList.add(
+'hidden'
+);
+}
 
-    badgeRuta.innerText =
-      ordenados.length;
+document.getElementById(
+'ranking-productos'
+).innerHTML =
 
-    if(ordenados.length > 0){
+Object.entries(ranking)
 
-      badgeRuta.classList.remove(
-        'hidden'
-      );
+.sort((a,b)=>b[1]-a[1])
 
-      document
-        .getElementById('btn-ruta')
-        .classList.add('pulse-notif');
+.slice(0,4)
 
-    }else{
+.map(([n,c],i)=>`
 
-      badgeRuta.classList.add(
-        'hidden'
-      );
-    }
+<div class="flex justify-between p-2 bg-purple-50 rounded-xl text-[10px] font-bold">
 
-    /* =========================
-       COMPRAS PENDIENTES
-    ========================= */
+<span>
+${i+1}. ${n}
+</span>
 
-    const pendientesCompras =
-      com.filter(c=>
-        norm(c.Estado_Entrega)
-        === "PENDIENTE"
-      );
+<span class="text-primary">
+${c}
+</span>
 
-    const badgeRecepcion =
-      document.getElementById(
-        'badge-recepcion'
-      );
+</div>
 
-    badgeRecepcion.innerText =
-      pendientesCompras.length;
+`).join('');
 
-    if(pendientesCompras.length > 0){
+const criticos =
+inv.filter(p=>{
 
-      badgeRecepcion.classList.remove(
-        'hidden'
-      );
+const s =
+Number(p.Stock) || 0;
 
-      document
-        .getElementById('btn-recepcion')
-        .classList.add('pulse-notif');
+return s > 0 && s <= 5;
+});
 
-    }else{
+document.getElementById(
+'cont-criticos'
+).innerHTML =
 
-      badgeRecepcion.classList.add(
-        'hidden'
-      );
-    }
+criticos.length
 
-    /* =========================
-       RANKING
-    ========================= */
+?
 
-    document.getElementById(
-      'ranking-productos'
-    ).innerHTML =
+criticos.map(p=>`
 
-      Object.entries(ranking)
+<div class="flex justify-between p-2 bg-red-50 rounded-xl text-[10px] font-bold">
 
-      .sort((a,b)=>b[1]-a[1])
+<span>
+${p.Producto}
+</span>
 
-      .slice(0,4)
+<span class="text-red-600">
+${p.Stock}
+</span>
 
-      .map(([n,c],i)=>`
+</div>
 
-      <div class="flex justify-between p-2 bg-purple-50 rounded-xl text-[10px] font-bold">
+`).join('')
 
-        <span>
-          ${i+1}. ${n}
-        </span>
+:
 
-        <span class="text-primary">
-          ${c}
-        </span>
+'<p class="text-center text-slate-300">Stock estable</p>';
 
-      </div>
+}catch(err){
 
-      `).join('');
+console.error(err);
 
-    /* =========================
-       STOCK CRITICO
-    ========================= */
+}finally{
 
-    const criticos =
-      inv.filter(p=>{
-
-      const s =
-        Number(p.Stock) || 0;
-
-      return s > 0 && s <= 5;
-    });
-
-    document.getElementById(
-      'cont-criticos'
-    ).innerHTML =
-
-      criticos.length
-
-      ?
-
-      criticos.map(p=>`
-
-      <div class="flex justify-between p-2 bg-red-50 rounded-xl text-[10px] font-bold">
-
-        <span>
-          ${p.Producto}
-        </span>
-
-        <span class="text-red-600">
-          ${p.Stock}
-        </span>
-
-      </div>
-
-      `).join('')
-
-      :
-
-      '<p class="text-center text-slate-300">Stock estable</p>';
-
-  }catch(err){
-
-    console.error(err);
-
-  }finally{
-
-    mostrarCargando(false);
-  }
+mostrarCargando(false);
+}
 }
 
 window.onload = cargarDatos;
 
 </script>
+
 </body>
 </html>

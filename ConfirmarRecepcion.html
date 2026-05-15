@@ -54,7 +54,7 @@
             </div>
 
             <div id="listaPedidos" class="flex-1 overflow-y-auto space-y-3 pr-1">
-                <!-- Loader -->
+                <!-- Loader Inicial -->
                 <div class="text-center py-8 text-slate-400 text-sm animate-pulse">
                     <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2"></i>
                     Cargando compras...
@@ -93,7 +93,6 @@
                     <div id="boxDiferencia" class="p-4 rounded-xl border bg-slate-50 border-slate-100 transition-colors">
                         <label class="block text-[10px] font-black text-slate-500 uppercase mb-1">Diferencia</label>
                         <div class="flex items-center justify-center md:justify-start gap-2">
-                            <i id="iconDiferencia" data-lucide="minus" class="w-5 h-5"></i>
                             <span id="numDiferencia" class="text-2xl font-black">0</span>
                         </div>
                     </div>
@@ -140,23 +139,29 @@
             cargarDatos();
         });
 
-        // USA CONFIG.WEB_APP_URL desde api-config.js
+        // Conexión unificada usando tu objeto global DairyAPI
         async function cargarDatos() {
             try {
-                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getComprasPendientes`);
-                const json = await res.json();
-                if(json.status === "success") {
-                    comprasPendientes = json.data;
+                // Llama al lector de la pestaña exacta "ComprasPendientes"
+                const datos = await DairyAPI.obtenerDatos("ComprasPendientes");
+                
+                // Mapeamos los datos del servidor. Si no viene como estructura exitosa por CORS opaco, validamos que sea Array
+                if (Array.isArray(datos)) {
+                    // Filtrar para mostrar únicamente los pedidos cuyo Estado_Entrega no sea "ENTREGADO"
+                    comprasPendientes = datos.filter(c => c.estadoEntrega !== "ENTREGADO");
                     renderizarLista(comprasPendientes);
+                } else if (datos && datos.status === "error") {
+                    throw new Error(datos.message);
                 }
             } catch (err) {
-                Swal.fire("Error", "No se conectó con api-config.js o el servidor", "error");
+                console.error(err);
+                Swal.fire("Error de Conexión", "No se pudo recuperar información de 'ComprasPendientes'. Verifica la URL de tu Apps Script.", "error");
             }
         }
 
         function renderizarLista(lista) {
             const container = document.getElementById("listaPedidos");
-            container.innerHTML = lista.length ? "" : "<p class='text-center text-slate-400 py-10'>Sin pendientes</p>";
+            container.innerHTML = lista.length ? "" : "<p class='text-center text-slate-400 py-10 text-sm'>Sin compras pendientes</p>";
             
             lista.forEach(c => {
                 const div = document.createElement("div");
@@ -164,7 +169,7 @@
                 div.onclick = () => seleccionar(c);
                 div.innerHTML = `
                     <div class="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
-                        <span>${c.idCompra}</span>
+                        <span>ID: ${c.idCompra || 'S/N'}</span>
                         <span>${c.fecha}</span>
                     </div>
                     <p class="font-black text-slate-800 text-sm truncate">${c.proveedor}</p>
@@ -180,7 +185,7 @@
             renderizarLista(comprasPendientes);
             
             document.getElementById("formularioRecepcion").classList.remove("opacity-50", "pointer-events-none");
-            document.getElementById("badgeIdCompra").innerText = `ID: ${c.idCompra}`;
+            document.getElementById("badgeIdCompra").innerText = `ID: ${c.idCompra || 'S/N'}`;
             document.getElementById("txtProveedor").innerText = c.proveedor;
             document.getElementById("txtFechaPedido").innerText = `Fecha Pedido: ${c.fecha}`;
             document.getElementById("txtProducto").innerText = c.producto;
@@ -195,7 +200,8 @@
         }
 
         function calcularDiferencia() {
-            const pedida = parseInt(compraActiva.cantidad);
+            if (!compraActiva) return;
+            const pedida = parseInt(compraActiva.cantidad) || 0;
             const recibida = parseInt(document.getElementById("numCantidadRecibida").value) || 0;
             const dif = recibida - pedida;
             
@@ -206,38 +212,67 @@
             if(dif === 0) { box.className = "p-4 rounded-xl border bg-emerald-50 border-emerald-300 text-emerald-700"; }
             else if(dif < 0) { box.className = "p-4 rounded-xl border bg-rose-50 border-rose-300 text-rose-700"; }
             else { box.className = "p-4 rounded-xl border bg-amber-50 border-amber-300 text-amber-700"; }
-            lucide.createIcons();
         }
 
         async function procesarRecepcion() {
+            if (!compraActiva) return;
+
+            const cantidadRecibida = document.getElementById("numCantidadRecibida").value;
+            const guia = document.getElementById("txtGuiaFactura").value;
+            const fechaReal = document.getElementById("dateRecepcion").value;
+            const novedades = document.getElementById("txtObservaciones").value;
+
+            if(!guia.trim()) return Swal.fire("Atención", "El número de guía o factura es obligatorio", "warning");
+            if(!fechaReal) return Swal.fire("Atención", "La fecha de recepción es obligatoria", "warning");
+
             const payload = {
                 action: "confirmarRecepcion",
                 idCompra: compraActiva.idCompra,
                 producto: compraActiva.producto,
-                cantidadRecibida: document.getElementById("numCantidadRecibida").value,
-                guia: document.getElementById("txtGuiaFactura").value,
-                fechaReal: document.getElementById("dateRecepcion").value,
-                novedades: document.getElementById("txtObservaciones").value
+                cantidadRecibida: cantidadRecibida,
+                guia: guia,
+                fechaReal: fechaReal,
+                novedades: novedades
             };
 
-            if(!payload.guia) return Swal.fire("Atención", "Número de guía obligatorio", "warning");
-
-            Swal.fire({title: 'Guardando...', didOpen: () => Swal.showLoading()});
+            Swal.fire({
+                title: 'Procesando entrada...', 
+                text: 'Actualizando inventarios y hojas de control',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
             
             try {
-                // LLAMADA AL BACKEND USANDO CONFIG.WEB_APP_URL
-                await fetch(CONFIG.WEB_APP_URL, { method: "POST", mode: "no-cors", body: JSON.stringify(payload) });
-                Swal.fire("¡Éxito!", "Stock actualizado", "success");
+                // Enviamos los datos transaccionales a la pestaña HistorialRecepciones mediante POST centralizado
+                await DairyAPI.guardarDatos("HistorialRecepciones", payload);
+                
+                Swal.fire("¡Éxito!", "El stock ha sido ingresado al inventario correctamente.", "success");
+                
+                // Resetear interfaz del formulario
                 compraActiva = null;
+                document.getElementById("txtGuiaFactura").value = "";
+                document.getElementById("txtObservaciones").value = "";
+                document.getElementById("formularioRecepcion").classList.add("opacity-50", "pointer-events-none");
+                
+                const btn = document.getElementById("btnProcesar");
+                btn.disabled = true;
+                btn.className = "w-full bg-slate-400 text-white font-black px-6 py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm";
+                
+                // Recargar lista remota de pendientes de inmediato
                 cargarDatos();
             } catch (e) {
-                Swal.fire("Error", "Fallo de comunicación", "error");
+                console.error(e);
+                Swal.fire("Error", "Fallo al procesar la transacción en Google Sheets", "error");
             }
         }
 
         function filtrarPedidos() {
             const q = document.getElementById("searchPedido").value.toLowerCase();
-            renderizarLista(comprasPendientes.filter(c => c.proveedor.toLowerCase().includes(q) || c.idCompra.toLowerCase().includes(q)));
+            renderizarLista(comprasPendientes.filter(c => 
+                c.proveedor.toLowerCase().includes(q) || 
+                c.idCompra.toLowerCase().includes(q) ||
+                c.producto.toLowerCase().includes(q)
+            ));
         }
     </script>
 </body>

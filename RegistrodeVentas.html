@@ -49,11 +49,29 @@
         }
         .input-sutil:focus { background: white; border-color: #a21caf; box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05); }
 
-        #overlay-exito, #modal-consumo {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-            display: none; align-items: center; justify-content: center; z-index: 200;
+        #overlay-carga, #overlay-exito, #modal-consumo {
+            position: fixed; inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        #overlay-carga {
+            background: linear-gradient(135deg, #a21caf, #db2777);
+            flex-direction: column;
+        }
+        
+        #overlay-exito {
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(8px);
         }
+        
+        #modal-consumo {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+        }
+        
         .modal-content {
             background: white;
             border-radius: 2rem;
@@ -61,12 +79,41 @@
             width: 400px;
             animation: slideUp 0.3s ease-out;
         }
+        
         @keyframes slideUp {
             from { transform: translateY(50px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
+        
         .check-anim { font-size: 80px; color: #a21caf; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        
+        @keyframes pop { 
+            0% { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .pulse-logo {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
 
         #carrito-flotante {
             position: fixed; bottom: 100px; left: 16px; right: 16px;
@@ -79,7 +126,9 @@
             border: 1px solid rgba(162, 28, 175, 0.15);
             transition: all 0.3s;
         }
+        
         .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 16px; border-radius: 1.5rem; font-weight: 800; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
+        
         @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
         
         .btn-rapido-cabecera {
@@ -111,16 +160,34 @@
             background: white;
             border-radius: 1.5rem;
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
     </style>
 </head>
 <body class="pb-96"> 
 
-<!-- Pantalla de Carga/Éxito -->
+<!-- Pantalla de CARGA INICIAL -->
+<div id="overlay-carga">
+    <div class="text-center">
+        <div class="spinner mb-6"></div>
+        <h2 class="text-2xl font-black text-white uppercase tracking-wider">LÓGICA LÁCTEA</h2>
+        <p class="text-white/80 text-sm mt-2 font-medium">Cargando datos...</p>
+    </div>
+</div>
+
+<!-- Pantalla de Éxito -->
 <div id="overlay-exito">
-    <div class="bg-white rounded-3xl p-8 text-center max-w-xs mx-4 shadow-2xl">
-        <span class="material-symbols-outlined check-anim" id="icono-estado">sync</span>
-        <h2 class="text-xl font-black text-slate-800 mt-4" id="titulo-estado">Guardando...</h2>
-        <p class="text-slate-400 font-semibold text-[11px] mt-2" id="p-estado">Sincronizando...</p>
+    <div class="bg-white rounded-3xl p-8 text-center max-w-xs mx-4 shadow-2xl fade-in">
+        <span class="material-symbols-outlined check-anim" id="icono-estado" style="font-size: 80px;">check_circle</span>
+        <h2 class="text-xl font-black text-slate-800 mt-4" id="titulo-estado">¡Éxito!</h2>
+        <p class="text-slate-400 font-semibold text-[11px] mt-2" id="p-estado">Operación completada</p>
     </div>
 </div>
 
@@ -275,9 +342,12 @@ let carrito = {};
 let productosData = []; 
 let idVenta = "";
 let contadorConsumo = 1;
-let productoSeleccionadoModal = null;
 
 async function iniciar() {
+    // Mostrar pantalla de carga
+    const overlayCarga = document.getElementById('overlay-carga');
+    overlayCarga.style.display = 'flex';
+    
     const d = new Date();
     idVenta = `V-${d.getFullYear().toString().slice(-2)}${Math.floor(100000 + Math.random() * 900000)}`;
     document.getElementById('car-id').innerText = `ID: ${idVenta}`;
@@ -297,11 +367,21 @@ async function iniciar() {
         
         const consumosExistentes = await DairyAPI.obtenerDatos("Ventas");
         if(Array.isArray(consumosExistentes)) {
-            const numeros = consumosExistentes.filter(v => v.ID_Venta && v.ID_Venta.startsWith("CONSUMO-"))
-                .map(v => parseInt(v.ID_Venta.split("-")[1]) || 0);
+            const numeros = consumosExistentes.filter(v => v.ID_Venta && String(v.ID_Venta).startsWith("CONSUMO-"))
+                .map(v => parseInt(String(v.ID_Venta).split("-")[1]) || 0);
             contadorConsumo = (Math.max(...numeros, 0)) + 1;
         }
-    } catch(e) { console.error("Error al cargar:", e); }
+        
+        // Ocultar pantalla de carga
+        setTimeout(() => {
+            overlayCarga.style.display = 'none';
+        }, 800);
+        
+    } catch(e) { 
+        console.error("Error al cargar:", e);
+        overlayCarga.style.display = 'none';
+        alert("Error al cargar datos: " + e.message);
+    }
 }
 
 function activarInterfaz() {
@@ -319,7 +399,7 @@ function renderizar() {
         const idCant = `cant-${p.Producto.replace(/\s+/g,'-')}`;
         const stockActual = parseInt(p.Stock) || 0;
         cont.innerHTML += `
-            <div class="card-producto shadow-sm">
+            <div class="card-producto shadow-sm fade-in">
                 <div class="flex-1">
                     <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${p.Producto}</h4>
                     <div class="flex items-center gap-2 mt-1">
@@ -336,7 +416,7 @@ function renderizar() {
     });
     
     if(productosConStock.length === 0) {
-        cont.innerHTML = '<div class="text-center py-8 text-slate-400 italic bg-white rounded-2xl p-8">🍽️ No hay productos con stock disponible</div>';
+        cont.innerHTML = '<div class="text-center py-8 text-slate-400 italic bg-white rounded-2xl p-8 fade-in">🍽️ No hay productos con stock disponible</div>';
     }
 }
 
@@ -379,6 +459,18 @@ function cambiarCantidadModal(delta) {
     input.value = val;
 }
 
+function mostrarExito(mensaje, subMensaje) {
+    const overlay = document.getElementById('overlay-exito');
+    document.getElementById('titulo-estado').innerText = mensaje;
+    document.getElementById('p-estado').innerText = subMensaje || "Operación completada";
+    document.getElementById('icono-estado').innerHTML = "check_circle";
+    overlay.style.display = 'flex';
+    
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 2000);
+}
+
 async function confirmarConsumoInterno() {
     const select = document.getElementById('modal-producto');
     const producto = select.value;
@@ -406,7 +498,7 @@ async function confirmarConsumoInterno() {
     overlay.style.display = 'flex';
     document.getElementById('titulo-estado').innerText = "Registrando...";
     document.getElementById('icono-estado').innerHTML = "sync";
-    document.getElementById('icono-estado').classList.add('animate-spin');
+    document.getElementById('icono-estado').style.animation = "spin 1s linear infinite";
     
     try {
         await DairyAPI.enviarDatos({ 
@@ -427,17 +519,17 @@ async function confirmarConsumoInterno() {
         
         contadorConsumo++;
         
-        document.getElementById('icono-estado').classList.remove('animate-spin');
+        document.getElementById('icono-estado').style.animation = "none";
         document.getElementById('icono-estado').innerHTML = "check_circle";
         document.getElementById('titulo-estado').innerText = "¡Consumo Registrado!";
+        document.getElementById('p-estado').innerText = `ID: ${idConsumo} - Estado: INTERNO`;
         
         setTimeout(() => {
             overlay.style.display = 'none';
             cerrarModalConsumo();
             renderizar();
             actualizarCarrito();
-            alert(`✅ Consumo interno registrado:\n- ID: ${idConsumo}\n- Producto: ${producto}\n- Cantidad: ${cantidad}\n- Estado: INTERNO`);
-        }, 1000);
+        }, 1500);
         
     } catch(e) { 
         overlay.style.display = 'none';
@@ -483,7 +575,7 @@ async function procesarVenta() {
     overlay.style.display = 'flex';
     document.getElementById('titulo-estado').innerText = "Guardando Pedido...";
     document.getElementById('icono-estado').innerHTML = "sync";
-    document.getElementById('icono-estado').classList.add('animate-spin');
+    document.getElementById('icono-estado').style.animation = "spin 1s linear infinite";
 
     try {
         for(const n in carrito) {
@@ -504,7 +596,7 @@ async function procesarVenta() {
             }
         }
         
-        document.getElementById('icono-estado').classList.remove('animate-spin');
+        document.getElementById('icono-estado').style.animation = "none";
         document.getElementById('icono-estado').innerHTML = "check_circle";
         document.getElementById('titulo-estado').innerText = "¡Venta Exitosa!";
 
@@ -548,9 +640,13 @@ async function guardarCliente() {
 
     try {
         await DairyAPI.enviarDatos(data);
-        alert("✅ CLIENTE REGISTRADO");
-        location.reload();
-    } catch(e) { alert("Error al registrar"); btn.disabled = false; btn.innerText = "Guardar"; }
+        mostrarExito("Cliente Registrado", "Redirigiendo...");
+        setTimeout(() => location.reload(), 1500);
+    } catch(e) { 
+        alert("Error al registrar"); 
+        btn.disabled = false; 
+        btn.innerText = "Guardar"; 
+    }
 }
 
 function enviarWhatsApp() {

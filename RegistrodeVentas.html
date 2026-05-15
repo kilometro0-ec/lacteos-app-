@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>Ventas - Lógica Láctea</title>
 
-    <!-- PWA / Sistema -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="estilos-lacteos.css">
-
     <!-- Librerías -->
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
+
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="estilos-lacteos.css">
 
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -45,6 +45,7 @@
             border: 1px solid #f1f5f9;
             padding: 16px;
             display: flex;
+            align-items: center;
             justify-content: space-between;
             margin-bottom: 10px;
             transition: all 0.2s;
@@ -66,7 +67,14 @@
             width: 100%;
             font-size: 13px;
             font-weight: 700;
+            color: #1e293b;
             outline: none;
+        }
+
+        .input-sutil:focus {
+            background: white;
+            border-color: #a21caf;
+            box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05);
         }
 
         #carrito-flotante {
@@ -78,6 +86,7 @@
             border-radius: 2.5rem;
             padding: 20px;
             z-index: 100;
+            border: 1px solid rgba(162, 28, 175, 0.1);
         }
 
         .btn-whatsapp {
@@ -94,6 +103,9 @@
 
 <body class="pb-96">
 
+<!-- OVERLAY -->
+<div id="overlay-exito" style="display:none"></div>
+
 <!-- HEADER -->
 <header class="h-20 bg-white/80 backdrop-blur-md border-b border-fuchsia-50 flex justify-between items-center px-6 sticky top-0 z-50">
 
@@ -102,26 +114,32 @@
         <span id="id-venta-display" class="text-[10px] font-bold text-primary">ID: ---</span>
     </div>
 
-    <!-- BOTONES HEADER (AQUÍ ESTABA EL ERROR) -->
+    <!-- BOTONES (RESPETA DISEÑO) -->
     <div class="flex gap-2">
-        <button onclick="iniciar()" class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-primary flex items-center justify-center">
+
+        <button onclick="location.reload()"
+            class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-primary flex items-center justify-center">
             <span class="material-symbols-outlined">refresh</span>
         </button>
 
-        <button onclick="ventaRapida()" class="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center">
-            <span class="material-symbols-outlined">flash_on</span>
+        <!-- VENTA RÁPIDA -->
+        <button onclick="ventaRapida()"
+            class="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center">
+            <span class="material-symbols-outlined">bolt</span>
         </button>
+
     </div>
 </header>
 
+<!-- MAIN -->
 <main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
 
-<!-- CLIENTE -->
 <section class="bg-white p-6 rounded-[2.5rem] border border-fuchsia-50">
 
     <div class="flex justify-between mb-4">
-        <span class="text-[10px] font-black text-slate-400">Paso 1: Cliente</span>
-        <button onclick="alternarFormulario(true)" class="text-[10px] font-black bg-secondary text-white px-4 py-1 rounded-full">
+        <span class="text-[10px] font-black text-slate-400 uppercase">Paso 1: Cliente</span>
+        <button onclick="alternarFormulario(true)"
+            class="text-[10px] font-black text-white bg-secondary px-4 py-1.5 rounded-full">
             Nuevo +
         </button>
     </div>
@@ -130,7 +148,6 @@
         <option value="">-- SELECCIONAR CLIENTE --</option>
     </select>
 
-    <!-- NUEVO CLIENTE -->
     <div id="vista-nuevo-cliente" class="hidden mt-4 space-y-2">
         <input id="reg-nombre" class="input-sutil uppercase" placeholder="NOMBRE">
         <input id="reg-ruc" class="input-sutil" placeholder="CI / RUC">
@@ -141,6 +158,7 @@
             <button onclick="alternarFormulario(false)" class="flex-1 bg-gray-100 py-3 rounded-xl">Cancelar</button>
         </div>
     </div>
+
 </section>
 
 <!-- PRODUCTOS -->
@@ -159,6 +177,7 @@
             <p id="car-cliente" class="font-black text-primary">Esperando...</p>
             <p id="car-id" class="text-xs">ID</p>
         </div>
+
         <div class="text-right">
             <p id="car-total" class="text-2xl font-black">$0.00</p>
             <p id="car-items" class="text-xs">0</p>
@@ -169,19 +188,21 @@
 
     <input type="date" id="fecha-entrega" class="input-sutil mb-3">
 
-    <button id="btn-confirmar" onclick="procesarVenta()" class="bg-black text-white w-full py-4 rounded-xl font-bold">
+    <button id="btn-confirmar" onclick="procesarVenta()"
+        class="bg-black text-white w-full py-4 rounded-xl font-bold">
         Confirmar Pedido
     </button>
 
     <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-whatsapp">
         Enviar WhatsApp
     </button>
+
 </div>
 
-<!-- MENÚ INFERIOR (ARREGLADO) -->
+<!-- MENÚ INFERIOR -->
 <div id="menu-container"></div>
 
-<!-- SCRIPT MENÚ OBLIGATORIO -->
+<!-- SCRIPT MENÚ -->
 <script>
 window.addEventListener("load", () => {
     if (typeof initMenu === "function") {
@@ -190,13 +211,14 @@ window.addEventListener("load", () => {
 });
 </script>
 
+<!-- LOGICA -->
 <script>
 let carrito = {};
 let productosData = [];
 let idVenta = "";
 
 function ventaRapida() {
-    alert("Venta rápida activada");
+    alert("Venta rápida activa");
 }
 
 window.onload = iniciar;

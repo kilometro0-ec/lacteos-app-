@@ -154,14 +154,21 @@
     </div>
 </div>
 
-<!-- MODAL: NUEVO PRODUCTO -->
+<!-- MODAL: NUEVO PRODUCTO CON PROVEEDOR -->
 <div id="modal-nuevo-prod" class="modal-custom">
     <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-6 space-y-3 shadow-2xl">
         <h2 class="text-center font-black text-indigo-600 uppercase mb-2">Crear Producto</h2>
         <input type="text" id="n-nombre" placeholder="NOMBRE DEL PRODUCTO" class="input-sutil uppercase text-sm">
-        <input type="number" id="n-dist" placeholder="COSTO DISTRIBUIDOR $" class="input-sutil text-sm">
-        <input type="number" id="n-pvp" placeholder="PRECIO VENTA (PVP) $" class="input-sutil text-sm">
+        <input type="number" id="n-dist" placeholder="COSTO DISTRIBUIDOR $" class="input-sutil text-sm" step="any">
+        <input type="number" id="n-pvp" placeholder="PRECIO VENTA (PVP) $" class="input-sutil text-sm" step="any">
         <input type="number" id="n-stock" placeholder="STOCK INICIAL" class="input-sutil text-sm">
+        
+        <!-- Selector de Proveedor -->
+        <select id="n-proveedor" class="input-sutil text-sm bg-white">
+            <option value="GENERAL">GENERAL</option>
+            <!-- Se llenará dinámicamente desde la hoja Proveedores -->
+        </select>
+        
         <button id="btn-guardar-nuevo" onclick="guardarNuevo()" class="btn-magenta mt-4" style="background: #059669;">GUARDAR ITEM</button>
         <button onclick="cerrarModal('modal-nuevo-prod')" class="w-full text-sm font-bold text-slate-400 text-center mt-2">Cerrar</button>
     </div>
@@ -169,14 +176,18 @@
 
 <script>
 // ==================== API CONFIGURACIÓN ====================
+// CORREGIDA: URL del WebApp que implementa el backend de Google Apps Script
 const API_URL = "https://script.google.com/macros/s/AKfycbxabIAD-6st9we-W1KI6zKPAcFM842eu8RNos23QWAxP0jvzSahbAbEyYgQzAqz0J8c6A/exec";
 
 const DairyAPI = {
   async obtenerDatos(pestaña) {
     try {
-      const res = await fetch(`${API_URL}?pestaña=${pestaña}`);
+      // Usamos el método GET con parámetro pestaña
+      const res = await fetch(`${API_URL}?pestaña=${encodeURIComponent(pestaña)}`);
       const json = await res.json();
-      return json.data || [];
+      // El backend devuelve un objeto con propiedad "data" o directamente el array?
+      // Según el backend provisto, obtenerDatosHoja retorna el array.
+      return json.data || json || [];
     } catch (error) {
       console.error("Error en obtenerDatos:", error);
       throw error;
@@ -200,7 +211,9 @@ const DairyAPI = {
   },
 
   async crearDato(pestaña, datos) {
+    // Para crear usamos la acción "guardar" según el backend
     const payload = {
+      action: "guardar",
       pestaña: pestaña,
       ...datos
     };
@@ -209,18 +222,19 @@ const DairyAPI = {
 
   async actualizarDato(pestaña, id, datos) {
     const payload = {
+      action: "actualizar",
       pestaña: pestaña,
-      ID: id,
-      ...datos
+      id: id,
+      datos: datos
     };
     return await this.enviarDatos(payload);
   },
 
   async eliminarDato(pestaña, id) {
     const payload = {
+      action: "eliminar",
       pestaña: pestaña,
-      accion: "ELIMINAR",
-      ID: id
+      id: id
     };
     return await this.enviarDatos(payload);
   }
@@ -228,6 +242,7 @@ const DairyAPI = {
 
 // ==================== VARIABLES GLOBALES ====================
 let inventarioLocal = [];
+let proveedoresLista = []; // Guardar lista de proveedores
 let seleccionados = new Set();
 let modoSeleccion = false;
 let productoActivo = null;
@@ -238,12 +253,42 @@ function mostrarLoading(mostrar) {
     document.getElementById('overlay-loading').style.display = mostrar ? 'flex' : 'none';
 }
 
+// Cargar proveedores desde la hoja "Proveedores"
+async function cargarProveedores() {
+    try {
+        const proveedores = await DairyAPI.obtenerDatos("Proveedores");
+        if (Array.isArray(proveedores) && proveedores.length > 0) {
+            // Extraer el nombre del proveedor (columna 'Nombre del Proveedor' o 'Proveedor')
+            proveedoresLista = proveedores.map(p => p['Nombre del Proveedor'] || p['Proveedor'] || 'GENERAL').filter(v => v && v !== '');
+            // Aseguramos que GENERAL esté siempre
+            if (!proveedoresLista.includes('GENERAL')) proveedoresLista.unshift('GENERAL');
+        } else {
+            proveedoresLista = ['GENERAL'];
+        }
+        // Llenar el select
+        const selectProveedor = document.getElementById('n-proveedor');
+        selectProveedor.innerHTML = '';
+        proveedoresLista.forEach(prov => {
+            const option = document.createElement('option');
+            option.value = prov;
+            option.textContent = prov;
+            selectProveedor.appendChild(option);
+        });
+    } catch (error) {
+        console.error("Error cargando proveedores:", error);
+        // Si falla, al menos tener GENERAL
+        const selectProveedor = document.getElementById('n-proveedor');
+        if (selectProveedor.children.length === 0) {
+            selectProveedor.innerHTML = '<option value="GENERAL">GENERAL</option>';
+        }
+    }
+}
+
 async function cargarInventario() {
     mostrarLoading(true);
     try {
         const res = await DairyAPI.obtenerDatos("Inventario");
         if (Array.isArray(res)) {
-            // Mapear correctamente los campos según la hoja de Inventario
             inventarioLocal = res.map(item => ({
                 Fecha: item.Fecha,
                 ID: item.ID,
@@ -433,13 +478,29 @@ async function confirmarStock() {
     await cargarInventario();
 }
 
-// ==================== CREAR PRODUCTO ====================
+// ==================== CREAR PRODUCTO CON ID SECUENCIAL Y PROVEEDOR ====================
+// Función auxiliar para obtener el próximo ID secuencial no repetido basado en el inventario actual
+function generarIdSecuencial(inventarioActual) {
+    let max = 0;
+    // Buscar IDs existentes que tengan formato P-XXXX
+    for (let prod of inventarioActual) {
+        const id = prod.ID;
+        if (id && id.startsWith('P-')) {
+            const num = parseInt(id.split('-')[1]);
+            if (!isNaN(num) && num > max) max = num;
+        }
+    }
+    const nuevoNumero = max + 1;
+    return `P-${nuevoNumero}`;
+}
+
 async function guardarNuevo() {
     const btn = document.getElementById('btn-guardar-nuevo');
     const nombre = document.getElementById('n-nombre').value.trim().toUpperCase();
     const precioDist = parseFloat(document.getElementById('n-dist').value) || 0;
     const precioVenta = parseFloat(document.getElementById('n-pvp').value) || 0;
     const stockInicial = parseInt(document.getElementById('n-stock').value) || 0;
+    const proveedor = document.getElementById('n-proveedor').value || 'GENERAL';
 
     if (!nombre) {
         alert("⚠️ Nombre del producto requerido");
@@ -450,16 +511,30 @@ async function guardarNuevo() {
         return;
     }
 
+    // Asegurar que tengamos inventario actualizado para no repetir ID
+    // Recargamos inventario para obtener los últimos IDs
+    let inventarioActualizado = [];
+    try {
+        const res = await DairyAPI.obtenerDatos("Inventario");
+        if (Array.isArray(res)) {
+            inventarioActualizado = res.map(item => ({ ID: item.ID }));
+        }
+    } catch(e) { console.warn("No se pudo refrescar inventario, usando local", e); }
+    
+    // Si falla, usar el local
+    const listaIDs = inventarioActualizado.length ? inventarioActualizado : inventarioLocal;
+    const nuevoID = generarIdSecuencial(listaIDs);
+    
     const nuevoProducto = {
         pestaña: "Inventario",
-        Fecha: new Date().toISOString().split('T')[0],
-        ID: `P-${Date.now().toString().slice(-6)}`,
+        Fecha: new Date().toISOString().slice(0,19).replace('T', ' '), // Formato fecha-hora
+        ID: nuevoID,
         Producto: nombre,
         Stock: stockInicial,
         Precio_Distribuidor: precioDist,
         Precio_Venta: precioVenta,
         Ventas: 0,
-        "Proveedor Habitual": "GENERAL"
+        "Proveedor Habitual": proveedor
     };
 
     console.log("Enviando producto:", nuevoProducto);
@@ -468,14 +543,15 @@ async function guardarNuevo() {
     mostrarLoading(true);
     
     try {
-        const resultado = await DairyAPI.enviarDatos(nuevoProducto);
+        // Usamos la API de crearDato que envía acción "guardar"
+        const resultado = await DairyAPI.crearDato("Inventario", nuevoProducto);
         console.log("Respuesta:", resultado);
         
         if (resultado && resultado.error) {
             throw new Error(resultado.error);
         }
         
-        alert("✅ Producto creado exitosamente");
+        alert(`✅ Producto creado exitosamente con ID ${nuevoID}`);
         cerrarModal('modal-nuevo-prod');
         
         // Limpiar campos
@@ -483,6 +559,7 @@ async function guardarNuevo() {
         document.getElementById('n-dist').value = "";
         document.getElementById('n-pvp').value = "";
         document.getElementById('n-stock').value = "";
+        // El select se mantiene con valores, no es necesario resetear
         
         await cargarInventario();
     } catch(e) {
@@ -508,12 +585,13 @@ function descargarPDF() {
         p.ID, 
         p.Producto, 
         p.Stock, 
-        `$${Number(p.Precio_Venta).toFixed(2)}`
+        `$${Number(p.Precio_Venta).toFixed(2)}`,
+        p.Proveedor || 'GENERAL'
     ]);
 
     doc.autoTable({
         startY: 35,
-        head: [['ID', 'Producto', 'Stock', 'Precio PVP']],
+        head: [['ID', 'Producto', 'Stock', 'Precio PVP', 'Proveedor']],
         body: body,
         theme: 'grid',
         headStyles: { fillColor: [99, 102, 241] }
@@ -538,7 +616,10 @@ function filtrar() {
 }
 
 // ==================== INICIALIZACIÓN ====================
-window.onload = cargarInventario;
+window.onload = async () => {
+    await cargarProveedores();   // Cargar lista de proveedores desde Google Sheets
+    await cargarInventario();     // Cargar inventario principal
+};
 </script>
 
 </body>

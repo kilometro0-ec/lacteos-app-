@@ -98,16 +98,18 @@
             cargarDespachos();
         });
 
-        // Consumo utilizando la variable de entorno unificada CONFIG.WEB_APP_URL
+        // Consumo utilizando el estándar global de Lógica Láctea
         async function cargarDespachos() {
             try {
-                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getDespachos`);
-                const json = await res.json();
+                // Se solicitan los registros de la colección u hoja "Despachos" (o "Ventas" según tu esquema)
+                const datos = await DairyAPI.obtenerDatos("Despachos");
                 
-                if (json.status === "success") {
-                    despachosGlobal = json.data;
+                if (Array.isArray(datos)) {
+                    despachosGlobal = datos;
                     renderizarDespachos(despachosGlobal);
                     actualizarTarjetasMetricas(despachosGlobal);
+                } else if (datos && datos.status === "error") {
+                    throw new Error(datos.message);
                 }
             } catch (err) {
                 console.error("Error al sincronizar bitácora de rutas:", err);
@@ -123,7 +125,7 @@
             }
         }
 
-        // Renderizado de filas logísticas con semáforo de estados
+        // Renderizado de filas logísticas con semáforo de estados y protección de llaves nulas
         function renderizarDespachos(lista) {
             const tbody = document.getElementById("tbodyDespachos");
             tbody.innerHTML = lista.length ? "" : "<tr><td colspan='6' class='text-center py-10 text-slate-400 italic'>No hay órdenes registradas pendientes de despacho.</td></tr>";
@@ -131,20 +133,25 @@
             lista.forEach(d => {
                 let badgeClass = "";
                 let botonAccion = "";
+                
+                // Homologación de llaves seguras e ID transaccional
+                const idVenta = d.idVenta || d.id || d.codigo || "S/I";
                 const estado = (d.estado || "PENDIENTE").toUpperCase();
+                const cliente = d.cliente || d.nombreCliente || d.razonSocial || "Cliente Genérico";
+                const direccion = d.direccion || d.direccionEntrega || '';
 
                 // Reglas visuales según el estado del ciclo de vida del pedido
                 if (estado === "PENDIENTE") {
                     badgeClass = "bg-amber-100 text-amber-800 border border-amber-200";
                     botonAccion = `
-                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'EN RUTA')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95">
+                        <button onclick="actualizarEstadoDespacho('${idVenta}', 'EN RUTA')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95 shadow-sm">
                             <i data-lucide="play" class="w-3 h-3"></i> Despachar
                         </button>
                     `;
                 } else if (estado === "EN RUTA") {
                     badgeClass = "bg-cyan-100 text-cyan-800 border border-cyan-200 animate-pulse";
                     botonAccion = `
-                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'ENTREGADO')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95">
+                        <button onclick="actualizarEstadoDespacho('${idVenta}', 'ENTREGADO')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95 shadow-sm">
                             <i data-lucide="check" class="w-3 h-3"></i> Entregado
                         </button>
                     `;
@@ -155,15 +162,19 @@
                             <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Finalizado
                         </span>
                     `;
+                } else {
+                    // Estado de contingencia por si manejan cancelaciones u otros estados
+                    badgeClass = "bg-slate-100 text-slate-700 border border-slate-200";
+                    botonAccion = `<span class="text-slate-400 text-[11px] italic">${estado}</span>`;
                 }
 
                 const tr = document.createElement("tr");
-                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.className = "hover:bg-slate-50/60 transition-colors";
                 tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-mono font-bold text-slate-500">#${d.idVenta}</td>
-                    <td class="py-3.5 px-4 font-mono text-xs">${d.fecha || '-'}</td>
-                    <td class="py-3.5 px-4 font-black text-slate-800">${d.cliente}</td>
-                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${d.direccion || ''}">${d.direccion || '<span class="text-slate-300 italic">Retira en local</span>'}</td>
+                    <td class="py-3.5 px-6 font-mono font-bold text-slate-600">#${idVenta}</td>
+                    <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${d.fecha || '-'}</td>
+                    <td class="py-3.5 px-4 font-black text-slate-800">${cliente}</td>
+                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${direccion}">${direccion ? direccion : '<span class="text-slate-300 italic">Retira en planta</span>'}</td>
                     <td class="py-3.5 px-4 text-center">
                         <span class="px-2 py-0.5 rounded-md font-black text-[10px] uppercase tracking-wider ${badgeClass}">
                             ${estado}
@@ -176,7 +187,7 @@
             lucide.createIcons();
         }
 
-        // Calcula el conteo de indicadores superiores
+        // Calcula el conteo de indicadores superiores de manera reactiva
         function actualizarTarjetasMetricas(lista) {
             let p = 0, r = 0, e = 0;
             lista.forEach(d => {
@@ -190,7 +201,7 @@
             document.getElementById("cardEntregados").innerText = e;
         }
 
-        // Envía la mutación de estado a las hojas de Google Sheets usando POST
+        // Envía la mutación de estado de forma asíncrona y segura a la API unificada
         async function actualizarEstadoDespacho(idVenta, nuevoEstado) {
             Swal.fire({
                 title: 'Actualizando Bitácora...',
@@ -207,12 +218,8 @@
             };
 
             try {
-                await fetch(CONFIG.WEB_APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
+                // Se envía la mutación mediante el método global de guardado/actualización
+                await DairyAPI.guardarDatos("Despachos", payload);
 
                 Swal.fire({
                     title: 'Ruta Actualizada',
@@ -221,9 +228,10 @@
                     confirmButtonColor: '#0891b2'
                 });
                 
-                cargarDespachos(); // Refresca la vista completa para ver el salto de estado
+                cargarDespachos(); // Actualización en caliente de la vista completa
             } catch (err) {
-                Swal.fire("Error Logístico", "No se pudo sincronizar el cambio de estado con el servidor central.", "error");
+                console.error("Error al actualizar estado logístico:", err);
+                Swal.fire("Error Logístico", "No se pudo sincronizar el cambio de estado con el servidor central de Google Sheets.", "error");
             }
         }
     </script>

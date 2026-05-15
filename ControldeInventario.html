@@ -1,546 +1,63 @@
 <!DOCTYPE html>
 <html class="light" lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lógica Láctea | Inventario</title>
-    
-    <!-- Librerías Externas -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>Kardex de Inventario | Lógica Láctea</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script src="api-config.js?v=1.4"></script>
+    <script src="menu-logic.js?v=1.4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
-    
     <script>
-        tailwind.config = {
-          theme: {
-            extend: {
-              colors: {
-                primary: "#6366f1", 
-                secondary: "#4f46e5",
-                surface: "#ffffff",
-                background: "#f8fafc",
-                dark: "#0f172a"
-              }
-            }
-          }
-        }
+        tailwind.config = { theme: { extend: { colors: { primary: '#0284c7' } } } }
     </script>
-
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
-        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        .glass-header { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(14px); border-bottom: 1px solid rgba(99, 102, 241, 0.08); }
-        .card-premium { transition: transform 0.2s, box-shadow 0.2s; border: 1px solid rgba(99, 102, 241, 0.06); }
-        .card-premium:active { transform: scale(0.98); }
-        .modal { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 100; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(6px); }
-        .modal.active { display: flex; }
-        .modal-content { animation: modalSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); max-height: 85vh; overflow-y: auto; }
-        @keyframes modalSlide { from { transform: scale(0.95) translateY(15px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-        
-        #overlay-loading {
-            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
-            display: none; align-items: center; justify-content: center; z-index: 200;
-            backdrop-filter: blur(6px);
-        }
-        .spinner {
-            width: 44px; height: 44px; border: 4px solid rgba(99, 102, 241, 0.2);
-            border-top: 4px solid #6366f1; border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .hidden-view { display: none; }
-    </style>
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
-<body class="text-slate-800 pb-32">
-
-<div id="overlay-loading">
-    <div class="bg-white rounded-[2.5rem] p-8 text-center shadow-xl max-w-xs w-full mx-4">
-        <div class="spinner mx-auto mb-4"></div>
-        <p class="font-extrabold text-slate-800 text-sm tracking-wide">Sincronizando Base Central...</p>
-    </div>
-</div>
-
-<!-- CABECERA PRINCIPAL -->
-<header class="fixed top-0 w-full h-20 glass-header flex justify-between items-center px-6 z-50">
-    <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-primary to-indigo-400 flex items-center justify-center text-white shadow-md">
-            <span class="material-symbols-outlined text-xl">inventory</span>
-        </div>
+<body class="pb-32 bg-slate-50 text-slate-800">
+    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 bg-gradient-to-r from-sky-700 to-sky-900 text-white shadow-md">
         <div>
-            <h1 class="text-base font-black tracking-tight text-slate-900 leading-none uppercase italic">Lógica Láctea</h1>
-            <p id="syncStatus" class="text-[9px] font-black text-emerald-500 tracking-widest uppercase mt-0.5">Conectando...</p>
+            <h1 class="text-[9px] font-black text-sky-200 uppercase tracking-widest">Almacén Central</h1>
+            <h2 class="text-base font-black uppercase tracking-tight">Kardex de Inventario</h2>
         </div>
-    </div>
-    <div class="flex items-center gap-1.5">
-        <button id="btnPDF" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-100 active:scale-90 transition-transform">
-            <span class="material-symbols-outlined text-lg">description</span>
-        </button>
-        <button id="btnSync" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center border border-slate-100 active:scale-90 transition-transform">
-            <span class="material-symbols-outlined text-lg">sync</span>
-        </button>
-    </div>
-</header>
+        <span class="material-symbols-outlined text-2xl">inventory</span>
+    </header>
 
-<!-- SECCIÓN: INVENTARIO BODEGA -->
-<main id="view-inventario" class="pt-26 px-4 max-w-xl mx-auto space-y-5">
-    <!-- PANEL DE CONTROL ESTADÍSTICO -->
-    <section class="grid grid-cols-3 gap-2.5 fade-in" id="statsGrid">
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-            <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Bodega</span>
-            <span class="text-base font-black text-slate-900 block mt-0.5">$0</span>
+    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
+        <div class="relative">
+            <span class="material-symbols-outlined absolute left-4 top-3.5 text-sky-600">search</span>
+            <input type="text" id="buscador" oninput="filtrar()" placeholder="Buscar producto en stock..." class="w-full rounded-2xl border-none shadow-sm py-3.5 pl-12 text-xs font-bold focus:ring-2 focus:ring-sky-600/20 bg-white">
         </div>
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-            <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Críticos</span>
-            <span class="text-base font-black text-rose-500 block mt-0.5">0</span>
-        </div>
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-            <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Stock Total</span>
-            <span class="text-base font-black text-primary block mt-0.5">0</span>
-        </div>
-    </section>
+        <div id="grid-inventario" class="grid gap-3"></div>
+    </main>
+    <nav id="menu-container"></nav>
 
-    <!-- CUADRO DE BÚSQUEDA -->
-    <div class="relative">
-        <span class="material-symbols-outlined absolute left-4 top-3.5 text-slate-400 text-lg">search</span>
-        <input type="text" id="searchInput" placeholder="Filtrar catálogo..." oninput="filtrarProductos()" 
-            class="w-full bg-white border border-slate-100 rounded-2xl py-3.5 pl-11 pr-4 text-xs font-bold outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400 shadow-sm">
-    </div>
-    
-    <!-- CONTENEDOR GRID -->
-    <section class="grid grid-cols-2 gap-3" id="productosGrid">
-        <div class="col-span-2 text-center py-12 text-slate-400 font-bold text-xs animate-pulse">
-            Sincronizando existencias lácteas de la central...
-        </div>
-    </section>
-</main>
-
-<!-- VISTAS DE CONTINGENCIA / MÓDULOS FUTUROS -->
-<main id="view-ventas" class="hidden-view pt-26 px-4 max-w-xl mx-auto">
-    <div class="bg-amber-50/60 border border-amber-100 rounded-3xl p-6 text-center space-y-2">
-        <span class="material-symbols-outlined text-amber-500 text-3xl">point_of_sale</span>
-        <h3 class="text-xs font-black text-amber-900 uppercase">Módulo de Ventas Activo</h3>
-        <p class="text-[10px] text-amber-600 font-medium">Use el redireccionador principal para el registro dinámico de facturas.</p>
-    </div>
-</main>
-
-<main id="view-compras" class="hidden-view pt-26 px-4 max-w-xl mx-auto">
-    <div class="bg-indigo-50/60 border border-indigo-100 rounded-3xl p-6 text-center space-y-2">
-        <span class="material-symbols-outlined text-indigo-500 text-3xl">shopping_cart</span>
-        <h3 class="text-xs font-black text-indigo-900 uppercase">Órdenes de Compra</h3>
-        <p class="text-[10px] text-indigo-600 font-medium">Próxima integración automatizada con balanzas y recepción de materia prima.</p>
-    </div>
-</main>
-
-<main id="view-proveedores" class="hidden-view pt-26 px-4 max-w-xl mx-auto">
-    <div class="bg-purple-50/60 border border-purple-100 rounded-3xl p-6 text-center space-y-2">
-        <span class="material-symbols-outlined text-purple-500 text-3xl">local_shipping</span>
-        <h3 class="text-xs font-black text-purple-900 uppercase">Catálogo Proveedores</h3>
-        <p class="text-[10px] text-purple-600 font-medium">Gestión directa de despachadores mayoristas y rutas agropecuarias.</p>
-    </div>
-</main>
-
-<main id="view-clientes" class="hidden-view pt-26 px-4 max-w-xl mx-auto">
-    <div class="bg-emerald-50/60 border border-emerald-100 rounded-3xl p-6 text-center space-y-2">
-        <span class="material-symbols-outlined text-emerald-500 text-3xl">groups</span>
-        <h3 class="text-xs font-black text-emerald-900 uppercase">Trazabilidad de Clientes</h3>
-        <p class="text-[10px] text-emerald-600 font-medium">Redireccionando a la suite premium para control de rankings e historial.</p>
-    </div>
-</main>
-
-<!-- BOTÓN AGREGAR (FAB) -->
-<button class="fab" id="fabBtn">+</button>
-
-<!-- MODAL FORMULARIO: REGISTRO / EDICIÓN DE PRODUCTO -->
-<div class="modal" id="modalProducto" onclick="event.target === this && cerrarModal()">
-    <div class="bg-white w-full max-w-sm rounded-[2.5rem] p-7 shadow-2xl modal-content relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-secondary"></div>
-        
-        <div class="flex justify-between items-center mb-5">
-            <div>
-                <h2 id="modal-titulo" class="text-base font-black text-slate-900 uppercase tracking-tight">Nuevo Producto</h2>
-                <p class="text-[9px] font-black text-primary uppercase tracking-wider mt-0.5">Sanitización de Almacén</p>
-            </div>
-            <button onclick="cerrarModal()" class="w-8 h-8 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center">
-                <span class="material-symbols-outlined text-lg">close</span>
-            </button>
-        </div>
-
-        <form id="form-producto" class="space-y-3.5" onsubmit="event.preventDefault();">
-            <input type="hidden" id="prod-id">
-            
-            <div class="space-y-1">
-                <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Descripción Comercial del Producto</label>
-                <input type="text" id="prodNombre" required class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary uppercase">
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Costo Mayorista ($)</label>
-                    <input type="number" id="prodCosto" step="0.001" required class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">PVP Sugerido ($)</label>
-                    <input type="number" id="prodPvp" step="0.001" required class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary">
-                </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Existencia Física (Stock)</label>
-                    <input type="number" id="prodStock" min="0" required class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[9px] font-black text-slate-400 uppercase ml-1">Proveedor Habitual</label>
-                    <select id="prodProveedor" required class="w-full bg-slate-50 border-none rounded-xl p-3.5 text-xs font-bold focus:ring-2 focus:ring-primary appearance-none">
-                        <option value="GENERAL">GENERAL</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="pt-2">
-                <button type="button" id="btnGuardar" class="w-full py-4 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest shadow-md active:scale-95 transition-transform">
-                    Guardar Cambios
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- NAVEGACIÓN INFERIOR INTEGRADA -->
-<nav class="bottom-nav">
-    <button class="nav-item active" data-view="inventario">
-        <span class="material-symbols-outlined">inventory</span>
-        <span>Inventario</span>
-    </button>
-    <button class="nav-item" data-view="ventas">
-        <span class="material-symbols-outlined">point_of_sale</span>
-        <span>Ventas</span>
-    </button>
-    <button class="nav-item" data-view="compras">
-        <span class="material-symbols-outlined">shopping_cart</span>
-        <span>Compras</span>
-    </button>
-    <button class="nav-item" data-view="proveedores">
-        <span class="material-symbols-outlined">local_shipping</span>
-        <span>Proveedores</span>
-    </button>
-    <button class="nav-item" data-view="clientes">
-        <span class="material-symbols-outlined">groups</span>
-        <span>Clientes</span>
-    </button>
-</nav>
-
-<script>
-// ==================== CONFIGURACIÓN CENTRAL ====================
-const API_URL = "https://script.google.com/macros/s/AKfycbziATkvhWLT263Pa43Eppw8cRuRXW7IyNsGo0r7Ox0ePlb7sX7j0EoRJvyxzImCsLSgRg/exec";
-
-let inventario = [];
-let proveedoresLista = [];
-let currentView = 'inventario';
-let esEdicion = false;
-
-// ==================== UTILS ====================
-function showLoading(show) {
-    const loading = document.getElementById('overlay-loading');
-    if (loading) loading.style.display = show ? 'flex' : 'none';
-}
-
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>'"\/]/g, m => {
-        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '/': '&#x2F;' };
-        return map[m];
-    });
-}
-
-// ==================== NAVEGACIÓN DE VISTAS ====================
-function switchView(view) {
-    currentView = view;
-    
-    document.querySelectorAll('main').forEach(m => m.classList.add('hidden-view'));
-    const targetMain = document.getElementById(`view-${view}`);
-    if (targetMain) targetMain.classList.remove('hidden-view');
-    
-    document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-view') === view) btn.classList.add('active');
-    });
-    
-    const fab = document.getElementById('fabBtn');
-    if (fab) fab.style.display = (view === 'inventario') ? 'flex' : 'none';
-}
-
-// ==================== CAPTURA ASÍNCRONA DE DATOS ====================
-async function cargarInventario() {
-    showLoading(true);
-    try {
-        const res = await fetch(`${API_URL}?action=obtener&pestaesta=Inventario`);
-        const data = await res.json();
-        
-        if (Array.isArray(data)) {
-            inventario = data.map(item => ({
-                id: String(item.ID || "").trim(),
-                nombre: String(item.Producto || "").trim().toUpperCase(),
-                stock: Number(item.Stock) || 0,
-                pvp: Number(item.Precio_Venta) || 0,
-                costo: Number(item.Precio_Distribuidor) || 0,
-                proveedor: String(item["Proveedor Habitual"] || "GENERAL").trim().toUpperCase()
-            }));
-            renderizarTodo();
-            const syncStatus = document.getElementById('syncStatus');
-            syncStatus.innerHTML = "✅ SCONECTADO";
-            syncStatus.className = "text-[9px] font-black text-emerald-500 tracking-widest uppercase mt-0.5";
-        } else {
-            throw new Error("Estructura de respuesta inválida");
+    <script>
+        let inventario = [];
+        async function cargar() {
+            try {
+                inventario = await DairyAPI.obtenerDatos("Inventario");
+                renderizar(inventario);
+            } catch(e) { console.error(e); }
         }
-    } catch(e) {
-        console.error(e);
-        const syncStatus = document.getElementById('syncStatus');
-        syncStatus.innerHTML = "⚠️ FALLO DE RED";
-        syncStatus.className = "text-[9px] font-black text-rose-500 tracking-widest uppercase mt-0.5";
-        document.getElementById('productosGrid').innerHTML = `
-            <div class="col-span-2 text-center py-12 text-rose-500 font-bold text-xs">
-                ❌ Error al leer base de datos: ${escapeHtml(e.message)}
-            </div>`;
-    } finally {
-        showLoading(false);
-    }
-}
-
-async function cargarProveedores() {
-    try {
-        const res = await fetch(`${API_URL}?action=obtener&pestaesta=Proveedores`);
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-            proveedoresLista = data.map(p => p['Nombre del Proveedor'] || p['Proveedor']).filter(v => v);
-        }
-        if (!proveedoresLista.includes('GENERAL')) proveedoresLista.unshift('GENERAL');
-        
-        const select = document.getElementById('prodProveedor');
-        if (select) {
-            select.innerHTML = proveedoresLista.map(p => `
-                <option value="${escapeHtml(String(p).toUpperCase())}">${escapeHtml(String(p).toUpperCase())}</option>
-            `).join('');
-        }
-    } catch(e) {
-        console.error("Error al mapear proveedores habituales:", e);
-    }
-}
-
-// ==================== SISTEMA DE RENDERIZADO ====================
-function renderizarTodo() {
-    renderizarStats();
-    renderizarProductos(inventario);
-}
-
-function renderizarStats() {
-    let bodega = 0, criticos = 0, stockTotal = 0;
-    
-    inventario.forEach(p => {
-        bodega += p.pvp * p.stock;
-        if (p.stock <= 5) criticos++;
-        stockTotal += p.stock;
-    });
-    
-    document.getElementById('statsGrid').innerHTML = `
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-            <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Bodega</span>
-            <span class="text-base font-black text-slate-900 block mt-0.5">$${bodega.toFixed(2)}</span>
-        </div>
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-            <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Críticos</span>
-            <span class="text-base font-black ${criticos > 0 ? 'text-rose-500 animate-pulse' : 'text-slate-500'} block mt-0.5">${criticos}</span>
-        </div>
-        <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm text-center">
-            <span class="text-[8px] font-black text-slate-400 uppercase tracking-wider block">Stock Total</span>
-            <span class="text-base font-black text-primary block mt-0.5">${stockTotal} u</span>
-        </div>
-    `;
-}
-
-function renderizarProductos(lista) {
-    const grid = document.getElementById('productosGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    
-    if (lista.length === 0) {
-        grid.innerHTML = `<div class="col-span-2 text-center py-12 text-slate-400 font-bold text-xs">📋 Catálogo vacío para este filtro</div>`;
-        return;
-    }
-
-    lista.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'bg-white p-4 rounded-[1.75rem] card-premium flex flex-col justify-between shadow-sm border border-slate-100';
-        const nombreEscapadoJS = p.nombre.replace(/'/g, "\\'");
-        
-        card.setAttribute('onclick', `abrirModalEditar('${nombreEscapadoJS}')`);
-        card.style.cursor = "pointer";
-
-        card.innerHTML = `
-            <div>
-                <div class="text-[8px] font-black text-slate-400 tracking-wider">${escapeHtml(p.id)}</div>
-                <div class="text-[10px] font-extrabold text-slate-900 mt-1 uppercase leading-tight line-clamp-2 min-h-[2rem]">${escapeHtml(p.nombre)}</div>
-            </div>
-            <div class="mt-3">
-                <div class="flex justify-between items-end">
-                    <div class="flex items-baseline gap-0.5">
-                        <span class="text-xl font-black ${p.stock <= 5 ? 'text-rose-500' : 'text-primary'}">${p.stock}</span>
-                        <span class="text-[8px] font-bold text-slate-400 uppercase">u</span>
+        function renderizar(lista) {
+            document.getElementById('grid-inventario').innerHTML = lista.map(i => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xs font-black uppercase text-slate-800 leading-tight">${i.Producto}</h3>
+                        <p class="text-[10px] text-slate-400 font-bold mt-1">Proveedor: ${i.Proveedor_Habitual || 'Sin Asignar'}</p>
                     </div>
-                    <div class="text-xs font-black text-emerald-500 italic">$${p.pvp.toFixed(2)}</div>
-                </div>
-                <div class="text-[8px] text-slate-400 border-t border-slate-50 mt-2 pt-1.5 truncate font-medium">
-                    📦 ${escapeHtml(p.proveedor)}
-                </div>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
-}
-
-function filtrarProductos() {
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
-    if (!q) {
-        renderizarProductos(inventario);
-    } else {
-        renderizarProductos(inventario.filter(p => 
-            p.nombre.toLowerCase().includes(q) || 
-            p.id.toLowerCase().includes(q) || 
-            p.proveedor.toLowerCase().includes(q)
-        ));
-    }
-}
-
-// ==================== PERSISTENCIA Y ESCRITURA (PROCESAMIENTO) ====================
-async function procesarGuardado() {
-    const id = document.getElementById('prod-id').value;
-    const nombre = document.getElementById('prodNombre').value.trim().toUpperCase();
-    const costo = parseFloat(document.getElementById('prodCosto').value) || 0;
-    const pvp = parseFloat(document.getElementById('prodPvp').value) || 0;
-    const stock = parseInt(document.getElementById('prodStock').value, 10) || 0;
-    const proveedor = document.getElementById('prodProveedor').value;
-    
-    if (!nombre) return alert("⚠️ Se requiere descripción comercial del producto");
-    if (pvp <= 0) return alert("⚠️ El PVP debe ser un valor positivo");
-    if (stock < 0) return alert("⚠️ Las existencias no pueden ser negativas");
-    
-    showLoading(true);
-    
-    // Payload mapeado milimétricamente con las cabeceras de Lógica Láctea - API
-    const params = new URLSearchParams({
-        action: esEdicion ? "editar" : "guardar",
-        pestaesta: "Inventario",
-        ID: esEdicion ? id : `P-${Date.now().toString().slice(-6)}`,
-        Fecha: new Date().toISOString(),
-        Producto: nombre,
-        Stock: stock,
-        Precio_Distribuidor: costo,
-        Precio_Venta: pvp,
-        Ventas: 0,
-        "Proveedor Habitual": proveedor // Corrección de espacio crítico
-    });
-    
-    try {
-        const res = await fetch(`${API_URL}?${params.toString()}`);
-        const result = await res.json();
-        
-        if (result.success || result.resultado === "Éxito") {
-            cerrarModal();
-            await cargarInventario();
-        } else {
-            throw new Error(result.error || "Operación rechazada por el servidor");
+                    <div class="text-right">
+                        <span class="text-xs font-black bg-sky-50 text-sky-700 px-3 py-1.5 rounded-xl border border-sky-100">${i.Stock} Uds</span>
+                        <p class="text-[10px] font-black text-slate-600 mt-2">PVP: $${parseFloat(i.Precio_Venta || 0).toFixed(2)}</p>
+                    </div>
+                </div>`).join('');
         }
-    } catch(e) {
-        alert("❌ Error de sincronización: " + e.message);
-    } finally {
-        showLoading(false);
-    }
-}
-
-// ==================== GENERADOR LOGÍSTICO PDF ====================
-function descargarPDF() {
-    if (!inventario || inventario.length === 0) return alert("❌ No hay registros cargados para exportar");
-    
-    try {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        doc.setFontSize(14);
-        doc.setTextColor(15, 23, 42);
-        doc.text("LÓGICA LÁCTEA - INVENTARIO CONSOLIDADO", 14, 20);
-        
-        doc.setFontSize(8);
-        doc.setTextColor(100, 116, 139);
-        doc.text(`Fecha Reporte: ${new Date().toLocaleString('es-EC')}`, 14, 26);
-        
-        const body = inventario.map(p => [p.id, p.nombre, p.stock, `$ ${p.pvp.toFixed(2)}`, p.proveedor]);
-        
-        doc.autoTable({
-            startY: 32,
-            head: [['ID', 'Descripción Producto', 'Stock', 'PVP', 'Proveedor Habitual']],
-            body: body,
-            theme: 'grid',
-            headStyles: { fillColor: [99, 102, 241], fontSize: 8, fontStyle: 'bold' },
-            styles: { fontSize: 8, cellPadding: 2.5 }
-        });
-        
-        doc.save(`inventario_${Date.now()}.pdf`);
-    } catch(e) {
-        alert("❌ Fallo del motor de empaquetado PDF: " + e.message);
-    }
-}
-
-// ==================== CONTROL DE MODALES ====================
-function abrirModalNuevo() {
-    esEdicion = false;
-    document.getElementById('form-producto').reset();
-    document.getElementById('modal-titulo').innerText = "Nuevo Producto";
-    document.getElementById('prodStock').disabled = false;
-    document.getElementById('modalProducto').classList.add('active');
-}
-
-function abrirModalEditar(nombre) {
-    const p = inventario.find(item => item.nombre === nombre);
-    if (!p) return;
-    
-    esEdicion = true;
-    document.getElementById('modal-titulo').innerText = "Editar Producto";
-    document.getElementById('prod-id').value = p.id;
-    document.getElementById('prodNombre').value = p.nombre;
-    document.getElementById('prodCosto').value = p.costo;
-    document.getElementById('prodPvp').value = p.pvp;
-    document.getElementById('prodStock').value = p.stock;
-    document.getElementById('prodProveedor').value = p.proveedor;
-    
-    document.getElementById('modalProducto').classList.add('active');
-}
-
-function cerrarModal() {
-    document.getElementById('modalProducto').classList.remove('active');
-    document.getElementById('form-producto').reset();
-}
-
-// ==================== ASIGNACIÓN DE DISPARADORES ====================
-document.getElementById('fabBtn').onclick = abrirModalNuevo;
-document.getElementById('btnGuardar').onclick = procesarGuardado;
-document.getElementById('btnPDF').onclick = descargarPDF;
-document.getElementById('btnSync').onclick = () => cargarInventario();
-
-document.querySelectorAll('.nav-item').forEach(btn => {
-    btn.onclick = () => switchView(btn.getAttribute('data-view'));
-});
-
-// ==================== CARGA DE ENTORNO ====================
-window.onload = async () => {
-    await cargarProveedores();
-    await cargarInventario();
-    switchView('inventario');
-};
-</script>
-
+        function filtrar() {
+            const b = document.getElementById('buscador').value.toLowerCase();
+            renderizar(inventario.filter(i => i.Producto.toLowerCase().includes(b)));
+        }
+        window.onload = cargar;
+    </script>
 </body>
 </html>

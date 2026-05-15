@@ -4,167 +4,191 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Clientes - Lógica Láctea</title>
+    <!-- CONEXIÓN A ARCHIVOS RAÍZ -->
     <link rel="stylesheet" href="estilos-lacteos.css">
+    <!-- Tailwind CSS para maquetación ágil -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 para flujos de confirmación y feedback visual -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-20">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
-    <header class="bg-indigo-700 text-white shadow-lg px-6 py-4 flex justify-between items-center">
+    <!-- EL MENÚ SE INYECTA DINÁMICAMENTE DESDE menu-logic.js -->
+    <div id="menu-container"></div>
+
+    <!-- Encabezado del Módulo -->
+    <header class="bg-indigo-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
-            <i data-lucide="users" class="w-8 h-8"></i>
+            <i data-lucide="users" class="w-8 h-8 text-indigo-400"></i>
             <div>
-                <h1 class="text-xl font-bold">Base de Clientes</h1>
-                <p class="text-xs text-indigo-100">Inteligencia Comercial y Fidelización</p>
+                <h1 class="text-xl font-bold tracking-tight">Cartera de Clientes</h1>
+                <p class="text-xs text-indigo-200">Altas, Búsquedas y Control de Cuentas Comerciales</p>
             </div>
         </div>
-        <button onclick="abrirModalCliente()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 border border-indigo-400 transition-all">
-            <i data-lucide="user-plus" class="w-4 h-4"></i> Nuevo Cliente
+        <button onclick="abrirModalCliente()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all border border-indigo-400 shadow-sm active:scale-95">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Registrar Nuevo Cliente
         </button>
     </header>
 
-    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 justify-between">
-            <div class="relative flex-1">
-                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
-                <input type="text" id="buscarCliente" oninput="filtrarClientes()" placeholder="Buscar por nombre, cédula o sector..." class="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+    <!-- Barra de Búsqueda y Estadísticas -->
+    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <!-- Input Reactivo -->
+            <div class="relative w-full sm:w-96">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                </span>
+                <input type="text" id="buscarCliente" oninput="filtrarClientes()" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 bg-slate-50 outline-none" placeholder="Buscar por Nombre, CI o RUC...">
             </div>
-            <div class="flex items-center gap-2 bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-100 text-indigo-700">
-                <i data-lucide="trending-up" class="w-4 h-4"></i>
-                <span class="text-xs font-bold uppercase tracking-tighter">Ranking: Mayor Inversión</span>
+            
+            <!-- Contador Resumen -->
+            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider bg-slate-100 px-3 py-2 rounded-lg border border-slate-200">
+                Total Registrados: <span id="txtContadorClientes" class="text-indigo-700 font-black text-sm ml-1">0</span>
             </div>
         </div>
     </nav>
 
-    <main class="p-4 md:p-8 max-w-7xl mx-auto">
-        <div id="gridClientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="col-span-full text-center py-20 text-slate-400">
-                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-indigo-600"></i>
-                <p>Cargando cartera de clientes y analizando historial de ventas...</p>
+    <!-- Tabla Principal de Clientes -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                            <th class="py-3 px-6">Identificación (CI/RUC)</th>
+                            <th class="py-3 px-4">Razón Social / Nombre</th>
+                            <th class="py-3 px-4">Teléfono de Contacto</th>
+                            <th class="py-3 px-4">Dirección de Despacho</th>
+                            <th class="py-3 px-6 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyClientes" class="divide-y divide-slate-100 font-medium text-slate-700">
+                        <!-- Loader Dinámico -->
+                        <tr>
+                            <td colspan="5" class="text-center py-20 text-slate-400">
+                                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-indigo-600"></i>
+                                <p class="text-xs">Sincronizando registros con la base central de Clientes...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
 
+    <!-- Modal Formulario: Alta de Clientes -->
     <div id="modalCliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
-            <div class="bg-indigo-700 p-4 text-white flex justify-between items-center">
-                <h3 id="modalTitle" class="font-bold">Registrar Cliente</h3>
-                <button onclick="cerrarModalCliente()"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
+            <div class="bg-indigo-950 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4 text-indigo-400"></i> Ficha de Registro Comercial</h3>
+                <button onclick="cerrarModalCliente()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
-            <form id="formCliente" onsubmit="guardarCliente(event)" class="p-6 grid grid-cols-2 gap-4">
-                <div class="col-span-2">
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Nombre Completo *</label>
-                    <input type="text" id="cli_nombre" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
+            <form id="formCliente" onsubmit="guardarClienteNuevo(event)" class="p-6 space-y-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">CI / RUC *</label>
-                    <input type="text" id="cli_id" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Identificación (RUC / Cédula) *</label>
+                    <input type="text" id="cli_id" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 font-mono outline-none" placeholder="Ej: 1723456789001">
                 </div>
+
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Teléfono</label>
-                    <input type="tel" id="cli_tel" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Nombre Completo / Razón Social *</label>
+                    <input type="text" id="cli_nombre" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej: Distribuidora Lácteos Centro">
                 </div>
-                <div class="col-span-2">
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Dirección</label>
-                    <input type="text" id="cli_dir" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Teléfono / Celular</label>
+                        <input type="text" id="cli_telefono" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej: 0987654321">
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Sector</label>
-                    <input type="text" id="cli_sector" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-tight">Dirección de Entrega / Facturación</label>
+                    <textarea id="cli_direccion" rows="2" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Ej: Av. Amazonas N24 y Orellana"></textarea>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Referencia</label>
-                    <input type="text" id="cli_ref" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
-                </div>
-                <div class="col-span-2 flex gap-3 mt-4">
-                    <button type="button" onclick="cerrarModalCliente()" class="flex-1 py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
-                    <button type="submit" class="flex-1 py-2 bg-indigo-700 text-white rounded-lg font-bold hover:bg-indigo-800 shadow-lg">Guardar Cliente</button>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button type="button" onclick="cerrarModalCliente()" class="w-full py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50 text-xs uppercase tracking-wider">Cancelar</button>
+                    <button type="submit" class="w-full py-2 bg-indigo-600 text-white rounded-lg font-bold hover:bg-indigo-700 shadow-md text-xs uppercase tracking-wider">Registrar Ficha</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- SCRIPTS DE CONEXIÓN CON RAÍZ -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
+
     <script>
         let clientesGlobal = [];
-        let modoEdicion = false;
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
             cargarClientes();
         });
 
-        // Carga y Ordenamiento por DINERO (Columna G 'Total' en Ventas sumado por cliente)
+        // Consumo unificado mediante CONFIG.WEB_APP_URL derivado de tu raíz
         async function cargarClientes() {
             try {
-                // Aquí el script de Google debe devolver los clientes con un campo calculado 'totalDinero'
-                const response = await fetch(`${CONFIG.WEB_APP_URL}?action=getClientesConRanking`);
-                const data = await response.json();
+                const res = await fetch(`${CONFIG.WEB_APP_URL}?action=getClientes`);
+                const json = await res.json();
                 
-                if(data.status === "success") {
-                    clientesGlobal = data.data; // Viene ordenado desde el Apps Script
+                if (json.status === "success") {
+                    clientesGlobal = json.data;
                     renderizarClientes(clientesGlobal);
+                    document.getElementById("txtContadorClientes").innerText = clientesGlobal.length;
                 }
-            } catch (e) {
-                console.error("Error cargando clientes", e);
+            } catch (err) {
+                console.error("Error al enlazar base de datos:", err);
+                document.getElementById("tbodyClientes").innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-10 text-rose-500 font-bold">
+                            <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
+                            Fallo al conectar con el archivo api-config.js o Google Sheets.
+                        </td>
+                    </tr>
+                `;
+                lucide.createIcons();
             }
         }
 
+        // Renderizado dinámico de la grilla de contactos
         function renderizarClientes(lista) {
-            const container = document.getElementById("gridClientes");
-            container.innerHTML = "";
+            const tbody = document.getElementById("tbodyClientes");
+            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='5' class='text-center py-10 text-slate-400 italic'>No se encontraron registros en el maestro de clientes.</td></tr>";
 
-            lista.forEach((cli, index) => {
-                const card = document.createElement("div");
-                card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden group";
-                
-                // Badge de Ranking (Solo para los 3 primeros)
-                let badgeRanking = "";
-                if(index === 0) badgeRanking = '<span class="absolute -right-2 -top-2 bg-yellow-400 text-yellow-900 text-[10px] font-black px-4 py-2 rotate-12 shadow-sm">TOP COMPRADOR</span>';
-
-                card.innerHTML = `
-                    ${badgeRanking}
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="bg-indigo-100 p-3 rounded-xl text-indigo-700">
-                            <i data-lucide="user" class="w-6 h-6"></i>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] font-bold text-slate-400 uppercase">Total Invertido</p>
-                            <p class="text-lg font-black text-indigo-700">$${parseFloat(cli.totalVentas || 0).toFixed(2)}</p>
-                        </div>
-                    </div>
-                    <h3 class="font-bold text-slate-800 leading-tight">${cli.nombre}</h3>
-                    <p class="text-xs text-slate-500 mb-3">CI: ${cli.ci_ruc}</p>
-                    
-                    <div class="space-y-2 border-t border-slate-50 pt-3">
-                        <div class="flex items-center gap-2 text-xs text-slate-600">
-                            <i data-lucide="phone" class="w-3.5 h-3.5 text-indigo-400"></i> ${cli.telefono}
-                        </div>
-                        <div class="flex items-center gap-2 text-xs text-slate-600">
-                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400"></i> ${cli.sector} - ${cli.direccion}
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2 mt-5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick="editarCliente('${cli.ci_ruc}')" class="flex-1 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 text-slate-600 py-2 rounded-lg text-xs font-bold transition-colors">EDITAR</button>
-                        <button onclick="verCompras('${cli.ci_ruc}')" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 rounded-lg text-xs font-bold transition-colors">HISTORIAL</button>
-                        <button onclick="eliminarCliente('${cli.ci_ruc}')" class="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            lista.forEach(c => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-indigo-50/20 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3.5 px-6 font-mono font-bold text-indigo-900">${c.ci_ruc}</td>
+                    <td class="py-3.5 px-4 font-black text-slate-800">${c.nombre}</td>
+                    <td class="py-3.5 px-4 text-slate-600">${c.telefono || '<span class="text-slate-300 italic">No registrado</span>'}</td>
+                    <td class="py-3.5 px-4 text-slate-500 max-w-xs truncate" title="${c.direccion || ''}">${c.direccion || '<span class="text-slate-300 italic">No registrada</span>'}</td>
+                    <td class="py-3.5 px-6 text-center">
+                        <button onclick="contactarCliente('${c.telefono}')" class="text-indigo-600 hover:text-indigo-800 p-1 rounded hover:bg-indigo-50" title="Contactar">
+                            <i data-lucide="phone" class="w-4 h-4 mx-auto"></i>
                         </button>
-                    </div>
+                    </td>
                 `;
-                container.appendChild(card);
+                tbody.appendChild(tr);
             });
             lucide.createIcons();
         }
 
-        // Lógica de Modales y CRUD (Simpliicado para el ejemplo)
+        function filtrarClientes() {
+            const query = document.getElementById("buscarCliente").value.toLowerCase();
+            const filtrados = clientesGlobal.filter(c => 
+                c.nombre.toLowerCase().includes(query) || 
+                c.ci_ruc.toLowerCase().includes(query)
+            );
+            renderizarClientes(filtrados);
+        }
+
+        // Ciclo de Vida del Modal
         function abrirModalCliente() {
-            modoEdicion = false;
             document.getElementById("formCliente").reset();
-            document.getElementById("modalTitle").innerText = "Registrar Cliente";
             document.getElementById("modalCliente").classList.remove("hidden");
         }
 
@@ -172,56 +196,52 @@
             document.getElementById("modalCliente").classList.add("hidden");
         }
 
-        async function guardarCliente(e) {
+        // Envío asíncrono POST directo a la API unificada
+        async function guardarClienteNuevo(e) {
             e.preventDefault();
+
             const payload = {
-                action: modoEdicion ? "editarCliente" : "crearCliente",
-                data: {
-                    id: document.getElementById("cli_id").value,
-                    nombre: document.getElementById("cli_nombre").value,
-                    telefono: document.getElementById("cli_tel").value,
-                    direccion: document.getElementById("cli_dir").value,
-                    sector: document.getElementById("cli_sector").value,
-                    referencia: document.getElementById("cli_ref").value,
-                    fecha: new Date().toLocaleDateString()
-                }
+                action: "registrarCliente",
+                ci_ruc: document.getElementById("cli_id").value.trim(),
+                nombre: document.getElementById("cli_nombre").value.trim(),
+                telefono: document.getElementById("cli_telefono").value.trim(),
+                direccion: document.getElementById("cli_direccion").value.trim()
             };
 
-            // Llamada a CONFIG.WEB_APP_URL desde api-config.js
-            Swal.fire({title: 'Procesando...', didOpen: () => Swal.showLoading()});
-            
-            // Simulación de envío
-            setTimeout(() => {
-                Swal.fire('Éxito', 'Cliente guardado en la base Lógica Láctea', 'success');
-                cerrarModalCliente();
-                cargarClientes();
-            }, 1000);
-        }
-
-        function filtrarClientes() {
-            const term = document.getElementById("buscarCliente").value.toLowerCase();
-            const filtrados = clientesGlobal.filter(c => 
-                c.nombre.toLowerCase().includes(term) || 
-                c.ci_ruc.includes(term) || 
-                c.sector.toLowerCase().includes(term)
-            );
-            renderizarClientes(filtrados);
-        }
-
-        function eliminarCliente(id) {
             Swal.fire({
-                title: '¿Eliminar cliente?',
-                text: "Esta acción no se puede deshacer en el Google Sheet.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e11d48',
-                confirmButtonText: 'Sí, eliminar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Lógica de borrado en Apps Script
-                    Swal.fire('Eliminado', 'El cliente ha sido removido.', 'success');
-                }
+                title: 'Registrando en Cartera...',
+                text: 'Dando de alta nueva ficha de cliente...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
             });
+
+            try {
+                await fetch(CONFIG.WEB_APP_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                Swal.fire({
+                    title: 'Cliente Guardado',
+                    text: 'La ficha comercial se ha estructurado con éxito.',
+                    icon: 'success',
+                    confirmButtonColor: '#4f46e5'
+                });
+                
+                cerrarModalCliente();
+                cargarClientes(); // Recarga la grilla completa con el registro fresco
+            } catch (err) {
+                Swal.fire("Error Estructural", "No se pudo sincronizar el alta de cliente.", "error");
+            }
+        }
+
+        function contactarCliente(telefono) {
+            if(!telefono || telefono.includes("No registrado")) {
+                return Swal.fire("Datos Incompletos", "Este cliente no tiene un teléfono celular vinculado.", "info");
+            }
+            window.open(`https://wa.me/${telefono.replace(/[^0-9]/g, '')}`, '_blank');
         }
     </script>
 </body>

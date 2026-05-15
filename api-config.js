@@ -1,34 +1,19 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwlMnyLLaxTX_N9DQ7SldOs2dlJIfwmeNz940tGahfD49Ba134_UBKRFnL7Pyqc3NGn6Q/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxabIAD-6st9we-W1KI6zKPAcFM842eu8RNos23QWAxP0jvzSahbAbEyYgQzAqz0J8c6A/exec";
 
 const DairyAPI = {
 
   async obtenerDatos(pestaña) {
-    try {
-      const res = await fetch(`${API_URL}?pestaña=${encodeURIComponent(pestaña)}`);
-      const json = await res.json();
-      return json.data || [];
-    } catch (err) {
-      console.error("GET ERROR:", err);
-      return [];
-    }
+    const res = await fetch(`${API_URL}?pestaña=${pestaña}`);
+    return (await res.json()).data || [];
   },
 
-  async enviarDatos(payload) {
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
+  async enviarDatos(data) {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
 
-      return await res.json();
-
-    } catch (err) {
-      console.error("POST ERROR:", err);
-      return { error: true };
-    }
+    return await res.json();
   }
 
 };

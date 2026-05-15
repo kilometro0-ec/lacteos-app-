@@ -29,10 +29,11 @@
     </script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fdfaff; -webkit-tap-highlight-color: transparent; }
-        .card-producto { background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; transition: all 0.2s; }
-        .card-producto:active { transform: scale(0.98); background: #faf5ff; }
-        .bloqueado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #fdfaff 0%, #faf5ff 100%); -webkit-tap-highlight-color: transparent; }
+        .card-producto { background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-producto:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(162, 28, 175, 0.1); border-color: #f3e8ff; }
+        .card-producto:active { transform: scale(0.98); }
+        .bloqueado { opacity: 0.4; pointer-events: none; filter: grayscale(0.5); }
         
         .input-sutil { 
             background-color: #f8fafc; 
@@ -48,56 +49,140 @@
         }
         .input-sutil:focus { background: white; border-color: #a21caf; box-shadow: 0 0 0 4px rgba(162, 28, 175, 0.05); }
 
-        #overlay-exito {
-            position: fixed; inset: 0; background: rgba(255,255,255,0.98);
-            display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200;
+        #overlay-exito, #modal-consumo {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center; z-index: 200;
+            backdrop-filter: blur(8px);
+        }
+        .modal-content {
+            background: white;
+            border-radius: 2rem;
+            max-width: 90%;
+            width: 400px;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .check-anim { font-size: 80px; color: #a21caf; animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 
         #carrito-flotante {
             position: fixed; bottom: 100px; left: 16px; right: 16px;
-            background: white; border-radius: 2.5rem;
-            padding: 20px; box-shadow: 0 20px 50px rgba(162, 28, 175, 0.15); 
-            z-index: 100; border: 1px solid rgba(162, 28, 175, 0.1);
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            padding: 20px; 
+            box-shadow: 0 20px 40px -12px rgba(162, 28, 175, 0.2);
+            z-index: 100; 
+            border: 1px solid rgba(162, 28, 175, 0.15);
+            transition: all 0.3s;
         }
         .btn-whatsapp { background: #25d366; color: white; width: 100%; padding: 16px; border-radius: 1.5rem; font-weight: 800; display: none; align-items: center; justify-content: center; gap: 10px; animation: pulse-wa 2s infinite; }
         @keyframes pulse-wa { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
         
         .btn-rapido-cabecera {
-            background: #fef3c7;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
             color: #d97706;
             transition: all 0.2s;
-            width: 40px;
-            height: 40px;
-            border-radius: 1rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 1.25rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2);
         }
-        .btn-rapido-cabecera:active { transform: scale(0.95); background: #fde68a; }
+        .btn-rapido-cabecera:active { transform: scale(0.95); }
+        
+        .selector-cantidad {
+            background: linear-gradient(135deg, #faf5ff 0%, #fdfaff 100%);
+            border: 1px solid #f3e8ff;
+        }
+        
+        .gradient-border {
+            background: linear-gradient(135deg, #a21caf, #db2777);
+            padding: 2px;
+            border-radius: 1.5rem;
+        }
+        
+        .gradient-border > div {
+            background: white;
+            border-radius: 1.5rem;
+        }
     </style>
 </head>
 <body class="pb-96"> 
 
 <!-- Pantalla de Carga/Éxito -->
 <div id="overlay-exito">
-    <span class="material-symbols-outlined check-anim" id="icono-estado">sync</span>
-    <h2 class="text-2xl font-black text-slate-800 mt-4 uppercase tracking-tight" id="titulo-estado">Guardando...</h2>
-    <p class="text-slate-400 font-bold uppercase text-[10px] tracking-widest mt-2" id="p-estado">Sincronizando con la nube</p>
+    <div class="bg-white rounded-3xl p-8 text-center max-w-xs mx-4 shadow-2xl">
+        <span class="material-symbols-outlined check-anim" id="icono-estado">sync</span>
+        <h2 class="text-xl font-black text-slate-800 mt-4" id="titulo-estado">Guardando...</h2>
+        <p class="text-slate-400 font-semibold text-[11px] mt-2" id="p-estado">Sincronizando...</p>
+    </div>
+</div>
+
+<!-- Modal Consumo Interno -->
+<div id="modal-consumo">
+    <div class="modal-content">
+        <div class="gradient-border">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <span class="material-symbols-outlined text-2xl text-amber-600">dining</span>
+                        <h3 class="text-xl font-black text-slate-900 mt-1">Consumo Interno</h3>
+                    </div>
+                    <button onclick="cerrarModalConsumo()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] font-black text-primary uppercase tracking-wider">Producto</label>
+                        <select id="modal-producto" class="input-sutil mt-1">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="text-[10px] font-black text-primary uppercase tracking-wider">Cantidad</label>
+                        <div class="flex items-center gap-3 mt-1">
+                            <button onclick="cambiarCantidadModal(-1)" class="w-12 h-12 bg-fuchsia-50 rounded-xl font-black text-2xl text-primary">-</button>
+                            <input type="number" id="modal-cantidad" value="1" min="1" class="input-sutil text-center text-2xl font-black py-3">
+                            <button onclick="cambiarCantidadModal(1)" class="w-12 h-12 bg-fuchsia-50 rounded-xl font-black text-2xl text-primary">+</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-amber-50 rounded-2xl p-4">
+                        <p class="text-[10px] font-black text-amber-800 uppercase tracking-wider">Información</p>
+                        <p class="text-xs text-amber-700 mt-1">• ID: <span id="modal-id-preview">CONSUMO-001</span></p>
+                        <p class="text-xs text-amber-700">• Estado: INTERNO</p>
+                        <p class="text-xs text-amber-700">• Precio/Total: $0.00</p>
+                    </div>
+                    
+                    <button onclick="confirmarConsumoInterno()" class="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white font-black py-4 rounded-2xl text-sm uppercase tracking-wider shadow-lg shadow-amber-500/30">
+                        Registrar Consumo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Cabecera -->
-<header class="h-20 bg-white/80 backdrop-blur-md border-b border-fuchsia-50 flex justify-between items-center px-6 sticky top-0 z-50">
+<header class="h-20 bg-white/80 backdrop-blur-md border-b border-fuchsia-100 flex justify-between items-center px-6 sticky top-0 z-50">
     <div class="flex flex-col">
-        <h1 class="text-xl font-black text-slate-900 leading-none uppercase tracking-tighter">Nueva Venta</h1>
+        <h1 class="text-xl font-black bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent leading-none uppercase tracking-tighter">Nueva Venta</h1>
         <span id="id-venta-display" class="text-[10px] font-bold text-primary mt-1 tracking-widest">ID: ---</span>
     </div>
     <div class="flex gap-2">
-        <button onclick="ventaRapidaConsumo()" class="btn-rapido-cabecera" title="Venta Rápida (Consumo Interno)">
-            <span class="material-symbols-outlined text-xl">dining</span>
+        <button onclick="abrirModalConsumo()" class="btn-rapido-cabecera" title="Consumo Interno">
+            <span class="material-symbols-outlined text-2xl">dining</span>
         </button>
-        <button onclick="location.reload()" class="w-10 h-10 rounded-2xl bg-fuchsia-50 text-primary flex items-center justify-center">
+        <button onclick="location.reload()" class="w-11 h-11 rounded-2xl bg-fuchsia-50 text-primary flex items-center justify-center transition-all active:scale-95">
             <span class="material-symbols-outlined text-xl">refresh</span>
         </button>
     </div>
@@ -105,37 +190,39 @@
 
 <main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
     <!-- 1. SELECCIÓN DE CLIENTE -->
-    <section class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-fuchsia-50">
-        <div id="vista-seleccion-cliente">
-            <div class="flex justify-between items-center mb-4">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Paso 1: Cliente</span>
-                <button onclick="alternarFormulario(true)" class="text-[10px] font-black text-white bg-secondary px-4 py-1.5 rounded-full uppercase">Nuevo +</button>
+    <section class="gradient-border">
+        <div class="p-6">
+            <div id="vista-seleccion-cliente">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-[10px] font-black text-primary uppercase tracking-widest">Paso 1: Cliente</span>
+                    <button onclick="alternarFormulario(true)" class="text-[10px] font-black text-white bg-gradient-to-r from-secondary to-pink-600 px-4 py-1.5 rounded-full uppercase shadow-md">Nuevo +</button>
+                </div>
+                <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil">
+                    <option value="">-- SELECCIONAR CLIENTE --</option>
+                </select>
             </div>
-            <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil">
-                <option value="">-- SELECCIONAR CLIENTE --</option>
-            </select>
-        </div>
 
-        <!-- Registro Nuevo Cliente -->
-        <div id="vista-nuevo-cliente" class="hidden space-y-3">
-            <p class="text-[10px] font-black text-secondary uppercase italic tracking-widest">Nuevo Registro</p>
-            <input type="hidden" id="reg-id">
-            <input type="text" id="reg-nombre" placeholder="NOMBRE COMPLETO" class="input-sutil uppercase" oninput="this.value = this.value.toUpperCase()">
-            <div class="grid grid-cols-2 gap-2">
-                <input type="number" id="reg-ruc" placeholder="CI / RUC" class="input-sutil">
-                <input type="tel" id="reg-tel" placeholder="TELÉFONO" class="input-sutil">
-            </div>
-            <input type="text" id="reg-dir" placeholder="DIRECCIÓN EXACTA" class="input-sutil">
-            <input type="text" id="reg-ref" placeholder="REFERENCIA" class="input-sutil">
-            <select id="reg-sector" class="input-sutil">
-                <option value="SUR">SUR</option>
-                <option value="NORTE">NORTE</option>
-                <option value="CENTRO">CENTRO</option>
-                <option value="VALLES">VALLES</option>
-            </select>
-            <div class="flex gap-2 pt-2">
-                <button onclick="guardarCliente()" id="btn-guardar-cliente" class="flex-1 bg-primary text-white font-black py-4 rounded-2xl text-xs uppercase shadow-lg shadow-primary/20">Guardar</button>
-                <button onclick="alternarFormulario(false)" class="flex-1 bg-slate-100 text-slate-500 font-black py-4 rounded-2xl text-xs uppercase">Cancelar</button>
+            <!-- Registro Nuevo Cliente -->
+            <div id="vista-nuevo-cliente" class="hidden space-y-3">
+                <p class="text-[10px] font-black text-secondary uppercase italic tracking-widest">Nuevo Registro</p>
+                <input type="hidden" id="reg-id">
+                <input type="text" id="reg-nombre" placeholder="NOMBRE COMPLETO" class="input-sutil uppercase" oninput="this.value = this.value.toUpperCase()">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="number" id="reg-ruc" placeholder="CI / RUC" class="input-sutil">
+                    <input type="tel" id="reg-tel" placeholder="TELÉFONO" class="input-sutil">
+                </div>
+                <input type="text" id="reg-dir" placeholder="DIRECCIÓN EXACTA" class="input-sutil">
+                <input type="text" id="reg-ref" placeholder="REFERENCIA" class="input-sutil">
+                <select id="reg-sector" class="input-sutil">
+                    <option value="SUR">SUR</option>
+                    <option value="NORTE">NORTE</option>
+                    <option value="CENTRO">CENTRO</option>
+                    <option value="VALLES">VALLES</option>
+                </select>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="guardarCliente()" id="btn-guardar-cliente" class="flex-1 bg-primary text-white font-black py-4 rounded-2xl text-xs uppercase shadow-lg shadow-primary/20">Guardar</button>
+                    <button onclick="alternarFormulario(false)" class="flex-1 bg-slate-100 text-slate-500 font-black py-4 rounded-2xl text-xs uppercase">Cancelar</button>
+                </div>
             </div>
         </div>
     </section>
@@ -154,7 +241,7 @@
 
 <!-- 3. CARRITO FLOTANTE -->
 <div id="carrito-flotante" class="bloqueado">
-    <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-4">
+    <div class="flex justify-between items-center mb-4 border-b border-fuchsia-100 pb-4">
         <div class="flex-1">
             <p id="car-cliente" class="text-xs font-black text-primary uppercase italic truncate">Esperando...</p>
             <p id="car-id" class="text-[9px] font-bold text-slate-300">ID: ---</p>
@@ -187,6 +274,8 @@
 let carrito = {}; 
 let productosData = []; 
 let idVenta = "";
+let contadorConsumo = 1;
+let productoSeleccionadoModal = null;
 
 async function iniciar() {
     const d = new Date();
@@ -205,6 +294,13 @@ async function iniciar() {
             sel.innerHTML += `<option value="${c.Nombre}">${c.Nombre}</option>`; 
         });
         renderizar();
+        
+        const consumosExistentes = await DairyAPI.obtenerDatos("Ventas");
+        if(Array.isArray(consumosExistentes)) {
+            const numeros = consumosExistentes.filter(v => v.ID_Venta && v.ID_Venta.startsWith("CONSUMO-"))
+                .map(v => parseInt(v.ID_Venta.split("-")[1]) || 0);
+            contadorConsumo = (Math.max(...numeros, 0)) + 1;
+        }
     } catch(e) { console.error("Error al cargar:", e); }
 }
 
@@ -217,7 +313,6 @@ function activarInterfaz() {
 
 function renderizar() {
     const cont = document.getElementById('contenedor-productos'); cont.innerHTML = "";
-    // Solo mostrar productos con stock > 0
     const productosConStock = productosData.filter(p => (parseInt(p.Stock) || 0) > 0);
     
     productosConStock.forEach(p => {
@@ -228,67 +323,84 @@ function renderizar() {
                 <div class="flex-1">
                     <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${p.Producto}</h4>
                     <div class="flex items-center gap-2 mt-1">
-                        <span class="text-sm font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
-                        <span class="text-[9px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full uppercase">Stock: ${stockActual}</span>
+                        <span class="text-base font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
+                        <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">Stock: ${stockActual}</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 bg-fuchsia-50/50 p-1.5 rounded-2xl border border-fuchsia-50">
+                <div class="selector-cantidad flex items-center gap-2 p-1 rounded-2xl">
                     <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',-1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
-                    <span id="${idCant}" class="w-6 text-center font-black text-lg text-slate-900">0</span>
+                    <span id="${idCant}" class="w-6 text-center font-black text-base text-slate-900">0</span>
                     <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
                 </div>
             </div>`;
     });
     
     if(productosConStock.length === 0) {
-        cont.innerHTML = '<div class="text-center py-8 text-slate-400 italic">No hay productos con stock disponible</div>';
+        cont.innerHTML = '<div class="text-center py-8 text-slate-400 italic bg-white rounded-2xl p-8">🍽️ No hay productos con stock disponible</div>';
     }
 }
 
-async function ventaRapidaConsumo() {
-    const confirmar = confirm(`🍲 ¿Registrar VENTA RÁPIDA (Consumo Interno)?\n\nSelecciona un producto de la lista para registrar consumo interno.\n- ID especial: C-1111\n- Estado: ENTREGADO\n- Total: $0.00`);
-    if(!confirmar) return;
-    
+function abrirModalConsumo() {
     const productosConStock = productosData.filter(p => (parseInt(p.Stock) || 0) > 0);
     if(productosConStock.length === 0) {
-        alert("❌ No hay productos con stock disponible para consumo interno");
+        alert("❌ No hay productos con stock disponible");
         return;
     }
     
-    let listaProductos = "";
-    productosConStock.forEach((p, idx) => {
-        listaProductos += `${idx + 1}. ${p.Producto} (Stock: ${p.Stock})\n`;
+    const select = document.getElementById('modal-producto');
+    select.innerHTML = '<option value="">-- Seleccionar --</option>';
+    productosConStock.forEach(p => {
+        select.innerHTML += `<option value="${p.Producto}" data-stock="${p.Stock}">${p.Producto} (Stock: ${p.Stock})</option>`;
     });
     
-    const seleccion = prompt(`Selecciona el producto para consumo interno:\n\n${listaProductos}\n\nIngresa el número del producto:`);
-    if(!seleccion) return;
+    document.getElementById('modal-cantidad').value = 1;
+    document.getElementById('modal-id-preview').innerText = `CONSUMO-${String(contadorConsumo).padStart(3, '0')}`;
+    document.getElementById('modal-consumo').style.display = 'flex';
+}
+
+function cerrarModalConsumo() {
+    document.getElementById('modal-consumo').style.display = 'none';
+}
+
+function cambiarCantidadModal(delta) {
+    const input = document.getElementById('modal-cantidad');
+    let val = parseInt(input.value) || 1;
+    val = Math.max(1, val + delta);
     
-    const index = parseInt(seleccion) - 1;
-    if(isNaN(index) || index < 0 || index >= productosConStock.length) {
-        alert("❌ Selección inválida");
+    const select = document.getElementById('modal-producto');
+    const selectedOption = select.options[select.selectedIndex];
+    const maxStock = selectedOption ? parseInt(selectedOption.getAttribute('data-stock') || 0) : 0;
+    
+    if(val > maxStock && maxStock > 0) {
+        alert(`Stock máximo disponible: ${maxStock}`);
         return;
     }
     
-    const producto = productosConStock[index].Producto;
+    input.value = val;
+}
+
+async function confirmarConsumoInterno() {
+    const select = document.getElementById('modal-producto');
+    const producto = select.value;
+    const cantidad = parseInt(document.getElementById('modal-cantidad').value);
+    
+    if(!producto || cantidad < 1) {
+        alert("⚠️ Selecciona un producto y una cantidad válida");
+        return;
+    }
+    
     const productoObj = productosData.find(p => p.Producto === producto);
     const stockActual = parseInt(productoObj.Stock) || 0;
     
-    const cantidad = prompt(`🍲 ¿Cuántas unidades de "${producto}" consumir?\nStock disponible: ${stockActual}`, "1");
-    if(!cantidad) return;
-    
-    const cant = parseInt(cantidad);
-    if(isNaN(cant) || cant < 1) {
-        alert("❌ Cantidad inválida");
+    if(cantidad > stockActual) {
+        alert(`❌ Stock insuficiente. Solo hay ${stockActual} unidades.`);
         return;
     }
     
-    if(cant > stockActual) {
-        alert(`❌ Stock insuficiente. Solo hay ${stockActual} unidades disponibles.`);
-        return;
-    }
+    const idConsumo = `CONSUMO-${String(contadorConsumo).padStart(3, '0')}`;
     
-    const confirmar2 = confirm(`✅ Confirmar consumo interno:\n\nProducto: ${producto}\nCantidad: ${cant}\n\nTotal: $0.00\nID Venta: C-1111\nEstado: ENTREGADO`);
-    if(!confirmar2) return;
+    const confirmar = confirm(`✅ Confirmar consumo interno:\n\n📦 Producto: ${producto}\n🔢 Cantidad: ${cantidad}\n🆔 ID: ${idConsumo}\n📊 Estado: INTERNO\n💰 Total: $0.00`);
+    if(!confirmar) return;
     
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
@@ -299,20 +411,21 @@ async function ventaRapidaConsumo() {
     try {
         await DairyAPI.enviarDatos({ 
             pestaña: "Ventas",
-            ID_Venta: "C-1111",
+            ID_Venta: idConsumo,
             Cliente: "CONSUMO_INTERNO", 
             Producto: producto, 
-            Cantidad: cant, 
-            Precio_PVP: parseFloat(productoObj.Precio_Venta), 
+            Cantidad: cantidad, 
+            Precio_PVP: 0,
             Fecha_Entrega: new Date().toISOString().split('T')[0],
-            Estado_Entrega: "ENTREGADO",
+            Estado_Entrega: "INTERNO",
             Total: 0
         });
         
-        productoObj.Stock = stockActual - cant;
-        
+        productoObj.Stock = stockActual - cantidad;
         const indexProd = productosData.findIndex(p => p.Producto === producto);
-        if(indexProd !== -1) productosData[indexProd].Stock = stockActual - cant;
+        if(indexProd !== -1) productosData[indexProd].Stock = stockActual - cantidad;
+        
+        contadorConsumo++;
         
         document.getElementById('icono-estado').classList.remove('animate-spin');
         document.getElementById('icono-estado').innerHTML = "check_circle";
@@ -320,9 +433,10 @@ async function ventaRapidaConsumo() {
         
         setTimeout(() => {
             overlay.style.display = 'none';
+            cerrarModalConsumo();
             renderizar();
             actualizarCarrito();
-            alert(`✅ Consumo interno registrado:\n- Producto: ${producto}\n- Cantidad: ${cant}\n- ID: C-1111\n- Estado: ENTREGADO`);
+            alert(`✅ Consumo interno registrado:\n- ID: ${idConsumo}\n- Producto: ${producto}\n- Cantidad: ${cantidad}\n- Estado: INTERNO`);
         }, 1000);
         
     } catch(e) { 
@@ -352,10 +466,10 @@ function actualizarCarrito() {
             const p = productosData.find(x => x.Producto === n);
             const sub = (carrito[n] * parseFloat(p.Precio_Venta));
             t += sub; items += carrito[n];
-            html += `<div class="flex justify-between py-1 border-b border-fuchsia-50 last:border-0"><span>${n} (x${carrito[n]})</span><span class="text-slate-900">$${sub.toFixed(2)}</span></div>`;
+            html += `<div class="flex justify-between py-1 border-b border-fuchsia-100 last:border-0"><span class="font-bold">${n} (x${carrito[n]})</span><span class="font-black text-primary">$${sub.toFixed(2)}</span></div>`;
         }
     });
-    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-200 py-2 italic">Sin productos elegidos</p>';
+    document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-300 py-2 italic font-medium">✨ Sin productos elegidos</p>';
     document.getElementById('car-total').innerText = `$${t.toFixed(2)}`;
     document.getElementById('car-items').innerText = `${items} Unidades`;
 }
@@ -381,7 +495,7 @@ async function procesarVenta() {
                     Cliente: cli, 
                     Producto: n, 
                     Cantidad: carrito[n], 
-                    Precio_PVP: p.Precio_Venta, 
+                    Precio_PVP: parseFloat(p.Precio_Venta), 
                     Fecha_Entrega: fec,
                     Estado_Entrega: "PENDIENTE"
                 });
@@ -433,7 +547,7 @@ async function guardarCliente() {
     };
 
     try {
-        const res = await DairyAPI.enviarDatos(data);
+        await DairyAPI.enviarDatos(data);
         alert("✅ CLIENTE REGISTRADO");
         location.reload();
     } catch(e) { alert("Error al registrar"); btn.disabled = false; btn.innerText = "Guardar"; }

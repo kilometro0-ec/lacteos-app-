@@ -397,7 +397,7 @@
             }
         }
 
-        // ❌ ELIMINACIÓN DE FILA INTEGRAL POR ID SKU
+        // ❌ ELIMINACIÓN DE FILA INTEGRAL POR ID SKU (Corregida y unificada)
         function eliminarProductoIntegridad(idProducto) {
             Swal.fire({
                 title: '¿Eliminar Fila de Raíz?',
@@ -411,12 +411,15 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     Swal.fire({ title: 'Borrando registro...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+                    
+                    const payload = { 
+                        pestana: "Inventario",
+                        accion: "eliminar", 
+                        ID: idProducto 
+                    };
+
                     try {
-                        await DairyAPI.guardarDatos("Inventario", { 
-                            pestana: "Inventario", 
-                            accion: "eliminar", 
-                            ID: idProducto 
-                        });
+                        await DairyAPI.guardarDatos("Inventario", payload);
                         Swal.fire('Eliminado con éxito', 'La fila fue removida del libro de cálculo.', 'success');
                         cargarInventario();
                     } catch (err) {

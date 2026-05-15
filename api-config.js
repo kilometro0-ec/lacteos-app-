@@ -4,7 +4,7 @@
 // ============================================================
 
 // ⚠️ ACTUALIZA ESTA URL CON LA QUE OBTENGAS DESPUÉS DE PUBLICAR
-const API_BASE_URL = "https://script.google.com/macros/s/AKfycbyT0a-XauUheOL3hp-gwYkBGhLGbswZI95AfluOaqJlU7C6hD054_vPveuEXOKbpSgo6g/exec";
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbzZs1vjmrcLET3Wwfwh4NfsfCd84SvmzkPbPY4a59TH9PRQkJryZ2hvnCHpooWOD-u4EQ/exec";
 
 const DairyAPI = {
     // ========== GET: Obtener datos ==========

@@ -1,88 +1,338 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Kardex de Inventario | Lógica Láctea</title>
-    <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <link rel="stylesheet" href="estilos-lacteos.css?v=1.4">
-    <script src="api-config.js?v=1.4"></script>
-    <script src="menu-logic.js?v=1.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { primary: '#0284c7', outline: '#e2e8f0', surface: '#ffffff', textPrimary: '#1e293b' }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .sky-header { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Inventario - Lógica Láctea</title>
+    <!-- Tailwind CSS para el diseño -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 para alertas e inputs en modales -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="pb-32 bg-slate-50 text-slate-800">
-    <div id="loading-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center">
-        <div class="relative flex items-center justify-center">
-            <div class="absolute w-16 h-16 border-4 border-sky-100 border-t-sky-700 rounded-full animate-spin"></div>
-            <span class="material-symbols-outlined text-2xl text-sky-700 font-bold">inventory</span>
-        </div>
-        <p class="text-[10px] font-black uppercase tracking-widest text-sky-800 mt-6 animate-pulse">Cargando Kardex...</p>
-    </div>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 sky-header shadow-md text-white">
-        <div>
-            <h1 class="text-[9px] font-black text-sky-200 uppercase tracking-widest leading-none">Almacén Central</h1>
-            <h2 class="text-base font-black uppercase tracking-tight mt-0.5">Kardex de Inventario</h2>
+    <!-- Encabezado Principal -->
+    <header class="bg-sky-600 text-white shadow-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="boxes" class="w-8 h-8"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Kardex & Control de Inventario</h1>
+                <p class="text-xs text-sky-100">Monitoreo de Stock y Creación de Catálogo</p>
+            </div>
         </div>
-        <span class="material-symbols-outlined text-2xl">grid_view</span>
+        <button onclick="abrirModalNuevoProducto()" class="bg-sky-700 hover:bg-sky-800 text-white text-xs font-bold px-4 py-2.5 rounded-lg border border-sky-500 shadow-sm flex items-center gap-2 transition-all active:scale-95">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Nuevo Producto
+        </button>
     </header>
 
-    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
-        <div class="relative">
-            <span class="material-symbols-outlined absolute left-4 top-3.5 text-sky-600">search</span>
-            <input type="text" id="buscador" oninput="filtrar()" placeholder="Buscar producto en stock..." class="w-full rounded-2xl border-none shadow-sm py-3.5 pl-12 text-xs font-bold focus:ring-2 focus:ring-sky-600/20 bg-white">
+    <!-- Barra de Herramientas y Filtros -->
+    <div class="bg-white border-b border-slate-200 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row gap-4 justify-between items-center">
+            <!-- Buscador -->
+            <div class="relative w-full sm:w-96">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                </span>
+                <input type="text" id="txtBuscar" oninput="filtrarInventario()" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 bg-slate-50" placeholder="Buscar por Nombre o ID de producto...">
+            </div>
+            
+            <!-- Contadores de Alerta Rápidos -->
+            <div class="flex gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                <span id="badgeTotalItems" class="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap">Cargando...</span>
+                <span id="badgeStockCritico" class="bg-rose-100 text-rose-700 text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap">Crítico: -</span>
+                <span id="badgeStockBajo" class="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full whitespace-nowrap">Bajo: -</span>
+            </div>
         </div>
-        <div id="grid-inventario" class="grid gap-3"></div>
-    </main>
-    
-    <nav id="menu-container" class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200"></nav>
+    </div>
 
-    <script>
-        let inventario = [];
-        async function cargar() {
-            try {
-                inventario = await DairyAPI.obtenerDatos("Inventario");
-                renderizar(inventario);
-            } catch(e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = "none"; }
-        }
-        function renderizar(lista) {
-            document.getElementById('grid-inventario').innerHTML = lista.map(i => {
-                const stockNum = parseFloat(i.Stock || 0);
-                const esCritico = stockNum <= 5;
-                const badgeClass = esCritico ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : 'bg-sky-50 text-sky-700 border-sky-100';
-                return `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+    <!-- Contenedor de Tabla de Inventariado -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 text-[11px] font-bold uppercase tracking-wider">
+                            <th class="py-4 px-6">Detalles del Producto</th>
+                            <th class="py-4 px-6">Proveedor Habitual</th>
+                            <th class="py-4 px-6 text-center">Costo Distrib.</th>
+                            <th class="py-4 px-6 text-center">PVP Venta</th>
+                            <th class="py-4 px-6 text-center">Historial Ventas</th>
+                            <th class="py-4 px-6 text-center">Stock Disponible</th>
+                            <th class="py-4 px-6 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaInventario" class="divide-y divide-slate-100 text-sm">
+                        <!-- Animación de Carga -->
+                        <tr>
+                            <td colspan="7" class="text-center py-12 text-slate-400 animate-pulse">
+                                <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto mb-2 text-sky-600"></i>
+                                Sincronizando existencias de almacén...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modales Ocultos usando estructuras nativas de Tailwind -->
+    <!-- 1. Modal para crear Nuevo Producto -->
+    <div id="modalProducto" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+                <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="layer-plus" class="text-sky-600"></i> Catálogar Nuevo Ítem
+                </h3>
+                <button onclick="cerrarModalNuevoProducto()" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form id="formNuevoProducto" onsubmit="guardarNuevoProducto(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nombre del Producto *</label>
+                    <input type="text" id="addProducto" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500/20 focus:outline-none" placeholder="Ej: Queso Mozzarella 1Kg">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <h3 class="text-xs font-black uppercase text-slate-800 leading-tight">${i.Producto}</h3>
-                        <p class="text-[10px] text-slate-400 font-bold mt-1">Habitual: ${i.Proveedor_Habitual || 'Distribuidor Central'}</p>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Costo ($) *</label>
+                        <input type="number" step="0.01" id="addCosto" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500/20 focus:outline-none" placeholder="0.00">
                     </div>
-                    <div class="text-right">
-                        <span class="text-xs font-black px-3 py-1.5 rounded-xl border ${badgeClass}">${stockNum} Uds</span>
-                        <p class="text-[10px] font-black text-slate-600 mt-2">PVP: $${parseFloat(i.Precio_Venta || 0).toFixed(2)}</p>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">PVP Venta ($) *</label>
+                        <input type="number" step="0.01" id="addPvp" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500/20 focus:outline-none" placeholder="0.00">
                     </div>
-                </div>`;
-            }).join('');
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Proveedor Habitual</label>
+                    <input type="text" id="addProveedor" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500/20 focus:outline-none" placeholder="Ej: Distribuidora del Norte">
+                </div>
+                <div class="bg-amber-50 text-amber-800 text-[11px] p-3 rounded-lg border border-amber-100 font-medium">
+                    ⚠️ Nota: Por seguridad y trazabilidad, el stock inicial de todo producto nuevo se registrará en **0**. Deberá ingresar existencias mediante una compra formal.
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="cerrarModalNuevoProducto()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-sm font-semibold shadow-sm">Registrar Ítem</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script de Integración con Google Sheets API -->
+    <script>
+        // URL de tu Web App de Google Apps Script
+        const WEB_APP_URL = "https://script.google.com/macros/s/TU_ID_DESPLIEGUE/exec";
+
+        let inventarioGlobal = [];
+
+        // Umbrales para los semáforos de stock
+        const LIMITE_CRITICO = 5;
+        const LIMITE_BAJO = 15;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            cargarInventario();
+        });
+
+        // Cargar datos desde la pestaña 'Inventario'
+        function cargarInventario() {
+            fetch(`${WEB_APP_URL}?action=getInventario`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        inventarioGlobal = data.data;
+                        renderizarTabla(inventarioGlobal);
+                        actualizarKpis(inventarioGlobal);
+                    } else {
+                        mostrarAlerta("Error", "No se pudo sincronizar el inventario.", "error");
+                    }
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    mostrarAlerta("Error", "Fallo de conexión con el servidor Sheets.", "error");
+                });
         }
-        function filtrar() {
-            const b = document.getElementById('buscador').value.toLowerCase();
-            renderizar(inventario.filter(i => i.Producto.toLowerCase().includes(b)));
+
+        // Renderiza las filas de la tabla de forma dinámica
+        function renderizarTabla(lista) {
+            const tbody = document.getElementById("tablaInventario");
+            tbody.innerHTML = "";
+
+            if (lista.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-slate-400">No se encontraron productos en almacén.</td></tr>`;
+                return;
+            }
+
+            lista.forEach(item => {
+                const stockNum = parseInt(item.stock) || 0;
+                
+                // Determinar clase de semáforo de stock
+                let semaforoClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+                if (stockNum <= LIMITE_CRITICO) {
+                    semaforoClass = "bg-rose-50 text-rose-700 border-rose-200 animate-pulse font-black";
+                } else if (stockNum <= LIMITE_BAJO) {
+                    semaforoClass = "bg-amber-50 text-amber-700 border-amber-200 font-bold";
+                }
+
+                const fila = document.createElement("tr");
+                fila.className = "hover:bg-slate-50/80 transition-colors";
+                fila.innerHTML = `
+                    <td class="py-4 px-6">
+                        <div class="font-bold text-slate-800">${item.producto}</div>
+                        <div class="text-[11px] text-slate-400 font-medium">ID: ${item.id} | Reg: ${item.fecha}</div>
+                    </td>
+                    <td class="py-4 px-6 text-slate-600 font-medium">${item.proveedorHabitual || 'S/N'}</td>
+                    <td class="py-4 px-6 text-center font-bold text-slate-700">$${parseFloat(item.precioDistribuidor || 0).toFixed(2)}</td>
+                    <td class="py-4 px-6 text-center font-bold text-sky-700">$${parseFloat(item.precioVenta || 0).toFixed(2)}</td>
+                    <td class="py-4 px-6 text-center text-slate-500 font-semibold">${item.ventas || 0} Uds</td>
+                    <td class="py-4 px-6 text-center">
+                        <span class="px-3 py-1 rounded-full border text-xs ${semaforoClass}">
+                            ${stockNum} Uds
+                        </span>
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        <button onclick="ejecutarAjusteManual('${item.id}', '${item.producto}', ${stockNum})" class="text-slate-400 hover:text-sky-600 p-1.5 rounded-lg hover:bg-sky-50 transition-colors" title="Ajuste manual de stock">
+                            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(fila);
+            });
+            lucide.createIcons();
         }
-        window.onload = cargar;
+
+        // Calcula KPIs superiores
+        function actualizarKpis(lista) {
+            document.getElementById("badgeTotalItems").innerText = `Total Ítems: ${lista.length}`;
+            
+            const criticos = lista.filter(i => (parseInt(i.stock) || 0) <= LIMITE_CRITICO).length;
+            const bajos = lista.filter(i => (parseInt(i.stock) || 0) > LIMITE_CRITICO && (parseInt(i.stock) || 0) <= LIMITE_BAJO).length;
+
+            document.getElementById("badgeStockCritico").innerText = `Crítico (≤${LIMITE_CRITICO}): ${criticos}`;
+            document.getElementById("badgeStockBajo").innerText = `Bajo (≤${LIMITE_BAJO}): ${bajos}`;
+        }
+
+        // Barra de búsqueda e indexación
+        function filtrarInventario() {
+            const query = document.getElementById("txtBuscar").value.toLowerCase();
+            const filtrados = inventarioGlobal.filter(i => 
+                i.producto.toLowerCase().includes(query) || 
+                i.id.toLowerCase().includes(query)
+            );
+            renderizarTabla(filtrados);
+        }
+
+        // Modales nativos controladores
+        function abrirModalNuevoProducto() { document.getElementById("modalProducto").classList.remove("hidden"); }
+        function cerrarModalNuevoProducto() {
+            document.getElementById("modalProducto").classList.add("hidden");
+            document.getElementById("formNuevoProducto").reset();
+        }
+
+        // Envía el nuevo registro al backend inicializado en 0
+        function guardarNuevoProducto(e) {
+            e.preventDefault();
+            
+            Swal.fire({
+                title: '¿Registrar Producto?',
+                text: "Se añadirá el producto al catálogo general con stock inicial en 0.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#0284c7',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    mostrarPantallaCarga("Guardando en catálogo...");
+
+                    const payload = {
+                        action: "crearProducto",
+                        fecha: new Date().toISOString().split('T')[0],
+                        id: "PROD-" + Date.now().toString().slice(-5),
+                        producto: document.getElementById("addProducto").value.trim(),
+                        precioDistribuidor: parseFloat(document.getElementById("addCosto").value),
+                        precioVenta: parseFloat(document.getElementById("addPvp").value),
+                        proveedorHabitual: document.getElementById("addProveedor").value.trim()
+                    };
+
+                    fetch(WEB_APP_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(() => {
+                        mostrarAlerta("¡Creado!", "Producto catalogado correctamente con Stock: 0.", "success");
+                        cerrarModalNuevoProducto();
+                        cargarInventario();
+                    })
+                    .catch(() => mostrarAlerta("Error", "No se pudo procesar la inserción.", "error"));
+                }
+            });
+        }
+
+        // Función interactiva de ajuste manual (mermas, pérdidas, etc.) usando prompt de SweetAlert2
+        function ejecutarAjusteManual(idProducto, nombre, stockActual) {
+            Swal.fire({
+                title: 'Ajuste Manual de Inventario',
+                html: `
+                    <div class="text-left text-xs space-y-2">
+                        <p><strong>Producto:</strong> ${nombre}</p>
+                        <p><strong>Existencia Actual:</strong> ${stockActual} unidades</p>
+                        <label class="block font-bold text-slate-600 mt-4 uppercase">Nueva cantidad física en estantería:</label>
+                    </div>`,
+                input: 'number',
+                inputValue: stockActual,
+                inputAttributes: { min: 0, step: 1 },
+                showCancelButton: true,
+                confirmButtonColor: '#0284c7',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Guardar Ajuste',
+                cancelButtonText: 'Cancelar',
+                inputValidator: (value) => {
+                    if (!value || parseInt(value) < 0) {
+                        return 'Debe ingresar una cantidad válida igual o mayor a cero.';
+                    }
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const nuevoStock = parseInt(result.value);
+                    if (nuevoStock === stockActual) return; // No hay cambios
+
+                    mostrarPantallaCarga("Actualizando existencias...");
+
+                    const payload = {
+                        action: "ajustarStockManual",
+                        id: idProducto,
+                        nuevoStock: nuevoStock,
+                        observaciones: `Ajuste manual de control interno de inventario.`
+                    };
+
+                    fetch(WEB_APP_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(() => {
+                        mostrarAlerta("Ajustado", "El stock físico se ha corregido con éxito.", "success");
+                        cargarInventario();
+                    })
+                    .catch(() => mostrarAlerta("Error", "Error al procesar el ajuste en Sheets.", "error"));
+                }
+            });
+        }
+
+        // Helpers visuales
+        function mostrarPantallaCarga(msg) {
+            Swal.fire({ title: 'Procesando...', text: msg, allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+        }
+
+        function mostrarAlerta(title, text, icon) {
+            Swal.fire({ title: title, text: text, icon: icon, confirmButtonColor: '#0284c7' });
+        }
     </script>
 </body>
 </html>

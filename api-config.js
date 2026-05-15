@@ -1,63 +1,61 @@
-const API_URL = "https://script.google.com/macros/s/AKfycby7NpAxUYXx4LQ2E7RRXKX8-puxQYVJXpzBFSBFvNf0q7vAXw3ojUE1trpipo5QAaLCRQ/exec";
+const API_URL =
+"https://script.google.com/macros/s/AKfycbx-Go0Cfxm59LOdcahYSXsEKMRkoXA8YGi1-Pg2z4RLcrhoGMfKEkJjHO5hx0xAsmcSAQ/exec";
 
 const DairyAPI = {
 
-  // Obtener datos de una pestaña
-  async obtenerDatos(pestaña) {
-    try {
-      const res = await fetch(`${API_URL}?pestaña=${pestaña}`);
-      const json = await res.json();
-      return json.data || [];
-    } catch (error) {
-      console.error("Error en obtenerDatos:", error);
-      throw error;
-    }
-  },
+async obtenerDatos(pestaña){
 
-  // Enviar cualquier operación al backend
-  async enviarDatos(data) {
-    try {
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data)
-      });
-      return await res.json();
-    } catch (error) {
-      console.error("Error en enviarDatos:", error);
-      throw error;
-    }
-  },
+const res = await fetch(
+`${API_URL}?action=obtener&pestaña=${encodeURIComponent(pestaña)}`
+);
 
-  // Crear un nuevo registro
-  async crearDato(pestaña, datos) {
-    const payload = {
-      pestaña: pestaña,
-      ...datos
-    };
-    return await this.enviarDatos(payload);
-  },
+return await res.json();
 
-  // Actualizar un registro existente
-  async actualizarDato(pestaña, id, datos) {
-    const payload = {
-      pestaña: pestaña,
-      ID: id,
-      ...datos
-    };
-    return await this.enviarDatos(payload);
-  },
+},
 
-  // Eliminar un registro
-  async eliminarDato(pestaña, id) {
-    const payload = {
-      pestaña: pestaña,
-      accion: "ELIMINAR",
-      ID: id
-    };
-    return await this.enviarDatos(payload);
-  }
+async enviarDatos(data){
+
+const res = await fetch(API_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"guardar",
+...data
+})
+});
+
+return await res.json();
+
+},
+
+async actualizarDato(pestaña,id,datos){
+
+const res = await fetch(API_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"actualizar",
+pestaña,
+id,
+datos
+})
+});
+
+return await res.json();
+
+},
+
+async eliminarDato(pestaña,id){
+
+const res = await fetch(API_URL,{
+method:"POST",
+body:JSON.stringify({
+action:"eliminar",
+pestaña,
+id
+})
+});
+
+return await res.json();
+
+}
 
 };

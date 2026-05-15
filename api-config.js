@@ -1,92 +1,64 @@
-// api-config.js - VERSIÓN DEFINITIVA (solo GET, sin errores)
-const API_URL = 'https://script.google.com/macros/s/AKfycbww38Ya-F4EIPDv-xN1cnj8bujTGlM6dVWOF_sTn9SGbp5krZ6pDmwAjIlcWGTl3000Vw/exec';
+/**
+ * LÓGICA LÁCTEA - Motor de Configuración y Conectividad API
+ * Ecosistema de Conexión Unificada con Google Sheets
+ */
+
+const DairyConfig = {
+    // Reemplazar por el ID de implementación web generado en Google Apps Script
+    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzwnBqdfJf5NaUmAkJiq9Zl_5mek8rYMcj2NDkD61GZIFzgrn--7MNRHcNGt6PeZw6-Rw/exec",
+    VERSION: "1.4"
+};
 
 const DairyAPI = {
-    // Leer datos
-    async obtenerDatos(pestaña) {
+    /**
+     * Obtiene todos los registros de una hoja específica de cálculo.
+     * @param {string} pestana Nombre exacto de la pestaña (Clientes, Ventas, Proveedores, Compras, Inventario)
+     * @returns {Promise<Array>} Array de objetos con las filas de la hoja
+     */
+    async obtenerDatos(pestana) {
+        const url = `${DairyConfig.SCRIPT_URL}?pestana=${encodeURIComponent(pestana)}&accion=leer`;
         try {
-            const url = `${API_URL}?action=obtener&pestaña=${encodeURIComponent(pestaña)}`;
-            const response = await fetch(url);
-            const result = await response.json();
-            return result.data || [];
+            const response = await fetch(url, {
+                method: "GET",
+                mode: "cors",
+                headers: { "Content-Type": "text/plain" }
+            });
+            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+            return await response.json();
         } catch (error) {
-            console.error("Error en obtenerDatos:", error);
-            return [];
+            console.error(`Error al leer datos de la pestaña [${pestana}]:`, error);
+            throw error;
         }
     },
 
-    // Guardar registro (usando GET)
-    async guardarRegistro(pestaña, datos) {
+    /**
+     * Envía mutaciones y procesos transaccionales al servidor.
+     * @param {string} pestana Nombre exacto de la pestaña objetivo.
+     * @param {Object} payload Datos de la operación incluyendo la acción y variables.
+     * @returns {Promise<any>} Respuesta del servidor Apps Script
+     */
+    async guardarDatos(pestana, payload) {
         try {
-            let params = new URLSearchParams();
-            params.append('action', 'guardar');
-            params.append('pestaña', pestaña);
-            
-            // Agregar todos los campos
-            Object.keys(datos).forEach(key => {
-                if(datos[key] !== undefined && datos[key] !== null) {
-                    params.append(key, datos[key]);
-                }
+            // Estructuramos el envío mediante el método POST
+            const response = await fetch(DairyConfig.SCRIPT_URL, {
+                method: "POST",
+                mode: "cors",
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify(payload)
             });
             
-            const url = `${API_URL}?${params.toString()}`;
-            const response = await fetch(url);
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error("Error en guardarRegistro:", error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    // Actualizar registro (usando GET)
-    async actualizarRegistro(pestaña, ID, datos) {
-        try {
-            let params = new URLSearchParams();
-            params.append('action', 'actualizar');
-            params.append('pestaña', pestaña);
-            params.append('ID', ID);
+            if (!response.ok) throw new Error(`Error HTTP en servidor: ${response.status}`);
             
-            // Agregar todos los campos a actualizar
-            Object.keys(datos).forEach(key => {
-                if(datos[key] !== undefined && datos[key] !== null) {
-                    params.append(key, datos[key]);
-                }
-            });
-            
-            const url = `${API_URL}?${params.toString()}`;
-            const response = await fetch(url);
-            const result = await response.json();
-            return result;
+            const textoRespuesta = await response.text();
+            try {
+                return JSON.parse(textoRespuesta);
+            } catch (e) {
+                // Si el servidor retorna un string plano como "OK"
+                return textoRespuesta;
+            }
         } catch (error) {
-            console.error("Error en actualizarRegistro:", error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    // Eliminar registro (usando GET)
-    async eliminarRegistro(pestaña, ID) {
-        try {
-            const url = `${API_URL}?action=eliminar&pestaña=${encodeURIComponent(pestaña)}&ID=${encodeURIComponent(ID)}`;
-            const response = await fetch(url);
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error("Error en eliminarRegistro:", error);
-            return { success: false, error: error.message };
-        }
-    },
-
-    // Obtener último ID
-    async obtenerUltimoID(pestaña) {
-        try {
-            const url = `${API_URL}?action=lastID&pestaña=${encodeURIComponent(pestaña)}`;
-            const response = await fetch(url);
-            const result = await response.json();
-            return result;
-        } catch (error) {
-            console.error("Error en obtenerUltimoID:", error);
-            return { last: 0, nextId: "P-001" };
+            console.error(`Error al guardar datos en la pestaña [${pestana}]:`, error);
+            throw error;
         }
     }
 };

@@ -4,23 +4,42 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Kardex de Inventario | Lógica Láctea</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link rel="stylesheet" href="estilos-lacteos.css?v=1.4">
     <script src="api-config.js?v=1.4"></script>
     <script src="menu-logic.js?v=1.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
-        tailwind.config = { theme: { extend: { colors: { primary: '#0284c7' } } } }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: '#0284c7', outline: '#e2e8f0', surface: '#ffffff', textPrimary: '#1e293b' }
+                }
+            }
+        }
     </script>
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .sky-header { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+    </style>
 </head>
 <body class="pb-32 bg-slate-50 text-slate-800">
-    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 bg-gradient-to-r from-sky-700 to-sky-900 text-white shadow-md">
-        <div>
-            <h1 class="text-[9px] font-black text-sky-200 uppercase tracking-widest">Almacén Central</h1>
-            <h2 class="text-base font-black uppercase tracking-tight">Kardex de Inventario</h2>
+    <div id="loading-overlay" class="fixed inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center">
+        <div class="relative flex items-center justify-center">
+            <div class="absolute w-16 h-16 border-4 border-sky-100 border-t-sky-700 rounded-full animate-spin"></div>
+            <span class="material-symbols-outlined text-2xl text-sky-700 font-bold">inventory</span>
         </div>
-        <span class="material-symbols-outlined text-2xl">inventory</span>
+        <p class="text-[10px] font-black uppercase tracking-widest text-sky-800 mt-6 animate-pulse">Cargando Kardex...</p>
+    </div>
+
+    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 sky-header shadow-md text-white">
+        <div>
+            <h1 class="text-[9px] font-black text-sky-200 uppercase tracking-widest leading-none">Almacén Central</h1>
+            <h2 class="text-base font-black uppercase tracking-tight mt-0.5">Kardex de Inventario</h2>
+        </div>
+        <span class="material-symbols-outlined text-2xl">grid_view</span>
     </header>
 
     <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
@@ -30,7 +49,8 @@
         </div>
         <div id="grid-inventario" class="grid gap-3"></div>
     </main>
-    <nav id="menu-container"></nav>
+    
+    <nav id="menu-container" class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200"></nav>
 
     <script>
         let inventario = [];
@@ -38,20 +58,25 @@
             try {
                 inventario = await DairyAPI.obtenerDatos("Inventario");
                 renderizar(inventario);
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error(e); } finally { document.getElementById('loading-overlay').style.display = "none"; }
         }
         function renderizar(lista) {
-            document.getElementById('grid-inventario').innerHTML = lista.map(i => `
+            document.getElementById('grid-inventario').innerHTML = lista.map(i => {
+                const stockNum = parseFloat(i.Stock || 0);
+                const esCritico = stockNum <= 5;
+                const badgeClass = esCritico ? 'bg-red-50 text-red-600 border-red-100 animate-pulse' : 'bg-sky-50 text-sky-700 border-sky-100';
+                return `
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
                     <div>
                         <h3 class="text-xs font-black uppercase text-slate-800 leading-tight">${i.Producto}</h3>
-                        <p class="text-[10px] text-slate-400 font-bold mt-1">Proveedor: ${i.Proveedor_Habitual || 'Sin Asignar'}</p>
+                        <p class="text-[10px] text-slate-400 font-bold mt-1">Habitual: ${i.Proveedor_Habitual || 'Distribuidor Central'}</p>
                     </div>
                     <div class="text-right">
-                        <span class="text-xs font-black bg-sky-50 text-sky-700 px-3 py-1.5 rounded-xl border border-sky-100">${i.Stock} Uds</span>
+                        <span class="text-xs font-black px-3 py-1.5 rounded-xl border ${badgeClass}">${stockNum} Uds</span>
                         <p class="text-[10px] font-black text-slate-600 mt-2">PVP: $${parseFloat(i.Precio_Venta || 0).toFixed(2)}</p>
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
         }
         function filtrar() {
             const b = document.getElementById('buscador').value.toLowerCase();

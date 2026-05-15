@@ -1,5 +1,5 @@
 // api-config.js - VERSIÓN DEFINITIVA (solo GET, sin errores)
-const API_URL = 'https://script.google.com/macros/s/TU_ID_AQUI/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbww38Ya-F4EIPDv-xN1cnj8bujTGlM6dVWOF_sTn9SGbp5krZ6pDmwAjIlcWGTl3000Vw/exec';
 
 const DairyAPI = {
     // Leer datos

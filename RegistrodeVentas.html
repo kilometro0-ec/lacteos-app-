@@ -29,7 +29,7 @@
     </script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #fdfaff 0%, #faf5ff 100%); -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #fdfaff 0%, #faf5ff 100%); -webkit-tap-highlight-color: transparent; padding-bottom: 85px !important; }
         .card-producto { background: white; border-radius: 1.5rem; border: 1px solid #f1f5f9; padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .card-producto:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(162, 28, 175, 0.1); border-color: #f3e8ff; }
         .card-producto:active { transform: scale(0.98); }
@@ -106,17 +106,8 @@
             100% { transform: rotate(360deg); }
         }
         
-        .pulse-logo {
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; }
-        }
-
         #carrito-flotante {
-            position: fixed; bottom: 100px; left: 16px; right: 16px;
+            position: fixed; bottom: 95px; left: 16px; right: 16px;
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(10px);
             border-radius: 2rem;
@@ -171,7 +162,7 @@
         }
     </style>
 </head>
-<body class="pb-96"> 
+<body>
 
 <!-- Pantalla de CARGA INICIAL -->
 <div id="overlay-carga">
@@ -255,7 +246,7 @@
     </div>
 </header>
 
-<main class="mt-6 px-6 max-w-xl mx-auto space-y-6">
+<main class="mt-6 px-6 max-w-xl mx-auto space-y-6" style="padding-bottom: 180px;">
     <!-- 1. SELECCIÓN DE CLIENTE -->
     <section class="gradient-border">
         <div class="p-6">
@@ -275,7 +266,7 @@
                 <input type="hidden" id="reg-id">
                 <input type="text" id="reg-nombre" placeholder="NOMBRE COMPLETO" class="input-sutil uppercase" oninput="this.value = this.value.toUpperCase()">
                 <div class="grid grid-cols-2 gap-2">
-                    <input type="number" id="reg-ruc" placeholder="CI / RUC" class="input-sutil">
+                    <input type="text" id="reg-ruc" placeholder="CI / RUC" class="input-sutil">
                     <input type="tel" id="reg-tel" placeholder="TELÉFONO" class="input-sutil">
                 </div>
                 <input type="text" id="reg-dir" placeholder="DIRECCIÓN EXACTA" class="input-sutil">
@@ -334,7 +325,7 @@
     </button>
 </div>
 
-<!-- Menú inferior -->
+<!-- Contenedor del menú inferior (menu-logic.js lo llena) -->
 <div id="menu-container"></div>
 
 <script>
@@ -401,16 +392,16 @@ function renderizar() {
         cont.innerHTML += `
             <div class="card-producto shadow-sm fade-in">
                 <div class="flex-1">
-                    <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${p.Producto}</h4>
+                    <h4 class="font-black text-[13px] uppercase text-slate-800 leading-tight">${escapeHtml(p.Producto)}</h4>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="text-base font-black text-primary">$${parseFloat(p.Precio_Venta).toFixed(2)}</span>
                         <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">Stock: ${stockActual}</span>
                     </div>
                 </div>
                 <div class="selector-cantidad flex items-center gap-2 p-1 rounded-2xl">
-                    <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',-1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
+                    <button onclick="cambiarCant('${escapeHtml(p.Producto).replace(/'/g, "\\'")}',-1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">-</button>
                     <span id="${idCant}" class="w-6 text-center font-black text-base text-slate-900">0</span>
-                    <button onclick="cambiarCant('${p.Producto.replace(/'/g, "\\'")}',1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
+                    <button onclick="cambiarCant('${escapeHtml(p.Producto).replace(/'/g, "\\'")}',1)" class="w-8 h-8 bg-white rounded-xl shadow-sm font-black text-xl text-primary">+</button>
                 </div>
             </div>`;
     });
@@ -418,6 +409,16 @@ function renderizar() {
     if(productosConStock.length === 0) {
         cont.innerHTML = '<div class="text-center py-8 text-slate-400 italic bg-white rounded-2xl p-8 fade-in">🍽️ No hay productos con stock disponible</div>';
     }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
 function abrirModalConsumo() {
@@ -430,7 +431,7 @@ function abrirModalConsumo() {
     const select = document.getElementById('modal-producto');
     select.innerHTML = '<option value="">-- Seleccionar --</option>';
     productosConStock.forEach(p => {
-        select.innerHTML += `<option value="${p.Producto}" data-stock="${p.Stock}">${p.Producto} (Stock: ${p.Stock})</option>`;
+        select.innerHTML += `<option value="${escapeHtml(p.Producto)}" data-stock="${p.Stock}">${escapeHtml(p.Producto)} (Stock: ${p.Stock})</option>`;
     });
     
     document.getElementById('modal-cantidad').value = 1;
@@ -509,8 +510,7 @@ async function confirmarConsumoInterno() {
             Cantidad: cantidad, 
             Precio_PVP: 0,
             Fecha_Entrega: new Date().toISOString().split('T')[0],
-            Estado_Entrega: "INTERNO",
-            Total: 0
+            Estado_Entrega: "INTERNO"
         });
         
         productoObj.Stock = stockActual - cantidad;
@@ -544,7 +544,9 @@ function cambiarCant(n, d) {
     
     if(carrito[n]+d >= 0 && (carrito[n]+d <= stockDisp)) {
         carrito[n] += d;
-        document.getElementById(`cant-${n.replace(/\s+/g,'-')}`).innerText = carrito[n];
+        const idCant = `cant-${n.replace(/\s+/g,'-')}`;
+        const elem = document.getElementById(idCant);
+        if (elem) elem.innerText = carrito[n];
         actualizarCarrito();
     } else if (d > 0) {
         alert("¡Stock insuficiente!");
@@ -556,9 +558,11 @@ function actualizarCarrito() {
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
-            const sub = (carrito[n] * parseFloat(p.Precio_Venta));
-            t += sub; items += carrito[n];
-            html += `<div class="flex justify-between py-1 border-b border-fuchsia-100 last:border-0"><span class="font-bold">${n} (x${carrito[n]})</span><span class="font-black text-primary">$${sub.toFixed(2)}</span></div>`;
+            if (p) {
+                const sub = (carrito[n] * parseFloat(p.Precio_Venta));
+                t += sub; items += carrito[n];
+                html += `<div class="flex justify-between py-1 border-b border-fuchsia-100 last:border-0"><span class="font-bold">${escapeHtml(n)} (x${carrito[n]})</span><span class="font-black text-primary">$${sub.toFixed(2)}</span></div>`;
+            }
         }
     });
     document.getElementById('car-detalle').innerHTML = html || '<p class="text-center text-slate-300 py-2 italic font-medium">✨ Sin productos elegidos</p>';
@@ -569,7 +573,10 @@ function actualizarCarrito() {
 async function procesarVenta() {
     const cli = document.getElementById('select-cliente').value;
     const fec = document.getElementById('fecha-entrega').value;
-    if(!cli || document.getElementById('car-items').innerText === "0 Unidades") return alert("Selecciona cliente y productos");
+    let itemsCount = 0;
+    Object.keys(carrito).forEach(n => { if(carrito[n] > 0) itemsCount += carrito[n]; });
+    
+    if(!cli || itemsCount === 0) return alert("Selecciona cliente y productos");
     
     const overlay = document.getElementById('overlay-exito');
     overlay.style.display = 'flex';
@@ -581,18 +588,20 @@ async function procesarVenta() {
         for(const n in carrito) {
             if(carrito[n] > 0) {
                 const p = productosData.find(x => x.Producto === n);
-                await DairyAPI.enviarDatos({ 
-                    pestaña: "Ventas",
-                    ID_Venta: idVenta, 
-                    Cliente: cli, 
-                    Producto: n, 
-                    Cantidad: carrito[n], 
-                    Precio_PVP: parseFloat(p.Precio_Venta), 
-                    Fecha_Entrega: fec,
-                    Estado_Entrega: "PENDIENTE"
-                });
-                
-                p.Stock = parseInt(p.Stock) - carrito[n];
+                if (p) {
+                    await DairyAPI.enviarDatos({ 
+                        pestaña: "Ventas",
+                        ID_Venta: idVenta, 
+                        Cliente: cli, 
+                        Producto: n, 
+                        Cantidad: carrito[n], 
+                        Precio_PVP: parseFloat(p.Precio_Venta), 
+                        Fecha_Entrega: fec,
+                        Estado_Entrega: "PENDIENTE"
+                    });
+                    
+                    p.Stock = parseInt(p.Stock) - carrito[n];
+                }
             }
         }
         
@@ -608,7 +617,7 @@ async function procesarVenta() {
         }, 1500);
     } catch(e) { 
         overlay.style.display = 'none';
-        alert("Error de conexión"); 
+        alert("Error de conexión: " + e.message); 
     }
 }
 
@@ -618,7 +627,7 @@ async function guardarCliente() {
     const ruc = document.getElementById('reg-ruc').value.trim();
     const tel = document.getElementById('reg-tel').value.trim();
 
-    if(!nom || ruc.length < 10) return alert("Nombre y CI (10 dígitos) obligatorios");
+    if(!nom || ruc.length < 5) return alert("Nombre y CI/RUC obligatorios");
 
     btn.innerText = "PROCESANDO...";
     btn.disabled = true;
@@ -643,7 +652,7 @@ async function guardarCliente() {
         mostrarExito("Cliente Registrado", "Redirigiendo...");
         setTimeout(() => location.reload(), 1500);
     } catch(e) { 
-        alert("Error al registrar"); 
+        alert("Error al registrar: " + e.message); 
         btn.disabled = false; 
         btn.innerText = "Guardar"; 
     }
@@ -656,8 +665,10 @@ function enviarWhatsApp() {
     Object.keys(carrito).forEach(n => {
         if(carrito[n] > 0) {
             const p = productosData.find(x => x.Producto === n);
-            listado += `• *${carrito[n]}* ${n} ($${p.Precio_Venta})\n`;
-            t += (carrito[n] * parseFloat(p.Precio_Venta));
+            if (p) {
+                listado += `• *${carrito[n]}* ${n} ($${p.Precio_Venta})\n`;
+                t += (carrito[n] * parseFloat(p.Precio_Venta));
+            }
         }
     });
 

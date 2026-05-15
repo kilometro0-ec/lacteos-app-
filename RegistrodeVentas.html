@@ -162,39 +162,46 @@
             inicializarModulo();
         });
 
-        // Consumo unificado de API mediante CONFIG.WEB_APP_URL desde api-config.js
+        // Consumo unificado usando DairyAPI para encapsular la comunicación con Sheets
         async function inicializarModulo() {
             try {
-                // 1. Obtener Clientes
-                const resClientes = await fetch(`${CONFIG.WEB_APP_URL}?action=getClientes`);
-                const jsonClientes = await resClientes.json();
-                if(jsonClientes.status === "success") {
-                    const selectCli = document.getElementById("selectCliente");
+                // 1. Obtener Cartera de Clientes
+                const datosClientes = await DairyAPI.obtenerDatos("Clientes");
+                const selectCli = document.getElementById("selectCliente");
+                
+                if (Array.isArray(datosClientes)) {
                     selectCli.innerHTML = '<option value="">-- Seleccione un Cliente --</option>';
-                    jsonClientes.data.forEach(c => {
-                        selectCli.innerHTML += `<option value="${c.ci_ruc}">${c.nombre} (${c.ci_ruc})</option>`;
+                    datosClientes.forEach(c => {
+                        // Tolerancia a variaciones de mayúsculas/minúsculas en propiedades
+                        const ruc = c.ci_ruc || c.CI_RUC || c.ruc || c.id;
+                        const nombre = c.nombre || c.Nombre || c.razon_social;
+                        selectCli.innerHTML += `<option value="${ruc}">${nombre} (${ruc})</option>`;
                     });
                 }
 
-                // 2. Obtener Inventario Vigente
-                const resInventario = await fetch(`${CONFIG.WEB_APP_URL}?action=getInventario`);
-                const jsonInventario = await resInventario.json();
-                if(jsonInventario.status === "success") {
-                    catalogoProductos = jsonInventario.data;
-                    const selectProd = document.getElementById("selectProducto");
+                // 2. Obtener Catálogo e Inventario Vigente
+                const datosInventario = await DairyAPI.obtenerDatos("Inventario");
+                const selectProd = document.getElementById("selectProducto");
+                
+                if (Array.isArray(datosInventario)) {
+                    catalogoProductos = datosInventario;
                     selectProd.innerHTML = '<option value="">-- Seleccione un ítem --</option>';
                     catalogoProductos.forEach(p => {
-                        selectProd.innerHTML += `<option value="${p.id}">${p.producto}</option>`;
+                        const id = p.id || p.ID || p.codigo;
+                        const producto = p.producto || p.Producto || p.nombre;
+                        selectProd.innerHTML += `<option value="${id}">${producto}</option>`;
                     });
                 }
             } catch (err) {
-                Swal.fire("Error Estructural", "Fallo al enlazar con api-config.js o Google Sheets.", "error");
+                console.error("Error al inicializar Punto de Venta:", err);
+                Swal.fire("Error Estructural", "Fallo al conectar con el servidor central de Google Sheets.", "error");
             }
         }
 
         // Monitoreo dinámico del stock antes de permitir la inserción
         function verificarStockDisponible() {
-            const idProd = document.getElementById("selectProducto").value;
+            const selectP = document.getElementById("selectProducto");
+            const idProd = selectP.value;
             const wrapper = document.getElementById("wrapperStock");
             
             if(!idProd) {
@@ -203,12 +210,16 @@
                 return;
             }
 
-            const prod = catalogoProductos.find(p => p.id === idProd);
-            const stockActual = parseInt(prod.stock) || 0;
+            // Ubicar ítem tolerando diferencias de mayúsculas/minúsculas en el ID
+            const prod = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === idProd);
+            if(!prod) return;
+
+            const stockActual = parseInt(prod.stock || prod.Stock || 0);
+            const precioVenta = parseFloat(prod.precioVenta || prod.PrecioVenta || prod.precio || 0);
             
             wrapper.classList.remove("hidden");
             document.getElementById("txtStockMinimo").innerText = `${stockActual} Unidades`;
-            document.getElementById("numPrecioUnitario").value = esConsumoInterno ? 0.00 : parseFloat(prod.precioVenta || 0).toFixed(2);
+            document.getElementById("numPrecioUnitario").value = esConsumoInterno ? "0.00" : precioVenta.toFixed(2);
 
             const badge = document.getElementById("badgeEstadoStock");
             if(stockActual <= 0) {
@@ -236,24 +247,20 @@
                 badgeTipo.innerText = "Venta Comercial";
             }
 
-            // Recalcular el ítem seleccionado si existe
             verificarStockDisponible();
             
-            // Forzar a precio cero todo lo que ya esté en el carrito si se cambia el switch a mitad de orden
+            // Recalcular dinámicamente el carrito en caso de cambios a mitad de orden
             carrito.forEach(item => {
-                if(esConsumoInterno) {
-                    item.precio = 0.00;
-                    item.subtotal = 0.00;
-                } else {
-                    const original = catalogoProductos.find(p => p.id === item.id);
-                    item.precio = parseFloat(original.precioVenta) || 0;
-                    item.subtotal = item.precio * item.cantidad;
-                }
+                const original = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === item.id);
+                const precioOrig = parseFloat(original.precioVenta || original.PrecioVenta || original.precio || 0);
+                
+                item.precio = esConsumoInterno ? 0.00 : precioOrig;
+                item.subtotal = item.precio * item.cantidad;
             });
             renderizarCarrito();
         }
 
-        // Valida existencias agregadas vs remanentes en caliente antes de sumarlo a la lista
+        // Valida existencias y previene duplicados inconsistentes
         function agregarItemAlCarrito() {
             const idProd = document.getElementById("selectProducto").value;
             const cant = parseInt(document.getElementById("numCantidadVenta").value) || 0;
@@ -262,26 +269,26 @@
                 return Swal.fire("Campos Incompletos", "Selecciona un producto y define una cantidad válida.", "warning");
             }
 
-            const prod = catalogoProductos.find(p => p.id === idProd);
-            const stockActual = parseInt(prod.stock) || 0;
+            const prod = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === idProd);
+            const stockActual = parseInt(prod.stock || prod.Stock || 0);
 
-            // Calcular cuánto de este producto ya se encuentra en el carrito provisional
             const yaEnCarrito = carrito.find(item => item.id === idProd);
             const cantidadTotalSolicitada = cant + (yaEnCarrito ? yaEnCarrito.cantidad : 0);
 
             if(cantidadTotalSolicitada > stockActual) {
-                return Swal.fire("Quiebre de Stock", `No puedes despachar ${cantidadTotalSolicitada} unidades. El stock disponible es de solo ${stockActual} unidades.`, "error");
+                return Swal.fire("Quiebre de Stock", `No puedes despachar ${cantidadTotalSolicitada} unidades. El stock disponible actual es de ${stockActual} unidades.`, "error");
             }
 
             if(yaEnCarrito) {
-                yaEnCarrito.grid_cantidad = cantidadTotalSolicitada; // Corrección de tipado de variable interna
                 yaEnCarrito.cantidad = cantidadTotalSolicitada;
                 yaEnCarrito.subtotal = yaEnCarrito.cantidad * yaEnCarrito.precio;
             } else {
-                const precioUnidad = esConsumoInterno ? 0.00 : parseFloat(prod.precioVenta || 0);
+                const nombreProd = prod.producto || prod.Producto || prod.nombre;
+                const precioUnidad = esConsumoInterno ? 0.00 : parseFloat(prod.precioVenta || prod.PrecioVenta || prod.precio || 0);
+                
                 carrito.push({
-                    id: prod.id,
-                    producto: prod.producto,
+                    id: idProd,
+                    producto: nombreProd,
                     cantidad: cant,
                     precio: precioUnidad,
                     subtotal: cant * precioUnidad
@@ -289,7 +296,8 @@
             }
 
             renderizarCarrito();
-            // Resetear selectores parciales
+            
+            // Limpieza y reseteo suave del bloque de selección
             document.getElementById("selectProducto").value = "";
             document.getElementById("numCantidadVenta").value = "1";
             document.getElementById("wrapperStock").classList.add("hidden");
@@ -345,69 +353,68 @@
             }
         }
 
-        function confirmarYEnviarVenta() {
+        // Escritura asíncrona robusta hacia Google Sheets sin pérdida de estado
+        async function confirmarYEnviarVenta() {
             const clienteId = document.getElementById("selectCliente").value;
             if(!clienteId) {
                 return Swal.fire("Cliente Requerido", "Por favor, asigne un cliente válido para esta transacción.", "warning");
             }
 
-            Swal.fire({
+            const confirmacion = await Swal.fire({
                 title: '¿Confirmar Despacho?',
-                text: esConsumoInterno ? "Se registrará como Consumo Interno con costo operativo de $0.00." : "Se procesará la venta y se restarán de inmediato las existencias de la hoja Almacén.",
+                text: esConsumoInterno ? "Se registrará como Consumo Interno con costo de $0.00." : "Se procesará la venta y se descontarán las existencias del inventario.",
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#059669',
                 cancelButtonColor: '#64748b',
                 confirmButtonText: 'Sí, procesar salida',
                 cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({
-                        title: 'Escribiendo en Libro Diario...',
-                        text: 'Sincronizando transacciones financieras...',
-                        allowOutsideClick: false,
-                        didOpen: () => { Swal.showLoading(); }
-                    });
-
-                    // Construcción del Payload Multi-línea estructurado
-                    const payload = {
-                        action: "registrarVenta",
-                        clienteId: clienteId,
-                        esConsumoInterno: esConsumoInterno,
-                        fecha: new Date().toISOString().split('T')[0],
-                        items: carrito
-                    };
-
-                    // Envío POST HTTP directo a la API de Google Sheets
-                    fetch(CONFIG.WEB_APP_URL, {
-                        method: "POST",
-                        mode: "no-cors",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(() => {
-                        Swal.fire({
-                            title: '¡Operación Exitosa!',
-                            text: 'Venta asentada y stock deducido correctamente.',
-                            icon: 'success',
-                            confirmButtonColor: '#059669'
-                        });
-                        // Limpiar formulario completo e impactar cambios de inmediato
-                        carrito = [];
-                        document.getElementById("selectCliente").value = "";
-                        if(document.getElementById("chkConsumoInterno").checked) {
-                            document.getElementById("chkConsumoInterno").checked = false;
-                            alternarConsumoInterno();
-                        }
-                        renderizarCarrito();
-                        inicializarModulo(); // Recarga catálogos con stocks frescos desde el backend
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        Swal.fire("Error Operativo", "No se pudo comunicar la transacción con las hojas de cálculo.", "error");
-                    });
-                }
             });
+
+            if (!confirmacion.isConfirmed) return;
+
+            Swal.fire({
+                title: 'Procesando Operación...',
+                text: 'Deduciendo inventarios y asentando transacciones fiscales...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            // Preparación del payload unificado
+            const payload = {
+                action: "registrarVenta",
+                clienteId: clienteId,
+                esConsumoInterno: esConsumoInterno,
+                fecha: new Date().toISOString().split('T')[0],
+                items: carrito
+            };
+
+            try {
+                // Escritura centralizada controlada a través de DairyAPI
+                await DairyAPI.guardarDatos("Ventas", payload);
+
+                Swal.fire({
+                    title: '¡Operación Exitosa!',
+                    text: 'Venta asentada y stock deducido correctamente.',
+                    icon: 'success',
+                    confirmButtonColor: '#059669'
+                });
+
+                // Reseteo limpio de la interfaz y el estado local
+                carrito = [];
+                document.getElementById("selectCliente").value = "";
+                if(document.getElementById("chkConsumoInterno").checked) {
+                    document.getElementById("chkConsumoInterno").checked = false;
+                    alternarConsumoInterno();
+                }
+                renderizarCarrito();
+                
+                // Forzar sincronización en caliente para reflejar los nuevos balances de Kárdex
+                inicializarModulo();
+            } catch (err) {
+                console.error("Error al asentar orden de salida:", err);
+                Swal.fire("Error Operativo", "No se pudo sincronizar la transacción con las hojas de cálculo centralizadas.", "error");
+            }
         }
     </script>
 </body>

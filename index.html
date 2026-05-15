@@ -4,6 +4,8 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Lógica Láctea - Dashboard Total</title>
+    <!-- Evitar error 404 de favicon -->
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <!-- CDN de Tailwind con plugins requeridos -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <!-- Configuración del API global del proyecto -->
@@ -96,7 +98,7 @@
         </div>
         <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:scale-90 transition-transform">
             <span class="material-symbols-outlined text-slate-500">sync</span>
-        </button>
+        </</button>
     </header>
 
     <!-- CONTENIDO PRINCIPAL -->
@@ -208,7 +210,7 @@
     </main>
 
     <!-- SCRIPTS DE NAVEGACIÓN COMPARTIDA -->
-    <script src="menu-logic.js"></script>
+    <script src="./menu-logic.js"></script>
 
     <script>
         const fInput = document.getElementById('filtro-fecha');
@@ -272,16 +274,17 @@
             const fSel = fInput.value;
 
             try {
-                // Consultas concurrentes optimizadas mediante DairyAPI
+                // Consultas concurrentes mediante DairyAPI
                 const [inventario, ventas, compras] = await Promise.all([
                     DairyAPI.obtenerDatos("Inventario"),
                     DairyAPI.obtenerDatos("Ventas"),
-                    DairyAPI.obtenerDatos("Compras")
+                    DairyAPI.obtenerDatos("ComprasPendientes") // Cambiado a ComprasPendientes según la estructura de tu Apps Script
                 ]);
 
-                const inv = inventario || [];
-                const ven = ventas || [];
-                const com = compras || [];
+                // BLINDAJE ANTI TYPEERROR: Validar estructuración correcta de los datos en formato Array
+                const inv = Array.isArray(inventario) ? inventario : (inventario?.data && Array.isArray(inventario.data) ? inventario.data : []);
+                const ven = Array.isArray(ventas) ? ventas : (ventas?.data && Array.isArray(ventas.data) ? ventas.data : []);
+                const com = Array.isArray(compras) ? compras : (compras?.data && Array.isArray(compras.data) ? compras.data : []);
 
                 const costos = {};
                 let valorBodega = 0;
@@ -289,8 +292,8 @@
 
                 inv.forEach(p => {
                     const prod = normalizar(p.Producto || p.producto);
-                    const costo = Number(p.Precio_Distribuidor || p.precio_distribuidor || p.precioDistribuidor) || 0;
-                    const venta = Number(p.Precio_Venta || p.precio_venta || p.precioVenta) || 0;
+                    const costo = Number(p.Precio_Distribuidor || p.precioDistribuidor || p.precio_distribuidor) || 0;
+                    const venta = Number(p.Precio_Venta || p.precioVenta || p.precio_venta) || 0;
                     const stock = Number(p.Stock || p.stock) || 0;
                     costos[prod] = costo;
                     valorBodega += costo * stock;
@@ -361,15 +364,15 @@
                         }
                     }
 
-                    if (estado === "PENDIENTE") {
+                    if (estado === "PENDIENTE" || estado === "PENDIENTE_ENTREGA") {
                         porCobrar += total;
-                        const idVenta = v.ID_Venta || v.id_venta || v.id;
+                        const idVenta = v.ID_Venta || v.idVenta || v.id_venta || v.id;
                         if (idVenta) {
                             if (!pedidos[idVenta]) {
                                 const dias = Math.floor((hoyNow - fecha) / (1000 * 60 * 60 * 24));
                                 pedidos[idVenta] = {
                                     cliente: v.Cliente || v.cliente,
-                                    dias: dias,
+                                    dias: dias >= 0 ? dias : 0,
                                     total: 0
                                 };
                             }
@@ -419,9 +422,15 @@
                     document.getElementById('btn-ruta').classList.add('pulse-notif');
                 } else {
                     badgeRuta.classList.add('hidden');
+                    document.getElementById('btn-ruta').classList.remove('pulse-notif');
                 }
 
-                const pendientesCompras = com.filter(c => normalizar(c.Estado_Entrega || c.estado_entrega || c.estado) === "PENDIENTE");
+                // Filtrado dinámico seguro usando los fallbacks de propiedades unificadas
+                const pendientesCompras = com.filter(c => {
+                    const est = normalizar(c.Estado_Entrega || c.estadoEntrega || c.estado_entrega || c.estado);
+                    return est === "PENDIENTE";
+                });
+                
                 const badgeRecepcion = document.getElementById('badge-recepcion');
                 badgeRecepcion.innerText = pendientesCompras.length;
                 if (pendientesCompras.length > 0) {
@@ -429,6 +438,7 @@
                     document.getElementById('btn-recepcion').classList.add('pulse-notif');
                 } else {
                     badgeRecepcion.classList.add('hidden');
+                    document.getElementById('btn-recepcion').classList.remove('pulse-notif');
                 }
 
                 document.getElementById('ranking-productos').innerHTML = Object.entries(ranking)
@@ -455,7 +465,8 @@
             } catch (err) {
                 console.error("Error en dashboard:", err);
                 document.getElementById('ventas-total-hoy').innerText = "Error";
-            } {
+            } finally {
+                // Bloque FINALLY unificado: Oculta la pantalla de carga de forma garantizada
                 mostrarCargando(false);
             }
         }

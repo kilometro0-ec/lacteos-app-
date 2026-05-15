@@ -12,8 +12,11 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- SheetJS para la Exportación a Excel -->
+    <!-- SheetJS para Exportación a Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jspdf y jspdf-autotable para Exportación a PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
@@ -26,24 +29,21 @@
             <i data-lucide="boxes" class="w-8 h-8 text-blue-400"></i>
             <div>
                 <h1 class="text-xl font-bold tracking-tight">Kárdex y Control de Inventario</h1>
-                <p class="text-xs text-slate-400">Existencias en Tiempo Real y Gestión Maestra de Catálogo</p>
+                <p class="text-xs text-slate-400">Existencias Organizadas de Mayor a Menor Stock</p>
             </div>
         </div>
         <div class="flex flex-wrap gap-2 w-full sm:w-auto">
-            <button onclick="abrirModalProducto()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+            <button onclick="abrirModalProducto()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
                 <i data-lucide="plus-circle" class="w-4 h-4"></i> Agregar Producto
             </button>
-            <button onclick="abrirModalAjuste()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
-                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Ajustar Stock Manual
-            </button>
-            <button onclick="exportarAExcel()" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
-                <i data-lucide="download" class="w-4 h-4"></i> Exportar
+            <button onclick="solicitarFormatoExportacion()" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95">
+                <i data-lucide="download" class="w-4 h-4"></i> Exportar Catálogo
             </button>
         </div>
     </header>
 
     <!-- Barra de Filtros y Resumen Rápido -->
-    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm space-y-3">
+    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-4 justify-between items-center">
             
             <!-- Bloque de Búsqueda y Filtro por Estado -->
@@ -52,7 +52,7 @@
                     <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                         <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
                     </span>
-                    <input type="text" id="buscarProducto" oninput="procesarFiltrosYBusqueda()" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-slate-50 outline-none" placeholder="Buscar por código o descripción...">
+                    <input type="text" id="buscarProducto" oninput="procesarFiltrosYBusqueda()" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 bg-slate-50 outline-none" placeholder="Buscar por ID o descripción...">
                 </div>
                 
                 <select id="filtroEstadoLogistico" onchange="procesarFiltrosYBusqueda()" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-50 outline-none text-slate-600 font-medium">
@@ -63,7 +63,7 @@
                 </select>
             </div>
             
-            <!-- Indicadores de Estado Rápidos (Clickables para filtrado rápido) -->
+            <!-- Indicadores de Estado Rápidos -->
             <div class="flex gap-4 w-full lg:w-auto overflow-x-auto pb-1 lg:pb-0">
                 <div onclick="filtrarPorBadge('CRITICO')" class="cursor-pointer hover:opacity-80 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 flex items-center gap-2 whitespace-nowrap">
                     <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
@@ -85,16 +85,16 @@
     <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                <table class="w-full text-left border-collapse text-xs md:text-sm" id="tablaInventarioFormatos">
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                            <th class="py-3 px-6">Código</th>
+                            <th class="py-3 px-6">ID (SKU)</th>
                             <th class="py-3 px-4">Descripción del Producto</th>
-                            <th class="py-3 px-4 text-right">Precio Compra</th>
+                            <th class="py-3 px-4 text-right">Precio Distribuidor</th>
                             <th class="py-3 px-4 text-right">Precio Venta</th>
-                            <th class="py-3 px-4 text-center">Stock Actual</th>
-                            <th class="py-3 px-6 text-center">Estado Logístico</th>
-                            <th class="py-3 px-6 text-center text-slate-500">Acciones Estructurales</th>
+                            <th class="py-3 px-4 text-center">Stock</th>
+                            <th class="py-3 px-4">Proveedor Habitual</th>
+                            <th class="py-3 px-6 text-center text-slate-500">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyInventario" class="divide-y divide-slate-100 font-medium text-slate-700">
@@ -111,29 +111,29 @@
         </div>
     </main>
 
-    <!-- MÓDULO 1: Modal de Producto (Sirve para [Agregar] y [Editar]) -->
+    <!-- MODAL DE PRODUCTO (AGREGAR / EDITAR) -->
     <div id="modalProducto" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
             <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
                 <h3 class="font-bold flex items-center gap-2" id="modalProductoTitulo">
-                    <i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i> Ficha Técnica del Producto
+                    <i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i> Ficha del Producto
                 </h3>
                 <button type="button" onclick="cerrarModalProducto()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <form id="formProducto" onsubmit="guardarEstructuraProducto(event)" class="p-6 space-y-4">
-                <input type="hidden" id="prod_id_interno"> <!-- Campo oculto para saber si editamos -->
+                <input type="hidden" id="prod_id_interno">
                 
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Código SKU / Identificador *</label>
-                    <input type="text" id="prod_codigo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50 font-mono" placeholder="Ej: LAC-001">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">ID SKU (Auto-generado) *</label>
+                    <input type="text" id="prod_codigo" readonly class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-100 font-mono font-bold text-slate-600" placeholder="Se generará al guardar...">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Descripción / Nombre del Producto *</label>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Nombre / Descripción del Producto *</label>
                     <input type="text" id="prod_nombre" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50" placeholder="Ej: Queso Mozzarella 1Kg">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Precio Compra ($) *</label>
+                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Precio Distribuidor ($) *</label>
                         <input type="number" step="0.01" id="prod_costo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-mono text-right" placeholder="0.00">
                     </div>
                     <div>
@@ -141,15 +141,9 @@
                         <input type="number" step="0.01" id="prod_venta" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none font-mono text-right text-blue-600 font-bold" placeholder="0.00">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div id="container_stock_inicial">
-                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Stock Inicial *</label>
-                        <input type="number" id="prod_stock" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" placeholder="0">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Stock Mínimo Alerta *</label>
-                        <input type="number" id="prod_minimo" min="1" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" placeholder="10">
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Proveedor Habitual</label>
+                    <input type="text" id="prod_proveedor" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50" placeholder="Ej: Distribuidora Láctea S.A.">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-2">
@@ -160,53 +154,11 @@
         </div>
     </div>
 
-    <!-- MÓDULO 2: Modal de Ajuste Manual de Inventario (Suma/Resta de existencias directas) -->
-    <div id="modalAjuste" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-            <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
-                <h3 class="font-bold flex items-center gap-2"><i data-lucide="sliders-horizontal" class="w-4 h-4 text-blue-400"></i> Ajuste Físico de Stock</h3>
-                <button type="button" onclick="cerrarModalAjuste()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <form id="formAjuste" onsubmit="guardarAjusteManual(event)" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Seleccionar Producto *</label>
-                    <select id="adj_producto" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50">
-                        <!-- Se llena dinámicamente -->
-                    </select>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Tipo de Ajuste *</label>
-                        <select id="adj_tipo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none bg-slate-50">
-                            <option value="INGRESO">Suma (+) Ingreso</option>
-                            <option value="EGRESO">Resta (-) Merma/Baja</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Cantidad Unidades *</label>
-                        <input type="number" id="adj_cantidad" min="1" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold outline-none" placeholder="Ej: 5">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Motivo / Justificación *</label>
-                    <textarea id="adj_motivo" required rows="2" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none" placeholder="Ej: Auditoría física de inventario / Producto vencido"></textarea>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <button type="button" onclick="cerrarModalAjuste()" class="w-full py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50 text-xs uppercase">Cancelar</button>
-                    <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md text-xs uppercase">Aplicar Cambio</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MÓDULO 3: Modal de Historial Visor de Movimientos de Kárdex -->
+    <!-- MODAL DE MOVIMIENTOS DE KÁRDEX -->
     <div id="modalKardex" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden">
             <div class="bg-slate-900 p-4 text-white flex justify-between items-center">
-                <h3 class="font-bold flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-amber-400"></i> Historial Kárdex del Producto</h3>
+                <h3 class="font-bold flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-amber-400"></i> Historial Kárdex</h3>
                 <button type="button" onclick="cerrarModalKardex()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6">
@@ -221,9 +173,7 @@
                                 <th class="p-2.5">Justificación / Origen</th>
                             </tr>
                         </thead>
-                        <tbody id="tbodyKardex" class="divide-y divide-slate-100 font-medium text-slate-600">
-                            <!-- Inyección dinámica de movimientos de kárdex -->
-                        </tbody>
+                        <tbody id="tbodyKardex" class="divide-y divide-slate-100 font-medium text-slate-600"></tbody>
                     </table>
                 </div>
             </div>
@@ -242,15 +192,16 @@
             cargarInventario();
         });
 
-        // 🔄 CONSUMO CENTRALIZADO DE DATOS
+        // 🔄 CARGA Y LOGICA DE ORDENAMIENTO (MAYOR A MENOR STOCK)
         async function cargarInventario() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
                 if (Array.isArray(datos)) {
-                    inventarioGlobal = datos;
+                    // Ordenar de Mayor a Menor Stock de forma nativa antes de procesar
+                    inventarioGlobal = datos.sort((a, b) => (parseInt(b.Stock) || 0) - (parseInt(a.Stock) || 0));
+                    
                     procesarFiltrosYBusqueda();
                     calcularResumenContadores(inventarioGlobal);
-                    llenarSelectProductos(inventarioGlobal);
                 } else if (datos && datos.status === "error") {
                     throw new Error(datos.message);
                 }
@@ -260,7 +211,7 @@
                     <tr>
                         <td colspan="7" class="text-center py-10 text-rose-500 font-bold">
                             <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
-                            Fallo de sincronización con api-config.js o Google Sheets.
+                            Fallo de sincronización con la Base Central (Google Sheets).
                         </td>
                     </tr>
                 `;
@@ -268,14 +219,14 @@
             }
         }
 
-        // 🎨 RENDERIZADO CONTROLADO CON BOTONES ESTRUCTURALES
+        // 🎨 RENDERIZADO AJUSTADO A LAS COLUMNAS EXACTAS DE TU HOJA
         function renderizarInventario(lista) {
             const tbody = document.getElementById("tbodyInventario");
             tbody.innerHTML = lista.length ? "" : "<tr><td colspan='7' class='text-center py-10 text-slate-400'>No se encontraron productos coincidentes.</td></tr>";
 
             lista.forEach(p => {
-                const stock = parseInt(p.stock) || 0;
-                const min = parseInt(p.stockMinimo) || 10; 
+                const stock = parseInt(p.Stock) || 0;
+                const idProducto = p.ID || p.id || "S/N";
                 
                 let badgeClass = "";
                 let badgeText = "";
@@ -285,7 +236,7 @@
                     badgeClass = "bg-rose-100 text-rose-800 border border-rose-200";
                     badgeText = "Agotado (Crítico)";
                     rowAlertClass = "bg-rose-50/40 hover:bg-rose-50";
-                } else if (stock <= min) {
+                } else if (stock <= 5) { // Alerta fijada en base a tu dashboard central
                     badgeClass = "bg-amber-100 text-amber-800 border border-amber-200";
                     badgeText = "Stock Bajo";
                     rowAlertClass = "bg-amber-50/30 hover:bg-amber-50/60";
@@ -298,24 +249,20 @@
                 const tr = document.createElement("tr");
                 tr.className = `transition-colors ${rowAlertClass}`;
                 tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-mono text-[11px] text-slate-400 font-bold">#${p.id || p.codigo || 'S/N'}</td>
-                    <td class="py-3.5 px-4 font-bold text-slate-800">${p.producto}</td>
-                    <td class="py-3.5 px-4 text-right text-slate-500 font-mono">$${parseFloat(p.precioCompra || 0).toFixed(2)}</td>
-                    <td class="py-3.5 px-4 text-right text-blue-700 font-bold font-mono">$${parseFloat(p.precioVenta || 0).toFixed(2)}</td>
+                    <td class="py-3.5 px-6 font-mono text-[11px] text-slate-500 font-bold">#${idProducto}</td>
+                    <td class="py-3.5 px-4 font-bold text-slate-800">${p.Producto || p.producto}</td>
+                    <td class="py-3.5 px-4 text-right text-slate-500 font-mono">$${parseFloat(p.Precio_Distribuidor || 0).toFixed(2)}</td>
+                    <td class="py-3.5 px-4 text-right text-blue-700 font-bold font-mono">$${parseFloat(p.Precio_Venta || 0).toFixed(2)}</td>
                     <td class="py-3.5 px-4 text-center font-black text-slate-800 text-base">${stock}</td>
-                    <td class="py-3.5 px-6 text-center">
-                        <span class="px-2.5 py-1 rounded-md font-black text-[10px] uppercase tracking-wider ${badgeClass}">
-                            ${badgeText}
-                        </span>
-                    </td>
+                    <td class="py-3.5 px-4 text-slate-500 text-xs">${p.Proveedor_Habitual || p['Proveedor Habitual'] || 'No Asignado'}</td>
                     <td class="py-3.5 px-6 flex justify-center gap-1.5">
                         <button onclick='abrirModalProducto(${JSON.stringify(p)})' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-blue-100 hover:text-blue-700 transition" title="Editar Ficha Técnica">
                             <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                         </button>
-                        <button onclick='verMovimientosKardex("${p.id}", "${p.producto}")' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-amber-100 hover:text-amber-700 transition" title="Ver Historial Kárdex">
+                        <button onclick='verMovimientosKardex("${idProducto}", "${p.Producto || p.producto}")' class="p-1.5 bg-slate-100 text-slate-600 rounded hover:bg-amber-100 hover:text-amber-700 transition" title="Ver Historial Kárdex">
                             <i data-lucide="history" class="w-3.5 h-3.5"></i>
                         </button>
-                        <button onclick='eliminarProductoIntegridad("${p.id}")' class="p-1.5 bg-slate-100 text-slate-400 rounded hover:bg-rose-100 hover:text-rose-600 transition" title="Eliminar Producto">
+                        <button onclick='eliminarProductoIntegridad("${idProducto}")' class="p-1.5 bg-slate-100 text-slate-400 rounded hover:bg-rose-100 hover:text-rose-600 transition" title="Eliminar Producto">
                             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                         </button>
                     </td>
@@ -325,14 +272,13 @@
             lucide.createIcons();
         }
 
-        // 📊 CONTADORES SUPERIORES
+        // 📊 CONTADORES RÁPIDOS
         function calcularResumenContadores(lista) {
             let criticos = 0, porAgotar = 0, optimos = 0;
             lista.forEach(p => {
-                const stock = parseInt(p.stock) || 0;
-                const min = parseInt(p.stockMinimo) || 10;
+                const stock = parseInt(p.Stock) || 0;
                 if (stock <= 0) criticos++;
-                else if (stock <= min) porAgotar++;
+                else if (stock <= 5) porAgotar++;
                 else optimos++;
             });
             document.getElementById("lblCriticos").innerText = `${criticos} Críticos`;
@@ -340,23 +286,22 @@
             document.getElementById("lblOptimos").innerText = `${optimos} Óptimos`;
         }
 
-        // 🔍 FILTRADO INTEGRADO (Busqueda + Select)
+        // 🔍 FILTRADO Y BÚSQUEDA INTEGRADOS
         function procesarFiltrosYBusqueda() {
             const query = document.getElementById("buscarProducto").value.toLowerCase();
             const selector = document.getElementById("filtroEstadoLogistico").value;
 
             const filtrados = inventarioGlobal.filter(p => {
-                const stock = parseInt(p.stock) || 0;
-                const min = parseInt(p.stockMinimo) || 10;
+                const stock = parseInt(p.Stock) || 0;
+                const idProducto = String(p.ID || p.id || "").toLowerCase();
+                const nombreProducto = String(p.Producto || p.producto || "").toLowerCase();
                 
-                // Filtro de texto
-                const cumpleTexto = (p.producto && p.producto.toLowerCase().includes(query)) || (p.id && p.id.toLowerCase().includes(query));
+                const cumpleTexto = idProducto.includes(query) || nombreProducto.includes(query);
                 
-                // Filtro de Estado Logístico
                 let cumpleEstado = true;
                 if (selector === "CRITICO") cumpleEstado = (stock <= 0);
-                else if (selector === "BAJO") cumpleEstado = (stock > 0 && stock <= min);
-                else if (selector === "OPTIMO") cumpleEstado = (stock > min);
+                else if (selector === "BAJO") cumpleEstado = (stock > 0 && stock <= 5);
+                else if (selector === "OPTIMO") cumpleEstado = (stock > 5);
 
                 return cumpleTexto && cumpleEstado;
             });
@@ -369,38 +314,33 @@
             procesarFiltrosYBusqueda();
         }
 
-        function llenarSelectProductos(lista) {
-            const select = document.getElementById("adj_producto");
-            select.innerHTML = '<option value="">-- Elige un Producto --</option>';
-            lista.forEach(p => {
-                select.innerHTML += `<option value="${p.id}">${p.producto} (Actual: ${p.stock} Uds)</option>`;
-            });
-        }
-
-        // 📦 GESTIÓN DE MODAL DE PRODUCTO (AGREGAR / EDITAR)
+        // 📦 OPERACIONES MAESTRAS: MODAL PRODUCTO
         function abrirModalProducto(producto = null) {
             document.getElementById("formProducto").reset();
-            const containerStock = document.getElementById("container_stock_inicial");
 
             if (producto) {
-                // Configuración modo Edición
+                // Modo Edición
                 document.getElementById("modalProductoTitulo").innerHTML = `<i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i> Editar Producto Maestro`;
-                document.getElementById("prod_id_interno").value = producto.id;
-                document.getElementById("prod_codigo").value = producto.id;
-                document.getElementById("prod_codigo").disabled = true; // El ID no debe cambiarse
-                document.getElementById("prod_nombre").value = producto.producto;
-                document.getElementById("prod_costo").value = producto.precioCompra;
-                document.getElementById("prod_venta").value = producto.precioVenta;
-                document.getElementById("prod_minimo").value = producto.stockMinimo;
-                containerStock.classList.add("hidden"); // El stock estructural se edita vía ajuste manual
-                document.getElementById("prod_stock").required = false;
+                document.getElementById("prod_id_interno").value = producto.ID || producto.id;
+                document.getElementById("prod_codigo").value = producto.ID || producto.id;
+                document.getElementById("prod_nombre").value = producto.Producto || producto.producto;
+                document.getElementById("prod_costo").value = producto.Precio_Distribuidor;
+                document.getElementById("prod_venta").value = producto.Precio_Venta;
+                document.getElementById("prod_proveedor").value = producto.Proveedor_Habitual || producto['Proveedor Habitual'] || "";
             } else {
-                // Configuración modo Creación
+                // Modo Creación (ID Auto-generado)
                 document.getElementById("modalProductoTitulo").innerHTML = `<i data-lucide="package-plus" class="w-4 h-4 text-emerald-400"></i> Agregar Nuevo Producto`;
                 document.getElementById("prod_id_interno").value = "";
-                document.getElementById("prod_codigo").disabled = false;
-                containerStock.classList.remove("hidden");
-                document.getElementById("prod_stock").required = true;
+                
+                // Calcular SKU Automático no repetido basándose en el número más alto existente
+                let maxNum = 0;
+                inventarioGlobal.forEach(p => {
+                    const idStr = String(p.ID || p.id || "");
+                    const num = parseInt(idStr.replace(/\D/g, ""));
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                });
+                const nuevoSKU = `PROD-${String(maxNum + 1).padStart(3, '0')}`;
+                document.getElementById("prod_codigo").value = nuevoSKU;
             }
             document.getElementById("modalProducto").classList.remove("hidden");
             lucide.createIcons();
@@ -410,163 +350,170 @@
             document.getElementById("modalProducto").classList.add("hidden");
         }
 
-        // 💾 GUARDAR CAMBIOS DE MAESTRO PRODUCTOS
+        // 💾 SALVAR EN BASE DE DATOS UNIFICADA
         async function guardarEstructuraProducto(e) {
             e.preventDefault();
             const idInterno = document.getElementById("prod_id_interno").value;
             const esEdicion = idInterno !== "";
 
             const payload = {
-                action: esEdicion ? "editarProducto" : "agregarProducto",
-                id: document.getElementById("prod_codigo").value,
-                producto: document.getElementById("prod_nombre").value,
-                precioCompra: parseFloat(document.getElementById("prod_costo").value),
-                precioVenta: parseFloat(document.getElementById("prod_venta").value),
-                stockMinimo: parseInt(document.getElementById("prod_minimo").value)
+                pestana: "Inventario",
+                accion: esEdicion ? "editar" : "escribir",
+                // Mapeo exacto de las columnas de tu Google Sheet
+                Fecha: new Date().toLocaleDateString('es-EC'),
+                ID: document.getElementById("prod_codigo").value,
+                Producto: document.getElementById("prod_nombre").value,
+                Stock: esEdicion ? undefined : 0, // No hay stock inicial, empieza en 0
+                Precio_Distribuidor: parseFloat(document.getElementById("prod_costo").value),
+                Precio_Venta: parseFloat(document.getElementById("prod_venta").value),
+                Ventas: esEdicion ? undefined : 0,
+                Proveedor_Habitual: document.getElementById("prod_proveedor").value
             };
 
-            if (!esEdicion) {
-                payload.stock = parseInt(document.getElementById("prod_stock").value) || 0;
-            }
-
-            Swal.fire({ title: 'Sincronizando Catálogo...', text: 'Modificando bases maestras...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+            Swal.fire({ title: 'Guardando en Almacén Central...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
 
             try {
+                // Se envía la petición estructurada con los nombres de columna de tu tabla
                 await DairyAPI.guardarDatos("Inventario", payload);
-                Swal.fire({ title: 'Procesado', text: 'El catálogo maestro ha sido actualizado.', icon: 'success', confirmButtonColor: '#2563eb'});
+                Swal.fire({ title: 'Éxito', text: 'Registro salvado correctamente.', icon: 'success', confirmButtonColor: '#2563eb'});
                 cerrarModalProducto();
                 cargarInventario();
             } catch (err) {
                 console.error(err);
-                Swal.fire("Error", "Error al procesar la actualización en Google Sheets.", "error");
+                Swal.fire("Error", "Error de comunicación con el backend de Google Apps Script.", "error");
             }
         }
 
-        // 🛠️ MODAL DE AJUSTE MANUAL DE STOCK
-        function abrirModalAjuste() {
-            document.getElementById("formAjuste").reset();
-            document.getElementById("modalAjuste").classList.remove("hidden");
-            lucide.createIcons();
+        // ❌ ELIMINAR REGISTRO COMPLETO DE LA HOJA INVENTARIO
+        function eliminarProductoIntegridad(idProducto) {
+            Swal.fire({
+                title: '¿Eliminar Producto de Raíz?',
+                text: `Esta acción borrará permanentemente el ID #${idProducto} de la hoja Inventario de Google Sheets.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#475569',
+                confirmButtonText: 'Sí, borrar fila',
+                cancelButtonText: 'Cancelar'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({ title: 'Removiendo de la base central...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+                    try {
+                        // Enviamos el comando de borrado explícito por ID
+                        await DairyAPI.guardarDatos("Inventario", { 
+                            pestana: "Inventario", 
+                            accion: "eliminar", 
+                            ID: idProducto 
+                        });
+                        Swal.fire('Eliminado', 'El ítem ha sido removido de la hoja de cálculo.', 'success');
+                        cargarInventario();
+                    } catch (err) {
+                        console.error(err);
+                        Swal.fire('Error', 'El servidor rechazó la solicitud de eliminación.', 'error');
+                    }
+                }
+            });
         }
 
-        function cerrarModalAjuste() {
-            document.getElementById("modalAjuste").classList.add("hidden");
-        }
-
-        async function guardarAjusteManual(e) {
-            e.preventDefault();
-            const payload = {
-                action: "ajusteInventarioManual",
-                idProducto: document.getElementById("adj_producto").value,
-                tipoMovimiento: document.getElementById("adj_tipo").value,
-                cantidad: parseInt(document.getElementById("adj_cantidad").value),
-                motivo: document.getElementById("adj_motivo").value,
-                fecha: new Date().toISOString().split('T')[0]
-            };
-
-            Swal.fire({ title: 'Impactando Kárdex...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
-
-            try {
-                await DairyAPI.guardarDatos("KardexMovimientos", payload);
-                Swal.fire({ title: 'Ajuste Aplicado', text: 'Stock recalculado.', icon: 'success', confirmButtonColor: '#2563eb'});
-                cerrarModalAjuste();
-                cargarInventario();
-            } catch (err) {
-                Swal.fire("Error", "Error al registrar movimiento.", "error");
-            }
-        }
-
-        // 🕒 VER MOVIMIENTOS KÁRDEX
+        // 🕒 VER HISTORIAL KÁRDEX
         async function verMovimientosKardex(idProducto, nombreProducto) {
             document.getElementById("kardexProductoNombre").innerText = `Producto: ${nombreProducto} (#${idProducto})`;
             const tbody = document.getElementById("tbodyKardex");
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500"></i>Buscando historial...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500"></i>Buscando...</td></tr>`;
             document.getElementById("modalKardex").classList.remove("hidden");
             lucide.createIcons();
 
             try {
                 const todosLosMovimientos = await DairyAPI.obtenerDatos("KardexMovimientos");
                 tbody.innerHTML = "";
-                
-                // Filtramos por el ID del producto seleccionado
-                const filtrados = todosLosMovimientos.filter(m => String(m.idProducto) === String(idProducto));
+                const filtrados = todosLosMovimientos.filter(m => String(m.idProducto || m.ID) === String(idProducto));
 
                 if (!filtrados.length) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">Sin movimientos registrados para este ítem.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">Sin movimientos registrados.</td></tr>`;
                     return;
                 }
 
                 filtrados.forEach(m => {
                     const esIngreso = m.tipoMovimiento === "INGRESO" || m.tipoMovimiento === "COMPRA";
-                    const colorCantidad = esIngreso ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
-                    const signo = esIngreso ? "+" : "-";
-
                     const tr = document.createElement("tr");
                     tr.className = "border-b border-slate-50 hover:bg-slate-50/50";
                     tr.innerHTML = `
-                        <td class="p-2.5 whitespace-nowrap text-slate-400 font-mono">${m.fecha || 'S/F'}</td>
-                        <td class="p-2.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-black tracking-wider ${esIngreso ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}">${m.tipoMovimiento}</span></td>
-                        <td class="p-2.5 text-center ${colorCantidad}">${signo}${m.cantidad}</td>
-                        <td class="p-2.5 text-slate-500 max-w-xs truncate" title="${m.motivo || m.origen || ''}">${m.motivo || m.origen || 'Ajuste operativo'}</td>
+                        <td class="p-2.5 text-slate-400 font-mono">${m.fecha || 'S/F'}</td>
+                        <td class="p-2.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-black ${esIngreso ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">${m.tipoMovimiento || 'AJUSTE'}</span></td>
+                        <td class="p-2.5 text-center font-bold ${esIngreso ? 'text-emerald-600' : 'text-rose-600'}">${esIngreso ? '+' : '-'}${m.cantidad}</td>
+                        <td class="p-2.5 text-slate-500">${m.motivo || 'Actualización'}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-rose-500 font-bold">Imposible recuperar el kárdex actual.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-rose-500 text-xs">No se pudo leer el histórico.</td></tr>`;
             }
         }
 
-        function cerrarModalKardex() {
-            document.getElementById("modalKardex").classList.add("hidden");
-        }
+        function cerrarModalKardex() { document.getElementById("modalKardex").classList.add("hidden"); }
 
-        // ❌ ELIMINAR PRODUCTO (CON PROTECCIÓN DE INTEGRIDAD)
-        function eliminarProductoIntegridad(idProducto) {
+        // 🟢 SELECCIÓN SELECTIVA DE EXPORTACIÓN (EXCEL O PDF)
+        function solicitarFormatoExportacion() {
             Swal.fire({
-                title: '¿Eliminar de Catálogo?',
-                text: "Esta acción quitará el producto del maestro de Almacén. No se recomienda si tiene histórico de ventas.",
-                icon: 'warning',
+                title: 'Exportar Reporte de Inventario',
+                text: 'Selecciona el formato de salida deseado para tu informe:',
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#475569',
-                confirmButtonText: 'Sí, Eliminar de raíz',
-                cancelButtonText: 'Cancelar'
-            }).then(async (result) => {
+                showDenyButton: true,
+                confirmButtonColor: '#10b981',
+                denyButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '📊 Descargar Excel',
+                denyButtonText: '📄 Descargar PDF',
+                cancelButtonText: 'Cerrar'
+            }).then((result) => {
                 if (result.isConfirmed) {
-                    Swal.fire({ title: 'Borrando...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
-                    try {
-                        await DairyAPI.guardarDatos("Inventario", { action: "eliminarProducto", id: idProducto });
-                        Swal.fire('Eliminado', 'Producto removido de la base unificada.', 'success');
-                        cargarInventario();
-                    } catch (err) {
-                        Swal.fire('Error', 'No se pudo eliminar el registro.', 'error');
-                    }
+                    exportarAExcel();
+                } else if (result.isDenied) {
+                    exportarAPDF();
                 }
             });
         }
 
-        // 🟢 EXPORTAR A EXCEL (USANDO SHEETJS)
         function exportarAExcel() {
-            if (!inventarioGlobal.length) {
-                Swal.fire("Atención", "No hay datos en stock para exportar.", "info");
-                return;
-            }
-
-            const datosLimpios = inventarioGlobal.map(p => ({
-                "Código SKU": p.id || p.codigo,
-                "Descripción": p.producto,
-                "Precio Distribuidor ($)": parseFloat(p.precioCompra || 0),
-                "Precio Venta Público ($)": parseFloat(p.precioVenta || 0),
-                "Existencia Física (Uds)": parseInt(p.stock || 0),
-                "Stock Mínimo": parseInt(p.stockMinimo || 10)
+            if (!inventarioGlobal.length) return;
+            const filas = inventarioGlobal.map(p => ({
+                "ID (SKU)": p.ID,
+                "Producto / Descripción": p.Producto,
+                "Precio Distribuidor ($)": parseFloat(p.Precio_Distribuidor || 0),
+                "Precio Venta ($)": parseFloat(p.Precio_Venta || 0),
+                "Existencia (Stock)": parseInt(p.Stock || 0),
+                "Proveedor Habitual": p.Proveedor_Habitual || p['Proveedor Habitual'] || ''
             }));
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(filas);
+            XLSX.utils.book_append_sheet(wb, ws, "Stock Activo");
+            XLSX.writeFile(wb, `Inventario_Lacteo_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
 
-            const libro = XLSX.utils.book_new();
-            const hoja = XLSX.utils.json_to_sheet(datosLimpios);
-            XLSX.utils.book_append_sheet(libro, hoja, "Inventario Real");
+        function exportarAPDF() {
+            if (!inventarioGlobal.length) return;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
             
-            // Descarga automática del archivo plano procesado
-            XLSX.writeFile(libro, `Inventario_LogicaLactea_${new Date().toISOString().split('T')[0]}.xlsx`);
+            doc.text("LÓGICA LÁCTEA - REPORTE DE EXHAUSTIVIDAD DE INVENTARIO", 14, 15);
+            doc.setFontSize(9);
+            doc.text(`Fecha de emisión: ${new Date().toLocaleString()}`, 14, 22);
+
+            const columnas = ["ID", "Producto", "P. Distribuidor", "P. Venta", "Stock", "Proveedor"];
+            const filas = inventarioGlobal.map(p => [
+                p.ID, p.Producto, `$${p.Precio_Distribuidor}`, `$${p.Precio_Venta}`, p.Stock, p.Proveedor_Habitual || 'S/A'
+            ]);
+
+            doc.autoTable({
+                startY: 26,
+                head: [columnas],
+                body: filas,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 23, 42] } // Slate-900
+            });
+
+            doc.save(`Inventario_Lacteo_${new Date().toISOString().split('T')[0]}.pdf`);
         }
     </script>
 </body>

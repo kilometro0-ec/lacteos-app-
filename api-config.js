@@ -3,7 +3,7 @@
  * Solución para CORS con Google Apps Script
  */
 
-const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbyhuid6wQS8RM74_ZAKbzgC-2ZOpI3BgE2ZsDFZS22ffs9a7Usy1VZQDc5SwpgR5eoPBw/exec";
+const DAIRY_API_URL = "https://script.google.com/macros/s/AKfycbxfeCS_jHckt_eps4g-2FbfEtr6nfzcIyIoV9VAXlB3dlLXfLnMtKuZpyQu4vwbHG8IrA/exec";
 
 const DairyAPI = {
     // 1. LECTURA DE DATOS (doGet) - Esto funciona con GET normal

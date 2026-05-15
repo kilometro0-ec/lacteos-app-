@@ -1,9 +1,9 @@
 {
-
+  "name": "Lógica Láctea",
   "short_name": "Láctea",
-
-  "name": "Lógica Láctea - Gestión",
-
-  "icons": [
-
-    {
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#a21caf",
+  "icons": []
+}

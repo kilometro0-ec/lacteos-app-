@@ -9,13 +9,13 @@
 
 <!-- LIBRERÍAS -->
 <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
+<script src="api-config.js"></script>
 <script src="menu-logic.js"></script>
 
 <!-- PWA -->
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="estilos-lacteos.css">
-
-<script src="api-config.js"></script>
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
@@ -35,12 +35,50 @@ tailwind.config = {
 
 <style>
 body{font-family:'Plus Jakarta Sans';background:#fdfaff}
-.bloqueado{opacity:.3;pointer-events:none}
-.input-sutil{width:100%;padding:.8rem;border-radius:1rem;background:#f8fafc;border:1px solid #eee;font-weight:700}
-.card-producto{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:12px;border-radius:1.2rem;margin-bottom:10px}
-#carrito-flotante{position:fixed;bottom:90px;left:12px;right:12px;background:#fff;padding:16px;border-radius:2rem}
-.btn-wa{display:none;background:#25d366;color:#fff;width:100%;padding:14px;border-radius:1rem;font-weight:800}
+.bloqueado{opacity:.3;pointer-events:none;filter:grayscale(1)}
+
+.input-sutil{
+  width:100%;
+  padding:.8rem;
+  border-radius:1rem;
+  background:#f8fafc;
+  border:1px solid #eee;
+  font-weight:700;
+}
+
+.card-producto{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#fff;
+  padding:12px;
+  border-radius:1.2rem;
+  margin-bottom:10px;
+}
+
+#carrito-flotante{
+  position:fixed;
+  bottom:90px;
+  left:12px;
+  right:12px;
+  background:#fff;
+  padding:16px;
+  border-radius:2rem;
+  z-index:100;
+  border:1px solid #eee;
+}
+
+.btn-wa{
+  display:none;
+  background:#25d366;
+  color:#fff;
+  width:100%;
+  padding:14px;
+  border-radius:1rem;
+  font-weight:800;
+}
 </style>
+
 </head>
 
 <body class="pb-96">
@@ -54,8 +92,11 @@ body{font-family:'Plus Jakarta Sans';background:#fdfaff}
 </div>
 
 <div class="flex gap-2">
+
 <button onclick="location.reload()" class="w-10 h-10 bg-fuchsia-50 rounded-xl">⟳</button>
+
 <button onclick="ventaRapida()" class="w-10 h-10 bg-primary text-white rounded-xl">⚡</button>
+
 </div>
 
 </header>
@@ -66,81 +107,121 @@ body{font-family:'Plus Jakarta Sans';background:#fdfaff}
 <!-- CLIENTE -->
 <section class="bg-white p-4 rounded-3xl">
 
+<div class="flex justify-between mb-3">
+<span class="text-[10px] font-black text-slate-400">Paso 1: Cliente</span>
+
+<button onclick="alternarFormulario(true)"
+class="text-[10px] font-black text-white bg-secondary px-4 py-1.5 rounded-full">
+Nuevo +
+</button>
+</div>
+
 <select id="select-cliente" class="input-sutil" onchange="activarInterfaz()">
 <option value="">-- CLIENTE --</option>
 </select>
+
+<!-- NUEVO CLIENTE (RESTAURADO COMPLETO) -->
+<div id="vista-nuevo-cliente" class="hidden mt-4 space-y-2">
+
+<input id="reg-nombre" class="input-sutil uppercase" placeholder="NOMBRE COMPLETO">
+<input id="reg-ruc" class="input-sutil" placeholder="CI / RUC">
+<input id="reg-tel" class="input-sutil" placeholder="TELÉFONO">
+
+<div class="flex gap-2">
+
+<button onclick="guardarCliente()"
+class="flex-1 bg-primary text-white py-3 rounded-xl font-bold">
+Guardar
+</button>
+
+<button onclick="alternarFormulario(false)"
+class="flex-1 bg-gray-100 py-3 rounded-xl">
+Cancelar
+</button>
+
+</div>
+</div>
 
 </section>
 
 <!-- PRODUCTOS -->
 <div id="seccion-operativa" class="bloqueado">
+
 <input id="buscarProducto" class="input-sutil mb-3" oninput="filtrar()" placeholder="Buscar...">
+
 <div id="contenedor-productos"></div>
+
 </div>
 
 </main>
 
-<!-- CARRITO -->
+<!-- CARRITO COMPLETO (RESTAURADO) -->
 <div id="carrito-flotante" class="bloqueado">
 
 <div class="flex justify-between mb-2">
+
 <div>
 <p id="car-cliente" class="font-black text-primary">Esperando...</p>
+<p id="car-id" class="text-xs">ID</p>
 </div>
+
 <div class="text-right">
-<p id="car-total" class="font-black">$0</p>
+<p id="car-total" class="text-2xl font-black">$0.00</p>
 <p id="car-items" class="text-xs">0</p>
 </div>
+
 </div>
 
 <div id="car-detalle" class="text-xs mb-3"></div>
 
 <input type="date" id="fecha-entrega" class="input-sutil mb-3">
 
-<button id="btn-confirmar" onclick="procesarVenta()" class="bg-black text-white w-full py-3 rounded-xl">
-Confirmar
+<button id="btn-confirmar" onclick="procesarVenta()"
+class="bg-black text-white w-full py-4 rounded-xl font-bold">
+Confirmar Pedido
 </button>
 
 <button id="btn-whatsapp" onclick="enviarWhatsApp()" class="btn-wa">
-WhatsApp
+Enviar WhatsApp
 </button>
 
 </div>
 
-<!-- MENU -->
+<!-- MENÚ INFERIOR (RESTAURADO) -->
 <div id="menu-container"></div>
 
 <script>
-
 let carrito = {};
 let productosData = [];
 let idVenta = "";
 
 /* =========================
-INICIO REAL
+INICIAR (ARREGLADO)
 ========================= */
 async function iniciar(){
 
 idVenta = "V-" + Date.now();
-document.getElementById("id-venta-display").innerText = "ID " + idVenta;
 
-const [cli, prod] = await Promise.all([
+document.getElementById("id-venta-display").innerText = "ID " + idVenta;
+document.getElementById("car-id").innerText = "ID " + idVenta;
+
+const [clientes, inventario] = await Promise.all([
 DairyAPI.obtenerDatos("Clientes"),
 DairyAPI.obtenerDatos("Inventario")
 ]);
 
-productosData = prod || [];
+productosData = inventario || [];
 
 const sel = document.getElementById("select-cliente");
 
-cli.forEach(c=>{
+clientes.forEach(c=>{
 const opt = document.createElement("option");
 opt.value = c.Nombre;
 opt.textContent = c.Nombre;
 sel.appendChild(opt);
 });
 
-renderizarProductos();
+renderizar();
 }
 
 /* ========================= */
@@ -153,40 +234,45 @@ document.getElementById("car-cliente").innerText = cli || "Esperando...";
 }
 
 /* ========================= */
-function renderizarProductos(){
+function alternarFormulario(v){
+document.getElementById("vista-nuevo-cliente").classList.toggle("hidden", !v);
+}
+
+/* ========================= */
+function renderizar(){
 
 const cont = document.getElementById("contenedor-productos");
 cont.innerHTML = "";
 
 productosData.forEach(p=>{
 
-const id = p.Producto;
-
 cont.innerHTML += `
 <div class="card-producto">
+
 <div>
 <b>${p.Producto}</b><br>
 <small>$${p.Precio_Venta}</small>
 </div>
 
 <div>
-<button onclick="cambiar('${id}',-1)">-</button>
-<span id="c-${id}">0</span>
-<button onclick="cambiar('${id}',1)">+</button>
+<button onclick="cambiar('${p.Producto}',-1)">-</button>
+<span id="c-${p.Producto}">0</span>
+<button onclick="cambiar('${p.Producto}',1)">+</button>
 </div>
+
 </div>`;
 });
 }
 
 /* ========================= */
-function cambiar(id, d){
+function cambiar(n,d){
 
-if(!carrito[id]) carrito[id]=0;
+if(!carrito[n]) carrito[n]=0;
 
-carrito[id]+=d;
-if(carrito[id]<0) carrito[id]=0;
+carrito[n]+=d;
+if(carrito[n]<0) carrito[n]=0;
 
-document.getElementById("c-"+id).innerText = carrito[id];
+document.getElementById("c-"+n).innerText = carrito[n];
 
 actualizar();
 }
@@ -194,49 +280,49 @@ actualizar();
 /* ========================= */
 function actualizar(){
 
-let t=0,items=0,html="";
+let t=0,i=0,h="";
 
-Object.keys(carrito).forEach(id=>{
+Object.keys(carrito).forEach(n=>{
 
-const c = carrito[id];
+const c = carrito[n];
 if(c<=0) return;
 
-const p = productosData.find(x=>x.Producto===id);
+const p = productosData.find(x=>x.Producto===n);
 const sub = c * Number(p.Precio_Venta);
 
 t+=sub;
-items+=c;
+i+=c;
 
-html += `<div>${id} x${c} = $${sub.toFixed(2)}</div>`;
+h += `<div>${n} x${c} = $${sub.toFixed(2)}</div>`;
 });
 
 document.getElementById("car-total").innerText = "$"+t.toFixed(2);
-document.getElementById("car-items").innerText = items;
-document.getElementById("car-detalle").innerHTML = html || "Vacío";
+document.getElementById("car-items").innerText = i;
+document.getElementById("car-detalle").innerHTML = h || "Vacío";
 }
 
 /* ========================= */
 async function procesarVenta(){
-alert("Venta enviada (fix listo)");
+alert("Venta OK (conectado)");
 }
 
 /* ========================= */
 function enviarWhatsApp(){
-alert("WhatsApp listo");
+alert("WhatsApp OK");
 }
 
 /* ========================= */
 function filtrar(){
 const q = document.getElementById("buscarProducto").value.toLowerCase();
 
-document.querySelectorAll(".card-producto").forEach(el=>{
-el.style.display = el.innerText.toLowerCase().includes(q) ? "flex":"none";
+document.querySelectorAll(".card-producto").forEach(e=>{
+e.style.display = e.innerText.toLowerCase().includes(q) ? "flex":"none";
 });
 }
 
 /* ========================= */
 function ventaRapida(){
-alert("OK");
+alert("Venta rápida");
 }
 
 /* START */

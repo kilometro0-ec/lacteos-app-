@@ -3,7 +3,7 @@
 // Versión CORREGIDA para CORS
 // ============================================================
 
-const API_BASE_URL = "https://script.google.com/macros/s/AKfycbwUno4F8mMni7r6drIhJp885y9LTRlz9KaU-6jtyodGJLs6lO9Dxp6_1BcOQvgrLqf3_Q/exec";
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbw55kLetMyNEBOb9z9jcM3f6q2fhg-DxQkIyxScRGNws0Nr1Tr2mSOS7ZHGoZ813hKYkg/exec";
 
 const DairyAPI = {
     // ========== GET: Obtener datos (funciona en PC y Celular) ==========

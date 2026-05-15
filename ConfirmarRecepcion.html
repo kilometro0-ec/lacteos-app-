@@ -4,7 +4,9 @@
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
     <title>Checklist de Recepción | Lógica Láctea</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="estilos-lacteos.css?v=1.4">
     <script src="api-config.js?v=1.4"></script>
     <script src="menu-logic.js?v=1.4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
@@ -76,7 +78,8 @@
             </div>
         </div>
     </div>
-    <nav id="menu-container"></nav>
+    
+    <nav id="menu-container" class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200"></nav>
 
     <script>
         let todosLosPedidos = []; let itemsEnEdicion = []; let idSeleccionado = "";

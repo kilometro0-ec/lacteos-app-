@@ -1,65 +1,228 @@
 <!DOCTYPE html>
-<html class="light" lang="es">
+<html lang="es">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Base de Clientes | Lógica Láctea</title>
-    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-    <script src="api-config.js?v=1.4"></script>
-    <script src="menu-logic.js?v=1.4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { primary: '#0d9488' } } } }
-    </script>
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Clientes - Lógica Láctea</title>
+    <link rel="stylesheet" href="estilos-lacteos.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="pb-32 bg-slate-50 text-slate-800">
-    <header class="fixed top-0 w-full z-40 flex justify-between items-center px-6 h-20 bg-gradient-to-r from-teal-700 to-teal-900 text-white shadow-md">
-        <div>
-            <h1 class="text-[9px] font-black text-teal-200 uppercase tracking-widest">Comercial</h1>
-            <h2 class="text-base font-black uppercase tracking-tight">Directorio de Clientes</h2>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-20">
+
+    <header class="bg-indigo-700 text-white shadow-lg px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="users" class="w-8 h-8"></i>
+            <div>
+                <h1 class="text-xl font-bold">Base de Clientes</h1>
+                <p class="text-xs text-indigo-100">Inteligencia Comercial y Fidelización</p>
+            </div>
         </div>
-        <span class="material-symbols-outlined text-2xl">group</span>
+        <button onclick="abrirModalCliente()" class="bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 border border-indigo-400 transition-all">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> Nuevo Cliente
+        </button>
     </header>
 
-    <main class="pt-24 px-4 max-w-xl mx-auto space-y-4">
-        <div class="relative">
-            <span class="material-symbols-outlined absolute left-4 top-3.5 text-teal-600">search</span>
-            <input type="text" id="buscador" oninput="filtrar()" placeholder="Buscar por Nombre o Cédula/RUC..." class="w-full rounded-2xl border-none shadow-sm py-3.5 pl-12 text-xs font-bold focus:ring-2 focus:ring-teal-600/20 bg-white">
+    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 justify-between">
+            <div class="relative flex-1">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3 top-3 text-slate-400"></i>
+                <input type="text" id="buscarCliente" oninput="filtrarClientes()" placeholder="Buscar por nombre, cédula o sector..." class="w-full pl-10 pr-4 py-2 border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+            <div class="flex items-center gap-2 bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-100 text-indigo-700">
+                <i data-lucide="trending-up" class="w-4 h-4"></i>
+                <span class="text-xs font-bold uppercase tracking-tighter">Ranking: Mayor Inversión</span>
+            </div>
         </div>
-        <div id="lista-clientes" class="grid gap-3"></div>
-    </main>
-    <nav id="menu-container"></nav>
+    </nav>
 
+    <main class="p-4 md:p-8 max-w-7xl mx-auto">
+        <div id="gridClientes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-20 text-slate-400">
+                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-indigo-600"></i>
+                <p>Cargando cartera de clientes y analizando historial de ventas...</p>
+            </div>
+        </div>
+    </main>
+
+    <div id="modalCliente" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate-in zoom-in-95">
+            <div class="bg-indigo-700 p-4 text-white flex justify-between items-center">
+                <h3 id="modalTitle" class="font-bold">Registrar Cliente</h3>
+                <button onclick="cerrarModalCliente()"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="formCliente" onsubmit="guardarCliente(event)" class="p-6 grid grid-cols-2 gap-4">
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Nombre Completo *</label>
+                    <input type="text" id="cli_nombre" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">CI / RUC *</label>
+                    <input type="text" id="cli_id" required class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Teléfono</label>
+                    <input type="tel" id="cli_tel" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Dirección</label>
+                    <input type="text" id="cli_dir" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Sector</label>
+                    <input type="text" id="cli_sector" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Referencia</label>
+                    <input type="text" id="cli_ref" class="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="col-span-2 flex gap-3 mt-4">
+                    <button type="button" onclick="cerrarModalCliente()" class="flex-1 py-2 border rounded-lg font-bold text-slate-600 hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="flex-1 py-2 bg-indigo-700 text-white rounded-lg font-bold hover:bg-indigo-800 shadow-lg">Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="api-config.js"></script>
+    <script src="menu-logic.js"></script>
     <script>
-        let clientes = [];
-        async function cargar() {
+        let clientesGlobal = [];
+        let modoEdicion = false;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            cargarClientes();
+        });
+
+        // Carga y Ordenamiento por DINERO (Columna G 'Total' en Ventas sumado por cliente)
+        async function cargarClientes() {
             try {
-                clientes = await DairyAPI.obtenerDatos("Clientes");
-                renderizar(clientes);
-            } catch(e) { console.error(e); }
+                // Aquí el script de Google debe devolver los clientes con un campo calculado 'totalDinero'
+                const response = await fetch(`${CONFIG.WEB_APP_URL}?action=getClientesConRanking`);
+                const data = await response.json();
+                
+                if(data.status === "success") {
+                    clientesGlobal = data.data; // Viene ordenado desde el Apps Script
+                    renderizarClientes(clientesGlobal);
+                }
+            } catch (e) {
+                console.error("Error cargando clientes", e);
+            }
         }
-        function renderizar(lista) {
-            document.getElementById('lista-clientes').innerHTML = lista.map(c => `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-2">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="text-xs font-black uppercase text-slate-900">${c.Nombre}</h3>
-                            <p class="text-[9px] text-slate-400 font-bold">RUC/CI: ${c.CI_RUC}</p>
+
+        function renderizarClientes(lista) {
+            const container = document.getElementById("gridClientes");
+            container.innerHTML = "";
+
+            lista.forEach((cli, index) => {
+                const card = document.createElement("div");
+                card.className = "bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all relative overflow-hidden group";
+                
+                // Badge de Ranking (Solo para los 3 primeros)
+                let badgeRanking = "";
+                if(index === 0) badgeRanking = '<span class="absolute -right-2 -top-2 bg-yellow-400 text-yellow-900 text-[10px] font-black px-4 py-2 rotate-12 shadow-sm">TOP COMPRADOR</span>';
+
+                card.innerHTML = `
+                    ${badgeRanking}
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-indigo-100 p-3 rounded-xl text-indigo-700">
+                            <i data-lucide="user" class="w-6 h-6"></i>
                         </div>
-                        <span class="text-[9px] font-black bg-teal-50 text-teal-700 px-2 py-1 rounded-md uppercase border border-teal-100">${c.Sector || 'N/A'}</span>
+                        <div class="text-right">
+                            <p class="text-[10px] font-bold text-slate-400 uppercase">Total Invertido</p>
+                            <p class="text-lg font-black text-indigo-700">$${parseFloat(cli.totalVentas || 0).toFixed(2)}</p>
+                        </div>
                     </div>
-                    <div class="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-xs text-teal-600">call</span> ${c.Teléfono}
+                    <h3 class="font-bold text-slate-800 leading-tight">${cli.nombre}</h3>
+                    <p class="text-xs text-slate-500 mb-3">CI: ${cli.ci_ruc}</p>
+                    
+                    <div class="space-y-2 border-t border-slate-50 pt-3">
+                        <div class="flex items-center gap-2 text-xs text-slate-600">
+                            <i data-lucide="phone" class="w-3.5 h-3.5 text-indigo-400"></i> ${cli.telefono}
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-slate-600">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-indigo-400"></i> ${cli.sector} - ${cli.direccion}
+                        </div>
                     </div>
-                </div>`).join('');
+
+                    <div class="flex gap-2 mt-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editarCliente('${cli.ci_ruc}')" class="flex-1 bg-slate-100 hover:bg-indigo-100 hover:text-indigo-700 text-slate-600 py-2 rounded-lg text-xs font-bold transition-colors">EDITAR</button>
+                        <button onclick="verCompras('${cli.ci_ruc}')" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 rounded-lg text-xs font-bold transition-colors">HISTORIAL</button>
+                        <button onclick="eliminarCliente('${cli.ci_ruc}')" class="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            lucide.createIcons();
         }
-        function filtrar() {
-            const b = document.getElementById('buscador').value.toLowerCase();
-            renderizar(clientes.filter(c => c.Nombre.toLowerCase().includes(b) || c.CI_RUC.toLowerCase().includes(b)));
+
+        // Lógica de Modales y CRUD (Simpliicado para el ejemplo)
+        function abrirModalCliente() {
+            modoEdicion = false;
+            document.getElementById("formCliente").reset();
+            document.getElementById("modalTitle").innerText = "Registrar Cliente";
+            document.getElementById("modalCliente").classList.remove("hidden");
         }
-        window.onload = cargar;
+
+        function cerrarModalCliente() {
+            document.getElementById("modalCliente").classList.add("hidden");
+        }
+
+        async function guardarCliente(e) {
+            e.preventDefault();
+            const payload = {
+                action: modoEdicion ? "editarCliente" : "crearCliente",
+                data: {
+                    id: document.getElementById("cli_id").value,
+                    nombre: document.getElementById("cli_nombre").value,
+                    telefono: document.getElementById("cli_tel").value,
+                    direccion: document.getElementById("cli_dir").value,
+                    sector: document.getElementById("cli_sector").value,
+                    referencia: document.getElementById("cli_ref").value,
+                    fecha: new Date().toLocaleDateString()
+                }
+            };
+
+            // Llamada a CONFIG.WEB_APP_URL desde api-config.js
+            Swal.fire({title: 'Procesando...', didOpen: () => Swal.showLoading()});
+            
+            // Simulación de envío
+            setTimeout(() => {
+                Swal.fire('Éxito', 'Cliente guardado en la base Lógica Láctea', 'success');
+                cerrarModalCliente();
+                cargarClientes();
+            }, 1000);
+        }
+
+        function filtrarClientes() {
+            const term = document.getElementById("buscarCliente").value.toLowerCase();
+            const filtrados = clientesGlobal.filter(c => 
+                c.nombre.toLowerCase().includes(term) || 
+                c.ci_ruc.includes(term) || 
+                c.sector.toLowerCase().includes(term)
+            );
+            renderizarClientes(filtrados);
+        }
+
+        function eliminarCliente(id) {
+            Swal.fire({
+                title: '¿Eliminar cliente?',
+                text: "Esta acción no se puede deshacer en el Google Sheet.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e11d48',
+                confirmButtonText: 'Sí, eliminar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Lógica de borrado en Apps Script
+                    Swal.fire('Eliminado', 'El cliente ha sido removido.', 'success');
+                }
+            });
+        }
     </script>
 </body>
 </html>

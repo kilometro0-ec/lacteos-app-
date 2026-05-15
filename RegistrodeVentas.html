@@ -68,14 +68,25 @@
 
 <!-- HEADER -->
 <header class="h-20 bg-white flex justify-between items-center px-6 sticky top-0">
+
     <div>
         <h1 class="font-black text-xl">Nueva Venta</h1>
         <span id="id-venta-display" class="text-xs text-primary">ID: ---</span>
     </div>
 
-    <button onclick="location.reload()" class="p-2 bg-slate-100 rounded-xl">
-        🔄
-    </button>
+    <div class="flex gap-2">
+
+        <!-- 🔥 BOTÓN VENTA RÁPIDA -->
+        <button onclick="ventaRapida()" class="p-2 bg-green-100 text-green-600 rounded-xl font-black">
+            ⚡
+        </button>
+
+        <!-- REFRESH -->
+        <button onclick="location.reload()" class="p-2 bg-slate-100 rounded-xl">
+            🔄
+        </button>
+
+    </div>
 </header>
 
 <main class="px-6 mt-6 max-w-xl mx-auto">
@@ -84,6 +95,7 @@
 <section class="bg-white p-5 rounded-3xl">
 
     <div id="vista-seleccion-cliente">
+
         <div class="flex justify-between mb-3">
             <span class="text-xs font-black">Cliente</span>
             <button onclick="alternarFormulario(true)" class="text-xs bg-pink-600 text-white px-3 py-1 rounded-full">
@@ -94,20 +106,7 @@
         <select id="select-cliente" onchange="activarInterfaz()" class="input-sutil">
             <option value="">Seleccionar cliente</option>
         </select>
-    </div>
 
-    <div id="vista-nuevo-cliente" class="hidden space-y-2">
-        <input id="reg-nombre" class="input-sutil" placeholder="Nombre">
-        <input id="reg-ruc" class="input-sutil" placeholder="CI/RUC">
-        <input id="reg-tel" class="input-sutil" placeholder="Teléfono">
-
-        <button onclick="guardarCliente()" class="bg-primary text-white w-full py-3 rounded-xl font-bold">
-            Guardar Cliente
-        </button>
-
-        <button onclick="alternarFormulario(false)" class="w-full py-2">
-            Cancelar
-        </button>
     </div>
 
 </section>
@@ -155,7 +154,6 @@ let idVenta = "";
 async function iniciar() {
 
     const d = new Date();
-
     idVenta = "V-" + Date.now();
 
     document.getElementById("id-venta-display").innerText = "ID: " + idVenta;
@@ -250,6 +248,55 @@ function actualizar() {
     document.getElementById("car-items").innerText = items + " unidades";
 }
 
+/* ======================================================
+   ⚡ VENTA RÁPIDA (SOLO STOCK + REGISTRO EN 0)
+====================================================== */
+async function ventaRapida() {
+
+    const cli = document.getElementById("select-cliente").value || "CONSUMO INTERNO";
+    const fec = new Date().toISOString().split("T")[0];
+
+    if (Object.keys(carrito).length === 0) {
+        return alert("No hay productos");
+    }
+
+    document.getElementById("overlay-exito").style.display = "flex";
+
+    for (let n in carrito) {
+
+        if (carrito[n] > 0) {
+
+            const p = productosData.find(x => x.Producto === n);
+
+            await DairyAPI.enviarDatos({
+                pestaña: "Ventas",
+                ID_Venta: "RAPIDA-" + Date.now(),
+                Cliente: cli,
+                Producto: n,
+                Cantidad: carrito[n],
+
+                // 🔥 IMPORTANTE: todo en cero
+                Precio_PVP: 0,
+                Total: 0,
+
+                Estado_Entrega: "CONSUMO_INTERNO",
+                Fecha_Entrega: fec
+            });
+
+            // descontar stock igual
+            await DairyAPI.enviarDatos({
+                pestaña: "Inventario",
+                Producto: n,
+                Stock: p.Stock - carrito[n]
+            });
+        }
+    }
+
+    location.reload();
+}
+
+/* ====================================================== */
+
 async function procesarVenta() {
 
     const cli = document.getElementById("select-cliente").value;
@@ -273,7 +320,7 @@ async function procesarVenta() {
                 Cantidad: carrito[n],
                 Precio_PVP: p.Precio_Venta,
                 Fecha_Entrega: fec,
-                Estado: "PENDIENTE"
+                Estado_Entrega: "PENDIENTE"
             });
         }
     }
@@ -283,7 +330,6 @@ async function procesarVenta() {
 
 function alternarFormulario(m) {
     document.getElementById("vista-seleccion-cliente").classList.toggle("hidden", m);
-    document.getElementById("vista-nuevo-cliente").classList.toggle("hidden", !m);
 }
 
 function filtrar() {
@@ -297,8 +343,6 @@ function filtrar() {
 window.onload = iniciar;
 
 </script>
-
-<script src="api-config.js"></script>
 
 </body>
 </html>

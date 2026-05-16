@@ -17,7 +17,19 @@
     <meta name="theme-color" content="#059669">
 </head>
 
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16 relative">
+
+    <!-- PANTALLA DE CARGA INICIAL (SPINNER ANIMADO) -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl border border-slate-100 flex flex-col items-center gap-4 max-w-xs w-full mx-4">
+            <!-- Spinner animado con Tailwind -->
+            <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+            <div class="text-center">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Lógica Láctea</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Sincronizando kárdex y clientes...</p>
+            </div>
+        </div>
+    </div>
 
     <div id="menu-container"></div>
 
@@ -180,7 +192,6 @@
         let carrito = [];
         let esConsumoInterno = false;
 
-        // Variables de control de lo seleccionado actualmente
         let clienteSeleccionado = null;
         let productoSeleccionado = null;
 
@@ -189,7 +200,6 @@
             establecerFechaPorDefecto();
             inicializarModulo();
 
-            // Cerrar listas flotantes al hacer clic afuera
             document.addEventListener("click", (e) => {
                 if (!e.target.closest('#buscarCliente') && !e.target.closest('#listaClientesFlotante')) {
                     document.getElementById("listaClientesFlotante").classList.add("hidden");
@@ -213,21 +223,29 @@
         };
 
         async function inicializarModulo() {
+            // Mostrar animación de carga al iniciar o refrescar datos
+            const overlay = document.getElementById("loadingOverlay");
+            overlay.classList.remove("hidden", "opacity-0");
+
             try {
                 const datosClientes = await DairyAPI.obtenerDatos("Clientes");
                 clientesGlobal = datosClientes || [];
 
                 const datosInventario = await DairyAPI.obtenerDatos("Inventario");
-                // Filtrar el catálogo eliminando productos sin stock
                 catalogoProductos = (datosInventario || []).filter(p => parseInt(p.stock || 0) > 0);
 
             } catch (err) {
                 console.error(err);
                 Swal.fire("Error", "No se pudo conectar con Sheets", "error");
+            } finally {
+                // Ocultar animación con efecto fade-out suave
+                overlay.classList.add("opacity-0");
+                setTimeout(() => {
+                    overlay.classList.add("hidden");
+                }, 300);
             }
         }
 
-        // LÓGICA DE BÚSQUEDA Y SELECCIÓN DE CLIENTES FLOTANTE
         function filtrarClientes() {
             if (esConsumoInterno) return;
             
@@ -272,7 +290,6 @@
             document.getElementById("btnLimpiarCliente").classList.add("hidden");
         }
 
-        // LÓGICA DE BÚSQUEDA Y SELECCIÓN DE PRODUCTOS FLOTANTE
         function filtrarProductos() {
             const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaProductosFlotante");
@@ -305,7 +322,6 @@
             document.getElementById("btnLimpiarProducto").classList.remove("hidden");
             document.getElementById("listaProductosFlotante").classList.add("hidden");
 
-            // Cargar Stock y Precios
             const prod = catalogoProductos.find(p => String(p.id).trim() === id);
             if (prod) {
                 const stock = parseInt(prod.stock || 0);
@@ -525,7 +541,6 @@
                     throw new Error(data.message || "Error devuelto por el servidor");
                 }
 
-                // ESTRUCTURACIÓN DEL TEXTO PARA WHATSAPP
                 let totalFactura = 0;
                 let cadenaProductos = "";
                 carrito.forEach(item => {
@@ -543,7 +558,6 @@
 
                 const urlWhatsApp = `https://api.whatsapp.com/send?phone=${telefonoCliente}&text=${encodeURIComponent(mensajeWhatsApp)}`;
 
-                // ALERTA DE ÉXITO CON BOTÓN PERSONALIZADO
                 Swal.fire({
                     title: 'Transacción Registrada',
                     html: `
@@ -561,7 +575,6 @@
                     confirmButtonText: 'Cerrar Ventana'
                 });
 
-                // Limpieza post-venta
                 carrito = [];
                 limpiarSeleccionCliente();
                 limpiarSeleccionProducto();

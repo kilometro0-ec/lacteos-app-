@@ -1,9 +1,16 @@
 {
-  "name": "Lógica Láctea",
-  "short_name": "Láctea",
-  "start_url": ".",
+  "short_name": "LogicaLactea",
+  "name": "Lógica Láctea - Gestión Integrada",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3050/3050158.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./RegistrodeVentas.html",
+  "background_color": "#f4f7f6",
+  "theme_color": "#1e3a8a",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#a21caf",
-  "icons": []
+  "orientation": "portrait"
 }

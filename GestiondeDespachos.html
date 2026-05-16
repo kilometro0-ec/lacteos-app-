@@ -1,6 +1,6 @@
 <!-- ========================================= -->
 <!-- ARCHIVO: GestiondeDespachos.html          -->
-<!-- VERSIÓN PREMIUM CON FILTROS AVANZADOS     -->
+<!-- VERSIÓN CONTROL DE RUTAS Y PRECIOS       -->
 <!-- ========================================= -->
 
 <!DOCTYPE html>
@@ -14,6 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    
     <!-- Librerías para Exportación de Datos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -93,7 +94,7 @@
                 <i data-lucide="truck" class="w-6 h-6"></i>
                 <div>
                     <h1 class="text-base font-bold tracking-tight">Despachos</h1>
-                    <p class="text-[10px] text-emerald-100">Gestión Inteligente</p>
+                    <p class="text-[10px] text-emerald-100">Rutas y Entregas</p>
                 </div>
             </div>
             <button onclick="recargarDatos()" class="bg-emerald-700 active:bg-emerald-800 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 touch-active">
@@ -194,14 +195,13 @@
             try {
                 const ventas = await DairyAPI.obtenerDatos("Ventas");
                 
-                // Cruce rápido con Clientes para capturar direcciones e información extra
                 let mapaClientes = {};
                 try {
                     const dataC = await DairyAPI.obtenerDatos("Clientes");
                     dataC.forEach(c => {
                         mapaClientes[c.nombre.toString().trim().toLowerCase()] = c.direccion || "Dirección no registrada";
                     });
-                } catch(e) { console.error("Error cargando direcciones de clientes", e); }
+                } catch(e) { console.error("Error cargando direcciones", e); }
 
                 if (!ventas || ventas.length === 0) {
                     todasLasVentasAgrupadas = [];
@@ -209,23 +209,24 @@
                     return;
                 }
 
-                todasLasVentasAgrupadas = ventas.map(v => {
-                    let est = (v.estado || "PENDIENTE").toUpperCase();
-                    if (est !== "ENTREGADO") est = "PENDIENTE";
+                // FILTRADO ESTRICTO EXCLUSIVO DESDE EL ORIGEN DE DATOS
+                const ventasLimpias = ventas.filter(v => {
+                    const e = (v.estado || "").toUpperCase().trim();
+                    return e === "PENDIENTE" || e === "ENTREGADO";
+                });
 
+                todasLasVentasAgrupadas = ventasLimpias.map(v => {
                     const clKey = v.cliente.toString().trim().toLowerCase();
-
                     return {
                         id: v.id,
                         fecha: v.fecha,
                         cliente: v.cliente,
                         telefono: v.telefono || "",
-                        direccion: mapaClientes[clKey] || "Entrega de Planta / Ruta Externa",
+                        direccion: mapaClientes[clKey] || "Dirección no registrada",
                         productos: v.productos || "", 
-                        items: v.items || 1,
+                        items: parseInt(v.items || 1),
                         total: parseFloat(v.total || 0),
-                        estado: est,
-                        fechaEntrega: v.fechaEntrega || ""
+                        estado: v.estado.toUpperCase()
                     };
                 });
 
@@ -247,25 +248,20 @@
         function aplicarFiltros() {
             let filtradas = [...todasLasVentasAgrupadas];
 
-            // 1. Filtro por Estado (Cards Superiores)
             if (filtroActual !== "TODOS") {
                 filtradas = filtradas.filter(v => v.estado === filtroActual);
             }
 
-            // 2. Filtro por Tiempo
             const modoTiempo = document.getElementById("filtroTiempo").value;
-            const contenedorFecha = document.getElementById("wrapperFechaEspecifica");
+            const contenedorFecha = document.getElementById("wrapperFechaExplicit");
             
             if (modoTiempo === "ESPECIFICA") {
-                contenedorFecha.classList.remove("hidden");
+                if(contenedorFecha) contenedorFecha.classList.remove("hidden");
                 const fExacta = document.getElementById("fechaFiltroExacto").value;
-                if (fExacta) {
-                    filtradas = filtradas.filter(v => v.fecha === fExacta);
-                }
+                if (fExacta) filtradas = filtradas.filter(v => v.fecha === fExacta);
             } else {
-                contenedorFecha.classList.add("hidden");
+                if(contenedorFecha) contenedorFecha.classList.add("hidden");
                 const hoy = new Date();
-                
                 if (modoTiempo === "SEMANA") {
                     const unaSemanaAtras = new Date(hoy.getTime() - 7 * 24 * 60 * 60 * 1000);
                     filtradas = filtradas.filter(v => new Date(v.fecha) >= unaSemanaAtras);
@@ -279,7 +275,6 @@
                 }
             }
 
-            // 3. Filtro por Buscador Texto
             if (textoBusqueda.trim() !== "") {
                 const b = textoBusqueda.toLowerCase().trim();
                 filtradas = filtradas.filter(v => v.cliente.toLowerCase().includes(b) || v.id.toLowerCase().includes(b));
@@ -296,7 +291,7 @@
                 container.innerHTML = `
                     <div class="text-center py-16 text-slate-400 italic">
                         <i data-lucide="package-x" class="w-16 h-16 mx-auto mb-3 opacity-50"></i>
-                        <p class="text-sm">No hay registros con los filtros seleccionados</p>
+                        <p class="text-sm">No hay pedidos válidos</p>
                     </div>`;
                 lucide.createIcons();
                 return;
@@ -305,9 +300,24 @@
             container.innerHTML = ventasFiltradas.map(v => {
                 const esEntregado = v.estado === "ENTREGADO";
                 
-                // Formateo visual estético e individualizado de productos en Badges claros
-                const listaBadgesProductos = v.productos.split(',').map(p => {
-                    return `<span class="inline-block bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-2 py-1 rounded-md m-0.5 shadow-sm">${p.trim()}</span>`;
+                // CÁLCULO Y DESGLOSE DETALLADO DE PRECIOS UNITARIOS
+                const itemsIndividuales = v.productos.split(',');
+                const totalItemsCuenta = itemsIndividuales.length;
+                const precioEstimadoUnidad = v.total / (v.items || totalItemsCuenta || 1);
+
+                const listaBadgesProductos = itemsIndividuales.map(p => {
+                    const cadenaLimpia = p.trim();
+                    const matchCant = cadenaLimpia.match(/\((\d+)\)/);
+                    const cantidad = matchCant ? parseInt(matchCant[1]) : 1;
+                    const subtotalItem = cantidad * precioEstimadoUnidad;
+
+                    return `
+                        <div class="w-full flex justify-between items-center bg-emerald-50/60 text-emerald-900 border border-emerald-100 text-xs font-medium px-3 py-2 rounded-lg m-1 shadow-sm">
+                            <span class="font-bold text-slate-800">${cadenaLimpia}</span>
+                            <span class="text-[11px] text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
+                                $${precioEstimadoUnidad.toFixed(2)} c/u • Total: <b class="font-black">$${subtotalItem.toFixed(2)}</b>
+                            </span>
+                        </div>`;
                 }).join('');
 
                 return `
@@ -320,27 +330,28 @@
                                         <span class="text-[10px] text-slate-400 font-bold">${v.fecha}</span>
                                     </div>
                                     <h3 class="font-bold text-slate-800 text-sm mt-1">${v.cliente}</h3>
-                                    <div class="flex items-center gap-1 text-[11px] text-slate-500 mt-1">
-                                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-500 shrink-0"></i>
-                                        <span class="truncate">${v.direccion}</span>
+                                    
+                                    <!-- CONTENEDOR DIRECCIÓN + SELECTOR DE MAPAS -->
+                                    <div class="flex items-center justify-between gap-2 mt-2 bg-slate-100/80 p-2 rounded-lg border border-slate-200/60">
+                                        <div class="flex items-center gap-1.5 text-[11px] text-slate-600 truncate">
+                                            <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                                            <span class="truncate font-medium">${v.direccion}</span>
+                                        </div>
+                                        <button onclick="abrirNavegadorGps('${encodeURIComponent(v.direccion)}')" class="bg-emerald-600 text-white p-1.5 rounded-md flex items-center gap-1 text-[10px] font-bold shadow-sm shrink-0 touch-active">
+                                            <i data-lucide="navigation" class="w-3.5 h-3.5"></i> NAVEGAR
+                                        </button>
                                     </div>
-                                </div>
-                                <div>
-                                    ${v.estado === 'PENDIENTE' 
-                                        ? '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 shadow-sm">⏳ Pendiente</span>'
-                                        : '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 shadow-sm">✅ Entregado</span>'
-                                    }
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- RESUMEN VISUAL DE PRODUCTOS MEJORADO -->
+                        <!-- DETALLE MONTO Y PRECIOS -->
                         <div class="p-4 bg-white">
-                            <div class="flex justify-between items-center mb-2.5">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Productos Requeridos</span>
-                                <span class="text-emerald-700 font-black text-base">$${v.total.toFixed(2)}</span>
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Desglose de Valores</span>
+                                <span class="text-emerald-700 font-black text-lg bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">$${v.total.toFixed(2)}</span>
                             </div>
-                            <div class="flex flex-wrap border border-slate-100 p-2 rounded-xl bg-slate-50/30">
+                            <div class="space-y-1">
                                 ${listaBadgesProductos}
                             </div>
                         </div>
@@ -358,7 +369,7 @@
                                 </button>
                             ` : `
                                 <div class="w-full text-center text-[11px] text-slate-400 italic flex items-center justify-center gap-1 py-1">
-                                    <i data-lucide="lock" class="w-3 h-3"></i> Entregado el ${v.fechaEntrega || v.fecha}
+                                    <i data-lucide="lock" class="w-3 h-3"></i> Pedido Entregado Correctamente
                                 </div>
                             `}
                         </div>
@@ -367,12 +378,32 @@
             lucide.createIcons();
         }
 
-        // LÓGICA DE MODIFICACIÓN REAL DIRECTA A LA BASE DE DATOS TRABAJANDO FILA POR FILA
+        // DESPLEGABLE DE SELECCIÓN DE MAPAS O WAZE
+        function abrirNavegadorGps(direccionCodificada) {
+            const dir = decodeURIComponent(direccionCodificada);
+            Swal.fire({
+                title: 'Seleccionar Navegador',
+                text: '¿Con qué aplicación deseas armar la ruta de entrega?',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: '🗺️ Google Maps',
+                cancelButtonText: '🚙 Waze',
+                confirmButtonColor: '#4285F4',
+                cancelButtonColor: '#33CCFF',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`, '_blank');
+                }
+            });
+        }
+
         async function modificarProductosOrden(idVenta) {
             const orden = todasLasVentasAgrupadas.find(v => v.id === idVenta);
             if (!orden) return;
 
-            // Mapeo interno del string
             let listaItems = orden.productos.split(',').map((item, index) => {
                 const partes = item.trim().match(/(.+)\s\((\d+)\)/);
                 return {
@@ -385,10 +416,10 @@
             let htmlFormulario = `<div class="text-left text-sm space-y-2 max-h-64 overflow-y-auto pr-1">`;
             listaItems.forEach((prod) => {
                 htmlFormulario += `
-                    <div id="row-edit-${prod.idOriginal}" class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200 font-sans">
+                    <div id="row-edit-${prod.idOriginal}" class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
                         <div class="flex-1">
                             <p class="font-bold text-slate-800 text-xs">${prod.nombre}</p>
-                            <p class="text-[10px] text-slate-400">Cantidad confirmada: ${prod.cantidad} u</p>
+                            <p class="text-[10px] text-slate-400">Cantidad: ${prod.cantidad} u</p>
                         </div>
                         <button onclick="document.getElementById('row-edit-${prod.idOriginal}').remove()" class="bg-rose-50 text-rose-600 p-2 rounded-lg btn-borrado-item" data-name="${prod.nombre}" data-qty="${prod.cantidad}">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -398,10 +429,10 @@
             htmlFormulario += `</div>`;
 
             const resModal = await Swal.fire({
-                title: 'Editar Ítems de Orden',
+                title: 'Editar Ítems',
                 html: htmlFormulario,
                 showCancelButton: true,
-                confirmButtonText: '💾 Guardar Cambios',
+                confirmButtonText: '💾 Guardar',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#059669',
                 didOpen: () => lucide.createIcons()
@@ -411,16 +442,13 @@
 
             const botonesRestantes = document.querySelectorAll('.btn-borrado-item');
             if (botonesRestantes.length === 0) {
-                Swal.fire("Error", "No puedes vaciar el pedido completo.", "error");
+                Swal.fire("Error", "No puedes dejar la orden en blanco.", "error");
                 return;
             }
 
-            // Crear nuevo arreglo de productos reconstruido
             let nuevosProductos = [];
             let nuevoTotalVenta = 0;
-
-            // Para recalcular el dinero de forma exacta simulamos los precios unitarios proporcionales
-            const factorPrecioProporcional = orden.total / orden.items;
+            const factorPrecioProporcional = orden.total / (orden.items || 1);
 
             botonesRestantes.forEach(b => {
                 const n = b.getAttribute('data-name');
@@ -429,26 +457,11 @@
                 nuevoTotalVenta += c * factorPrecioProporcional;
             });
 
-            Swal.fire({ title: 'Actualizando base de datos...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            orden.productos = nuevosProductos.join(', ');
+            orden.total = nuevoTotalVenta;
 
-            try {
-                // LLAMADA POST AL SCRIPT PARA RE-ESCRIBIR O GUARDAR LA MODIFICACIÓN
-                const payload = {
-                    action: "actualizarEstadoDespacho", // Reutiliza el endpoint de actualización enviando la estructura mutada
-                    idVenta: idVenta,
-                    estado: orden.estado,
-                    fechaEntrega: orden.fechaEntrega || ""
-                };
-
-                // Forzamos actualización local inmediata de la caché visual
-                orden.productos = nuevosProductos.join(', ');
-                orden.total = nuevoTotalVenta;
-
-                Swal.fire({ icon: 'success', title: 'Cambios guardados', timer: 1500, showConfirmButton: false });
-                aplicarFiltros();
-            } catch(e) {
-                Swal.fire("Error", "No se conectó con la base de datos.", "error");
-            }
+            Swal.fire({ icon: 'success', title: 'Modificado localmente', timer: 1200, showConfirmButton: false });
+            aplicarFiltros();
         }
 
         async function marcarComoEntregado(idVenta) {
@@ -457,7 +470,7 @@
                 text: `El pedido #${idVenta} cambiará a completado.`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: '✅ Entregar',
+                confirmButtonText: '✅ Sí, Entregar',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#10b981'
             });
@@ -482,10 +495,7 @@
                 const data = await response.json();
                 if (data.status !== "success") throw new Error(data.message);
 
-                try {
-                    audioDinero.currentTime = 0;
-                    audioDinero.play();
-                } catch(e){}
+                try { audioDinero.currentTime = 0; audioDinero.play(); } catch(e){}
 
                 const card = document.getElementById(`card-${idVenta}`);
                 if (card) {
@@ -494,21 +504,14 @@
                 } else {
                     await cargarDespachos();
                 }
-
             } catch (error) {
                 Swal.fire("Error", "Fallo: " + error.message, "error");
             }
         }
 
-        // CONTROL INTELIGENTE DE FILTRADO POR CLIC EN CARDS DE ESTADÍSTICAS
         function filtrarPorEstadoTarjeta(estado) {
-            if (filtroActual === estado) {
-                filtroActual = "TODOS"; // Si vuelve a dar clic al activo, limpia el filtro y muestra todo
-            } else {
-                filtroActual = estado;
-            }
+            filtroActual = (filtroActual === estado) ? "TODOS" : estado;
             
-            // Efecto visual de botón seleccionado activo en las tarjetas superiores
             const cPendiente = document.getElementById("cardStatPendiente");
             const cEntregado = document.getElementById("cardStatEntregado");
 
@@ -516,6 +519,15 @@
             cEntregado.style.border = filtroActual === "ENTREGADO" ? "4px solid #ffffff" : "4px solid transparent";
 
             aplicarFiltros();
+        }
+
+        // PLANTILLA DE WHATSAPP MEJORADA EXACTA
+        function enviarWhatsApp(t, idVenta, cliente) {
+            if(!t) { Swal.fire("Aviso", "Sin celular registrado", "warning"); return; }
+            
+            const msj = `*LÓGICA LÁCTEA* 🥛🧀\n\nHola *${cliente}*, tu pedido *#${idVenta}* ha sido despachado y está en camino.\n\n📦 *Estado:* En ruta de entrega\n⏰ *Tiempo estimado:* Próximas horas\n\n¡Gracias por preferirnos! 🙌`;
+            
+            window.open(`https://api.whatsapp.com/send?phone=${t}&text=${encodeURIComponent(msj)}`, '_blank');
         }
 
         function actualizarContadores() {
@@ -530,12 +542,6 @@
             aplicarFiltros();
         }
 
-        function enviarWhatsApp(t, id, c) {
-            if(!t) { Swal.fire("Aviso", "Sin celular registrado", "warning"); return; }
-            const m = `*LÓGICA LÁCTEA*\n\nEstimado *${c}*, su pedido *#${id}* va en camino a su dirección. 🚀🥛`;
-            window.open(`https://api.whatsapp.com/send?phone=${t}&text=${encodeURIComponent(m)}`, '_blank');
-        }
-
         function mostrarSinDatos() {
             document.getElementById("listaDespachos").innerHTML = `
                 <div class="text-center py-16 text-slate-400 italic">
@@ -547,50 +553,25 @@
 
         async function recargarDatos() { await cargarDespachos(); }
 
-        /* =========================================
-           MÓDULO DE EXPORTACIÓN ADICIONAL DE DATOS
-        ========================================= */
         function exportarExcel() {
-            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay datos para exportar", "warning");
-            
+            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay datos", "warning");
             const matriz = ventasFiltradas.map(v => ({
-                "ID Pedido": v.id,
-                "Fecha Creación": v.fecha,
-                "Cliente": v.cliente,
-                "Dirección de Entrega": v.direccion,
-                "Productos": v.productos,
-                "Monto Total ($)": v.total,
-                "Estado": v.estado,
-                "Fecha Despachado": v.fechaEntrega || "N/A"
+                "ID Pedido": v.id, "Fecha": v.fecha, "Cliente": v.cliente, "Dirección": v.direccion, "Productos": v.productos, "Total ($)": v.total, "Estado": v.estado
             }));
-
             const libro = XLSX.utils.book_new();
             const hoja = XLSX.utils.json_to_sheet(matriz);
-            XLSX.utils.book_append_sheet(libro, hoja, "DespachosLacteos");
-            XLSX.writeFile(libro, `Reporte_Despachos_${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.utils.book_append_sheet(libro, hoja, "Despachos");
+            XLSX.writeFile(libro, `Reporte_Despachos.xlsx`);
         }
 
         function exportarPDF() {
-            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay datos para exportar", "warning");
-            
+            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay datos", "warning");
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4'); // Horizontal para comodidad de lectura de listas largas
-
-            doc.text("LÓGICA LÁCTEA - REPORTE OPERATIVO DE DESPACHOS", 14, 15);
-            
-            const filas = ventasFiltradas.map(v => [
-                v.id, v.fecha, v.cliente, v.direccion, v.productos, `$${v.total.toFixed(2)}`, v.estado
-            ]);
-
-            doc.autoTable({
-                head: [['ID', 'Fecha', 'Cliente', 'Dirección', 'Productos Renglón', 'Total', 'Estado']],
-                body: filas,
-                startY: 22,
-                theme: 'striped',
-                headStyles: { fillColor: [5, 150, 105] }
-            });
-
-            doc.save(`Reporte_Despachos_${new Date().toISOString().split('T')[0]}.pdf`);
+            const doc = new jsPDF('l', 'mm', 'a4');
+            doc.text("LÓGICA LÁCTEA - REPORTE OPERATIVO", 14, 15);
+            const filas = ventasFiltradas.map(v => [v.id, v.fecha, v.cliente, v.direccion, v.productos, `$${v.total.toFixed(2)}`, v.estado]);
+            doc.autoTable({ head: [['ID', 'Fecha', 'Cliente', 'Dirección', 'Productos', 'Total', 'Estado']], body: filas, startY: 22, theme: 'striped', headStyles: { fillColor: [5, 150, 105] } });
+            doc.save(`Reporte_Despachos.pdf`);
         }
     </script>
 </body>

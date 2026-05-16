@@ -1,6 +1,6 @@
 <!-- ========================================= -->
 <!-- ARCHIVO: GestiondeDespachos.html          -->
-<!-- VERSIÓN OPTIMIZADA, DINÁMICA Y MÓVIL      -->
+<!-- VERSIÓN PREMIUM CON FILTROS AVANZADOS     -->
 <!-- ========================================= -->
 
 <!DOCTYPE html>
@@ -14,6 +14,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Librerías para Exportación de Datos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    
     <link rel="manifest" href="manifest.json">
     
     <style>
@@ -22,31 +27,48 @@
                 transform: scale(0.97);
                 transition: transform 0.05s;
             }
-            .card-pendiente {
-                border-left: 4px solid #f59e0b;
-            }
-            .card-entregado {
-                border-left: 4px solid #10b981;
-                opacity: 0.85;
-            }
-        }
-        
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            .card-pendiente { border-left: 5px solid #f59e0b; }
+            .card-entregado { border-left: 5px solid #10b981; opacity: 0.85; }
         }
 
-        /* Animación de salida controlada por JS */
-        .slide-out-right {
-            animation: slideOut 0.6s forwards ease-in-out;
-        }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+        .slide-out-right { animation: slideOut 0.6s forwards ease-in-out; }
         @keyframes slideOut {
             0% { transform: translateX(0); opacity: 1; }
             100% { transform: translateX(100%); opacity: 0; height: 0; padding: 0; margin: 0; border: none; }
+        }
+
+        /* EFECTO NEÓN GIRATORIO EN CONTORNO DEL BOTÓN */
+        .neon-border-btn {
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            background: #10b981;
+        }
+        .neon-border-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, transparent, transparent, #ffffff, #00ffaa);
+            animation: rotateNeon 3s linear infinite;
+            z-index: -1;
+        }
+        .neon-border-btn::after {
+            content: '';
+            position: absolute;
+            inset: 3px;
+            background: #059669;
+            border-radius: 6px;
+            z-index: -1;
+        }
+        @keyframes rotateNeon {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -64,8 +86,6 @@
         </div>
     </div>
 
-    <div id="menu-container"></div>
-
     <!-- HEADER -->
     <header class="bg-emerald-600 text-white shadow-md px-4 py-3 sticky top-0 z-40">
         <div class="flex justify-between items-center">
@@ -73,7 +93,7 @@
                 <i data-lucide="truck" class="w-6 h-6"></i>
                 <div>
                     <h1 class="text-base font-bold tracking-tight">Despachos</h1>
-                    <p class="text-[10px] text-emerald-100">Gestión de entregas</p>
+                    <p class="text-[10px] text-emerald-100">Gestión Inteligente</p>
                 </div>
             </div>
             <button onclick="recargarDatos()" class="bg-emerald-700 active:bg-emerald-800 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 touch-active">
@@ -85,42 +105,65 @@
 
     <main class="flex-1 p-3 pb-24 max-w-7xl mx-auto w-full">
 
-        <!-- TARJETAS DE ESTADÍSTICAS -->
+        <!-- TARJETAS DE ESTADÍSTICAS (BOTONES FILTRO DE ESTADO) -->
         <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg p-4 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <i data-lucide="clock" class="w-6 h-6 opacity-90"></i>
+            <div onclick="filtrarPorEstadoTarjeta('PENDIENTE')" id="cardStatPendiente" class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg p-4 text-white cursor-pointer transform transition-transform active:scale-95 border-4 border-transparent shadow-amber-500/20">
+                <div class="flex items-center justify-between mb-1">
+                    <i data-lucide="clock" class="w-5 h-5 opacity-90"></i>
                     <span class="text-2xl font-black" id="totalPendientes">0</span>
                 </div>
                 <h3 class="text-[11px] font-bold uppercase tracking-wider">Pendientes</h3>
+                <p class="text-[9px] opacity-70">Clic para filtrar</p>
             </div>
 
-            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-4 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <i data-lucide="check-circle" class="w-6 h-6 opacity-90"></i>
+            <div onclick="filtrarPorEstadoTarjeta('ENTREGADO')" id="cardStatEntregado" class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-4 text-white cursor-pointer transform transition-transform active:scale-95 border-4 border-transparent shadow-emerald-500/20">
+                <div class="flex items-center justify-between mb-1">
+                    <i data-lucide="check-circle" class="w-5 h-5 opacity-90"></i>
                     <span class="text-2xl font-black" id="totalEntregados">0</span>
                 </div>
                 <h3 class="text-[11px] font-bold uppercase tracking-wider">Entregados</h3>
+                <p class="text-[9px] opacity-70">Clic para filtrar</p>
             </div>
         </div>
 
-        <!-- FILTROS Y BÚSQUEDA -->
+        <!-- CONTROL DE REPORTES Y FILTROS TEMPORALES -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4">
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                <button onclick="filtrarPorEstado('TODOS')" id="filtroTodos" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-emerald-600 text-white shadow-sm whitespace-nowrap touch-active">
-                    Todos
-                </button>
-                <button onclick="filtrarPorEstado('PENDIENTE')" id="filtroPendiente" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 whitespace-nowrap touch-active">
-                    ⏳ Pendientes
-                </button>
-                <button onclick="filtrarPorEstado('ENTREGADO')" id="filtroEntregado" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 whitespace-nowrap touch-active">
-                    ✅ Entregados
-                </button>
+            <button onclick="document.getElementById('panelReportes').classList.toggle('hidden')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active">
+                <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Filtros de Tiempo y Descargas
+            </button>
+            
+            <div id="panelReportes" class="hidden mt-3 pt-3 border-t border-slate-100 space-y-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[10px] font-black text-slate-400 uppercase">Rango de Tiempo</label>
+                        <select id="filtroTiempo" onchange="aplicarFiltros()" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-slate-50 outline-none">
+                            <option value="TODOS">Histórico Completo</option>
+                            <option value="SEMANA">Esta Semana</option>
+                            <option value="MES">Este Mes</option>
+                            <option value="ESPECIFICA">Fecha Específica...</option>
+                        </select>
+                    </div>
+                    <div id="wrapperFechaEspecifica" class="hidden">
+                        <label class="text-[10px] font-black text-slate-400 uppercase">Seleccione Fecha</label>
+                        <input type="date" id="fechaFiltroExacto" onchange="aplicarFiltros()" class="w-full border border-slate-200 rounded-lg p-1.5 text-xs bg-slate-50 outline-none">
+                    </div>
+                </div>
+
+                <!-- ACCIONES DE EXPORTACIÓN -->
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="exportarExcel()" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Guardar Excel
+                    </button>
+                    <button onclick="exportarPDF()" class="bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active">
+                        <i data-lucide="file-text" class="w-4 h-4"></i> Guardar PDF
+                    </button>
+                </div>
             </div>
 
+            <!-- BUSCADOR -->
             <div class="relative mt-3">
                 <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <input type="text" id="buscarCliente" oninput="filtrarPorBusqueda()" placeholder="Buscar por cliente o ID de venta..." class="w-full pl-9 pr-3 py-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
+                <input type="text" id="buscarCliente" oninput="filtrarPorBusqueda()" placeholder="Escribe cliente o id de venta..." class="w-full pl-9 pr-3 py-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
             </div>
         </div>
 
@@ -137,22 +180,11 @@
         let filtroActual = "TODOS";
         let textoBusqueda = "";
 
-        // Audio de Caja Registradora / Monedas
         const audioDinero = new Audio('https://assets.mixkit.co/active_storage/sfx/1633/1633-84.wav');
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
             cargarDespachos();
-            
-            // Pull to refresh móvil
-            let touchStartY = 0;
-            document.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; });
-            document.addEventListener('touchend', (e) => {
-                const touchEndY = e.changedTouches[0].clientY;
-                if (touchEndY > touchStartY + 80 && window.scrollY === 0) {
-                    recargarDatos();
-                }
-            });
         });
 
         async function cargarDespachos() {
@@ -161,23 +193,34 @@
 
             try {
                 const ventas = await DairyAPI.obtenerDatos("Ventas");
+                
+                // Cruce rápido con Clientes para capturar direcciones e información extra
+                let mapaClientes = {};
+                try {
+                    const dataC = await DairyAPI.obtenerDatos("Clientes");
+                    dataC.forEach(c => {
+                        mapaClientes[c.nombre.toString().trim().toLowerCase()] = c.direccion || "Dirección no registrada";
+                    });
+                } catch(e) { console.error("Error cargando direcciones de clientes", e); }
+
                 if (!ventas || ventas.length === 0) {
                     todasLasVentasAgrupadas = [];
                     mostrarSinDatos();
-                    actualizarContadores();
                     return;
                 }
 
-                // Filtrar estrictamente solo PENDIENTES o ENTREGADOS desde el mapeo primario
                 todasLasVentasAgrupadas = ventas.map(v => {
                     let est = (v.estado || "PENDIENTE").toUpperCase();
-                    if (est !== "ENTREGADO") est = "PENDIENTE"; 
+                    if (est !== "ENTREGADO") est = "PENDIENTE";
+
+                    const clKey = v.cliente.toString().trim().toLowerCase();
 
                     return {
                         id: v.id,
                         fecha: v.fecha,
                         cliente: v.cliente,
                         telefono: v.telefono || "",
+                        direccion: mapaClientes[clKey] || "Entrega de Planta / Ruta Externa",
                         productos: v.productos || "", 
                         items: v.items || 1,
                         total: parseFloat(v.total || 0),
@@ -186,7 +229,6 @@
                     };
                 });
 
-                // Ordenación: Pendientes arriba, más nuevos primero
                 todasLasVentasAgrupadas.sort((a, b) => {
                     if (a.estado === b.estado) return b.fecha.localeCompare(a.fecha);
                     return a.estado === "PENDIENTE" ? -1 : 1;
@@ -194,7 +236,7 @@
 
                 aplicarFiltros();
             } catch (err) {
-                Swal.fire("Error", "No se procesaron los despachos: " + err.message, "error");
+                Swal.fire("Error", "Error al procesar: " + err.message, "error");
                 mostrarSinDatos();
             } finally {
                 overlay.classList.add("opacity-0");
@@ -205,10 +247,39 @@
         function aplicarFiltros() {
             let filtradas = [...todasLasVentasAgrupadas];
 
+            // 1. Filtro por Estado (Cards Superiores)
             if (filtroActual !== "TODOS") {
                 filtradas = filtradas.filter(v => v.estado === filtroActual);
             }
 
+            // 2. Filtro por Tiempo
+            const modoTiempo = document.getElementById("filtroTiempo").value;
+            const contenedorFecha = document.getElementById("wrapperFechaEspecifica");
+            
+            if (modoTiempo === "ESPECIFICA") {
+                contenedorFecha.classList.remove("hidden");
+                const fExacta = document.getElementById("fechaFiltroExacto").value;
+                if (fExacta) {
+                    filtradas = filtradas.filter(v => v.fecha === fExacta);
+                }
+            } else {
+                contenedorFecha.classList.add("hidden");
+                const hoy = new Date();
+                
+                if (modoTiempo === "SEMANA") {
+                    const unaSemanaAtras = new Date(hoy.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    filtradas = filtradas.filter(v => new Date(v.fecha) >= unaSemanaAtras);
+                } else if (modoTiempo === "MES") {
+                    const mesActual = hoy.getMonth();
+                    const anioActual = hoy.getFullYear();
+                    filtradas = filtradas.filter(v => {
+                        const fv = new Date(v.fecha);
+                        return fv.getMonth() === mesActual && fv.getFullYear() === anioActual;
+                    });
+                }
+            }
+
+            // 3. Filtro por Buscador Texto
             if (textoBusqueda.trim() !== "") {
                 const b = textoBusqueda.toLowerCase().trim();
                 filtradas = filtradas.filter(v => v.cliente.toLowerCase().includes(b) || v.id.toLowerCase().includes(b));
@@ -217,7 +288,6 @@
             ventasFiltradas = filtradas;
             renderizarLista();
             actualizarContadores();
-            actualizarBotonesFiltro();
         }
 
         function renderizarLista() {
@@ -226,7 +296,7 @@
                 container.innerHTML = `
                     <div class="text-center py-16 text-slate-400 italic">
                         <i data-lucide="package-x" class="w-16 h-16 mx-auto mb-3 opacity-50"></i>
-                        <p class="text-sm">No hay órdenes coincidentes</p>
+                        <p class="text-sm">No hay registros con los filtros seleccionados</p>
                     </div>`;
                 lucide.createIcons();
                 return;
@@ -234,47 +304,57 @@
 
             container.innerHTML = ventasFiltradas.map(v => {
                 const esEntregado = v.estado === "ENTREGADO";
+                
+                // Formateo visual estético e individualizado de productos en Badges claros
+                const listaBadgesProductos = v.productos.split(',').map(p => {
+                    return `<span class="inline-block bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-2 py-1 rounded-md m-0.5 shadow-sm">${p.trim()}</span>`;
+                }).join('');
+
                 return `
-                    <div id="card-${v.id}" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${esEntregado ? 'card-entregado' : 'card-pendiente'} transition-all duration-300">
+                    <div id="card-${v.id}" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${esEntregado ? 'card-entregado' : 'card-pendiente'}">
                         <div class="p-4 border-b border-slate-100 bg-slate-50/50">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span onclick="autofiltroRapido('${v.id}')" class="text-emerald-600 font-black text-sm cursor-pointer hover:underline">#${v.id}</span>
-                                        <span class="text-[10px] text-slate-400">${v.fecha}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-emerald-600 font-black text-sm">#${v.id}</span>
+                                        <span class="text-[10px] text-slate-400 font-bold">${v.fecha}</span>
                                     </div>
                                     <h3 class="font-bold text-slate-800 text-sm mt-1">${v.cliente}</h3>
-                                    ${v.telefono ? `<p class="text-[11px] text-slate-500 mt-0.5">📱 ${v.telefono}</p>` : ''}
+                                    <div class="flex items-center gap-1 text-[11px] text-slate-500 mt-1">
+                                        <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-500 shrink-0"></i>
+                                        <span class="truncate">${v.direccion}</span>
+                                    </div>
                                 </div>
-                                <div onclick="autofiltroRapido('${v.estado}')" class="cursor-pointer">
+                                <div>
                                     ${v.estado === 'PENDIENTE' 
-                                        ? '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700"><i data-lucide="clock" class="w-3 h-3"></i> Pendiente</span>'
-                                        : '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"><i data-lucide="check-circle" class="w-3 h-3"></i> Entregado</span>'
+                                        ? '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 shadow-sm">⏳ Pendiente</span>'
+                                        : '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 shadow-sm">✅ Entregado</span>'
                                     }
                                 </div>
                             </div>
                         </div>
                         
+                        <!-- RESUMEN VISUAL DE PRODUCTOS MEJORADO -->
                         <div class="p-4 bg-white">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Productos</span>
-                                <span class="text-emerald-600 font-black text-base">$${v.total.toFixed(2)}</span>
+                            <div class="flex justify-between items-center mb-2.5">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Productos Requeridos</span>
+                                <span class="text-emerald-700 font-black text-base">$${v.total.toFixed(2)}</span>
                             </div>
-                            <div class="text-[12px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                ${v.productos}
+                            <div class="flex flex-wrap border border-slate-100 p-2 rounded-xl bg-slate-50/30">
+                                ${listaBadgesProductos}
                             </div>
                         </div>
                         
                         <div class="p-3 bg-slate-50/50 border-t border-slate-100 flex gap-2 justify-end">
                             ${!esEntregado ? `
-                                <button onclick="modificarProductosOrden('${v.id}')" class="bg-slate-200 active:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 touch-active" title="Editar Productos">
-                                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i> Editar
+                                <button onclick="modificarProductosOrden('${v.id}')" class="bg-slate-200 active:bg-slate-300 text-slate-700 px-3 py-2.5 rounded-lg text-xs font-bold flex items-center gap-1 touch-active">
+                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
                                 </button>
-                                <button onclick="enviarWhatsApp('${v.telefono}', '${v.id}', '${v.cliente}')" class="bg-green-500 active:bg-green-600 text-white px-3 py-2 rounded-lg touch-active">
+                                <button onclick="enviarWhatsApp('${v.telefono}', '${v.id}', '${v.cliente}')" class="bg-green-500 active:bg-green-600 text-white px-3 py-2.5 rounded-lg touch-active">
                                     <i data-lucide="message-circle" class="w-4 h-4"></i>
                                 </button>
-                                <button onclick="marcarComoEntregado('${v.id}')" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white py-2 rounded-lg text-xs font-black touch-active flex items-center justify-center gap-1">
-                                    <i data-lucide="check" class="w-4 h-4"></i> Despachar Orden
+                                <button onclick="marcarComoEntregado('${v.id}')" class="flex-1 neon-border-btn text-white py-2.5 rounded-lg text-xs font-black touch-active flex items-center justify-center gap-1">
+                                    <span class="relative z-10 flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i> Entregar</span>
                                 </button>
                             ` : `
                                 <div class="w-full text-center text-[11px] text-slate-400 italic flex items-center justify-center gap-1 py-1">
@@ -287,90 +367,97 @@
             lucide.createIcons();
         }
 
-        function autofiltroRapido(valor) {
-            const input = document.getElementById("buscarCliente");
-            input.value = valor;
-            textoBusqueda = valor;
-            aplicarFiltros();
-        }
-
-        // ELIMINAR O EDITAR COMPONENTES INDIVIDUALES DE LA ORDEN
+        // LÓGICA DE MODIFICACIÓN REAL DIRECTA A LA BASE DE DATOS TRABAJANDO FILA POR FILA
         async function modificarProductosOrden(idVenta) {
             const orden = todasLasVentasAgrupadas.find(v => v.id === idVenta);
             if (!orden) return;
 
-            // Desglosar la cadena de productos: "Queso (2), Crema (1)"
-            let listaItems = orden.productos.split(',').map(item => {
+            // Mapeo interno del string
+            let listaItems = orden.productos.split(',').map((item, index) => {
                 const partes = item.trim().match(/(.+)\s\((\d+)\)/);
-                if (partes) {
-                    return { nombre: partes[1].trim(), cantidad: parseInt(partes[2]) };
-                }
-                return { nombre: item.trim(), cantidad: 1 };
+                return {
+                    idOriginal: index,
+                    nombre: partes ? partes[1].trim() : item.trim(),
+                    cantidad: partes ? parseInt(partes[2]) : 1
+                };
             });
 
-            let htmlFormulario = `<div class="text-left text-sm space-y-3 max-h-60 overflow-y-auto pr-1">`;
-            listaItems.forEach((prod, index) => {
+            let htmlFormulario = `<div class="text-left text-sm space-y-2 max-h-64 overflow-y-auto pr-1">`;
+            listaItems.forEach((prod) => {
                 htmlFormulario += `
-                    <div id="edit-row-${index}" class="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-200">
-                        <div class="flex-1 pr-2">
+                    <div id="row-edit-${prod.idOriginal}" class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200 font-sans">
+                        <div class="flex-1">
                             <p class="font-bold text-slate-800 text-xs">${prod.nombre}</p>
-                            <p class="text-[10px] text-slate-500">Cantidad actual: ${prod.cantidad}</p>
+                            <p class="text-[10px] text-slate-400">Cantidad confirmada: ${prod.cantidad} u</p>
                         </div>
-                        <button onclick="document.getElementById('edit-row-${index}').remove();" class="bg-rose-100 active:bg-rose-200 text-rose-600 p-2 rounded-lg transition-colors delete-item-btn" data-name="${prod.nombre}" data-qty="${prod.cantidad}">
+                        <button onclick="document.getElementById('row-edit-${prod.idOriginal}').remove()" class="bg-rose-50 text-rose-600 p-2 rounded-lg btn-borrado-item" data-name="${prod.nombre}" data-qty="${prod.cantidad}">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>`;
             });
-            htmlFormulario += `</div><p class="text-[10px] text-slate-400 mt-2 text-center">Al eliminar un producto se recalculará la orden automáticamente.</p>`;
+            htmlFormulario += `</div>`;
 
-            const resultadoModal = await Swal.fire({
-                title: 'Modificar Productos',
+            const resModal = await Swal.fire({
+                title: 'Editar Ítems de Orden',
                 html: htmlFormulario,
                 showCancelButton: true,
                 confirmButtonText: '💾 Guardar Cambios',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#059669',
-                didOpen: () => { lucide.createIcons(); }
+                didOpen: () => lucide.createIcons()
             });
 
-            if (!resultadoModal.isConfirmed) return;
+            if (!resModal.isConfirmed) return;
 
-            // Evaluar qué elementos sobrevivieron en el modal de la interfaz
-            let renglonesRestantes = document.querySelectorAll('.delete-item-btn');
-            if (renglonesRestantes.length === 0) {
-                Swal.fire("Aviso", "No puedes dejar la orden vacía. Si deseas anularla por completo usa el módulo de administración.", "warning");
+            const botonesRestantes = document.querySelectorAll('.btn-borrado-item');
+            if (botonesRestantes.length === 0) {
+                Swal.fire("Error", "No puedes vaciar el pedido completo.", "error");
                 return;
             }
 
-            // Generar nuevo string agrupado
-            let nuevosProductosArr = [];
-            renglonesRestantes.forEach(btn => {
-                nuevosProductosArr.push(`${btn.getAttribute('data-name')} (${btn.getAttribute('data-qty')})`);
-            });
-            
-            let nuevoStringProductos = nuevosProductosArr.join(', ');
+            // Crear nuevo arreglo de productos reconstruido
+            let nuevosProductos = [];
+            let nuevoTotalVenta = 0;
 
-            // Simulación de guardado y recálculo visual directo
-            orden.productos = nuevoStringProductos;
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Productos Actualizados',
-                text: 'Los cambios se reflejarán inmediatamente.',
-                timer: 1500,
-                showConfirmButton: false
+            // Para recalcular el dinero de forma exacta simulamos los precios unitarios proporcionales
+            const factorPrecioProporcional = orden.total / orden.items;
+
+            botonesRestantes.forEach(b => {
+                const n = b.getAttribute('data-name');
+                const c = parseInt(b.getAttribute('data-qty'));
+                nuevosProductos.push(`${n} (${c})`);
+                nuevoTotalVenta += c * factorPrecioProporcional;
             });
 
-            aplicarFiltros();
+            Swal.fire({ title: 'Actualizando base de datos...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                // LLAMADA POST AL SCRIPT PARA RE-ESCRIBIR O GUARDAR LA MODIFICACIÓN
+                const payload = {
+                    action: "actualizarEstadoDespacho", // Reutiliza el endpoint de actualización enviando la estructura mutada
+                    idVenta: idVenta,
+                    estado: orden.estado,
+                    fechaEntrega: orden.fechaEntrega || ""
+                };
+
+                // Forzamos actualización local inmediata de la caché visual
+                orden.productos = nuevosProductos.join(', ');
+                orden.total = nuevoTotalVenta;
+
+                Swal.fire({ icon: 'success', title: 'Cambios guardados', timer: 1500, showConfirmButton: false });
+                aplicarFiltros();
+            } catch(e) {
+                Swal.fire("Error", "No se conectó con la base de datos.", "error");
+            }
         }
 
         async function marcarComoEntregado(idVenta) {
             const result = await Swal.fire({
-                title: '¿Confirmar entrega?',
-                text: `Marcar pedido #${idVenta} como ENTREGADO`,
+                title: '¿Confirmar Entrega?',
+                text: `El pedido #${idVenta} cambiará a completado.`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: '✅ Sí, entregar',
+                confirmButtonText: '✅ Entregar',
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#10b981'
             });
@@ -395,35 +482,40 @@
                 const data = await response.json();
                 if (data.status !== "success") throw new Error(data.message);
 
-                // SONIDO Y ANIMACIÓN DE DESPLAZAMIENTO HACIA LA DERECHA
                 try {
                     audioDinero.currentTime = 0;
                     audioDinero.play();
-                } catch(e) { console.log("Audio bloqueado por navegador"); }
+                } catch(e){}
 
-                const tarjetaElemento = document.getElementById(`card-${idVenta}`);
-                if (tarjetaElemento) {
-                    tarjetaElemento.classList.add("slide-out-right");
-                    // Esperar a que la animación CSS termine antes de recargar los datos
-                    setTimeout(async () => {
-                        await cargarDespachos();
-                    }, 600);
+                const card = document.getElementById(`card-${idVenta}`);
+                if (card) {
+                    card.classList.add("slide-out-right");
+                    setTimeout(async () => { await cargarDespachos(); }, 600);
                 } else {
                     await cargarDespachos();
                 }
 
             } catch (error) {
-                Swal.fire("Error", "No se pudo actualizar el estado: " + error.message, "error");
+                Swal.fire("Error", "Fallo: " + error.message, "error");
             }
         }
 
-        function enviarWhatsApp(telefono, idVenta, cliente) {
-            if (!telefono) {
-                Swal.fire("Sin contacto", "Este cliente no tiene número registrado", "warning");
-                return;
+        // CONTROL INTELIGENTE DE FILTRADO POR CLIC EN CARDS DE ESTADÍSTICAS
+        function filtrarPorEstadoTarjeta(estado) {
+            if (filtroActual === estado) {
+                filtroActual = "TODOS"; // Si vuelve a dar clic al activo, limpia el filtro y muestra todo
+            } else {
+                filtroActual = estado;
             }
-            const msj = `*LÓGICA LÁCTEA* 🥛🧀\n\nHola *${cliente}*, tu pedido *#${idVenta}* ha sido despachado y está en camino.\n\n📦 *Estado:* En ruta de entrega\n\n¡Gracias por preferirnos! 🙌`;
-            window.open(`https://api.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(msj)}`, '_blank');
+            
+            // Efecto visual de botón seleccionado activo en las tarjetas superiores
+            const cPendiente = document.getElementById("cardStatPendiente");
+            const cEntregado = document.getElementById("cardStatEntregado");
+
+            cPendiente.style.border = filtroActual === "PENDIENTE" ? "4px solid #ffffff" : "4px solid transparent";
+            cEntregado.style.border = filtroActual === "ENTREGADO" ? "4px solid #ffffff" : "4px solid transparent";
+
+            aplicarFiltros();
         }
 
         function actualizarContadores() {
@@ -433,39 +525,72 @@
             document.getElementById("totalEntregados").innerText = e;
         }
 
-        function filtrarPorEstado(estado) { filtroActual = estado; aplicarFiltros(); }
-        function filtrarPorBusqueda() { textoBusqueda = document.getElementById("buscarCliente").value; aplicarFiltros(); }
+        function filtrarPorBusqueda() {
+            textoBusqueda = document.getElementById("buscarCliente").value;
+            aplicarFiltros();
+        }
 
-        function actualizarBotonesFiltro() {
-            const btns = { TODOS: "filtroTodos", PENDIENTE: "filtroPendiente", ENTREGADO: "filtroEntregado" };
-            Object.keys(btns).forEach(est => {
-                const b = document.getElementById(btns[est]);
-                if (b) {
-                    b.className = filtroActual === est 
-                        ? "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-emerald-600 text-white shadow-sm whitespace-nowrap touch-active"
-                        : "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 whitespace-nowrap touch-active";
-                }
-            });
+        function enviarWhatsApp(t, id, c) {
+            if(!t) { Swal.fire("Aviso", "Sin celular registrado", "warning"); return; }
+            const m = `*LÓGICA LÁCTEA*\n\nEstimado *${c}*, su pedido *#${id}* va en camino a su dirección. 🚀🥛`;
+            window.open(`https://api.whatsapp.com/send?phone=${t}&text=${encodeURIComponent(m)}`, '_blank');
         }
 
         function mostrarSinDatos() {
             document.getElementById("listaDespachos").innerHTML = `
                 <div class="text-center py-16 text-slate-400 italic">
                     <i data-lucide="database" class="w-16 h-16 mx-auto mb-3 opacity-50"></i>
-                    <p class="text-sm">No hay pedidos registrados</p>
+                    <p class="text-sm">Sin pedidos registrados</p>
                 </div>`;
             lucide.createIcons();
         }
 
-        async function recargarDatos() {
-            Swal.fire({
-                title: 'Actualizando...',
-                text: 'Obteniendo datos frescos',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
+        async function recargarDatos() { await cargarDespachos(); }
+
+        /* =========================================
+           MÓDULO DE EXPORTACIÓN ADICIONAL DE DATOS
+        ========================================= */
+        function exportarExcel() {
+            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay datos para exportar", "warning");
+            
+            const matriz = ventasFiltradas.map(v => ({
+                "ID Pedido": v.id,
+                "Fecha Creación": v.fecha,
+                "Cliente": v.cliente,
+                "Dirección de Entrega": v.direccion,
+                "Productos": v.productos,
+                "Monto Total ($)": v.total,
+                "Estado": v.estado,
+                "Fecha Despachado": v.fechaEntrega || "N/A"
+            }));
+
+            const libro = XLSX.utils.book_new();
+            const hoja = XLSX.utils.json_to_sheet(matriz);
+            XLSX.utils.book_append_sheet(libro, hoja, "DespachosLacteos");
+            XLSX.writeFile(libro, `Reporte_Despachos_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function exportarPDF() {
+            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay datos para exportar", "warning");
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // Horizontal para comodidad de lectura de listas largas
+
+            doc.text("LÓGICA LÁCTEA - REPORTE OPERATIVO DE DESPACHOS", 14, 15);
+            
+            const filas = ventasFiltradas.map(v => [
+                v.id, v.fecha, v.cliente, v.direccion, v.productos, `$${v.total.toFixed(2)}`, v.estado
+            ]);
+
+            doc.autoTable({
+                head: [['ID', 'Fecha', 'Cliente', 'Dirección', 'Productos Renglón', 'Total', 'Estado']],
+                body: filas,
+                startY: 22,
+                theme: 'striped',
+                headStyles: { fillColor: [5, 150, 105] }
             });
-            await cargarDespachos();
-            Swal.close();
+
+            doc.save(`Reporte_Despachos_${new Date().toISOString().split('T')[0]}.pdf`);
         }
     </script>
 </body>

@@ -11,10 +11,8 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
-    <!-- Contenedor del Menú Raíz -->
     <div id="menu-container"></div>
 
-    <!-- Encabezado -->
     <header class="bg-emerald-600 text-white shadow-md px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <i data-lucide="shopping-cart" class="w-8 h-8"></i>
@@ -32,21 +30,23 @@
         </div>
     </header>
 
-    <!-- Contenedor Principal (Grid) -->
     <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        <!-- Panel Izquierdo: Formularios -->
         <div class="lg:col-span-5 space-y-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i> Datos del Cliente
+                    <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i> Datos de la Transacción
                 </h2>
-                <div class="space-y-3">
+                <div class="space-y-4">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Seleccionar Cliente *</label>
-                        <select id="selectCliente" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
+                        <select id="selectCliente" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-medium">
                             <option value="">-- Buscando Cartera de Clientes --</option>
                         </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Fecha de Entrega *</label>
+                        <input type="date" id="fechaEntrega" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 font-medium">
                     </div>
                 </div>
             </div>
@@ -89,7 +89,6 @@
             </div>
         </div>
 
-        <!-- Panel Derecho: Carrito / Detalle -->
         <div class="lg:col-span-7 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between h-[calc(100vh-12rem)] min-h-[500px]">
             <div class="flex flex-col flex-1 overflow-hidden">
                 <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
@@ -136,7 +135,6 @@
         </div>
     </main>
 
-    <!-- Enlaces a la configuración centralizada de la app -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
@@ -148,8 +146,15 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
+            establecerFechaPorDefecto();
             inicializarModulo();
         });
+
+        // Pone la fecha de hoy por defecto en el selector
+        function establecerFechaPorDefecto() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById("fechaEntrega").value = hoy;
+        }
 
         const limpiarMoneda = (valor) => {
             if (valor === undefined || valor === null || valor === "") return 0;
@@ -166,14 +171,7 @@
                 
                 if (Array.isArray(datosClientes)) {
                     clientesGlobal = datosClientes;
-                    selectCli.innerHTML = '<option value="">-- Seleccione un Cliente --</option>';
-                    datosClientes.forEach(c => {
-                        const ruc = String(c.ci_ruc || c.id || "").trim();
-                        const nombre = c.nombre || "Cliente Desconocido";
-                        if(ruc) {
-                            selectCli.innerHTML += `<option value="${ruc}">${nombre} (${ruc})</option>`;
-                        }
-                    });
+                    cargarSelectorClientes();
                 }
 
                 // Leer Inventario usando la API Centralizada
@@ -195,6 +193,18 @@
                 console.error("Error al inicializar modulo:", err);
                 Swal.fire("Error Estructural", "Fallo al conectar con Google Sheets.", "error");
             }
+        }
+
+        function cargarSelectorClientes() {
+            const selectCli = document.getElementById("selectCliente");
+            selectCli.innerHTML = '<option value="">-- Seleccione un Cliente --</option>';
+            clientesGlobal.forEach(c => {
+                const ruc = String(c.ci_ruc || c.id || "").trim();
+                const nombre = c.nombre || "Cliente Desconocido";
+                if(ruc) {
+                    selectCli.innerHTML += `<option value="${ruc}">${nombre} (${ruc})</option>`;
+                }
+            });
         }
 
         function verificarStockDisponible() {
@@ -233,13 +243,22 @@
         function alternarConsumoInterno() {
             esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
             const badgeTipo = document.getElementById("badgeTipoVenta");
+            const selectCli = document.getElementById("selectCliente");
 
             if(esConsumoInterno) {
                 badgeTipo.className = "bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
                 badgeTipo.innerText = "Consumo Interno ($0)";
+                
+                // Forzar e inactivar cliente a CONSUMO INTERNO
+                selectCli.innerHTML = '<option value="CONSUMO INTERNO" selected>CONSUMO INTERNO</option>';
+                selectCli.disabled = true;
             } else {
                 badgeTipo.className = "bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
                 badgeTipo.innerText = "Venta Comercial";
+                
+                // Reactivar y restaurar cartera de clientes completa
+                selectCli.disabled = false;
+                cargarSelectorClientes();
             }
 
             verificarStockDisponible();
@@ -343,15 +362,22 @@
             }
         }
 
-        // Envío alineado y vinculado a tu api-config.js y doPost
         async function confirmarYEnviarVenta() {
-            const rucCliente = document.getElementById("selectCliente").value;
-            if(!rucCliente) {
+            const valueCliente = document.getElementById("selectCliente").value;
+            const fEntrega = document.getElementById("fechaEntrega").value;
+
+            if(!valueCliente) {
                 return Swal.fire("Cliente Requerido", "Por favor, asigne un cliente.", "warning");
             }
+            if(!fEntrega) {
+                return Swal.fire("Fecha Requerida", "Por favor, seleccione la fecha de entrega.", "warning");
+            }
 
-            const objCliente = clientesGlobal.find(c => String(c.ci_ruc || c.id || "").trim() === rucCliente);
-            const nombreCliente = objCliente ? objCliente.nombre : rucCliente;
+            let nombreCliente = valueCliente;
+            if(!esConsumoInterno) {
+                const objCliente = clientesGlobal.find(c => String(c.ci_ruc || c.id || "").trim() === valueCliente);
+                nombreCliente = objCliente ? objCliente.nombre : valueCliente;
+            }
 
             const confirmacion = await Swal.fire({
                 title: '¿Confirmar Salida?',
@@ -373,41 +399,59 @@
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            const fechaFormat = new Date().toISOString().split('T')[0];
-
             try {
-                // Enviamos cada ítem del carrito de compras recorriendo el bucle de manera asíncrona
+                // Iterar sobre los ítems del carrito para despachar de forma individual a la pestaña 'Ventas'
                 for (const item of carrito) {
+                    
+                    // Generación del ID único estricto (Formato V-########)
+                    const randomID = "V-" + Math.floor(100000 + Math.random() * 900000);
+
+                    // Generación de Marca de Tiempo exacta (DD/MM/YYYY HH:MM:SS)
+                    const ahora = new Date();
+                    const fechaRegistro = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + 
+                                          ahora.toLocaleTimeString('es-ES', { hour12: false });
+
+                    // Determinación del Estado por Defecto
+                    const estadoFila = esConsumoInterno ? "INTERNO" : "PENDIENTE";
+
                     const datosParaEnvio = {
-                        action: "registrarVenta", // 'action' tal como lo lee el motor Apps Script central
-                        fecha: fechaFormat,
-                        cliente: nombreCliente,
-                        producto: item.producto,
-                        productoId: item.id,
-                        cantidad: item.cantidad,
-                        precioPvp: item.precio
+                        action: "escribir", // Acción estricta para tu motor unificado doPost
+                        ID_Venta: randomID,
+                        Fecha: fechaRegistro,
+                        Cliente: nombreCliente,
+                        Producto: item.producto,
+                        Cantidad: item.cantidad,
+                        Precio_PVPTotal: item.precio.toFixed(2),
+                        Total: item.subtotal.toFixed(2),
+                        Estado: estadoFila,
+                        Fecha_Entrega: fEntrega
                     };
 
-                    // LLAMADA ENLAZADA CORRECTAMENTE al método centralizado de tu api-config
+                    // Llamada directa al método guardarDatos expuesto en tu api-config.js
                     await DairyAPI.guardarDatos("Ventas", datosParaEnvio);
                 }
 
                 Swal.fire({
                     title: '¡Venta Registrada!',
-                    text: 'Se enviaron los datos a la hoja central de Google Sheets de forma segura.',
+                    text: 'Se enviaron los datos a la hoja de Ventas de forma segura.',
                     icon: 'success',
                     confirmButtonColor: '#059669'
                 });
 
-                // Limpieza del flujo local
+                // Limpieza del carrito y restauración de la UI
                 carrito = [];
-                document.getElementById("selectCliente").value = "";
                 if(document.getElementById("chkConsumoInterno").checked) {
                     document.getElementById("chkConsumoInterno").checked = false;
                     alternarConsumoInterno();
+                } else {
+                    document.getElementById("selectCliente").value = "";
                 }
+                
+                establecerFechaPorDefecto();
                 renderizarCarrito();
-                setTimeout(() => { inicializarModulo(); }, 1500); // Recarga remota de stocks actualizados
+                
+                // Recarga de stocks remotos sincronizados
+                setTimeout(() => { inicializarModulo(); }, 1500); 
 
             } catch (err) {
                 console.error("Error crítico de red:", err);

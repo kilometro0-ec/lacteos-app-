@@ -1,6 +1,6 @@
 const DairyConfig = {
     // ID de implementación web activo en Google Apps Script
-    SCRIPT_URL: "https://script.google.com/macros/s/AKfycby6eRkef5znc1AAljkb7ZcIwKGLuiopwbYljAgDyRujRuznjIVjcUwNAATuWy1jSS-3/exec",
+    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyyIiBF-4HQ4IZ1ZR2rYXK_3BszxMxJdgq28Z2SlldAfKNwBtIC8GthD_haCpneAmscfw/exec",
     VERSION: "1.4"
 };
 

@@ -15,28 +15,6 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#059669">
-    
-    <style>
-        /* Animación de pulso para el botón Insertar */
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4);
-            }
-            70% {
-                transform: scale(1.02);
-                box-shadow: 0 0 0 10px rgba(5, 150, 105, 0);
-            }
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(5, 150, 105, 0);
-            }
-        }
-        
-        .btn-insertar-pulse {
-            animation: pulse 0.6s ease-in-out;
-        }
-    </style>
 </head>
 
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16 relative">
@@ -148,7 +126,6 @@
                         <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
                         Datos de la Transacción
                     </h2>
-                    <!-- BOTÓN PARA ABRIR EL MODAL DE NUEVO CLIENTE -->
                     <button type="button" id="btnAbrirModalCliente" onclick="abrirModalCliente()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-all">
                         <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
                         + Nuevo Cliente
@@ -215,7 +192,7 @@
                         </div>
                     </div>
 
-                    <button type="button" id="btnInsertarLista" onclick="agregarItemAlCarrito()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
+                    <button type="button" onclick="agregarItemAlCarrito()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-95 animate-pulse">
                         <i data-lucide="list-plus" class="w-4 h-4"></i>
                         Insertar a la Lista
                     </button>
@@ -245,17 +222,17 @@
                                 <th class="py-3 px-2 text-right">P. Unit</th>
                                 <th class="py-3 px-2 text-right">Subtotal</th>
                                 <th class="py-3 px-4 text-center">Acción</th>
-                             </tr>
+                            </tr>
                         </thead>
                         <tbody id="tbodyCarrito">
-                             <tr>
+                            <tr>
                                 <td colspan="5" class="text-center py-16 text-slate-400 italic">
                                     <i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
                                     No hay productos agregados.
-                                 </td>
-                             </tr>
+                                </td>
+                            </tr>
                         </tbody>
-                     </table>
+                    </table>
                 </div>
             </div>
 
@@ -332,7 +309,6 @@
             }
         }
 
-        // CONTROL DEL MODAL DE NUEVO CLIENTE
         function abrirModalCliente() {
             document.getElementById("formNuevoCliente").reset();
             document.getElementById("modalNuevoCliente").classList.remove("hidden");
@@ -351,12 +327,11 @@
                 didOpen: () => Swal.showLoading()
             });
 
-            // Generación Automática e Irrepetible del ID y Fecha
             const autoId = "CLI-" + Math.floor(Date.now() / 1000);
             const fechaRegistro = new Date().toISOString().split('T')[0];
 
             const payloadCliente = {
-                action: "registrarCliente", // Asegúrate de tener esta acción mapeada en tu Script de Google o pásala como fila directa
+                action: "registrarCliente", 
                 id: autoId,
                 nombre: document.getElementById("modalNombre").value.trim(),
                 ci_ruc: document.getElementById("modalRuc").value.trim(),
@@ -383,11 +358,8 @@
                 Swal.fire("¡Éxito!", `Cliente registrado con ID: ${autoId}`, "success");
                 cerrarModalCliente();
                 
-                // Recargar el módulo para que aparezca en las búsquedas de inmediato
                 await inicializarModulo();
-
-                // Dejarlo auto-seleccionado en la pantalla de ventas (mostrando solo el nombre)
-                seleccionarCliente(payloadCliente.ci_ruc, payloadCliente.nombre);
+                seleccionarCliente(payloadCliente.nombre);
 
             } catch (error) {
                 console.error(error);
@@ -395,7 +367,6 @@
             }
         }
 
-        // FILTRADO Y MANEJO DE CLIENTES
         function filtrarClientes() {
             if (esConsumoInterno) return;
             
@@ -413,9 +384,9 @@
                 listaDiv.innerHTML = filtrados.map(c => {
                     const ruc = String(c.ci_ruc || c.id || "").trim();
                     return `
-                        <div onclick="seleccionarCliente('${ruc}', '${c.nombre}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex flex-col">
+                        <div onclick="seleccionarCliente('${c.nombre}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex flex-col">
                             <span class="font-bold text-slate-900">${c.nombre}</span>
-                            <span class="text-[10px] text-slate-400">Sector: ${c.sector || 'S/S'}</span>
+                            <span class="text-[10px] text-slate-400">RUC/CI: ${ruc} | Sector: ${c.sector || 'S/S'}</span>
                         </div>
                     `;
                 }).join('');
@@ -423,14 +394,14 @@
             listaDiv.classList.remove("hidden");
         }
 
-        function seleccionarCliente(ruc, nombre) {
-            clienteSeleccionado = ruc;
+        function seleccionarCliente(nombre) {
+            clienteSeleccionado = nombre; // Tu backend busca coincidencias por el texto literal del Nombre del cliente
             const input = document.getElementById("buscarCliente");
-            // Mostrar SOLO el nombre del cliente, sin la cédula
-            input.value = nombre;
+            input.value = nombre; 
             input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
             document.getElementById("btnLimpiarCliente").classList.remove("hidden");
             document.getElementById("listaClientesFlotante").classList.add("hidden");
+            evaluarEstadoBotonRegistrar();
         }
 
         function limpiarSeleccionCliente() {
@@ -439,9 +410,9 @@
             input.value = "";
             input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
             document.getElementById("btnLimpiarCliente").classList.add("hidden");
+            evaluarEstadoBotonRegistrar();
         }
 
-        // FILTRADO Y MANEJO DE PRODUCTOS
         function filtrarProductos() {
             const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaProductosFlotante");
@@ -482,6 +453,9 @@
                 document.getElementById("wrapperStock").classList.remove("hidden");
                 document.getElementById("txtStockMinimo").innerText = `${stock} Unidades`;
                 document.getElementById("numPrecioUnitario").value = esConsumoInterno ? "0.00" : precio.toFixed(2);
+                
+                const btnInsertar = document.querySelector("button[onclick='agregarItemAlCarrito()']");
+                if(btnInsertar) btnInsertar.classList.remove("animate-pulse");
             }
         }
 
@@ -493,6 +467,9 @@
             document.getElementById("btnLimpiarProducto").classList.add("hidden");
             document.getElementById("wrapperStock").classList.add("hidden");
             document.getElementById("numPrecioUnitario").value = "";
+            
+            const btnInsertar = document.querySelector("button[onclick='agregarItemAlCarrito()']");
+            if(btnInsertar) btnInsertar.classList.add("animate-pulse");
         }
 
         function alternarConsumoInterno() {
@@ -522,6 +499,17 @@
             if(productoSeleccionado) {
                 seleccionarProducto(productoSeleccionado, document.getElementById("buscarProducto").value);
             }
+
+            carrito = carrito.map(item => {
+                const prodOriginal = catalogoProductos.find(p => p.id === item.id);
+                const nuevoPrecio = esConsumoInterno ? 0 : limpiarMoneda(prodOriginal.precioVenta);
+                return {
+                    ...item,
+                    precio: nuevoPrecio,
+                    subtotal: item.cantidad * nuevoPrecio
+                };
+            });
+            renderCarritoYTotales();
         }
 
         function agregarItemAlCarrito() {
@@ -556,32 +544,24 @@
             } else {
                 carrito.push({
                     id: productoSeleccionado,
-                    producto: prod.producto,
+                    producto: prod.producto, // Guardamos la cadena de texto literal
                     cantidad: cantidad,
                     precio: precio,
                     subtotal: cantidad * precio
                 });
             }
 
-            renderizarCarrito();
-            
-            // ANIMACIÓN DEL BOTÓN INSERTAR A LA LISTA
-            const btnInsertar = document.getElementById('btnInsertarLista');
-            btnInsertar.classList.add('btn-insertar-pulse');
-            setTimeout(() => {
-                btnInsertar.classList.remove('btn-insertar-pulse');
-            }, 600);
-            
+            renderCarritoYTotales();
             limpiarSeleccionProducto();
             document.getElementById("numCantidadVenta").value = "1";
         }
 
         function eliminarItem(index) {
             carrito.splice(index, 1);
-            renderizarCarrito();
+            renderCarritoYTotales();
         }
 
-        function renderizarCarrito() {
+        function renderCarritoYTotales() {
             const tbody = document.getElementById("tbodyCarrito");
             tbody.innerHTML = "";
 
@@ -591,11 +571,11 @@
                         <td colspan="5" class="text-center py-16 text-slate-400 italic">
                             <i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
                             No hay productos agregados.
-                         </td>
+                        </td>
                     </tr>
                 `;
                 document.getElementById("txtTotalFactura").innerText = "$0.00";
-                toggleBtnRegistrar(false);
+                evaluarEstadoBotonRegistrar();
                 lucide.createIcons();
                 return;
             }
@@ -610,7 +590,7 @@
                         <td class="py-3 px-2 text-right">$${item.precio.toFixed(2)}</td>
                         <td class="py-3 px-2 text-right font-bold text-emerald-700">$${item.subtotal.toFixed(2)}</td>
                         <td class="py-3 px-4 text-center">
-                            <button onclick="eliminarItem(${index})" class="text-rose-500 hover:text-rose-700 transition-colors p-1">
+                            <button onclick="eliminarItem(${index})" class="text-rose-500 hover:text-rose-700 transition-colors">
                                 <i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i>
                             </button>
                         </td>
@@ -619,139 +599,92 @@
             });
 
             document.getElementById("txtTotalFactura").innerText = `$${total.toFixed(2)}`;
-            toggleBtnRegistrar(true);
+            evaluarEstadoBotonRegistrar();
             lucide.createIcons();
         }
 
-        function toggleBtnRegistrar(activar) {
+        function evaluarEstadoBotonRegistrar() {
             const btn = document.getElementById("btnRegistrarVenta");
-            btn.disabled = !activar;
-            if (activar) {
+            if (carrito.length > 0 && clienteSeleccionado !== null) {
+                btn.removeAttribute("disabled");
                 btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-pointer transition-all uppercase tracking-widest text-sm active:scale-95";
             } else {
+                btn.setAttribute("disabled", "true");
                 btn.className = "w-full bg-slate-400 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm";
             }
         }
 
+        /* CORRECCIÓN INTEGRADA: Cumple la firma exacta requerida por la acción "registrarVenta" en tu backend */
         async function confirmarYEnviarVenta() {
-            const fEntrega = document.getElementById("fechaEntrega").value;
+            if (carrito.length === 0 || !clienteSeleccionado) return;
 
-            if (!clienteSeleccionado) {
-                return Swal.fire("Cliente requerido", "Por favor seleccione un cliente de la lista", "warning");
-            }
-
-            if (carrito.length === 0) {
-                return Swal.fire("Carrito vacío", "Agregue productos", "warning");
-            }
-
-            let nombreCliente = clienteSeleccionado;
-            let telefonoCliente = "";
-            
-            const objCliente = clientesGlobal.find(
-                c => String(c.ci_ruc || c.id || "").trim() === clienteSeleccionado
-            );
-
-            if (!esConsumoInterno) {
-                nombreCliente = objCliente ? objCliente.nombre : clienteSeleccionado;
-                telefonoCliente = objCliente ? String(objCliente.telefono || "").replace(/\s+/g, '') : "";
-            } else {
-                nombreCliente = "CONSUMO INTERNO";
-            }
-
-            const confirmacion = await Swal.fire({
+            const resultadoConfirmacion = await Swal.fire({
                 title: '¿Confirmar Operación?',
-                text: 'Se registrará en Sheets y descontará stock automáticamente.',
+                text: `Se registrarán ${carrito.length} productos y se actualizará el stock en tiempo real.`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#059669',
                 cancelButtonColor: '#64748b',
-                confirmButtonText: 'Sí, registrar'
+                confirmButtonText: 'Sí, despachar',
+                cancelButtonText: 'Cancelar'
             });
 
-            if (!confirmacion.isConfirmed) return;
+            if (!resultadoConfirmacion.isConfirmed) return;
 
             Swal.fire({
-                title: 'Procesando...',
+                title: 'Procesando transacción...',
+                text: 'Sincronizando movimientos con Google Sheets',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
 
+            const fechaOp = document.getElementById("fechaEntrega").value;
+
+            // Mapeo adaptado: Tu backend lee 'prod.producto' para buscar coincidencia exacta de texto en la pestaña Inventario
+            const productosMapeados = carrito.map(item => ({
+                producto: item.producto, 
+                cantidad: item.cantidad,
+                precio: item.precio
+            }));
+
+            const payloadVenta = {
+                action: "registrarVenta", 
+                cliente: clienteSeleccionado,
+                fecha: fechaOp,
+                esConsumoInterno: esConsumoInterno,
+                productos: productosMapeados 
+            };
+
             try {
-                const productos = carrito.map(item => ({
-                    productoId: item.id,
-                    producto: item.producto,
-                    cantidad: item.cantidad,
-                    precioVenta: item.precio
-                }));
-
-                const payload = {
-                    action: "registrarVenta",
-                    fecha: fEntrega,
-                    cliente: nombreCliente,
-                    esConsumoInterno: esConsumoInterno,
-                    productos: productos
-                };
-
                 const response = await fetch(DairyConfig.SCRIPT_URL, {
                     method: "POST",
                     headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(payloadVenta)
                 });
 
                 const data = await response.json();
 
                 if (data.status !== "success") {
-                    throw new Error(data.message || "Error devuelto por el servidor");
+                    throw new Error(data.message || "Error devuelto por el servidor.");
                 }
 
-                let totalFactura = 0;
-                let cadenaProductos = "";
-                carrito.forEach(item => {
-                    totalFactura += item.subtotal;
-                    cadenaProductos += `* ${item.cantidad} ${item.producto} ($${item.precio.toFixed(2)})\n`;
-                });
-
-                const mensajeWhatsApp = `LÓGICA LÁCTEA - PEDIDO\n\n` +
-                                        `ID: ${data.idVenta}\n` +
-                                        `Cliente: ${nombreCliente}\n` +
-                                        `Entrega: ${fEntrega}\n\n` +
-                                        `PRODUCTOS:\n${cadenaProductos}\n` +
-                                        `TOTAL: $${totalFactura.toFixed(2)}\n\n` +
-                                        `¡Gracias por preferirnos! 🥛🧀`;
-
-                const urlWhatsApp = `https://api.whatsapp.com/send?phone=${telefonoCliente}&text=${encodeURIComponent(mensajeWhatsApp)}`;
-
-                Swal.fire({
-                    title: 'Transacción Registrada',
-                    html: `
-                        <div class="text-left bg-slate-50 p-3 rounded border border-slate-100 text-sm space-y-1 mb-4">
-                            <p><b>Código ID:</b> <span class="font-mono text-emerald-700">${data.idVenta}</span></p>
-                            <p><b>Ítems procesados:</b> ${data.productos}</p>
-                        </div>
-                        <a href="${urlWhatsApp}" target="_blank" class="inline-flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all uppercase tracking-wide text-xs">
-                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.456L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.966C16.428 1.975 13.957 1.95 11.4 1.95c-5.439 0-9.865 4.371-9.869 9.802-.001 1.768.482 3.49 1.398 5.013l-.991 3.624 3.709-.965zm12.422-5.592c-.322-.16-.1.217-.491-.32-.614-.84-1.012-.971-1.212-.971-.11 0-.212.012-.303.033-.242.057-.455.222-.546.325-.213.242-.434.527-.434.527-.333.4-.647.38-.859.242-.232-.152-.93-.343-1.728-1.047-.62-.547-1.039-1.223-1.161-1.431-.121-.208-.013-.321.092-.425.094-.094.212-.242.318-.363.106-.121.141-.203.212-.338.071-.136.035-.254-.018-.363-.053-.109-.434-1.046-.596-1.435-.157-.38-.314-.328-.434-.333-.112-.005-.242-.006-.374-.006-.455 0-.828.169-1.01.374-.232.263-.808.788-.808 1.922 0 1.133.828 2.227.94 2.378.111.152 1.63 2.487 3.948 3.487.551.238 1.013.39 1.359.499.553.176 1.057.151 1.455.093.443-.066 1.359-.556 1.551-1.093.192-.536.192-.997.136-1.093-.057-.096-.213-.157-.536-.317z"/></svg>
-                            Enviar Comprobante por WhatsApp
-                        </a>
-                    `,
-                    icon: 'success',
-                    confirmButtonColor: '#64748b',
-                    confirmButtonText: 'Cerrar Ventana'
-                });
-
+                await Swal.fire("¡Éxito!", `La transacción se guardó correctamente. ID: ${data.idVenta}`, "success");
+                
                 carrito = [];
-                limpiarSeleccionCliente();
+                renderCarritoYTotales();
                 limpiarSeleccionProducto();
-                if(esConsumoInterno) { alternarConsumoInterno(); }
-                renderizarCarrito();
-                inicializarModulo();
+                if (esConsumoInterno) {
+                    document.getElementById("chkConsumoInterno").checked = false;
+                    alternarConsumoInterno();
+                } else {
+                    limpiarSeleccionCliente();
+                }
+                
+                await inicializarModulo();
 
             } catch (err) {
                 console.error(err);
-                Swal.fire(
-                    "Error de Conexión",
-                    "No se pudo guardar la operación en Google Sheets: " + err.message,
-                    "error"
-                );
+                Swal.fire("Error crítico", "No se pudieron procesar las salidas del almacén: " + err.message, "error");
             }
         }
     </script>

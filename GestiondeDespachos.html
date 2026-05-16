@@ -1,5 +1,5 @@
 <!-- ========================================= -->
-<!-- ARCHIVO: GestionDespachos.html            -->
+<!-- ARCHIVO: GestiondeDespachos.html          -->
 <!-- ========================================= -->
 
 <!DOCTYPE html>
@@ -7,79 +7,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Despachos - Lógica Láctea</title>
-    <!-- Tailwind CSS para diseño fluido -->
+    <title>Control de Despachos y Rutas - Lógica Láctea</title>
+
+    <link rel="stylesheet" href="estilos-lacteos.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SweetAlert2 para flujos de confirmación y carga -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#059669">
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
-    <!-- EL MENÚ SE INYECTA DINÁMICAMENTE DESDE menu-logic.js -->
-    <div id="menu-container"></div>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16 relative">
 
-    <!-- Encabezado del Módulo -->
-    <header class="bg-cyan-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <i data-lucide="truck" class="w-8 h-8 text-cyan-400"></i>
-            <div>
-                <h1 class="text-xl font-bold tracking-tight">Control de Despachos y Rutas</h1>
-                <p class="text-xs text-cyan-200">Monitoreo de Entregas, Estados de Envío y Logística de Última Milla</p>
+    <!-- PANTALLA DE CARGA INICIAL -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl border border-slate-100 flex flex-col items-center gap-4 max-w-xs w-full mx-4">
+            <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+            <div class="text-center">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Lógica Láctea</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Cargando hoja de ruta...</p>
             </div>
         </div>
-        <button onclick="cargarDespachos()" class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all border border-cyan-400 shadow-sm active:scale-95">
-            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Sincronizar Rutas
+    </div>
+
+    <div id="menu-container"></div>
+
+    <header class="bg-emerald-600 text-white shadow-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="truck" class="w-8 h-8"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Control de Despachos y Rutas</h1>
+                <p class="text-xs text-emerald-100">Monitoreo de Entregas, Estados de Envío y Logística de Última Milla</p>
+            </div>
+        </div>
+
+        <button onclick="recargarDatos()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            Actualizar
         </button>
     </header>
 
-    <!-- Tarjetas de Estado Logístico Rápido -->
-    <section class="max-w-7xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Órdenes en Cola</span>
-                <span id="cardPendientes" class="text-2xl font-black text-amber-600">0</span>
-            </div>
-            <div class="p-2.5 bg-amber-50 text-amber-600 rounded-lg"><i data-lucide="clock" class="w-5 h-5"></i></div>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">En Tránsito</span>
-                <span id="cardRuta" class="text-2xl font-black text-cyan-600">0</span>
-            </div>
-            <div class="p-2.5 bg-cyan-50 text-cyan-600 rounded-lg"><i data-lucide="package-open" class="w-5 h-5"></i></div>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
-            <div>
-                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Entregas Exitosas</span>
-                <span id="cardEntregados" class="text-2xl font-black text-emerald-600">0</span>
-            </div>
-            <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-lg"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
-        </div>
-    </section>
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
 
-    <!-- Tabla de Control Transaccional -->
-    <main class="p-4 md:p-8 max-w-7xl mx-auto w-full pt-0">
+        <!-- TARJETAS DE ESTADÍSTICAS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
+                <div class="flex items-center justify-between mb-3">
+                    <i data-lucide="clock" class="w-8 h-8 opacity-90"></i>
+                    <span class="text-3xl font-black" id="totalEnCola">0</span>
+                </div>
+                <h3 class="text-sm font-bold uppercase tracking-wider opacity-90">Órdenes en Cola</h3>
+                <p class="text-xs opacity-75 mt-1">Pendientes de asignar</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
+                <div class="flex items-center justify-between mb-3">
+                    <i data-lucide="truck" class="w-8 h-8 opacity-90"></i>
+                    <span class="text-3xl font-black" id="totalEnTransito">0</span>
+                </div>
+                <h3 class="text-sm font-bold uppercase tracking-wider opacity-90">En Tránsito</h3>
+                <p class="text-xs opacity-75 mt-1">En camino al cliente</p>
+            </div>
+
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
+                <div class="flex items-center justify-between mb-3">
+                    <i data-lucide="check-circle" class="w-8 h-8 opacity-90"></i>
+                    <span class="text-3xl font-black" id="totalEntregadas">0</span>
+                </div>
+                <h3 class="text-sm font-bold uppercase tracking-wider opacity-90">Entregas Exitosas</h3>
+                <p class="text-xs opacity-75 mt-1">Confirmadas por cliente</p>
+            </div>
+        </div>
+
+        <!-- FILTROS Y BÚSQUEDA -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button onclick="filtrarPorEstado('TODOS')" id="filtroTodos" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-emerald-600 text-white shadow-sm">
+                        Todos
+                    </button>
+                    <button onclick="filtrarPorEstado('EN COLA')" id="filtroCola" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        En Cola
+                    </button>
+                    <button onclick="filtrarPorEstado('EN TRÁNSITO')" id="filtroTransito" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        En Tránsito
+                    </button>
+                    <button onclick="filtrarPorEstado('ENTREGADO')" id="filtroEntregado" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 hover:bg-slate-200">
+                        Entregado
+                    </button>
+                </div>
+
+                <div class="relative w-full md:w-72">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <input type="text" id="buscarCliente" oninput="filtrarPorBusqueda()" placeholder="Buscar por cliente o ID de venta..." class="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA DE DESPACHOS -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
-                            <th class="py-3 px-6">ID Venta</th>
-                            <th class="py-3 px-4">Fecha</th>
-                            <th class="py-3 px-4">Cliente / Destino</th>
-                            <th class="py-3 px-4">Items / Total</th>
-                            <th class="py-3 px-4 text-center">Estado Actual</th>
-                            <th class="py-3 px-6 text-center">Acciones Logísticas</th>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                            <th class="py-4 px-6">ID Venta</th>
+                            <th class="py-4 px-6">Fecha</th>
+                            <th class="py-4 px-6">Cliente</th>
+                            <th class="py-4 px-6 text-center">Items / Total</th>
+                            <th class="py-4 px-6 text-center">Estado Actual</th>
+                            <th class="py-4 px-6 text-center">Acción Logística</th>
                         </tr>
                     </thead>
-                    <tbody id="tbodyDespachos" class="divide-y divide-slate-100 font-medium text-slate-700">
-                        <!-- Loader Dinámico -->
+                    <tbody id="tbodyDespachos">
                         <tr>
-                            <td colspan="6" class="text-center py-20 text-slate-400">
-                                <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-cyan-600"></i>
-                                <p class="text-xs">Maquetando hoja de ruta desde el servidor de Ventas...</p>
+                            <td colspan="6" class="text-center py-16 text-slate-400 italic">
+                                <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                                Cargando información de despachos...
                             </td>
                         </tr>
                     </tbody>
@@ -88,12 +131,21 @@
         </div>
     </main>
 
-    <!-- SCRIPTS DE CONEXIÓN CON RAÍZ -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
     <script>
-        let despachosGlobal = [];
+        let todasLasVentas = [];
+        let ventasFiltradas = [];
+        let filtroActual = "TODOS";
+        let textoBusqueda = "";
+
+        // Estados posibles para el flujo de despacho
+        const ESTADOS = {
+            EN_COLA: "EN COLA",
+            EN_TRANSITO: "EN TRÁNSITO",
+            ENTREGADO: "ENTREGADO"
+        };
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
@@ -101,265 +153,284 @@
         });
 
         async function cargarDespachos() {
+            const overlay = document.getElementById("loadingOverlay");
+            overlay.classList.remove("hidden", "opacity-0");
+
             try {
-                const datos = await DairyAPI.obtenerDatos("Ventas");
+                // Obtener todas las ventas registradas
+                const ventas = await DairyAPI.obtenerDatos("Ventas");
                 
-                if (Array.isArray(datos)) {
-                    despachosGlobal = datos;
-                    renderizarDespachos(despachosGlobal);
-                    actualizarTarjetasMetricas(despachosGlobal);
-                } else if (datos && datos.status === "error") {
-                    throw new Error(datos.message);
+                if (!ventas || ventas.length === 0) {
+                    todasLasVentas = [];
+                    mostrarMensajeSinDatos();
+                    actualizarContadores();
+                    return;
                 }
+
+                // Filtrar y normalizar los datos
+                todasLasVentas = ventas.map(venta => ({
+                    id: venta.id || venta.ID_VENTA || "N/A",
+                    fecha: venta.fecha || venta.FECHA || "Sin fecha",
+                    cliente: venta.cliente || venta.CLIENTE || "Cliente no especificado",
+                    items: venta.items || venta.ITEMS || "0",
+                    total: venta.total || venta.TOTAL || "0",
+                    estado: (venta.estado || venta.ESTADO || "EN COLA").toUpperCase(),
+                    telefono: venta.telefono || venta.TELEFONO || "",
+                    productos: venta.productos || venta.PRODUCTOS || []
+                }));
+
+                aplicarFiltros();
+
             } catch (err) {
-                console.error("Error al sincronizar bitácora de rutas:", err);
-                document.getElementById("tbodyDespachos").innerHTML = `
+                console.error("Error al cargar despachos:", err);
+                Swal.fire("Error", "No se pudieron cargar los despachos: " + err.message, "error");
+                mostrarMensajeSinDatos();
+            } finally {
+                overlay.classList.add("opacity-0");
+                setTimeout(() => { overlay.classList.add("hidden"); }, 300);
+            }
+        }
+
+        function aplicarFiltros() {
+            let filtradas = [...todasLasVentas];
+
+            // Filtrar por estado
+            if (filtroActual !== "TODOS") {
+                filtradas = filtradas.filter(venta => venta.estado === filtroActual);
+            }
+
+            // Filtrar por búsqueda
+            if (textoBusqueda.trim() !== "") {
+                const busqueda = textoBusqueda.toLowerCase().trim();
+                filtradas = filtradas.filter(venta => 
+                    venta.cliente.toLowerCase().includes(busqueda) ||
+                    venta.id.toLowerCase().includes(busqueda)
+                );
+            }
+
+            ventasFiltradas = filtradas;
+            renderizarTabla();
+            actualizarContadores();
+            actualizarBotonesFiltro();
+        }
+
+        function renderizarTabla() {
+            const tbody = document.getElementById("tbodyDespachos");
+            
+            if (ventasFiltradas.length === 0) {
+                tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center py-10 text-rose-500 font-bold">
-                            <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
-                            Error de comunicación con api-config.js o Google Sheets.<br>
-                            <span class="text-xs font-normal text-slate-400">${err.message}</span>
+                        <td colspan="6" class="text-center py-16 text-slate-400 italic">
+                            <i data-lucide="package-x" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                            No hay despachos para mostrar
                         </td>
                     </tr>
                 `;
                 lucide.createIcons();
+                return;
             }
-        }
 
-        function renderizarDespachos(lista) {
-            const tbody = document.getElementById("tbodyDespachos");
-            tbody.innerHTML = lista.length ? "" : "<tr><td colspan='6' class='text-center py-10 text-slate-400 italic'>No hay ventas registradas.</td></tr>";
-
-            const pedidosAgrupados = {};
-
-            lista.forEach(item => {
-                const idVenta = item.ID_Venta || item.id_venta;
-                if(!idVenta || idVenta === "ID_Venta") return;
-
-                const totalFila = parseFloat(item.Total || 0);
-                const descProducto = `${item.Producto || 'Producto'} (x${item.Cantidad || 1})`;
-
-                if (!pedidosAgrupados[idVenta]) {
-                    pedidosAgrupados[idVenta] = {
-                        idVenta: idVenta,
-                        fecha: item.Fecha || '-',
-                        cliente: item.Cliente || "Consumidor Final",
-                        productos: [descProducto],
-                        montoTotal: totalFila,
-                        estado: (item.Estado || "PENDIENTE").toUpperCase()
-                    };
-                } else {
-                    pedidosAgrupados[idVenta].productos.push(descProducto);
-                    pedidosAgrupados[idVenta].montoTotal += totalFila;
-                }
-            });
-
-            const despachosUnicos = Object.values(pedidosAgrupados);
-
-            despachosUnicos.forEach(d => {
-                let badgeClass = "";
-                let botonFlujo = "";
-                const estado = d.estado;
-
-                // Definición del ciclo logístico principal
-                if (estado === "PENDIENTE") {
-                    badgeClass = "bg-amber-100 text-amber-800 border border-amber-200";
-                    botonFlujo = `
-                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'EN RUTA')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all active:scale-95">
-                            <i data-lucide="play" class="w-3 h-3"></i> Despachar
-                        </button>
-                    `;
-                } else if (estado === "EN RUTA") {
-                    badgeClass = "bg-cyan-100 text-cyan-800 border border-cyan-200 animate-pulse";
-                    botonFlujo = `
-                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'ENTREGADO')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all active:scale-95">
-                            <i data-lucide="check" class="w-3 h-3"></i> Entregado
-                        </button>
-                    `;
-                } else if (estado === "ENTREGADO") {
-                    badgeClass = "bg-emerald-100 text-emerald-800 border border-emerald-200";
-                    botonFlujo = `
-                        <span class="text-emerald-600 text-[11px] font-bold flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 shadow-sm">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Completado
-                        </span>
-                    `;
-                } else {
-                    badgeClass = "bg-slate-100 text-slate-700 border border-slate-200";
-                    botonFlujo = `<span class="text-slate-400 text-[11px] italic">${estado}</span>`;
-                }
-
-                const listaProductosText = d.productos.join(', ');
-
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-slate-50/60 transition-colors";
-                tr.innerHTML = `
-                    <td class="py-3.5 px-6 font-mono font-bold text-slate-600">#${d.idVenta}</td>
-                    <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${d.fecha}</td>
-                    <td class="py-3.5 px-4">
-                        <div class="font-black text-slate-800">${d.cliente}</div>
-                        <!-- BOTÓN DIRECCIÓN (MAPS) -->
-                        <button onclick="abrirDireccion('${d.cliente}')" class="text-cyan-600 hover:text-cyan-700 font-bold text-[11px] flex items-center gap-1 mt-0.5 transition-all active:translate-x-0.5">
-                            <i data-lucide="map-pin" class="w-3 h-3 text-cyan-500"></i> Ver ubicación en mapa
-                        </button>
+            tbody.innerHTML = ventasFiltradas.map(venta => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                    <td class="py-4 px-6 font-bold text-emerald-600 text-sm">${venta.id}</td>
+                    <td class="py-4 px-6 text-sm text-slate-600">${venta.fecha}</td>
+                    <td class="py-4 px-6">
+                        <div class="font-bold text-slate-800 text-sm">${venta.cliente}</div>
+                        ${venta.telefono ? `<div class="text-[10px] text-slate-400 mt-0.5">📱 ${venta.telefono}</div>` : ''}
                     </td>
-                    <td class="py-3.5 px-4 text-slate-600">
-                        <div class="text-xs truncate max-w-[200px] font-semibold text-slate-500" title="${listaProductosText}">${listaProductosText}</div>
-                        <div class="text-xs font-bold text-cyan-700">$${d.montoTotal.toFixed(2)}</div>
+                    <td class="py-4 px-6 text-center text-sm">
+                        <div class="font-bold">${venta.items} items</div>
+                        <div class="text-emerald-600 font-black">$${parseFloat(venta.total).toFixed(2)}</div>
                     </td>
-                    <td class="py-3.5 px-4 text-center">
-                        <span class="px-2 py-0.5 rounded-md font-black text-[10px] uppercase tracking-wider ${badgeClass}">
-                            ${estado}
-                        </span>
+                    <td class="py-4 px-6 text-center">
+                        ${renderizarEstado(venta.estado)}
                     </td>
-                    <!-- PANEL DE ACCIONES LOGÍSTICAS COMPLETO -->
-                    <td class="py-3.5 px-6">
-                        <div class="flex items-center justify-center gap-2">
-                            ${botonFlujo}
-                            
-                            <!-- BOTÓN WHATSAPP -->
-                            <button onclick="enviarMensajeWhatsapp('${d.idVenta}', '${d.cliente}', '${listaProductosText}', '${d.montoTotal.toFixed(2)}')" class="bg-emerald-500 hover:bg-emerald-600 text-white p-1.5 rounded shadow-sm transition-all active:scale-90" title="Notificar por WhatsApp">
-                                <i data-lucide="message-circle" class="w-4 h-4"></i>
-                            </button>
-
-                            <!-- BOTÓN ELIMINAR / ANULAR ORDEN -->
-                            <button onclick="eliminarOrdenDespacho('${d.idVenta}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-1.5 rounded border border-rose-200 shadow-sm transition-all active:scale-90" title="Eliminar / Anular Pedido">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                    <td class="py-4 px-6 text-center">
+                        <div class="flex gap-2 justify-center">
+                            ${renderizarBotonesAccion(venta)}
                         </div>
                     </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                </tr>
+            `).join('');
+            
             lucide.createIcons();
         }
 
-        // Métrica reactiva calculada basándose en IDs únicos
-        function actualizarTarjetasMetricas(lista) {
-            let p = 0, r = 0, e = 0;
-            const visitados = new Set();
-
-            lista.forEach(item => {
-                const idVenta = item.ID_Venta || item.id_venta;
-                if (!idVenta || idVenta === "ID_Venta" || visitados.has(idVenta)) return;
-                
-                visitados.add(idVenta);
-                const est = (item.Estado || "PENDIENTE").toUpperCase();
-                
-                if (est === "PENDIENTE") p++;
-                else if (est === "EN RUTA") r++;
-                else if (est === "ENTREGADO") e++;
-            });
-
-            document.getElementById("cardPendientes").innerText = p;
-            document.getElementById("cardRuta").innerText = r;
-            document.getElementById("cardEntregados").innerText = e;
-        }
-
-        // FUNCIÓN 1: ABRIR DIRECCIÓN EN MAPS
-        function abrirDireccion(cliente) {
-            const query = encodeURIComponent(cliente);
-            const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-            window.open(url, '_blank');
-        }
-
-        // FUNCIÓN 2: WHATSAPP DINÁMICO PIDIENDO TELÉFONO
-        async function enviarMensajeWhatsapp(idVenta, cliente, productos, total) {
-            const { value: telefono } = await Swal.fire({
-                title: 'Notificar Entrega',
-                text: `Ingrese el número de WhatsApp para el cliente: ${cliente}`,
-                input: 'tel',
-                inputPlaceholder: 'Ej: 0998765432 o 593998765432',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: '<i class="inline-block mr-1" data-lucide="send"></i> Enviar Mensaje',
-                didOpen: () => { lucide.createIcons(); }
-            });
-
-            if (!telefono) return; // Si cancela o no digita nada, frena el flujo
-
-            let msg = `*🥛 LÓGICA LÁCTEA - CONTROL DE ENTREGAS *\n\n`;
-            msg += `Hola *${cliente}*, su pedido ya se encuentra procesado en nuestra logística.\n\n`;
-            msg += `• *Orden:* #${idVenta}\n`;
-            msg += `• *Detalle:* ${productos}\n`;
-            msg += `• *Monto Total:* $${total}\n\n`;
-            msg += `¡Gracias por elegirnos! Nos vemos pronto en su entrega.`;
-
-            let numLimpio = telefono.replace(/[^0-9]/g, '');
-            if (numLimpio.startsWith('0')) {
-                numLimpio = '593' + numLimpio.substring(1);
-            }
-
-            window.open(`https://wa.me/${numLimpio}?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-
-        // FUNCIÓN 3: ELIMINAR / ANULAR ORDEN DESDE LA INTERFAZ
-        async function eliminarOrdenDespacho(idVenta) {
-            const result = await Swal.fire({
-                title: '¿Anular este despacho?',
-                text: `Esta acción eliminará todas las líneas vinculadas al ID Venta #${idVenta} en Google Sheets de forma permanente.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#ef4444',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Sí, eliminar',
-                cancelButtonText: 'Cancelar'
-            });
-
-            if (!result.isConfirmed) return;
-
-            Swal.fire({
-                title: 'Eliminando de la base...',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-
-            const payload = {
-                action: "eliminarDespacho",
-                idVenta: idVenta
-            };
-
-            try {
-                // Envía la acción de remoción apuntando a la hoja física de Ventas
-                await DairyAPI.guardarDatos("Ventas", payload);
-
-                Swal.fire('Eliminado', `La orden #${idVenta} fue removida con éxito.`, 'success');
-                cargarDespachos(); // Recarga la cuadrícula refrescada
-            } catch (err) {
-                console.error("Error al remover orden:", err);
-                Swal.fire("Error", "No se pudo realizar el borrado en Google Sheets.", "error");
+        function renderizarEstado(estado) {
+            switch(estado) {
+                case ESTADOS.EN_COLA:
+                    return '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700"><i data-lucide="clock" class="w-3 h-3"></i> EN COLA</span>';
+                case ESTADOS.EN_TRANSITO:
+                    return '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700"><i data-lucide="truck" class="w-3 h-3"></i> EN TRÁNSITO</span>';
+                case ESTADOS.ENTREGADO:
+                    return '<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700"><i data-lucide="check-circle" class="w-3 h-3"></i> ENTREGADO</span>';
+                default:
+                    return '<span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">DESCONOCIDO</span>';
             }
         }
 
-        // Sincronización base de cambio de estados
-        async function actualizarEstadoDespacho(idVenta, nuevoEstado) {
-            Swal.fire({
-                title: 'Sincronizando Estado...',
-                text: `Modificando Pedido #${idVenta} a: ${nuevoEstado}`,
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
+        function renderizarBotonesAccion(venta) {
+            switch(venta.estado) {
+                case ESTADOS.EN_COLA:
+                    return `
+                        <button onclick="cambiarEstado('${venta.id}', '${ESTADOS.EN_TRANSITO}')" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                            <i data-lucide="play" class="w-3 h-3"></i>
+                            Iniciar Ruta
+                        </button>
+                    `;
+                case ESTADOS.EN_TRANSITO:
+                    return `
+                        <button onclick="cambiarEstado('${venta.id}', '${ESTADOS.ENTREGADO}')" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                            <i data-lucide="check-circle" class="w-3 h-3"></i>
+                            Marcar Entregado
+                        </button>
+                        <button onclick="enviarWhatsApp('${venta.telefono}', '${venta.id}', '${venta.cliente}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                            <i data-lucide="message-circle" class="w-3 h-3"></i>
+                            Notificar
+                        </button>
+                    `;
+                case ESTADOS.ENTREGADO:
+                    return `
+                        <span class="text-[10px] text-slate-400 italic">Completado</span>
+                    `;
+                default:
+                    return `
+                        <button onclick="cambiarEstado('${venta.id}', '${ESTADOS.EN_COLA}')" class="bg-slate-500 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
+                            Reintegrar
+                        </button>
+                    `;
+            }
+        }
+
+        async function cambiarEstado(idVenta, nuevoEstado) {
+            const confirmacion = await Swal.fire({
+                title: '¿Cambiar estado del despacho?',
+                text: `Esta acción moverá el pedido a "${nuevoEstado}"`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#059669',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, actualizar'
             });
 
-            const payload = {
-                action: "actualizarEstadoDespacho",
-                idVenta: idVenta,
-                estado: nuevoEstado,
-                fechaEntrega: nuevoEstado === "ENTREGADO" ? new Date().toISOString().split('T')[0] : ""
-            };
+            if (!confirmacion.isConfirmed) return;
+
+            Swal.fire({
+                title: 'Actualizando...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
 
             try {
-                await DairyAPI.guardarDatos("Ventas", payload);
-                Swal.fire({
-                    title: 'Cambio Confirmado',
-                    text: `La orden #${idVenta} cambió a ${nuevoEstado} con éxito.`,
-                    icon: 'success',
-                    confirmButtonColor: '#0891b2'
+                const payload = {
+                    action: "actualizarEstadoDespacho",
+                    idVenta: idVenta,
+                    nuevoEstado: nuevoEstado
+                };
+
+                const response = await fetch(DairyConfig.SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
                 });
-                cargarDespachos();
-            } catch (err) {
-                console.error("Error al actualizar estado logístico:", err);
-                Swal.fire("Error de Conexión", "No se pudo impactar el cambio en Google Sheets.", "error");
+
+                const data = await response.json();
+
+                if (data.status !== "success") {
+                    throw new Error(data.message || "Error al actualizar el estado");
+                }
+
+                Swal.fire("¡Éxito!", `Despacho actualizado a "${nuevoEstado}"`, "success");
+                
+                // Recargar los datos para reflejar cambios
+                await cargarDespachos();
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire("Error", "No se pudo actualizar el estado: " + error.message, "error");
             }
+        }
+
+        function enviarWhatsApp(telefono, idVenta, cliente) {
+            if (!telefono || telefono === "") {
+                Swal.fire("Sin contacto", "Este cliente no tiene número de teléfono registrado", "warning");
+                return;
+            }
+
+            const mensaje = `Hola ${cliente}, tu pedido #${idVenta} está en camino con nuestro repartidor. 🚚\n\nLÓGICA LÁCTEA - Tu pedido llegará pronto.\n\n¡Gracias por preferirnos! 🥛🧀`;
+            
+            const urlWhatsApp = `https://api.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`;
+            window.open(urlWhatsApp, '_blank');
+        }
+
+        function actualizarContadores() {
+            const enCola = todasLasVentas.filter(v => v.estado === ESTADOS.EN_COLA).length;
+            const enTransito = todasLasVentas.filter(v => v.estado === ESTADOS.EN_TRANSITO).length;
+            const entregadas = todasLasVentas.filter(v => v.estado === ESTADOS.ENTREGADO).length;
+
+            document.getElementById("totalEnCola").innerText = enCola;
+            document.getElementById("totalEnTransito").innerText = enTransito;
+            document.getElementById("totalEntregadas").innerText = entregadas;
+        }
+
+        function filtrarPorEstado(estado) {
+            filtroActual = estado;
+            aplicarFiltros();
+        }
+
+        function filtrarPorBusqueda() {
+            textoBusqueda = document.getElementById("buscarCliente").value;
+            aplicarFiltros();
+        }
+
+        function actualizarBotonesFiltro() {
+            const botones = {
+                TODOS: document.getElementById("filtroTodos"),
+                "EN COLA": document.getElementById("filtroCola"),
+                "EN TRÁNSITO": document.getElementById("filtroTransito"),
+                "ENTREGADO": document.getElementById("filtroEntregado")
+            };
+
+            Object.keys(botones).forEach(estado => {
+                const btn = botones[estado];
+                if (filtroActual === estado) {
+                    btn.className = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-emerald-600 text-white shadow-sm";
+                } else {
+                    btn.className = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 hover:bg-slate-200";
+                }
+            });
+        }
+
+        function mostrarMensajeSinDatos() {
+            const tbody = document.getElementById("tbodyDespachos");
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-16 text-slate-400 italic">
+                        <i data-lucide="database" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                        No hay ventas registradas en el sistema
+                    </td>
+                </tr>
+            `;
+            lucide.createIcons();
+        }
+
+        async function recargarDatos() {
+            Swal.fire({
+                title: 'Actualizando datos...',
+                text: 'Obteniendo la información más reciente',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+            
+            await cargarDespachos();
+            
+            Swal.fire({
+                title: '¡Actualizado!',
+                text: 'Los datos de despachos están al día',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
         }
     </script>
 </body>

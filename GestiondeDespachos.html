@@ -1,3 +1,7 @@
+<!-- ========================================= -->
+<!-- ARCHIVO: GestionDespachos.html            -->
+<!-- ========================================= -->
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -96,10 +100,9 @@
             cargarDespachos();
         });
 
-        // Consumo utilizando el estándar global de Lógica Láctea apuntando a la hoja Ventas
+        // Consumo directo mapeado a la hoja "Ventas"
         async function cargarDespachos() {
             try {
-                // Modificado para consumir directamente de la hoja física "Ventas"
                 const datos = await DairyAPI.obtenerDatos("Ventas");
                 
                 if (Array.isArray(datos)) {
@@ -124,32 +127,32 @@
             }
         }
 
-        // Renderizado consolidado por ID_Venta
+        // Renderizado consolidado leyendo los encabezados exactos de tu hoja Ventas
         function renderizarDespachos(lista) {
             const tbody = document.getElementById("tbodyDespachos");
             tbody.innerHTML = lista.length ? "" : "<tr><td colspan='6' class='text-center py-10 text-slate-400 italic'>No hay ventas registradas.</td></tr>";
 
-            // Agrupamos filas repetidas por ID_Venta para no duplicar filas visuales por producto
             const pedidosAgrupados = {};
 
             lista.forEach(item => {
-                const idVenta = item.ID_Venta || item.id_venta || item.id || "S/I";
-                if(idVenta === "S/I" || idVenta === "ID_Venta") return; // Ignora cabeceras accidentales
+                // Validación exacta con tus llaves correspondientes
+                const idVenta = item.ID_Venta || item.id_venta;
+                if(!idVenta || idVenta === "ID_Venta") return; // Salta cabeceras de texto de la hoja
 
-                const totalFila = parseFloat(item.Total || item.total || 0);
+                const totalFila = parseFloat(item.Total || 0);
                 const descProducto = `${item.Producto || 'Producto'} (x${item.Cantidad || 1})`;
 
                 if (!pedidosAgrupados[idVenta]) {
                     pedidosAgrupados[idVenta] = {
                         idVenta: idVenta,
-                        fecha: item.Fecha || item.fecha || '-',
-                        cliente: item.Cliente || item.cliente || "Consumidor Final",
+                        fecha: item.Fecha || '-',
+                        cliente: item.Cliente || "Consumidor Final",
                         productos: [descProducto],
                         montoTotal: totalFila,
-                        estado: (item.Estado || item.estado || "PENDIENTE").toUpperCase()
+                        estado: (item.Estado || "PENDIENTE").toUpperCase()
                     };
                 } else {
-                    // Si ya existe el ID, agregamos el producto a la lista e incrementamos el monto
+                    // Si el ID se repite (varios productos en una misma venta), se agrupan en la misma fila visual
                     pedidosAgrupados[idVenta].productos.push(descProducto);
                     pedidosAgrupados[idVenta].montoTotal += totalFila;
                 }
@@ -162,7 +165,6 @@
                 let botonAccion = "";
                 const estado = d.estado;
 
-                // Control del ciclo de estados exacto en base a tus requerimientos
                 if (estado === "PENDIENTE") {
                     badgeClass = "bg-amber-100 text-amber-800 border border-amber-200";
                     botonAccion = `
@@ -213,17 +215,17 @@
             lucide.createIcons();
         }
 
-        // Métrica reactiva calculada en base a órdenes únicas agrupadas
+        // Métrica reactiva calculada basándose exclusivamente en IDs únicos
         function actualizarTarjetasMetricas(lista) {
             let p = 0, r = 0, e = 0;
             const visitados = new Set();
 
             lista.forEach(item => {
-                const idVenta = item.ID_Venta || item.id_venta || item.id;
+                const idVenta = item.ID_Venta || item.id_venta;
                 if (!idVenta || idVenta === "ID_Venta" || visitados.has(idVenta)) return;
                 
                 visitados.add(idVenta);
-                const est = (item.Estado || item.estado || "PENDIENTE").toUpperCase();
+                const est = (item.Estado || "PENDIENTE").toUpperCase();
                 
                 if (est === "PENDIENTE") p++;
                 else if (est === "EN RUTA") r++;
@@ -235,7 +237,7 @@
             document.getElementById("cardEntregados").innerText = e;
         }
 
-        // Guarda la mutación directo en Google Sheets afectando al ID_Venta correspondiente
+        // Actualiza el estado e inyecta la Fecha_Entrega cuando corresponde
         async function actualizarEstadoDespacho(idVenta, nuevoEstado) {
             Swal.fire({
                 title: 'Sincronizando Estado...',
@@ -244,7 +246,7 @@
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            // Parámetros estructurados para tu Web App Script (API unificada)
+            // Parámetros limpios y vinculados a las columnas de tu hoja
             const payload = {
                 action: "actualizarEstadoDespacho",
                 idVenta: idVenta,
@@ -253,7 +255,7 @@
             };
 
             try {
-                // Mutación apuntando a la hoja física de "Ventas"
+                // Ejecuta la mutación directo en Google Sheets afectando a la hoja "Ventas"
                 await DairyAPI.guardarDatos("Ventas", payload);
 
                 Swal.fire({
@@ -263,7 +265,7 @@
                     confirmButtonColor: '#0891b2'
                 });
                 
-                cargarDespachos(); // Refrescar interfaz
+                cargarDespachos(); // Recarga la tabla de inmediato
             } catch (err) {
                 console.error("Error al actualizar estado logístico:", err);
                 Swal.fire("Error de Conexión", "No se pudo impactar el cambio en la base de datos de Google Sheets.", "error");

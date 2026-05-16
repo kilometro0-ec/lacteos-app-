@@ -1,7 +1,7 @@
-<!-- ========================================= -->
-<!-- ARCHIVO: GestiondeDespachos.html          -->
-<!-- VERSIÓN CONTROL DE RUTAS Y PRECIOS        -->
-<!-- ========================================= -->
+<!-- ==================================================================== -->
+<!-- SYSTEM: DAIRYCONFIG / LÓGICA LÁCTEA                                 -->
+<!-- ARCHIVO: GestiondeDespachos.html (VERSIÓN INTEGRADA DE ALTA FIABILIDAD)-->
+<!-- ==================================================================== -->
 
 <!DOCTYPE html>
 <html lang="es">
@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Librerías para Exportación de Datos -->
+    <!-- Librerías de Exportación -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
@@ -30,13 +30,12 @@
             }
         }
         
-        /* IDENTIFICADORES VISUALES CRÍTICOS DE ESTADOS */
         .card-pendiente { 
-            border-left: 6px solid #d946ef !important; /* Fucsia / Purpura */
-            background-color: #faf5ff !important; /* Púrpura muy bajo (Slate/Purple 50) */
+            border-left: 6px solid #d946ef !important; 
+            background-color: #faf5ff !important; 
         }
         .card-entregado { 
-            border-left: 6px solid #10b981 !important; /* Verde Esmeralda */
+            border-left: 6px solid #10b981 !important; 
             opacity: 0.85; 
         }
 
@@ -49,7 +48,6 @@
             100% { transform: translateX(100%); opacity: 0; height: 0; padding: 0; margin: 0; border: none; }
         }
 
-        /* EFECTO NEÓN GIRATORIO EN CONTORNO DEL BOTÓN */
         .neon-border-btn {
             position: relative;
             z-index: 1;
@@ -114,7 +112,7 @@
 
     <main class="flex-1 p-3 pb-24 max-w-7xl mx-auto w-full">
 
-        <!-- TARJETAS DE ESTADÍSTICAS (BOTONES FILTRO DE ESTADO) -->
+        <!-- TARJETAS DE ESTADÍSTICAS -->
         <div class="grid grid-cols-2 gap-3 mb-4">
             <div onclick="filtrarPorEstadoTarjeta('PENDIENTE')" id="cardStatPendiente" class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg p-4 text-white cursor-pointer transform transition-transform active:scale-95 border-4 border-transparent shadow-amber-500/20">
                 <div class="flex items-center justify-between mb-1">
@@ -135,7 +133,7 @@
             </div>
         </div>
 
-        <!-- CONTROL DE REPORTES Y FILTROS TEMPORALES -->
+        <!-- CONTROL DE REPORTES Y FILTROS -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4">
             <button onclick="document.getElementById('panelReportes').classList.toggle('hidden')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active">
                 <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Filtros de Tiempo y Descargas
@@ -158,7 +156,6 @@
                     </div>
                 </div>
 
-                <!-- ACCIONES DE EXPORTACIÓN -->
                 <div class="grid grid-cols-2 gap-2 pt-1">
                     <button onclick="exportarExcel()" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active">
                         <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Guardar Excel
@@ -180,10 +177,29 @@
         <div id="listaDespachos" class="space-y-4"></div>
     </main>
 
-    <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
-
+    <!-- ======================================================== -->
+    <!-- LÓGICA DE SCRIPT CENTRAL DE LA APLICACIÓN               -->
+    <!-- ======================================================== -->
     <script>
+        // CONFIGURACIÓN DE CONEXIÓN CON EL SERVIDOR GOOGLE SHEETS
+        const DairyConfig = {
+            SCRIPT_URL: "TU_URL_DE_APPS_SCRIPT_AQUÍ" 
+        };
+
+        const DairyAPI = {
+            async obtenerDatos(pestana) {
+                try {
+                    const url = `${DairyConfig.SCRIPT_URL}?accion=leer&pestana=${pestana}`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error("Error en la respuesta de la red.");
+                    return await response.json();
+                } catch (error) {
+                    console.error(`Fallo de lectura en ${pestana}:`, error);
+                    throw error;
+                }
+            }
+        };
+
         let todasLasVentasAgrupadas = [];
         let ventasFiltradas = [];
         let filtroActual = "TODOS";
@@ -202,14 +218,14 @@
 
             try {
                 const ventas = await DairyAPI.obtenerDatos("Ventas");
-                
                 let mapaClientes = {};
+                
                 try {
                     const dataC = await DairyAPI.obtenerDatos("Clientes");
                     dataC.forEach(c => {
-                        mapaClientes[c.nombre.toString().trim().toLowerCase()] = c.direccion || "Dirección no registrada";
+                        if(c.nombre) mapaClientes[c.nombre.toString().trim().toLowerCase()] = c.direccion || "Dirección no registrada";
                     });
-                } catch(e) { console.error("Error cargando direcciones", e); }
+                } catch(e) { console.error("Aviso: No se mapearon direcciones.", e); }
 
                 if (!ventas || ventas.length === 0) {
                     todasLasVentasAgrupadas = [];
@@ -217,18 +233,17 @@
                     return;
                 }
 
-                // FILTRADO ESTRICTO EXCLUSIVO DESDE EL ORIGEN DE DATOS
                 const ventasLimpias = ventas.filter(v => {
                     const e = (v.estado || "").toUpperCase().trim();
                     return e === "PENDIENTE" || e === "ENTREGADO";
                 });
 
                 todasLasVentasAgrupadas = ventasLimpias.map(v => {
-                    const clKey = v.cliente.toString().trim().toLowerCase();
+                    const clKey = v.cliente ? v.cliente.toString().trim().toLowerCase() : "";
                     return {
                         id: v.id,
                         fecha: v.fecha,
-                        cliente: v.cliente,
+                        cliente: v.cliente || "Cliente Desconocido",
                         telefono: v.telefono || "",
                         direccion: mapaClientes[clKey] || "Dirección no registrada",
                         productos: v.productos || "", 
@@ -245,9 +260,9 @@
 
                 aplicarFiltros();
             } catch (err) {
-                Swal.fire("Error", "Error al procesar: " + err.message, "error");
+                Swal.fire("Error", "Error al procesar base de datos: " + err.message, "error");
                 mostrarSinDatos();
-            } finally {
+            } finaly {
                 overlay.classList.add("opacity-0");
                 setTimeout(() => { overlay.classList.add("hidden"); }, 300);
             }
@@ -261,7 +276,7 @@
             }
 
             const modoTiempo = document.getElementById("filtroTiempo").value;
-            const contenedorFecha = document.getElementById("wrapperFechaSpecificas") || document.getElementById("wrapperFechaEspecifica");
+            const contenedorFecha = document.getElementById("wrapperFechaEspecifica");
             
             if (modoTiempo === "ESPECIFICA") {
                 if(contenedorFecha) contenedorFecha.classList.remove("hidden");
@@ -299,7 +314,7 @@
                 container.innerHTML = `
                     <div class="text-center py-16 text-slate-400 italic">
                         <i data-lucide="package-x" class="w-16 h-16 mx-auto mb-3 opacity-50"></i>
-                        <p class="text-sm">No hay pedidos válidos</p>
+                        <p class="text-sm">No hay pedidos para este filtro</p>
                     </div>`;
                 lucide.createIcons();
                 return;
@@ -307,8 +322,6 @@
 
             container.innerHTML = ventasFiltradas.map(v => {
                 const esEntregado = v.estado === "ENTREGADO";
-                
-                // CÁLCULO Y DESGLOSE DETALLADO DE PRECIOS UNITARIOS
                 const itemsIndividuales = v.productos.split(',').filter(item => item.trim() !== '');
                 const totalItemsCuenta = itemsIndividuales.length;
                 const precioEstimadoUnidad = v.total / (v.items || totalItemsCuenta || 1);
@@ -339,7 +352,6 @@
                                     </div>
                                     <h3 class="font-black text-slate-800 text-base mt-1.5 tracking-tight">${v.cliente}</h3>
                                     
-                                    <!-- CONTENEDOR DIRECCIÓN -->
                                     <div class="flex items-center justify-between gap-3 mt-2.5 bg-white/90 p-2 rounded-xl border border-slate-200">
                                         <div class="flex items-center gap-1.5 text-[11px] text-slate-600 truncate">
                                             <i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0"></i>
@@ -353,7 +365,6 @@
                             </div>
                         </div>
                         
-                        <!-- DETALLE MONTO Y PRECIOS -->
                         <div class="p-4 bg-white/30">
                             <div class="flex justify-between items-center mb-3">
                                 <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Desglose de Valores</span>
@@ -449,12 +460,13 @@
 
             const botonesRestantes = document.querySelectorAll('.btn-borrado-item');
             if (botonesRestantes.length === 0) {
-                Swal.fire("Error", "No puedes dejar la orden en blanco.", "error");
+                Swal.fire("Error", "No puedes dejar la orden sin productos.", "error");
                 return;
             }
 
             let nuevosProductos = [];
             let nuevoTotalVenta = 0;
+            let totalUnidadesNuevas = 0;
             const factorPrecioProporcional = orden.total / (orden.items || 1);
 
             botonesRestantes.forEach(b => {
@@ -462,12 +474,34 @@
                 const c = parseInt(b.getAttribute('data-qty')) || 1;
                 nuevosProductos.push(`${n} (${c})`);
                 nuevoTotalVenta += c * factorPrecioProporcional;
+                totalUnidadesNuevas += c;
             });
 
             orden.productos = nuevosProductos.join(', ');
             orden.total = nuevoTotalVenta;
+            orden.items = totalUnidadesNuevas;
 
-            Swal.fire({ icon: 'success', title: 'Modificado localmente', timer: 1200, showConfirmButton: false });
+            // SINCRONIZACIÓN INMEDIATA CON GOOGLE SHEETS
+            try {
+                const response = await fetch(DairyConfig.SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify({
+                        action: "actualizarEstadoDespacho",
+                        idVenta: idVenta,
+                        productos: orden.productos,
+                        items: orden.items,
+                        total: orden.total
+                    })
+                });
+                const responseData = await response.json();
+                if(responseData.status !== "success") throw new Error(responseData.message);
+
+                Swal.fire({ icon: 'success', title: 'Sincronizado en Sheets', timer: 1200, showConfirmButton: false });
+            } catch(err) {
+                Swal.fire("Aviso", "Guardado temporalmente en pantalla. Error de red al subir a Sheets.", "warning");
+            }
+
             aplicarFiltros();
         }
 
@@ -512,7 +546,7 @@
                     await cargarDespachos();
                 }
             } catch (error) {
-                Swal.fire("Error", "Fallo: " + error.message, "error");
+                Swal.fire("Error", "Fallo al despachar: " + error.message, "error");
             }
         }
 
@@ -529,10 +563,8 @@
         }
 
         function enviarWhatsApp(t, idVenta, cliente) {
-            if(!t) { Swal.fire("Aviso", "Sin celular registrado", "warning"); return; }
-            
-            const msj = `*LÓGICA LÁCTEA* 🥛🧀\n\nHola *${cliente}*, tu pedido *#${idVenta}* ha sido despachado y está en camino.\n\n📦 *Estado:* En ruta de entrega\n⏰ *Tiempo estimado:* Próximas horas\n\n¡Gracias por preferirnos! 🙌`;
-            
+            if(!t) { Swal.fire("Aviso", "Este cliente no posee celular registrado", "warning"); return; }
+            const msj = `*LÓGICA LÁCTEA* 🥛🧀\n\nHola *${cliente}*, tu pedido *#${idVenta}* ha sido despachado y está en camino.\n\n📦 *Estado:* En ruta de entrega\n⏰ *Tiempo estimado:* Próximas horas\n\n¡Gracias por tu confianza! 🙌`;
             window.open(`https://api.whatsapp.com/send?phone=${t}&text=${encodeURIComponent(msj)}`, '_blank');
         }
 
@@ -552,7 +584,7 @@
             document.getElementById("listaDespachos").innerHTML = `
                 <div class="text-center py-16 text-slate-400 italic">
                     <i data-lucide="database" class="w-16 h-16 mx-auto mb-3 opacity-50"></i>
-                    <p class="text-sm">Sin pedidos registrados</p>
+                    <p class="text-sm">Sin pedidos en el historial</p>
                 </div>`;
             lucide.createIcons();
         }
@@ -560,7 +592,7 @@
         async function recargarDatos() { await cargarDespachos(); }
 
         function exportarExcel() {
-            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay datos", "warning");
+            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay registros cargados para exportar.", "warning");
             const matriz = ventasFiltradas.map(v => ({
                 "ID Pedido": v.id, "Fecha": v.fecha, "Cliente": v.cliente, "Dirección": v.direccion, "Productos": v.productos, "Total ($)": v.total, "Estado": v.estado
             }));
@@ -571,7 +603,7 @@
         }
 
         function exportarPDF() {
-            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay datos", "warning");
+            if(ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay registros cargados para exportar.", "warning");
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             doc.text("LÓGICA LÁCTEA - REPORTE OPERATIVO", 14, 15);

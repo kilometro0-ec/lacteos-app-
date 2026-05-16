@@ -53,7 +53,8 @@
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Seleccionar Cliente *</label>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Escriba para buscar Cliente</label>
+                        <input type="text" id="buscarCliente" oninput="filtrarClientes()" placeholder="Buscar por nombre o RUC..." class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs mb-1 outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
                         <select id="selectCliente" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-medium">
                             <option value="">-- Buscando Cartera de Clientes --</option>
                         </select>
@@ -75,7 +76,8 @@
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Producto / Derivado Lácteo</label>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Escriba para buscar Producto (Solo con Stock)</label>
+                        <input type="text" id="buscarProducto" oninput="filtrarProductos()" placeholder="Buscar producto..." class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs mb-1 outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
                         <select id="selectProducto" onchange="verificarStockDisponible()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
                             <option value="">-- Seleccione un ítem --</option>
                         </select>
@@ -159,7 +161,6 @@
         </div>
     </main>
 
-    <!-- Scripts de Configuración y Lógica Global -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
@@ -191,42 +192,55 @@
             try {
                 const datosClientes = await DairyAPI.obtenerDatos("Clientes");
                 clientesGlobal = datosClientes || [];
-                cargarSelectorClientes();
+                renderizarSelectorClientes(clientesGlobal);
 
                 const datosInventario = await DairyAPI.obtenerDatos("Inventario");
-                catalogoProductos = datosInventario || [];
+                // CORRECCIÓN: Filtrar el catálogo eliminando de raíz productos con Stock <= 0
+                catalogoProductos = (datosInventario || []).filter(p => parseInt(p.stock || 0) > 0);
+                renderizarSelectorProductos(catalogoProductos);
 
-                const selectProd = document.getElementById("selectProducto");
-                selectProd.innerHTML = '<option value="">-- Seleccione un ítem --</option>';
-
-                catalogoProductos.forEach(p => {
-                    const id = String(p.id || "").trim();
-                    if (!id) return;
-                    selectProd.innerHTML += `
-                        <option value="${id}">
-                            ${p.producto}
-                        </option>
-                    `;
-                });
             } catch (err) {
                 console.error(err);
                 Swal.fire("Error", "No se pudo conectar con Sheets", "error");
             }
         }
 
-        function cargarSelectorClientes() {
+        function renderizarSelectorClientes(lista) {
             const selectCli = document.getElementById("selectCliente");
             selectCli.innerHTML = '<option value="">-- Seleccione un Cliente --</option>';
-
-            clientesGlobal.forEach(c => {
+            lista.forEach(c => {
                 const ruc = String(c.ci_ruc || c.id || "").trim();
                 const nombre = c.nombre || "Cliente";
-                selectCli.innerHTML += `
-                    <option value="${ruc}">
-                        ${nombre} (${ruc})
-                    </option>
-                `;
+                selectCli.innerHTML += `<option value="${ruc}">${nombre} (${ruc})</option>`;
             });
+        }
+
+        function renderizarSelectorProductos(lista) {
+            const selectProd = document.getElementById("selectProducto");
+            selectProd.innerHTML = '<option value="">-- Seleccione un ítem --</option>';
+            lista.forEach(p => {
+                const id = String(p.id || "").trim();
+                if (!id) return;
+                selectProd.innerHTML += `<option value="${id}">${p.producto}</option>`;
+            });
+        }
+
+        // FUNCIONES DE BÚSQUEDA RÁPIDA (FILTROS)
+        function filtrarClientes() {
+            const termino = document.getElementById("buscarCliente").value.toLowerCase().trim();
+            const filtrados = clientesGlobal.filter(c => 
+                (c.nombre || "").toLowerCase().includes(termino) || 
+                String(c.ci_ruc || c.id || "").toLowerCase().includes(termino)
+            );
+            renderizarSelectorClientes(filtrados);
+        }
+
+        function filtrarProductos() {
+            const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
+            const filtrados = catalogoProductos.filter(p => 
+                (p.producto || "").toLowerCase().includes(termino)
+            );
+            renderizarSelectorProductos(filtrados);
         }
 
         function verificarStockDisponible() {
@@ -248,21 +262,23 @@
         function alternarConsumoInterno() {
             esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
             const selectCli = document.getElementById("selectCliente");
+            const buscarCli = document.getElementById("buscarCliente");
             const badgeTipo = document.getElementById("badgeTipoVenta");
 
             if (esConsumoInterno) {
                 selectCli.innerHTML = '<option value="CONSUMO INTERNO">CONSUMO INTERNO</option>';
                 selectCli.disabled = true;
+                buscarCli.disabled = true;
+                buscarCli.value = "";
                 badgeTipo.innerText = "Consumo Interno";
                 badgeTipo.className = "bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
             } else {
                 selectCli.disabled = false;
+                buscarCli.disabled = false;
                 badgeTipo.innerText = "Venta Comercial";
                 badgeTipo.className = "bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
-                cargarSelectorClientes();
+                renderizarSelectorClientes(clientesGlobal);
             }
-
-            // Actualizar precios de productos en cascada si ya hay uno seleccionado
             verificarStockDisponible();
         }
 
@@ -276,11 +292,21 @@
             }
 
             const prod = catalogoProductos.find(p => String(p.id).trim() === idProd);
+            
+            // Validación local preventiva de stock antes de meter al carrito
+            if (cantidad > parseInt(prod.stock || 0)) {
+                Swal.fire("Stock Insuficiente", `Solo quedan ${prod.stock} unidades de este producto.`, "error");
+                return;
+            }
+
             const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.precioVenta);
 
-            // Evitar duplicados incrementando la cantidad en el carrito existente
             const itemExistente = carrito.find(item => item.id === idProd);
             if (itemExistente) {
+                if ((itemExistente.cantidad + cantidad) > parseInt(prod.stock || 0)) {
+                    Swal.fire("Excede el inventario", "La cantidad total acumulada supera el stock disponible.", "error");
+                    return;
+                }
                 itemExistente.cantidad += cantidad;
                 itemExistente.subtotal = itemExistente.cantidad * itemExistente.precio;
             } else {
@@ -295,8 +321,9 @@
 
             renderizarCarrito();
             
-            // Reseteo rápido del selector de productos para evitar inserciones accidentales continuas
             document.getElementById("selectProducto").value = "";
+            document.getElementById("buscarProducto").value = "";
+            renderizarSelectorProductos(catalogoProductos);
             document.getElementById("numCantidadVenta").value = "1";
             document.getElementById("wrapperStock").classList.add("hidden");
         }
@@ -326,7 +353,6 @@
             }
 
             let total = 0;
-
             carrito.forEach((item, index) => {
                 total += item.subtotal;
                 tbody.innerHTML += `
@@ -352,7 +378,6 @@
         function toggleBtnRegistrar(activar) {
             const btn = document.getElementById("btnRegistrarVenta");
             btn.disabled = !activar;
-
             if (activar) {
                 btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-pointer transition-all uppercase tracking-widest text-sm active:scale-95";
             } else {
@@ -373,11 +398,17 @@
             }
 
             let nombreCliente = valueCliente;
+            let telefonoCliente = "";
+            
+            const objCliente = clientesGlobal.find(
+                c => String(c.ci_ruc || c.id || "").trim() === valueCliente
+            );
+
             if (!esConsumoInterno) {
-                const objCliente = clientesGlobal.find(
-                    c => String(c.ci_ruc || c.id || "").trim() === valueCliente
-                );
                 nombreCliente = objCliente ? objCliente.nombre : valueCliente;
+                telefonoCliente = objCliente ? String(objCliente.telefono || "").replace(/\s+/g, '') : "";
+            } else {
+                nombreCliente = "CONSUMO INTERNO";
             }
 
             const confirmacion = await Swal.fire({
@@ -414,14 +445,9 @@
                     productos: productos
                 };
 
-                // SOLUCIÓN A LOS DOS ERRORES ANTERIORES:
-                // 1. Apunta correctamente a DairyConfig.SCRIPT_URL (no a la variable ficticia API_URL)
-                // 2. Usamos Content-Type "text/plain" para evadir los errores de preflight de CORS en Apps Script
                 const response = await fetch(DairyConfig.SCRIPT_URL, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "text/plain"
-                    },
+                    headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify(payload)
                 });
 
@@ -431,23 +457,48 @@
                     throw new Error(data.message || "Error devuelto por el servidor");
                 }
 
+                // ESTRUCTURACIÓN DEL TEXTO PARA WHATSAPP
+                let totalFactura = 0;
+                let cadenaProductos = "";
+                carrito.forEach(item => {
+                    totalFactura += item.subtotal;
+                    cadenaProductos += `* ${item.cantidad} ${item.producto} ($${item.precio.toFixed(2)})\n`;
+                });
+
+                const mensajeWhatsApp = `LÓGICA LÁCTEA - PEDIDO\n\n` +
+                                        `ID: ${data.idVenta}\n` +
+                                        `Cliente: ${nombreCliente}\n` +
+                                        `Entrega: ${fEntrega}\n\n` +
+                                        `PRODUCTOS:\n${cadenaProductos}\n` +
+                                        `TOTAL: $${totalFactura.toFixed(2)}\n\n` +
+                                        `¡Gracias por preferirnos! 🥛🧀`;
+
+                const urlWhatsApp = `https://api.whatsapp.com/send?phone=${telefonoCliente}&text=${encodeURIComponent(mensajeWhatsApp)}`;
+
+                // ALERTA DE ÉXITO CON EL BOTÓN EXCLUSIVO DE WHATSAPP
                 Swal.fire({
                     title: 'Transacción Registrada',
                     html: `
-                        <div class="text-left bg-slate-50 p-3 rounded border border-slate-100 text-sm space-y-1">
+                        <div class="text-left bg-slate-50 p-3 rounded border border-slate-100 text-sm space-y-1 mb-4">
                             <p><b>Código ID:</b> <span class="font-mono text-emerald-700">${data.idVenta}</span></p>
                             <p><b>Ítems procesados:</b> ${data.productos}</p>
-                            <p class="text-xs text-slate-400 mt-2">Los cambios se han guardado con éxito en la base de datos centralizada.</p>
                         </div>
+                        <a href="${urlWhatsApp}" target="_blank" class="inline-flex items-center justify-center gap-2 w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all uppercase tracking-wide text-xs">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.717-1.456L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.799.002-2.63-1.023-5.101-2.885-6.966C16.428 1.975 13.957 1.95 11.4 1.95c-5.439 0-9.865 4.371-9.869 9.802-.001 1.768.482 3.49 1.398 5.013l-.991 3.624 3.709-.965zm12.422-5.592c-.322-.16-.1.217-.491-.32-.614-.84-1.012-.971-1.212-.971-.11 0-.212.012-.303.033-.242.057-.455.222-.546.325-.213.242-.434.527-.434.527-.333.4-.647.38-.859.242-.232-.152-.93-.343-1.728-1.047-.62-.547-1.039-1.223-1.161-1.431-.121-.208-.013-.321.092-.425.094-.094.212-.242.318-.363.106-.121.141-.203.212-.338.071-.136.035-.254-.018-.363-.053-.109-.434-1.046-.596-1.435-.157-.38-.314-.328-.434-.333-.112-.005-.242-.006-.374-.006-.455 0-.828.169-1.01.374-.232.263-.808.788-.808 1.922 0 1.133.828 2.227.94 2.378.111.152 1.63 2.487 3.948 3.487.551.238 1.013.39 1.359.499.553.176 1.057.151 1.455.093.443-.066 1.359-.556 1.551-1.093.192-.536.192-.997.136-1.093-.057-.096-.213-.157-.536-.317z"/></svg>
+                            Enviar Comprobante por WhatsApp
+                        </a>
                     `,
                     icon: 'success',
-                    confirmButtonColor: '#059669'
+                    confirmButtonColor: '#64748b',
+                    confirmButtonText: 'Cerrar Ventana'
                 });
 
-                // Resetear estado general de la aplicación móvil/PWA local tras la transacción
+                // Limpieza de interfaz móvil / PWA local
                 carrito = [];
+                document.getElementById("buscarCliente").value = "";
+                document.getElementById("buscarProducto").value = "";
                 renderizarCarrito();
-                inicializarModulo(); // Vuelve a leer el inventario actualizado desde Google Sheets
+                inicializarModulo();
 
             } catch (err) {
                 console.error(err);

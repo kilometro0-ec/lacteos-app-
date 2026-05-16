@@ -1,463 +1,831 @@
+<!-- ========================================= -->
+<!-- ARCHIVO: RegistrodeVentas.html -->
+<!-- ========================================= -->
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Ventas - Lógica Láctea</title>
+
     <link rel="stylesheet" href="estilos-lacteos.css">
+
     <script src="https://cdn.tailwindcss.com"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="manifest" href="manifest.json">
+
+    <meta name="theme-color" content="#059669">
 </head>
+
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
     <div id="menu-container"></div>
 
     <header class="bg-emerald-600 text-white shadow-md px-6 py-4 flex justify-between items-center">
+
         <div class="flex items-center gap-3">
+
             <i data-lucide="shopping-cart" class="w-8 h-8"></i>
+
             <div>
-                <h1 class="text-xl font-bold tracking-tight">Punto de Venta / Salidas</h1>
-                <p class="text-xs text-emerald-100">Facturación, Despachos y Consumo Interno</p>
+                <h1 class="text-xl font-bold tracking-tight">
+                    Punto de Venta / Salidas
+                </h1>
+
+                <p class="text-xs text-emerald-100">
+                    Facturación, Despachos y Consumo Interno
+                </p>
             </div>
+
         </div>
+
         <div class="flex items-center gap-2">
+
             <label class="inline-flex items-center cursor-pointer bg-emerald-700/50 px-3 py-1.5 rounded-lg border border-emerald-500 select-none">
-                <input type="checkbox" id="chkConsumoInterno" onchange="alternarConsumoInterno()" class="sr-only peer">
-                <span class="text-xs font-bold mr-2 text-emerald-100 peer-checked:text-white">CONSUMO INTERNO</span>
+
+                <input
+                    type="checkbox"
+                    id="chkConsumoInterno"
+                    onchange="alternarConsumoInterno()"
+                    class="sr-only peer">
+
+                <span class="text-xs font-bold mr-2 text-emerald-100 peer-checked:text-white">
+                    CONSUMO INTERNO
+                </span>
+
                 <div class="relative w-9 h-5 bg-emerald-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+
             </label>
+
         </div>
+
     </header>
 
     <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
+        <!-- IZQUIERDA -->
+
         <div class="lg:col-span-5 space-y-6">
+
+            <!-- DATOS -->
+
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+
                 <h2 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i> Datos de la Transacción
+
+                    <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
+
+                    Datos de la Transacción
+
                 </h2>
+
                 <div class="space-y-4">
+
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Seleccionar Cliente *</label>
-                        <select id="selectCliente" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-medium">
-                            <option value="">-- Buscando Cartera de Clientes --</option>
+
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                            Seleccionar Cliente *
+                        </label>
+
+                        <select
+                            id="selectCliente"
+                            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-medium">
+
+                            <option value="">
+                                -- Buscando Cartera de Clientes --
+                            </option>
+
                         </select>
+
                     </div>
+
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Fecha de Entrega *</label>
-                        <input type="date" id="fechaEntrega" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 font-medium">
+
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                            Fecha de Entrega *
+                        </label>
+
+                        <input
+                            type="date"
+                            id="fechaEntrega"
+                            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 font-medium">
+
                     </div>
+
                 </div>
+
             </div>
 
+            <!-- PRODUCTOS -->
+
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+
                 <h2 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <i data-lucide="package" class="w-4 h-4 text-emerald-600"></i> Agregar Producto
+
+                    <i data-lucide="package" class="w-4 h-4 text-emerald-600"></i>
+
+                    Agregar Producto
+
                 </h2>
+
                 <div class="space-y-4">
+
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Producto / Derivado Lácteo</label>
-                        <select id="selectProducto" onchange="verificarStockDisponible()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
-                            <option value="">-- Seleccione un ítem --</option>
+
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                            Producto / Derivado Lácteo
+                        </label>
+
+                        <select
+                            id="selectProducto"
+                            onchange="verificarStockDisponible()"
+                            class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
+
+                            <option value="">
+                                -- Seleccione un ítem --
+                            </option>
+
                         </select>
+
                     </div>
 
-                    <div id="wrapperStock" class="hidden p-3 rounded-lg border text-xs flex justify-between items-center transition-all">
+                    <div
+                        id="wrapperStock"
+                        class="hidden p-3 rounded-lg border text-xs flex justify-between items-center transition-all">
+
                         <div>
-                            <span class="font-bold block text-slate-600">Disponibilidad en Kárdex:</span>
-                            <span id="txtStockMinimo" class="text-base font-black">0 Uds</span>
+
+                            <span class="font-bold block text-slate-600">
+                                Disponibilidad en Kárdex:
+                            </span>
+
+                            <span id="txtStockMinimo" class="text-base font-black">
+                                0 Uds
+                            </span>
+
                         </div>
-                        <span id="badgeEstadoStock" class="px-2 py-1 rounded font-bold uppercase text-[10px]"></span>
+
+                        <span
+                            id="badgeEstadoStock"
+                            class="px-2 py-1 rounded font-bold uppercase text-[10px]">
+                        </span>
+
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
+
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Precio Unitario ($)</label>
-                            <input type="number" id="numPrecioUnitario" readonly class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-100 font-bold text-slate-600 outline-none">
+
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                                Precio Unitario ($)
+                            </label>
+
+                            <input
+                                type="number"
+                                id="numPrecioUnitario"
+                                readonly
+                                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-100 font-bold text-slate-600 outline-none">
+
                         </div>
+
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Cantidad a Vender</label>
-                            <input type="number" id="numCantidadVenta" min="1" value="1" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 font-black outline-none">
+
+                            <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">
+                                Cantidad a Vender
+                            </label>
+
+                            <input
+                                type="number"
+                                id="numCantidadVenta"
+                                min="1"
+                                value="1"
+                                class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 font-black outline-none">
+
                         </div>
+
                     </div>
 
-                    <button type="button" onclick="agregarItemAlCarrito()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
-                        <i data-lucide="list-plus" class="w-4 h-4"></i> Insertar a la Lista
+                    <button
+                        type="button"
+                        onclick="agregarItemAlCarrito()"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all active:scale-95">
+
+                        <i data-lucide="list-plus" class="w-4 h-4"></i>
+
+                        Insertar a la Lista
+
                     </button>
+
                 </div>
+
             </div>
+
         </div>
 
+        <!-- DERECHA -->
+
         <div class="lg:col-span-7 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between h-[calc(100vh-12rem)] min-h-[500px]">
+
             <div class="flex flex-col flex-1 overflow-hidden">
+
                 <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
+
                     <h2 class="font-black text-slate-700 uppercase tracking-wider text-sm flex items-center gap-2">
-                        <i data-lucide="receipt" class="w-4 h-4 text-emerald-600"></i> Detalle de la Operación
+
+                        <i data-lucide="receipt" class="w-4 h-4 text-emerald-600"></i>
+
+                        Detalle de la Operación
+
                     </h2>
-                    <span id="badgeTipoVenta" class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider">Venta Comercial</span>
+
+                    <span
+                        id="badgeTipoVenta"
+                        class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider">
+
+                        Venta Comercial
+
+                    </span>
+
                 </div>
 
                 <div class="flex-1 overflow-y-auto pr-1">
+
                     <table class="w-full text-left border-collapse text-xs">
+
                         <thead>
+
                             <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+
                                 <th class="py-3 px-4">Producto</th>
+
                                 <th class="py-3 px-2 text-center">Cant.</th>
+
                                 <th class="py-3 px-2 text-right">P. Unit</th>
+
                                 <th class="py-3 px-2 text-right">Subtotal</th>
+
                                 <th class="py-3 px-4 text-center">Acción</th>
+
                             </tr>
+
                         </thead>
-                        <tbody id="tbodyCarrito" class="divide-y divide-slate-100 font-medium text-slate-700">
+
+                        <tbody id="tbodyCarrito">
+
                             <tr>
+
                                 <td colspan="5" class="text-center py-16 text-slate-400 italic">
+
                                     <i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+
                                     No hay productos agregados.
+
                                 </td>
+
                             </tr>
+
                         </tbody>
+
                     </table>
+
                 </div>
+
             </div>
 
             <div class="border-t border-slate-100 pt-4 mt-4 space-y-4">
+
                 <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Neto a Liquidar:</span>
-                    <span id="txtTotalFactura" class="text-3xl font-black text-slate-800">$0.00</span>
+
+                    <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                        Total Neto a Liquidar:
+                    </span>
+
+                    <span id="txtTotalFactura" class="text-3xl font-black text-slate-800">
+                        $0.00
+                    </span>
+
                 </div>
 
-                <button type="button" id="btnRegistrarVenta" onclick="confirmarYEnviarVenta()" disabled class="w-full bg-slate-400 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm active:scale-95">
+                <button
+                    type="button"
+                    id="btnRegistrarVenta"
+                    onclick="confirmarYEnviarVenta()"
+                    disabled
+                    class="w-full bg-slate-400 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm active:scale-95">
+
                     <i data-lucide="check-square" class="w-5 h-5"></i>
+
                     Registrar y Descontar Stock
+
                 </button>
+
             </div>
+
         </div>
+
     </main>
 
-    <script src="api-config.js"></script>
-    <script src="menu-logic.js"></script>
+<script src="api-config.js"></script>
+<script src="menu-logic.js"></script>
 
-    <script>
-        let catalogoProductos = [];
-        let clientesGlobal = [];
-        let carrito = [];
-        let esConsumoInterno = false;
+<script>
 
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            establecerFechaPorDefecto();
-            inicializarModulo();
+let catalogoProductos = [];
+let clientesGlobal = [];
+let carrito = [];
+let esConsumoInterno = false;
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    lucide.createIcons();
+
+    establecerFechaPorDefecto();
+
+    inicializarModulo();
+
+});
+
+function establecerFechaPorDefecto() {
+
+    const hoy = new Date().toISOString().split('T')[0];
+
+    document.getElementById("fechaEntrega").value = hoy;
+
+}
+
+const limpiarMoneda = (valor) => {
+
+    if (!valor) return 0;
+
+    let texto = String(valor)
+        .replace(/[^0-9.,-]/g, '')
+        .replace(',', '.');
+
+    let numero = parseFloat(texto);
+
+    return isNaN(numero) ? 0 : numero;
+
+};
+
+async function inicializarModulo() {
+
+    try {
+
+        const datosClientes =
+            await DairyAPI.obtenerDatos("Clientes");
+
+        clientesGlobal = datosClientes || [];
+
+        cargarSelectorClientes();
+
+        const datosInventario =
+            await DairyAPI.obtenerDatos("Inventario");
+
+        catalogoProductos = datosInventario || [];
+
+        const selectProd =
+            document.getElementById("selectProducto");
+
+        selectProd.innerHTML =
+            '<option value="">-- Seleccione un ítem --</option>';
+
+        catalogoProductos.forEach(p => {
+
+            const id = String(p.id || "").trim();
+
+            if (!id) return;
+
+            selectProd.innerHTML += `
+                <option value="${id}">
+                    ${p.producto}
+                </option>
+            `;
+
         });
 
-        // Pone la fecha de hoy por defecto en el selector
-        function establecerFechaPorDefecto() {
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById("fechaEntrega").value = hoy;
-        }
+    } catch (err) {
 
-        const limpiarMoneda = (valor) => {
-            if (valor === undefined || valor === null || valor === "") return 0;
-            let texto = String(valor).replace(/[^0-9.,-]/g, '').replace(',', '.');
-            let numero = parseFloat(texto);
-            return isNaN(numero) ? 0 : numero;
+        console.error(err);
+
+        Swal.fire(
+            "Error",
+            "No se pudo conectar con Sheets",
+            "error"
+        );
+
+    }
+
+}
+
+function cargarSelectorClientes() {
+
+    const selectCli =
+        document.getElementById("selectCliente");
+
+    selectCli.innerHTML =
+        '<option value="">-- Seleccione un Cliente --</option>';
+
+    clientesGlobal.forEach(c => {
+
+        const ruc =
+            String(c.ci_ruc || c.id || "").trim();
+
+        const nombre =
+            c.nombre || "Cliente";
+
+        selectCli.innerHTML += `
+            <option value="${ruc}">
+                ${nombre} (${ruc})
+            </option>
+        `;
+
+    });
+
+}
+
+function verificarStockDisponible() {
+
+    const idProd =
+        document.getElementById("selectProducto").value;
+
+    if (!idProd) return;
+
+    const prod =
+        catalogoProductos.find(
+            p => String(p.id).trim() === idProd
+        );
+
+    if (!prod) return;
+
+    const stock = parseInt(prod.stock || 0);
+
+    const precio =
+        limpiarMoneda(prod.precioVenta || 0);
+
+    document.getElementById("wrapperStock")
+        .classList.remove("hidden");
+
+    document.getElementById("txtStockMinimo")
+        .innerText = `${stock} Unidades`;
+
+    document.getElementById("numPrecioUnitario")
+        .value = esConsumoInterno
+        ? "0.00"
+        : precio.toFixed(2);
+
+}
+
+function alternarConsumoInterno() {
+
+    esConsumoInterno =
+        document.getElementById("chkConsumoInterno").checked;
+
+    const selectCli =
+        document.getElementById("selectCliente");
+
+    if (esConsumoInterno) {
+
+        selectCli.innerHTML =
+            '<option value="CONSUMO INTERNO">CONSUMO INTERNO</option>';
+
+        selectCli.disabled = true;
+
+    } else {
+
+        selectCli.disabled = false;
+
+        cargarSelectorClientes();
+
+    }
+
+    verificarStockDisponible();
+
+}
+
+function agregarItemAlCarrito() {
+
+    const idProd =
+        document.getElementById("selectProducto").value;
+
+    const cantidad =
+        parseInt(
+            document.getElementById("numCantidadVenta").value
+        ) || 0;
+
+    if (!idProd || cantidad <= 0) {
+
+        Swal.fire(
+            "Datos inválidos",
+            "Seleccione producto y cantidad",
+            "warning"
+        );
+
+        return;
+
+    }
+
+    const prod =
+        catalogoProductos.find(
+            p => String(p.id).trim() === idProd
+        );
+
+    const precio =
+        esConsumoInterno
+        ? 0
+        : limpiarMoneda(prod.precioVenta);
+
+    carrito.push({
+
+        id: idProd,
+
+        producto: prod.producto,
+
+        cantidad: cantidad,
+
+        precio: precio,
+
+        subtotal: cantidad * precio
+
+    });
+
+    renderizarCarrito();
+
+}
+
+function eliminarItem(index) {
+
+    carrito.splice(index, 1);
+
+    renderizarCarrito();
+
+}
+
+function renderizarCarrito() {
+
+    const tbody =
+        document.getElementById("tbodyCarrito");
+
+    tbody.innerHTML = "";
+
+    if (carrito.length === 0) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5"
+                    class="text-center py-16 text-slate-400 italic">
+                    No hay productos agregados.
+                </td>
+            </tr>
+        `;
+
+        document.getElementById("txtTotalFactura")
+            .innerText = "$0.00";
+
+        toggleBtnRegistrar(false);
+
+        return;
+
+    }
+
+    let total = 0;
+
+    carrito.forEach((item, index) => {
+
+        total += item.subtotal;
+
+        tbody.innerHTML += `
+            <tr>
+
+                <td class="py-3 px-4 font-bold">
+                    ${item.producto}
+                </td>
+
+                <td class="py-3 px-2 text-center">
+                    ${item.cantidad}
+                </td>
+
+                <td class="py-3 px-2 text-right">
+                    $${item.precio.toFixed(2)}
+                </td>
+
+                <td class="py-3 px-2 text-right font-bold text-emerald-700">
+                    $${item.subtotal.toFixed(2)}
+                </td>
+
+                <td class="py-3 px-4 text-center">
+
+                    <button
+                        onclick="eliminarItem(${index})"
+                        class="text-rose-500">
+
+                        <i data-lucide="trash-2"
+                           class="w-4 h-4 mx-auto"></i>
+
+                    </button>
+
+                </td>
+
+            </tr>
+        `;
+
+    });
+
+    document.getElementById("txtTotalFactura")
+        .innerText = `$${total.toFixed(2)}`;
+
+    toggleBtnRegistrar(true);
+
+    lucide.createIcons();
+
+}
+
+function toggleBtnRegistrar(activar) {
+
+    const btn =
+        document.getElementById("btnRegistrarVenta");
+
+    btn.disabled = !activar;
+
+    if (activar) {
+
+        btn.className =
+            "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-pointer transition-all uppercase tracking-widest text-sm active:scale-95";
+
+    } else {
+
+        btn.className =
+            "w-full bg-slate-400 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm";
+
+    }
+
+}
+
+async function confirmarYEnviarVenta() {
+
+    const valueCliente =
+        document.getElementById("selectCliente").value;
+
+    const fEntrega =
+        document.getElementById("fechaEntrega").value;
+
+    if (!valueCliente) {
+
+        return Swal.fire(
+            "Cliente requerido",
+            "Seleccione cliente",
+            "warning"
+        );
+
+    }
+
+    if (carrito.length === 0) {
+
+        return Swal.fire(
+            "Carrito vacío",
+            "Agregue productos",
+            "warning"
+        );
+
+    }
+
+    let nombreCliente = valueCliente;
+
+    if (!esConsumoInterno) {
+
+        const objCliente =
+            clientesGlobal.find(
+                c => String(c.ci_ruc || c.id || "").trim()
+                === valueCliente
+            );
+
+        nombreCliente =
+            objCliente
+            ? objCliente.nombre
+            : valueCliente;
+
+    }
+
+    const confirmacion = await Swal.fire({
+
+        title: '¿Confirmar Venta?',
+
+        text: 'Se descontará stock automáticamente.',
+
+        icon: 'question',
+
+        showCancelButton: true,
+
+        confirmButtonColor: '#059669',
+
+        cancelButtonColor: '#64748b',
+
+        confirmButtonText: 'Sí, registrar'
+
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    Swal.fire({
+
+        title: 'Procesando...',
+
+        allowOutsideClick: false,
+
+        didOpen: () => Swal.showLoading()
+
+    });
+
+    try {
+
+        const productos = carrito.map(item => ({
+
+            productoId: item.id,
+
+            producto: item.producto,
+
+            cantidad: item.cantidad,
+
+            precioVenta: item.precio
+
+        }));
+
+        const payload = {
+
+            action: "registrarVenta",
+
+            fecha: fEntrega,
+
+            cliente: nombreCliente,
+
+            esConsumoInterno: esConsumoInterno,
+
+            productos: productos
+
         };
 
-        async function inicializarModulo() {
-            try {
-                // Leer Cartera de Clientes usando la API Centralizada
-                const datosClientes = await DairyAPI.obtenerDatos("Clientes");
-                const selectCli = document.getElementById("selectCliente");
-                
-                if (Array.isArray(datosClientes)) {
-                    clientesGlobal = datosClientes;
-                    cargarSelectorClientes();
-                }
+        const response = await fetch(API_URL, {
 
-                // Leer Inventario usando la API Centralizada
-                const datosInventario = await DairyAPI.obtenerDatos("Inventario");
-                const selectProd = document.getElementById("selectProducto");
-                
-                if (Array.isArray(datosInventario)) {
-                    catalogoProductos = datosInventario;
-                    selectProd.innerHTML = '<option value="">-- Seleccione un ítem --</option>';
-                    catalogoProductos.forEach(p => {
-                        const id = String(p.id || "").trim();
-                        const producto = p.producto || "Producto sin nombre";
-                        if(id) {
-                            selectProd.innerHTML += `<option value="${id}">${producto}</option>`;
-                        }
-                    });
-                }
-            } catch (err) {
-                console.error("Error al inicializar modulo:", err);
-                Swal.fire("Error Estructural", "Fallo al conectar con Google Sheets.", "error");
-            }
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(payload)
+
+        });
+
+        const data = await response.json();
+
+        if (data.status !== "success") {
+
+            throw new Error(
+                data.message || "Error"
+            );
+
         }
 
-        function cargarSelectorClientes() {
-            const selectCli = document.getElementById("selectCliente");
-            selectCli.innerHTML = '<option value="">-- Seleccione un Cliente --</option>';
-            clientesGlobal.forEach(c => {
-                const ruc = String(c.ci_ruc || c.id || "").trim();
-                const nombre = c.nombre || "Cliente Desconocido";
-                if(ruc) {
-                    selectCli.innerHTML += `<option value="${ruc}">${nombre} (${ruc})</option>`;
-                }
-            });
-        }
+        Swal.fire({
 
-        function verificarStockDisponible() {
-            const idProd = document.getElementById("selectProducto").value;
-            const wrapper = document.getElementById("wrapperStock");
-            
-            if(!idProd) {
-                wrapper.classList.add("hidden");
-                document.getElementById("numPrecioUnitario").value = "";
-                return;
-            }
+            title: 'Venta Registrada',
 
-            const prod = catalogoProductos.find(p => String(p.id).trim() === idProd);
-            if(!prod) return;
+            html: `
+                <b>ID:</b> ${data.idVenta}<br>
+                <b>Productos:</b> ${data.productosRegistrados}
+            `,
 
-            const stockActual = parseInt(prod.stock || 0);
-            const precioVenta = limpiarMoneda(prod.precioVenta || 0);
-            
-            wrapper.classList.remove("hidden");
-            document.getElementById("txtStockMinimo").innerText = `${stockActual} Unidades`;
-            document.getElementById("numPrecioUnitario").value = esConsumoInterno ? "0.00" : precioVenta.toFixed(2);
+            icon: 'success',
 
-            const badge = document.getElementById("badgeEstadoStock");
-            if(stockActual <= 0) {
-                badge.className = "px-2 py-1 rounded font-bold uppercase text-[10px] bg-rose-100 text-rose-700";
-                badge.innerText = "Sin Stock";
-            } else if(stockActual <= 10) {
-                badge.className = "px-2 py-1 rounded font-bold uppercase text-[10px] bg-amber-100 text-amber-700";
-                badge.innerText = "Stock Crítico";
-            } else {
-                badge.className = "px-2 py-1 rounded font-bold uppercase text-[10px] bg-emerald-100 text-emerald-700";
-                badge.innerText = "Disponible";
-            }
-        }
+            confirmButtonColor: '#059669'
 
-        function alternarConsumoInterno() {
-            esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
-            const badgeTipo = document.getElementById("badgeTipoVenta");
-            const selectCli = document.getElementById("selectCliente");
+        });
 
-            if(esConsumoInterno) {
-                badgeTipo.className = "bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
-                badgeTipo.innerText = "Consumo Interno ($0)";
-                
-                // Forzar e inactivar cliente a CONSUMO INTERNO
-                selectCli.innerHTML = '<option value="CONSUMO INTERNO" selected>CONSUMO INTERNO</option>';
-                selectCli.disabled = true;
-            } else {
-                badgeTipo.className = "bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
-                badgeTipo.innerText = "Venta Comercial";
-                
-                // Reactivar y restaurar cartera de clientes completa
-                selectCli.disabled = false;
-                cargarSelectorClientes();
-            }
+        carrito = [];
 
-            verificarStockDisponible();
-            
-            carrito.forEach(item => {
-                const original = catalogoProductos.find(p => String(p.id).trim() === item.id);
-                const precioOrig = limpiarMoneda(original.precioVenta || 0);
-                item.precio = esConsumoInterno ? 0.00 : precioOrig;
-                item.subtotal = item.precio * item.cantidad;
-            });
-            renderizarCarrito();
-        }
+        renderizarCarrito();
 
-        function agregarItemAlCarrito() {
-            const idProd = document.getElementById("selectProducto").value;
-            const cant = parseInt(document.getElementById("numCantidadVenta").value) || 0;
+        inicializarModulo();
 
-            if(!idProd || cant <= 0) {
-                return Swal.fire("Campos Incompletos", "Selecciona un producto y cantidad.", "warning");
-            }
+    } catch (err) {
 
-            const prod = catalogoProductos.find(p => String(p.id).trim() === idProd);
-            const stockActual = parseInt(prod.stock || 0);
+        console.error(err);
 
-            const yaEnCarrito = carrito.find(item => item.id === idProd);
-            const cantidadTotalSolicitada = cant + (yaEnCarrito ? yaEnCarrito.cantidad : 0);
+        Swal.fire(
+            "Error",
+            err.message,
+            "error"
+        );
 
-            if(cantidadTotalSolicitada > stockActual) {
-                return Swal.fire("Quiebre de Stock", `Solo quedan ${stockActual} unidades.`, "error");
-            }
+    }
 
-            if(yaEnCarrito) {
-                yaEnCarrito.cantidad = cantidadTotalSolicitada;
-                yaEnCarrito.subtotal = yaEnCarrito.cantidad * yaEnCarrito.precio;
-            } else {
-                const nombreProd = prod.producto || "Sin nombre";
-                const precioUnidad = esConsumoInterno ? 0.00 : limpiarMoneda(prod.precioVenta || 0);
-                
-                carrito.push({
-                    id: idProd,
-                    producto: nombreProd,
-                    cantidad: cant,
-                    precio: precioUnidad,
-                    subtotal: cant * precioUnidad
-                });
-            }
+}
 
-            renderizarCarrito();
-            document.getElementById("selectProducto").value = "";
-            document.getElementById("numCantidadVenta").value = "1";
-            document.getElementById("wrapperStock").classList.add("hidden");
-        }
+</script>
 
-        function eliminarItem(index) {
-            carrito.splice(index, 1);
-            renderizarCarrito();
-        }
-
-        function renderizarCarrito() {
-            const tbody = document.getElementById("tbodyCarrito");
-            tbody.innerHTML = "";
-
-            if(carrito.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-16 text-slate-400 italic"><i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>No hay productos agregados.</td></tr>`;
-                document.getElementById("txtTotalFactura").innerText = "$0.00";
-                toggleBtnRegistrar(false);
-                lucide.createIcons();
-                return;
-            }
-
-            let totalAcumulado = 0;
-            carrito.forEach((item, index) => {
-                totalAcumulado += item.subtotal;
-                const tr = document.createElement("tr");
-                tr.className = "hover:bg-slate-50 transition-colors";
-                tr.innerHTML = `
-                    <td class="py-3 px-4 font-bold text-slate-800">${item.producto}</td>
-                    <td class="py-3 px-2 text-center font-black text-slate-600">${item.cantidad}</td>
-                    <td class="py-3 px-2 text-right">$${item.precio.toFixed(2)}</td>
-                    <td class="py-3 px-2 text-right font-bold text-emerald-700">$${item.subtotal.toFixed(2)}</td>
-                    <td class="py-3 px-4 text-center">
-                        <button onclick="eliminarItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            document.getElementById("txtTotalFactura").innerText = `$${totalAcumulado.toFixed(2)}`;
-            toggleBtnRegistrar(true);
-            lucide.createIcons();
-        }
-
-        function toggleBtnRegistrar(activar) {
-            const btn = document.getElementById("btnRegistrarVenta");
-            if(activar) {
-                btn.disabled = false;
-                btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-pointer transition-all uppercase tracking-widest text-sm active:scale-95";
-            } else {
-                btn.disabled = true;
-                btn.className = "w-full bg-slate-400 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm";
-            }
-        }
-
-        async function confirmarYEnviarVenta() {
-            const valueCliente = document.getElementById("selectCliente").value;
-            const fEntrega = document.getElementById("fechaEntrega").value;
-
-            if(!valueCliente) {
-                return Swal.fire("Cliente Requerido", "Por favor, asigne un cliente.", "warning");
-            }
-            if(!fEntrega) {
-                return Swal.fire("Fecha Requerida", "Por favor, seleccione la fecha de entrega.", "warning");
-            }
-
-            let nombreCliente = valueCliente;
-            if(!esConsumoInterno) {
-                const objCliente = clientesGlobal.find(c => String(c.ci_ruc || c.id || "").trim() === valueCliente);
-                nombreCliente = objCliente ? objCliente.nombre : valueCliente;
-            }
-
-            const confirmacion = await Swal.fire({
-                title: '¿Confirmar Salida?',
-                text: "Se guardará la transacción y se afectará el inventario.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#059669',
-                cancelButtonColor: '#64748b',
-                confirmButtonText: 'Sí, procesar',
-                cancelButtonText: 'Cancelar'
-            });
-
-            if (!confirmacion.isConfirmed) return;
-
-            Swal.fire({
-                title: 'Procesando...',
-                text: 'Escribiendo registros y rebajando stock...',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-
-            try {
-                // Iterar sobre los ítems del carrito para despachar de forma individual a la pestaña 'Ventas'
-                for (const item of carrito) {
-                    
-                    // Generación del ID único estricto (Formato V-########)
-                    const randomID = "V-" + Math.floor(100000 + Math.random() * 900000);
-
-                    // Generación de Marca de Tiempo exacta (DD/MM/YYYY HH:MM:SS)
-                    const ahora = new Date();
-                    const fechaRegistro = ahora.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + 
-                                          ahora.toLocaleTimeString('es-ES', { hour12: false });
-
-                    // Determinación del Estado por Defecto
-                    const estadoFila = esConsumoInterno ? "INTERNO" : "PENDIENTE";
-
-                    const datosParaEnvio = {
-                        action: "escribir", // Acción estricta para tu motor unificado doPost
-                        ID_Venta: randomID,
-                        Fecha: fechaRegistro,
-                        Cliente: nombreCliente,
-                        Producto: item.producto,
-                        Cantidad: item.cantidad,
-                        Precio_PVPTotal: item.precio.toFixed(2),
-                        Total: item.subtotal.toFixed(2),
-                        Estado: estadoFila,
-                        Fecha_Entrega: fEntrega
-                    };
-
-                    // Llamada directa al método guardarDatos expuesto en tu api-config.js
-                    await DairyAPI.guardarDatos("Ventas", datosParaEnvio);
-                }
-
-                Swal.fire({
-                    title: '¡Venta Registrada!',
-                    text: 'Se enviaron los datos a la hoja de Ventas de forma segura.',
-                    icon: 'success',
-                    confirmButtonColor: '#059669'
-                });
-
-                // Limpieza del carrito y restauración de la UI
-                carrito = [];
-                if(document.getElementById("chkConsumoInterno").checked) {
-                    document.getElementById("chkConsumoInterno").checked = false;
-                    alternarConsumoInterno();
-                } else {
-                    document.getElementById("selectCliente").value = "";
-                }
-                
-                establecerFechaPorDefecto();
-                renderizarCarrito();
-                
-                // Recarga de stocks remotos sincronizados
-                setTimeout(() => { inicializarModulo(); }, 1500); 
-
-            } catch (err) {
-                console.error("Error crítico de red:", err);
-                Swal.fire("Error de Envío", "Hubo un fallo en la red al despachar la información.", "error");
-            }
-        }
-    </script>
 </body>
 </html>

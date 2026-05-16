@@ -261,7 +261,7 @@
             }
 
             const modoTiempo = document.getElementById("filtroTiempo").value;
-            const contenedorFecha = document.getElementById("wrapperFechaExplicit");
+            const contenedorFecha = document.getElementById("wrapperFechaSpecificas") || document.getElementById("wrapperFechaEspecifica");
             
             if (modoTiempo === "ESPECIFICA") {
                 if(contenedorFecha) contenedorFecha.classList.remove("hidden");
@@ -309,7 +309,7 @@
                 const esEntregado = v.estado === "ENTREGADO";
                 
                 // CÁLCULO Y DESGLOSE DETALLADO DE PRECIOS UNITARIOS
-                const itemsIndividuales = v.productos.split(',');
+                const itemsIndividuales = v.productos.split(',').filter(item => item.trim() !== '');
                 const totalItemsCuenta = itemsIndividuales.length;
                 const precioEstimadoUnidad = v.total / (v.items || totalItemsCuenta || 1);
 
@@ -339,7 +339,7 @@
                                     </div>
                                     <h3 class="font-black text-slate-800 text-base mt-1.5 tracking-tight">${v.cliente}</h3>
                                     
-                                    <!-- CONTENEDOR DIRECCIÓN + SELECTOR DE MAPAS (BOTÓN AZUL DE NAVEGACIÓN) -->
+                                    <!-- CONTENEDOR DIRECCIÓN -->
                                     <div class="flex items-center justify-between gap-3 mt-2.5 bg-white/90 p-2 rounded-xl border border-slate-200">
                                         <div class="flex items-center gap-1.5 text-[11px] text-slate-600 truncate">
                                             <i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0"></i>
@@ -386,7 +386,6 @@
             lucide.createIcons();
         }
 
-        // DESPLEGABLE DE SELECCIÓN DE MAPAS O WAZE
         function abrirNavegadorGps(direccionCodificada) {
             const dir = decodeURIComponent(direccionCodificada);
             Swal.fire({
@@ -412,12 +411,12 @@
             const orden = todasLasVentasAgrupadas.find(v => v.id === idVenta);
             if (!orden) return;
 
-            let listaItems = orden.productos.split(',').map((item, index) => {
+            let listaItems = orden.productos.split(',').filter(item => item.trim() !== '').map((item, index) => {
                 const partes = item.trim().match(/(.+)\s\((\d+)\)/);
                 return {
                     idOriginal: index,
                     nombre: partes ? partes[1].trim() : item.trim(),
-                    shadow: partes ? parseInt(partes[2]) : 1
+                    cantidad: partes ? parseInt(partes[2]) : 1
                 };
             });
 
@@ -460,7 +459,7 @@
 
             botonesRestantes.forEach(b => {
                 const n = b.getAttribute('data-name');
-                const c = parseInt(b.getAttribute('data-qty'));
+                const c = parseInt(b.getAttribute('data-qty')) || 1;
                 nuevosProductos.push(`${n} (${c})`);
                 nuevoTotalVenta += c * factorPrecioProporcional;
             });

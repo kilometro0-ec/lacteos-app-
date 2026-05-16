@@ -68,10 +68,10 @@
                         <tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                             <th class="py-3 px-6">ID Venta</th>
                             <th class="py-3 px-4">Fecha</th>
-                            <th class="py-3 px-4">Cliente</th>
+                            <th class="py-3 px-4">Cliente / Destino</th>
                             <th class="py-3 px-4">Items / Total</th>
                             <th class="py-3 px-4 text-center">Estado Actual</th>
-                            <th class="py-3 px-6 text-center">Acción Logística</th>
+                            <th class="py-3 px-6 text-center">Acciones Logísticas</th>
                         </tr>
                     </thead>
                     <tbody id="tbodyDespachos" class="divide-y divide-slate-100 font-medium text-slate-700">
@@ -100,7 +100,6 @@
             cargarDespachos();
         });
 
-        // Consumo directo mapeado a la hoja "Ventas"
         async function cargarDespachos() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Ventas");
@@ -127,7 +126,6 @@
             }
         }
 
-        // Renderizado consolidado leyendo los encabezados exactos de tu hoja Ventas
         function renderizarDespachos(lista) {
             const tbody = document.getElementById("tbodyDespachos");
             tbody.innerHTML = lista.length ? "" : "<tr><td colspan='6' class='text-center py-10 text-slate-400 italic'>No hay ventas registradas.</td></tr>";
@@ -135,9 +133,8 @@
             const pedidosAgrupados = {};
 
             lista.forEach(item => {
-                // Validación exacta con tus llaves correspondientes
                 const idVenta = item.ID_Venta || item.id_venta;
-                if(!idVenta || idVenta === "ID_Venta") return; // Salta cabeceras de texto de la hoja
+                if(!idVenta || idVenta === "ID_Venta") return;
 
                 const totalFila = parseFloat(item.Total || 0);
                 const descProducto = `${item.Producto || 'Producto'} (x${item.Cantidad || 1})`;
@@ -152,7 +149,6 @@
                         estado: (item.Estado || "PENDIENTE").toUpperCase()
                     };
                 } else {
-                    // Si el ID se repite (varios productos en una misma venta), se agrupan en la misma fila visual
                     pedidosAgrupados[idVenta].productos.push(descProducto);
                     pedidosAgrupados[idVenta].montoTotal += totalFila;
                 }
@@ -162,45 +158,52 @@
 
             despachosUnicos.forEach(d => {
                 let badgeClass = "";
-                let botonAccion = "";
+                let botonFlujo = "";
                 const estado = d.estado;
 
+                // Definición del ciclo logístico principal
                 if (estado === "PENDIENTE") {
                     badgeClass = "bg-amber-100 text-amber-800 border border-amber-200";
-                    botonAccion = `
-                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'EN RUTA')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95 shadow-sm">
+                    botonFlujo = `
+                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'EN RUTA')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all active:scale-95">
                             <i data-lucide="play" class="w-3 h-3"></i> Despachar
                         </button>
                     `;
                 } else if (estado === "EN RUTA") {
                     badgeClass = "bg-cyan-100 text-cyan-800 border border-cyan-200 animate-pulse";
-                    botonAccion = `
-                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'ENTREGADO')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded text-[10px] font-black uppercase tracking-wider flex items-center gap-1 mx-auto transition-all active:scale-95 shadow-sm">
+                    botonFlujo = `
+                        <button onclick="actualizarEstadoDespacho('${d.idVenta}', 'ENTREGADO')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow-sm transition-all active:scale-95">
                             <i data-lucide="check" class="w-3 h-3"></i> Entregado
                         </button>
                     `;
                 } else if (estado === "ENTREGADO") {
                     badgeClass = "bg-emerald-100 text-emerald-800 border border-emerald-200";
-                    botonAccion = `
-                        <span class="text-slate-400 text-[11px] italic flex items-center justify-center gap-1">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Entregado
+                    botonFlujo = `
+                        <span class="text-emerald-600 text-[11px] font-bold flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded border border-emerald-100 shadow-sm">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Completado
                         </span>
                     `;
                 } else {
                     badgeClass = "bg-slate-100 text-slate-700 border border-slate-200";
-                    botonAccion = `<span class="text-slate-400 text-[11px] italic">${estado}</span>`;
+                    botonFlujo = `<span class="text-slate-400 text-[11px] italic">${estado}</span>`;
                 }
 
-                const listaProductosToolTip = d.productos.join(', ');
+                const listaProductosText = d.productos.join(', ');
 
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50/60 transition-colors";
                 tr.innerHTML = `
                     <td class="py-3.5 px-6 font-mono font-bold text-slate-600">#${d.idVenta}</td>
                     <td class="py-3.5 px-4 font-mono text-xs text-slate-500">${d.fecha}</td>
-                    <td class="py-3.5 px-4 font-black text-slate-800">${d.cliente}</td>
-                    <td class="py-3.5 px-4 text-slate-600" title="${listaProductosToolTip}">
-                        <div class="text-xs truncate max-w-[200px] font-semibold text-slate-500">${listaProductosToolTip}</div>
+                    <td class="py-3.5 px-4">
+                        <div class="font-black text-slate-800">${d.cliente}</div>
+                        <!-- BOTÓN DIRECCIÓN (MAPS) -->
+                        <button onclick="abrirDireccion('${d.cliente}')" class="text-cyan-600 hover:text-cyan-700 font-bold text-[11px] flex items-center gap-1 mt-0.5 transition-all active:translate-x-0.5">
+                            <i data-lucide="map-pin" class="w-3 h-3 text-cyan-500"></i> Ver ubicación en mapa
+                        </button>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-600">
+                        <div class="text-xs truncate max-w-[200px] font-semibold text-slate-500" title="${listaProductosText}">${listaProductosText}</div>
                         <div class="text-xs font-bold text-cyan-700">$${d.montoTotal.toFixed(2)}</div>
                     </td>
                     <td class="py-3.5 px-4 text-center">
@@ -208,14 +211,29 @@
                             ${estado}
                         </span>
                     </td>
-                    <td class="py-3.5 px-6 text-center">${botonAccion}</td>
+                    <!-- PANEL DE ACCIONES LOGÍSTICAS COMPLETO -->
+                    <td class="py-3.5 px-6">
+                        <div class="flex items-center justify-center gap-2">
+                            ${botonFlujo}
+                            
+                            <!-- BOTÓN WHATSAPP -->
+                            <button onclick="enviarMensajeWhatsapp('${d.idVenta}', '${d.cliente}', '${listaProductosText}', '${d.montoTotal.toFixed(2)}')" class="bg-emerald-500 hover:bg-emerald-600 text-white p-1.5 rounded shadow-sm transition-all active:scale-90" title="Notificar por WhatsApp">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                            </button>
+
+                            <!-- BOTÓN ELIMINAR / ANULAR ORDEN -->
+                            <button onclick="eliminarOrdenDespacho('${d.idVenta}')" class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-1.5 rounded border border-rose-200 shadow-sm transition-all active:scale-90" title="Eliminar / Anular Pedido">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
             lucide.createIcons();
         }
 
-        // Métrica reactiva calculada basándose exclusivamente en IDs únicos
+        // Métrica reactiva calculada basándose en IDs únicos
         function actualizarTarjetasMetricas(lista) {
             let p = 0, r = 0, e = 0;
             const visitados = new Set();
@@ -237,7 +255,83 @@
             document.getElementById("cardEntregados").innerText = e;
         }
 
-        // Actualiza el estado e inyecta la Fecha_Entrega cuando corresponde
+        // FUNCIÓN 1: ABRIR DIRECCIÓN EN MAPS
+        function abrirDireccion(cliente) {
+            const query = encodeURIComponent(cliente);
+            const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+            window.open(url, '_blank');
+        }
+
+        // FUNCIÓN 2: WHATSAPP DINÁMICO PIDIENDO TELÉFONO
+        async function enviarMensajeWhatsapp(idVenta, cliente, productos, total) {
+            const { value: telefono } = await Swal.fire({
+                title: 'Notificar Entrega',
+                text: `Ingrese el número de WhatsApp para el cliente: ${cliente}`,
+                input: 'tel',
+                inputPlaceholder: 'Ej: 0998765432 o 593998765432',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '<i class="inline-block mr-1" data-lucide="send"></i> Enviar Mensaje',
+                didOpen: () => { lucide.createIcons(); }
+            });
+
+            if (!telefono) return; // Si cancela o no digita nada, frena el flujo
+
+            let msg = `*🥛 LÓGICA LÁCTEA - CONTROL DE ENTREGAS *\n\n`;
+            msg += `Hola *${cliente}*, su pedido ya se encuentra procesado en nuestra logística.\n\n`;
+            msg += `• *Orden:* #${idVenta}\n`;
+            msg += `• *Detalle:* ${productos}\n`;
+            msg += `• *Monto Total:* $${total}\n\n`;
+            msg += `¡Gracias por elegirnos! Nos vemos pronto en su entrega.`;
+
+            let numLimpio = telefono.replace(/[^0-9]/g, '');
+            if (numLimpio.startsWith('0')) {
+                numLimpio = '593' + numLimpio.substring(1);
+            }
+
+            window.open(`https://wa.me/${numLimpio}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        // FUNCIÓN 3: ELIMINAR / ANULAR ORDEN DESDE LA INTERFAZ
+        async function eliminarOrdenDespacho(idVenta) {
+            const result = await Swal.fire({
+                title: '¿Anular este despacho?',
+                text: `Esta acción eliminará todas las líneas vinculadas al ID Venta #${idVenta} en Google Sheets de forma permanente.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!result.isConfirmed) return;
+
+            Swal.fire({
+                title: 'Eliminando de la base...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            const payload = {
+                action: "eliminarDespacho",
+                idVenta: idVenta
+            };
+
+            try {
+                // Envía la acción de remoción apuntando a la hoja física de Ventas
+                await DairyAPI.guardarDatos("Ventas", payload);
+
+                Swal.fire('Eliminado', `La orden #${idVenta} fue removida con éxito.`, 'success');
+                cargarDespachos(); // Recarga la cuadrícula refrescada
+            } catch (err) {
+                console.error("Error al remover orden:", err);
+                Swal.fire("Error", "No se pudo realizar el borrado en Google Sheets.", "error");
+            }
+        }
+
+        // Sincronización base de cambio de estados
         async function actualizarEstadoDespacho(idVenta, nuevoEstado) {
             Swal.fire({
                 title: 'Sincronizando Estado...',
@@ -246,7 +340,6 @@
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            // Parámetros limpios y vinculados a las columnas de tu hoja
             const payload = {
                 action: "actualizarEstadoDespacho",
                 idVenta: idVenta,
@@ -255,20 +348,17 @@
             };
 
             try {
-                // Ejecuta la mutación directo en Google Sheets afectando a la hoja "Ventas"
                 await DairyAPI.guardarDatos("Ventas", payload);
-
                 Swal.fire({
                     title: 'Cambio Confirmado',
-                    text: `La orden #${idVenta} cambió a ${nuevoEstado} con éxito en Google Sheets.`,
+                    text: `La orden #${idVenta} cambió a ${nuevoEstado} con éxito.`,
                     icon: 'success',
                     confirmButtonColor: '#0891b2'
                 });
-                
-                cargarDespachos(); // Recarga la tabla de inmediato
+                cargarDespachos();
             } catch (err) {
                 console.error("Error al actualizar estado logístico:", err);
-                Swal.fire("Error de Conexión", "No se pudo impactar el cambio en la base de datos de Google Sheets.", "error");
+                Swal.fire("Error de Conexión", "No se pudo impactar el cambio en Google Sheets.", "error");
             }
         }
     </script>

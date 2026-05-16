@@ -19,15 +19,78 @@
 
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16 relative">
 
-    <!-- PANTALLA DE CARGA INICIAL (SPINNER ANIMADO) -->
+    <!-- PANTALLA DE CARGA INICIAL -->
     <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="bg-white p-6 rounded-2xl shadow-2xl border border-slate-100 flex flex-col items-center gap-4 max-w-xs w-full mx-4">
-            <!-- Spinner animado con Tailwind -->
             <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
             <div class="text-center">
                 <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Lógica Láctea</h3>
                 <p class="text-xs text-slate-500 mt-0.5">Sincronizando kárdex y clientes...</p>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA REGISTRAR NUEVO CLIENTE -->
+    <div id="modalNuevoCliente" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden transform transition-all">
+            <div class="bg-emerald-600 px-6 py-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-5 h-5"></i>
+                    <h3 class="font-bold text-base">Registrar Nuevo Cliente</h3>
+                </div>
+                <button onclick="cerrarModalCliente()" class="text-emerald-100 hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nombre Completo *</label>
+                    <input type="text" id="modalNombre" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">CI / RUC *</label>
+                        <input type="text" id="modalRuc" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Teléfono *</label>
+                        <input type="tel" id="modalTelefono" required placeholder="09xxxxxxxx" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Sector *</label>
+                    <select id="modalSector" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-bold text-slate-700">
+                        <option value="" disabled selected>Seleccione un sector...</option>
+                        <option value="NORTE">NORTE</option>
+                        <option value="CENTRO">CENTRO</option>
+                        <option value="SUR">SUR</option>
+                        <option value="VALLES">VALLES</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Dirección</label>
+                    <input type="text" id="modalDireccion" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Referencia de Ubicación</label>
+                    <input type="text" id="modalReferencia" placeholder="Ej: Junto a la tienda, portón verde..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="cerrarModalCliente()" class="w-1/2 border border-slate-200 text-slate-500 font-bold py-2.5 rounded-lg text-xs hover:bg-slate-50 transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm transition-all">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        Guardar Cliente
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -58,10 +121,17 @@
 
             <!-- DATOS -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
-                    Datos de la Transacción
-                </h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>
+                        Datos de la Transacción
+                    </h2>
+                    <!-- BOTÓN PARA ABRIR EL MODAL DE NUEVO CLIENTE -->
+                    <button type="button" id="btnAbrirModalCliente" onclick="abrirModalCliente()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1 transition-all">
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                        + Nuevo Cliente
+                    </button>
+                </div>
 
                 <div class="space-y-4">
                     <!-- BUSCADOR INTELIGENTE DE CLIENTES -->
@@ -73,7 +143,6 @@
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
                         </div>
-                        <!-- Dropdown Flotante -->
                         <div id="listaClientesFlotante" class="hidden absolute z-50 w-full bg-white mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 shadow-xl divide-y divide-slate-100"></div>
                     </div>
 
@@ -101,7 +170,6 @@
                                 <i data-lucide="x" class="w-4 h-4"></i>
                             </button>
                         </div>
-                        <!-- Dropdown Flotante -->
                         <div id="listaProductosFlotante" class="hidden absolute z-50 w-full bg-white mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 shadow-xl divide-y divide-slate-100"></div>
                     </div>
 
@@ -223,7 +291,6 @@
         };
 
         async function inicializarModulo() {
-            // Mostrar animación de carga al iniciar o refrescar datos
             const overlay = document.getElementById("loadingOverlay");
             overlay.classList.remove("hidden", "opacity-0");
 
@@ -238,14 +305,75 @@
                 console.error(err);
                 Swal.fire("Error", "No se pudo conectar con Sheets", "error");
             } finally {
-                // Ocultar animación con efecto fade-out suave
                 overlay.classList.add("opacity-0");
-                setTimeout(() => {
-                    overlay.classList.add("hidden");
-                }, 300);
+                setTimeout(() => { overlay.classList.add("hidden"); }, 300);
             }
         }
 
+        // CONTROL DEL MODAL DE NUEVO CLIENTE
+        function abrirModalCliente() {
+            document.getElementById("formNuevoCliente").reset();
+            document.getElementById("modalNuevoCliente").classList.remove("hidden");
+        }
+
+        function cerrarModalCliente() {
+            document.getElementById("modalNuevoCliente").classList.add("hidden");
+        }
+
+        async function guardarNuevoCliente(e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: 'Registrando cliente...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            // Generación Automática e Irrepetible del ID y Fecha
+            const autoId = "CLI-" + Math.floor(Date.now() / 1000);
+            const fechaRegistro = new Date().toISOString().split('T')[0];
+
+            const payloadCliente = {
+                action: "registrarCliente", // Asegúrate de tener esta acción mapeada en tu Script de Google o pásala como fila directa
+                id: autoId,
+                nombre: document.getElementById("modalNombre").value.trim(),
+                ci_ruc: document.getElementById("modalRuc").value.trim(),
+                telefono: document.getElementById("modalTelefono").value.trim(),
+                direccion: document.getElementById("modalDireccion").value.trim(),
+                referencia: document.getElementById("modalReferencia").value.trim(),
+                sector: document.getElementById("modalSector").value,
+                fechaRegistro: fechaRegistro
+            };
+
+            try {
+                const response = await fetch(DairyConfig.SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payloadCliente)
+                });
+
+                const data = await response.json();
+
+                if (data.status !== "success") {
+                    throw new Error(data.message || "Error al insertar fila.");
+                }
+
+                Swal.fire("¡Éxito!", `Cliente registrado con ID: ${autoId}`, "success");
+                cerrarModalCliente();
+                
+                // Recargar el módulo para que aparezca en las búsquedas de inmediato
+                await inicializarModulo();
+
+                // Dejarlo auto-seleccionado en la pantalla de ventas
+                seleccionarCliente(payloadCliente.ci_ruc, payloadCliente.nombre);
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire("Error", "No se pudo sincronizar el nuevo cliente: " + error.message, "error");
+            }
+        }
+
+        // FILTRADO Y MANEJO DE CLIENTES
         function filtrarClientes() {
             if (esConsumoInterno) return;
             
@@ -265,7 +393,7 @@
                     return `
                         <div onclick="seleccionarCliente('${ruc}', '${c.nombre}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex flex-col">
                             <span class="font-bold text-slate-900">${c.nombre}</span>
-                            <span class="text-[10px] text-slate-400">RUC/CI: ${ruc}</span>
+                            <span class="text-[10px] text-slate-400">RUC/CI: ${ruc} | Sector: ${c.sector || 'S/S'}</span>
                         </div>
                     `;
                 }).join('');
@@ -290,6 +418,7 @@
             document.getElementById("btnLimpiarCliente").classList.add("hidden");
         }
 
+        // FILTRADO Y MANEJO DE PRODUCTOS
         function filtrarProductos() {
             const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaProductosFlotante");
@@ -346,6 +475,7 @@
         function alternarConsumoInterno() {
             esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
             const buscarCli = document.getElementById("buscarCliente");
+            const btnModalCli = document.getElementById("btnAbrirModalCliente");
             const badgeTipo = document.getElementById("badgeTipoVenta");
 
             limpiarSeleccionCliente();
@@ -354,11 +484,13 @@
                 clienteSeleccionado = "CONSUMO INTERNO";
                 buscarCli.value = "CONSUMO INTERNO";
                 buscarCli.disabled = true;
+                btnModalCli.classList.add("hidden");
                 buscarCli.classList.add("bg-amber-50", "border-amber-300", "font-bold", "text-amber-900");
                 badgeTipo.innerText = "Consumo Interno";
                 badgeTipo.className = "bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
             } else {
                 buscarCli.disabled = false;
+                btnModalCli.classList.remove("hidden");
                 buscarCli.classList.remove("bg-amber-50", "border-amber-300", "font-bold", "text-amber-900");
                 badgeTipo.innerText = "Venta Comercial";
                 badgeTipo.className = "bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
@@ -402,7 +534,7 @@
                 carrito.push({
                     id: productoSeleccionado,
                     producto: prod.producto,
-                    cantidad: cantidad,
+                    cantidad: quantity = cantidad,
                     precio: precio,
                     subtotal: cantidad * precio
                 });

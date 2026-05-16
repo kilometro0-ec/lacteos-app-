@@ -1,50 +1,25 @@
 <!-- ========================================= -->
 <!-- ARCHIVO: GestiondeDespachos.html          -->
-<!-- VERSIÓN CORREGIDA - AGRUPACIÓN Y LECTURA  -->
 <!-- ========================================= -->
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <meta name="theme-color" content="#059669">
-    <title>Despachos - Lógica Láctea</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Despachos - Lógica Láctea</title>
 
     <link rel="stylesheet" href="estilos-lacteos.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="manifest" href="manifest.json">
-    
-    <style>
-        @media (max-width: 640px) {
-            .touch-active:active {
-                transform: scale(0.97);
-                transition: transform 0.05s;
-            }
-            .card-pendiente {
-                border-left: 4px solid #f59e0b;
-            }
-            .card-entregado {
-                border-left: 4px solid #10b981;
-                opacity: 0.85;
-            }
-        }
-        
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
+    <meta name="theme-color" content="#059669">
 </head>
 
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16 relative">
 
-    <!-- PANTALLA DE CARGA -->
+    <!-- PANTALLA DE CARGA INICIAL -->
     <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="bg-white p-6 rounded-2xl shadow-2xl border border-slate-100 flex flex-col items-center gap-4 max-w-xs w-full mx-4">
             <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
@@ -57,85 +32,92 @@
 
     <div id="menu-container"></div>
 
-    <!-- HEADER -->
-    <header class="bg-emerald-600 text-white shadow-md px-4 py-3 sticky top-0 z-40">
-        <div class="flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <i data-lucide="truck" class="w-6 h-6"></i>
-                <div>
-                    <h1 class="text-base font-bold tracking-tight">Despachos</h1>
-                    <p class="text-[10px] text-emerald-100">Gestión de entregas</p>
-                </div>
+    <header class="bg-emerald-600 text-white shadow-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i data-lucide="truck" class="w-8 h-8"></i>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight">Control de Despachos</h1>
+                <p class="text-xs text-emerald-100">Gestión simplificada de entregas</p>
             </div>
-            <button onclick="recargarDatos()" class="bg-emerald-700 active:bg-emerald-800 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 touch-active">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                <span class="hidden sm:inline">Actualizar</span>
-            </button>
         </div>
+
+        <button onclick="recargarDatos()" class="bg-emerald-700 hover:bg-emerald-800 text-white p-2.5 rounded-xl text-sm font-bold flex items-center justify-center transition-all shadow-inner">
+            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+        </button>
     </header>
 
-    <main class="flex-1 p-3 pb-24 max-w-7xl mx-auto w-full">
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full">
 
-        <!-- TARJETAS DE ESTADÍSTICAS -->
-        <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg p-4 text-white">
+        <!-- TARJETAS DE ESTADÍSTICAS SIMPLIFICADAS (2 COLUMNAS) -->
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-md p-5 text-white">
                 <div class="flex items-center justify-between mb-2">
-                    <i data-lucide="clock" class="w-6 h-6 opacity-90"></i>
-                    <span class="text-2xl font-black" id="totalPendientes">0</span>
+                    <i data-lucide="clock" class="w-7 h-7 opacity-90"></i>
+                    <span class="text-3xl font-black" id="totalPendientes">0</span>
                 </div>
-                <h3 class="text-[11px] font-bold uppercase tracking-wider">Pendientes</h3>
-                <p class="text-[9px] opacity-75">Por entregar</p>
+                <h3 class="text-xs font-bold uppercase tracking-wider opacity-90">Pendientes</h3>
             </div>
 
-            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-4 text-white">
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-md p-5 text-white">
                 <div class="flex items-center justify-between mb-2">
-                    <i data-lucide="check-circle" class="w-6 h-6 opacity-90"></i>
-                    <span class="text-2xl font-black" id="totalEntregados">0</span>
+                    <i data-lucide="check-circle" class="w-7 h-7 opacity-90"></i>
+                    <span class="text-3xl font-black" id="totalEntregados">0</span>
                 </div>
-                <h3 class="text-[11px] font-bold uppercase tracking-wider">Entregados</h3>
-                <p class="text-[9px] opacity-75">Completados</p>
+                <h3 class="text-xs font-bold uppercase tracking-wider opacity-90">Entregados</h3>
             </div>
         </div>
 
         <!-- FILTROS Y BÚSQUEDA -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4">
-            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                <button onclick="filtrarPorEstado('TODOS')" id="filtroTodos" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-emerald-600 text-white shadow-sm whitespace-nowrap touch-active">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 space-y-4 md:space-y-0 md:flex md:gap-4 md:justify-between md:items-center">
+            <div class="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+                <button onclick="filtrarPorEstado('TODOS')" id="filtroTodos" class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all bg-emerald-600 text-white shadow-sm whitespace-nowrap">
                     Todos
                 </button>
-                <button onclick="filtrarPorEstado('PENDIENTE')" id="filtroPendiente" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 whitespace-nowrap touch-active">
-                    ⏳ Pendientes
+                <button onclick="filtrarPorEstado('PENDIENTE')" id="filtroPendiente" class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all bg-slate-100 text-slate-600 whitespace-nowrap">
+                    Pendientes
                 </button>
-                <button onclick="filtrarPorEstado('ENTREGADO')" id="filtroEntregado" class="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 whitespace-nowrap touch-active">
-                    ✅ Entregados
+                <button onclick="filtrarPorEstado('ENTREGADO')" id="filtroEntregado" class="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all bg-slate-100 text-slate-600 whitespace-nowrap">
+                    Entregados
                 </button>
             </div>
 
-            <div class="relative mt-3">
+            <div class="relative w-full md:w-72">
                 <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <input type="text" id="buscarCliente" oninput="filtrarPorBusqueda()" placeholder="Buscar por cliente o ID de venta..." class="w-full pl-9 pr-3 py-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
+                <input type="text" id="buscarCliente" oninput="filtrarPorBusqueda()" placeholder="Buscar cliente o ID..." class="w-full pl-9 pr-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
             </div>
         </div>
 
-        <!-- LISTA DE DESPACHOS -->
-        <div id="listaDespachos" class="space-y-3">
-            <div class="text-center py-16 text-slate-400 italic">
-                <i data-lucide="inbox" class="w-16 h-16 mx-auto mb-3 opacity-50"></i>
-                <p>Cargando pedidos...</p>
+        <!-- TABLA DE DESPACHOS -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto select-none">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                            <th class="py-4 px-5">ID Venta</th>
+                            <th class="py-4 px-5">Cliente / Info</th>
+                            <th class="py-4 px-5 text-center">Total</th>
+                            <th class="py-4 px-5 text-center">Estado</th>
+                            <th class="py-4 px-5 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyDespachos">
+                        <tr>
+                            <td colspan="5" class="text-center py-16 text-slate-400 italic">
+                                <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                                Cargando despachos...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
-
-    <!-- BOTÓN FLOTANTE REFRESCAR -->
-    <button onclick="recargarDatos()" class="fixed bottom-20 right-4 bg-emerald-600 text-white p-4 rounded-full shadow-xl active:scale-95 transition-transform z-50 touch-active">
-        <i data-lucide="refresh-cw" class="w-6 h-6"></i>
-    </button>
 
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
     <script>
-        let todasLasVentasAgrupadas = [];
+        let todasLasVentas = [];
         let ventasFiltradas = [];
         let filtroActual = "TODOS";
         let textoBusqueda = "";
@@ -158,70 +140,37 @@
                 const ventas = await DairyAPI.obtenerDatos("Ventas");
                 
                 if (!ventas || ventas.length === 0) {
-                    todasLasVentasAgrupadas = [];
-                    mostrarSinDatos();
+                    todasLasVentas = [];
+                    mostrarMensajeSinDatos();
                     actualizarContadores();
                     return;
                 }
 
-                // ============================================
-                // AGRUPACIÓN CORRECTA POR ID_VENTA
-                // ============================================
-                const mapaVentas = new Map();
-
-                ventas.forEach(venta => {
-                    const idVenta = venta.id || venta.ID_VENTA;
-                    
-                    // Si no tiene ID, lo saltamos
-                    if (!idVenta) return;
-
-                    if (!mapaVentas.has(idVenta)) {
-                        // Primera vez que vemos este ID - crear registro agrupado
-                        mapaVentas.set(idVenta, {
-                            id: idVenta,
-                            fecha: venta.fecha || venta.FECHA || "Sin fecha",
-                            cliente: venta.cliente || venta.CLIENTE || "Cliente no especificado",
-                            telefono: venta.telefono || venta.TELEFONO || "",
-                            estado: (venta.estado || venta.ESTADO || "PENDIENTE").toUpperCase(),
-                            total: 0,
-                            cantidadProductos: 0,
-                            productos: []
-                        });
+                todasLasVentas = ventas.map(venta => {
+                    // Mapeo inteligente si viene de "EN COLA" o "EN TRÁNSITO" a "PENDIENTE"
+                    let est = (venta.estado || venta.ESTADO || "PENDIENTE").toUpperCase();
+                    if (est === "EN COLA" || est === "EN TRÁNSITO") {
+                        est = "PENDIENTE";
                     }
 
-                    // Acumular datos del registro agrupado
-                    const registro = mapaVentas.get(idVenta);
-                    
-                    // Sumar total
-                    const totalItem = parseFloat(venta.total || venta.TOTAL || 0);
-                    registro.total += totalItem;
-                    
-                    // Sumar cantidad de productos
-                    const cantidad = parseInt(venta.cantidad || venta.CANTIDAD || 1);
-                    registro.cantidadProductos += cantidad;
-                    
-                    // Agregar producto al listado
-                    if (venta.producto || venta.PRODUCTO) {
-                        registro.productos.push({
-                            nombre: venta.producto || venta.PRODUCTO,
-                            cantidad: cantidad,
-                            precio: parseFloat(venta.precio || venta.PRECIO || 0)
-                        });
-                    }
+                    return {
+                        id: venta.id || venta.ID_VENTA || "N/A",
+                        fecha: venta.fecha || venta.FECHA || "Sin fecha",
+                        cliente: venta.cliente || venta.CLIENTE || "Cliente no especificado",
+                        items: venta.items || venta.ITEMS || "0",
+                        total: venta.total || venta.TOTAL || "0",
+                        estado: est,
+                        telefono: venta.telefono || venta.TELEFONO || "",
+                        productos: venta.productos || venta.PRODUCTOS || ""
+                    };
                 });
 
-                // Convertir el mapa a array y ordenar por fecha
-                todasLasVentasAgrupadas = Array.from(mapaVentas.values());
-                todasLasVentasAgrupadas.sort((a, b) => b.fecha.localeCompare(a.fecha));
-
-                console.log("Ventas agrupadas:", todasLasVentasAgrupadas);
-                
                 aplicarFiltros();
 
             } catch (err) {
                 console.error("Error al cargar despachos:", err);
-                Swal.fire("Error", "No se pudieron cargar los despachos: " + err.message, "error");
-                mostrarSinDatos();
+                Swal.fire("Error", "No se cargaron los datos: " + err.message, "error");
+                mostrarMensajeSinDatos();
             } finally {
                 overlay.classList.add("opacity-0");
                 setTimeout(() => { overlay.classList.add("hidden"); }, 300);
@@ -229,195 +178,219 @@
         }
 
         function aplicarFiltros() {
-            let filtradas = [...todasLasVentasAgrupadas];
+            let filtradas = [...todasLasVentas];
 
-            // Filtrar por estado
             if (filtroActual !== "TODOS") {
                 filtradas = filtradas.filter(venta => venta.estado === filtroActual);
             }
 
-            // Filtrar por búsqueda
             if (textoBusqueda.trim() !== "") {
                 const busqueda = textoBusqueda.toLowerCase().trim();
                 filtradas = filtradas.filter(venta => 
                     venta.cliente.toLowerCase().includes(busqueda) ||
-                    venta.id.toLowerCase().includes(busqueda)
+                    venta.id.toString().toLowerCase().includes(busqueda)
                 );
             }
 
             ventasFiltradas = filtradas;
-            renderizarLista();
+            renderizarTabla();
             actualizarContadores();
             actualizarBotonesFiltro();
         }
 
-        function renderizarLista() {
-            const container = document.getElementById("listaDespachos");
+        function renderizarTabla() {
+            const tbody = document.getElementById("tbodyDespachos");
             
             if (ventasFiltradas.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-16 text-slate-400 italic">
-                        <i data-lucide="package-x" class="w-16 h-16 mx-auto mb-3 opacity-50"></i>
-                        <p class="text-sm">No hay pedidos para mostrar</p>
-                    </div>
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-16 text-slate-400 italic">
+                            <i data-lucide="package-x" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                            No hay registros que coincidan
+                        </td>
+                    </tr>
                 `;
                 lucide.createIcons();
                 return;
             }
 
-            container.innerHTML = ventasFiltradas.map(venta => {
-                const esEntregado = venta.estado === ESTADOS.ENTREGADO;
-                const cardClass = esEntregado ? 'card-entregado' : 'card-pendiente';
-                
-                return `
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden ${cardClass}">
-                        <!-- Cabecera -->
-                        <div class="p-4 border-b border-slate-100 bg-slate-50/50">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="text-emerald-600 font-black text-sm">#${venta.id}</span>
-                                        <span class="text-[10px] text-slate-400">${venta.fecha}</span>
-                                    </div>
-                                    <h3 class="font-bold text-slate-800 text-sm mt-1">${venta.cliente}</h3>
-                                    ${venta.telefono ? `<p class="text-[11px] text-slate-500 mt-0.5">📱 ${venta.telefono}</p>` : ''}
-                                </div>
-                                ${renderizarEstadoBadge(venta.estado)}
-                            </div>
-                        </div>
+            tbody.innerHTML = ventasFiltradas.map(venta => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50/80 transition-colors">
+                    <td class="py-4 px-5 font-bold text-emerald-600 text-sm font-mono">#${venta.id}</td>
+                    <td class="py-4 px-5">
+                        <div class="font-black text-slate-800 text-sm leading-tight">${venta.cliente}</div>
+                        <div class="text-[11px] text-slate-500 font-medium mt-0.5 truncate max-w-[180px] md:max-w-xs">${venta.productos || 'Sin detalle de ítems'}</div>
                         
-                        <!-- Detalle de productos -->
-                        <div class="p-4 bg-white">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Productos (${venta.cantidadProductos} unidades)</span>
-                                <span class="text-emerald-600 font-black text-base">$${venta.total.toFixed(2)}</span>
-                            </div>
-                            <div class="text-[11px] text-slate-600 space-y-1">
-                                ${venta.productos.slice(0, 3).map(p => 
-                                    `<div class="flex justify-between">
-                                        <span>• ${p.cantidad}x ${p.nombre}</span>
-                                        <span class="text-slate-400">$${(p.precio * p.cantidad).toFixed(2)}</span>
-                                    </div>`
-                                ).join('')}
-                                ${venta.productos.length > 3 ? `<div class="text-[10px] text-slate-400 italic mt-1">+${venta.productos.length - 3} producto(s) más</div>` : ''}
-                            </div>
+                        <!-- ACCESOS DE RUTA RÁPIDOS -->
+                        <div class="flex items-center gap-3 mt-1.5">
+                            <button onclick="abrirDireccion('${venta.cliente}')" class="text-blue-600 hover:text-blue-700 font-bold text-[11px] flex items-center gap-0.5 active:scale-95 transition-all">
+                                <i data-lucide="map-pin" class="w-3 h-3 text-blue-500"></i> Ubicación
+                            </button>
+                            ${venta.telefono ? `<span class="text-[10px] text-slate-400 font-medium">📱 ${venta.telefono}</span>` : ''}
                         </div>
-                        
-                        <!-- ACCIONES: SOLO para pedidos PENDIENTES -->
-                        <div class="p-4 bg-slate-50/30 border-t border-slate-100">
-                            ${!esEntregado ? `
-                                <div class="flex gap-2">
-                                    <button onclick="marcarComoEntregado('${venta.id}')" class="flex-1 bg-emerald-500 active:bg-emerald-600 text-white py-3 rounded-lg text-sm font-bold touch-active flex items-center justify-center gap-2">
-                                        <i data-lucide="check-circle" class="w-4 h-4"></i>
-                                        Marcar Entregado
-                                    </button>
-                                    <button onclick="enviarWhatsApp('${venta.telefono}', '${venta.id}', '${venta.cliente}')" class="bg-green-500 active:bg-green-600 text-white px-4 py-3 rounded-lg touch-active">
-                                        <i data-lucide="message-circle" class="w-5 h-5"></i>
-                                    </button>
-                                </div>
-                            ` : `
-                                <div class="text-center text-[11px] text-slate-400 italic flex items-center justify-center gap-2">
-                                    <i data-lucide="lock" class="w-3 h-3"></i>
-                                    Pedido entregado - Solo lectura
-                                </div>
-                            `}
+                    </td>
+                    <td class="py-4 px-5 text-center">
+                        <div class="text-slate-900 font-black text-sm">$${parseFloat(venta.total).toFixed(2)}</div>
+                        <div class="text-[10px] text-slate-400 font-medium">${venta.items} items</div>
+                    </td>
+                    <td class="py-4 px-5 text-center">
+                        ${renderizarBadge(venta.estado)}
+                    </td>
+                    <td class="py-4 px-5 text-center">
+                        <div class="flex gap-1.5 justify-center items-center">
+                            ${renderizarAccionesSimplificadas(venta)}
+                            
+                            <!-- BOTÓN ELIMINAR ACCESIBLE -->
+                            <button onclick="anularPedido('${venta.id}')" class="bg-rose-50 border border-rose-200 text-rose-600 p-2 rounded-xl transition-all active:scale-90" title="Eliminar">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
                         </div>
-                    </div>
-                `;
-            }).join('');
+                    </td>
+                </tr>
+            `).join('');
             
             lucide.createIcons();
         }
 
-        function renderizarEstadoBadge(estado) {
+        function renderizarBadge(estado) {
             if (estado === ESTADOS.PENDIENTE) {
-                return '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700"><i data-lucide="clock" class="w-3 h-3"></i> Pendiente</span>';
-            } else {
-                return '<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"><i data-lucide="check-circle" class="w-3 h-3"></i> Entregado</span>';
+                return '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-blue-100 text-blue-700 tracking-wider uppercase">PENDIENTE</span>';
             }
+            return '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-100 text-emerald-700 tracking-wider uppercase">ENTREGADO</span>';
         }
 
-        async function marcarComoEntregado(idVenta) {
-            // Confirmación con SweetAlert
-            const result = await Swal.fire({
-                title: '¿Confirmar entrega?',
-                text: `Marcar pedido #${idVenta} como entregado`,
+        function renderizarAccionesSimplificadas(venta) {
+            if (venta.estado === ESTADOS.PENDIENTE) {
+                return `
+                    <button onclick="entregarPedido('${venta.id}', '${venta.telefono}', '${venta.cliente}')" class="bg-emerald-600 active:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1 min-h-[40px] shadow-sm uppercase tracking-wide">
+                        <i data-lucide="check" class="w-4 h-4"></i> Entregar
+                    </button>
+                `;
+            }
+            return `
+                <button onclick="enviarWhatsApp('${venta.telefono}', '${venta.id}', '${venta.cliente}')" class="bg-green-500 active:bg-green-600 text-white px-3 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1 min-h-[40px] shadow-sm">
+                    <i data-lucide="message-circle" class="w-4 h-4 fill-white"></i> Notificar
+                </button>
+            `;
+        }
+
+        async function entregarPedido(idVenta, telefono, cliente) {
+            const confirmacion = await Swal.fire({
+                title: '¿Confirmar Entrega?',
+                text: `El pedido #${idVenta} se registrará como completado.`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Sí, entregar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#10b981'
+                confirmButtonColor: '#059669',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, Entregado',
+                cancelButtonText: 'Cancelar'
             });
 
-            if (!result.isConfirmed) return;
+            if (!confirmacion.isConfirmed) return;
 
-            // Mostrar loading
-            Swal.fire({
-                title: 'Actualizando estado...',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
+            Swal.fire({ title: 'Procesando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             try {
                 const payload = {
                     action: "actualizarEstadoDespacho",
                     idVenta: idVenta,
-                    nuevoEstado: ESTADOS.ENTREGADO
+                    estado: ESTADOS.ENTREGADO,
+                    fechaEntrega: new Date().toISOString().split('T')[0]
                 };
 
-                const response = await fetch(DairyConfig.SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(payload)
+                await DairyAPI.guardarDatos("Ventas", payload);
+
+                // Al entregar con éxito, le ofrecemos mandar el WhatsApp altiro
+                const preguntarWS = await Swal.fire({
+                    title: '¡Entrega Registrada!',
+                    text: '¿Deseas enviar el comprobante de entrega por WhatsApp ahora mismo?',
+                    icon: 'success',
+                    showCancelButton: true,
+                    confirmButtonColor: '#22c55e',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Sí, enviar mensaje',
+                    cancelButtonText: 'Cerrar sin enviar'
                 });
 
-                const data = await response.json();
-
-                if (data.status !== "success") {
-                    throw new Error(data.message || "Error al actualizar");
+                if (preguntarWS.isConfirmed) {
+                    await enviarWhatsApp(telefono, idVenta, cliente);
                 }
 
-                Swal.fire({
-                    title: '¡Pedido entregado!',
-                    text: `#${idVenta} marcado como entregado`,
-                    icon: 'success',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                
-                // Recargar datos
                 await cargarDespachos();
 
             } catch (error) {
                 console.error(error);
-                Swal.fire("Error", "No se pudo actualizar el estado: " + error.message, "error");
+                Swal.fire("Error", "No se guardó el cambio: " + error.message, "error");
             }
         }
 
-        function enviarWhatsApp(telefono, idVenta, cliente) {
-            if (!telefono || telefono === "") {
-                Swal.fire({
-                    title: "Sin contacto",
-                    text: "Este cliente no tiene número de teléfono registrado",
-                    icon: "warning",
-                    confirmButtonColor: "#64748b"
+        function abrirDireccion(cliente) {
+            const query = encodeURIComponent(cliente);
+            window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+        }
+
+        async function enviarWhatsApp(telefonoExistente, idVenta, cliente) {
+            let telefonoDestino = telefonoExistente;
+
+            if (!telefonoDestino || telefonoDestino.trim() === "") {
+                const { value: nuevoTelefono } = await Swal.fire({
+                    title: 'Número Celular',
+                    text: `Escriba el celular para ${cliente}:`,
+                    input: 'tel',
+                    inputPlaceholder: 'Ej: 0998765432',
+                    showCancelButton: true,
+                    confirmButtonColor: '#059669',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Enviar',
+                    cancelButtonText: 'Cancelar'
                 });
-                return;
+
+                if (!nuevoTelefono) return;
+                telefonoDestino = nuevoTelefono;
             }
 
-            const mensaje = `*LÓGICA LÁCTEA* 🥛🧀\n\n` +
-                           `Hola *${cliente}*, tu pedido *#${idVenta}* ha sido despachado y está en camino.\n\n` +
-                           `📦 *Estado:* En ruta de entrega\n` +
-                           `⏰ *Tiempo estimado:* Próximas horas\n\n` +
-                           `¡Gracias por preferirnos! 🙌`;
-            
-            const urlWhatsApp = `https://api.whatsapp.com/send?phone=${telefono}&text=${encodeURIComponent(mensaje)}`;
-            window.open(urlWhatsApp, '_blank');
+            let numLimpio = telefonoDestino.replace(/[^0-9]/g, '');
+            if (numLimpio.startsWith('0')) {
+                numLimpio = '593' + numLimpio.substring(1);
+            }
+
+            const mensaje = `Estimado(a) *${cliente}*, su pedido *#${idVenta}* ha sido entregado exitosamente. ✔️\n\n¡Muchas gracias por su confianza!\n*LÓGICA LÁCTEA* 🥛🧀`;
+            window.open(`https://api.whatsapp.com/send?phone=${numLimpio}&text=${encodeURIComponent(mensaje)}`, '_blank');
+        }
+
+        async function anularPedido(idVenta) {
+            const confirmacion = await Swal.fire({
+                title: '¿Eliminar despacho?',
+                text: `Esta acción borrará de forma definitiva el despacho #${idVenta}.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (!confirmacion.isConfirmed) return;
+
+            Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            try {
+                await DairyAPI.guardarDatos("Ventas", {
+                    action: "eliminarDespacho",
+                    idVenta: idVenta
+                });
+
+                Swal.fire({ title: "¡Eliminado!", icon: "success", timer: 1000, showConfirmButton: false });
+                await cargarDespachos();
+
+            } catch (error) {
+                Swal.fire("Error", "No se pudo eliminar el despacho.", "error");
+            }
         }
 
         function actualizarContadores() {
-            const pendientes = todasLasVentasAgrupadas.filter(v => v.estado === ESTADOS.PENDIENTE).length;
-            const entregados = todasLasVentasAgrupadas.filter(v => v.estado === ESTADOS.ENTREGADO).length;
+            const pendientes = todasLasVentas.filter(v => v.estado === ESTADOS.PENDIENTE).length;
+            const entregados = todasLasVentas.filter(v => v.estado === ESTADOS.ENTREGADO).length;
 
             document.getElementById("totalPendientes").innerText = pendientes;
             document.getElementById("totalEntregados").innerText = entregados;
@@ -435,51 +408,39 @@
 
         function actualizarBotonesFiltro() {
             const botones = {
-                TODOS: "filtroTodos",
-                PENDIENTE: "filtroPendiente",
-                ENTREGADO: "filtroEntregado"
+                TODOS: document.getElementById("filtroTodos"),
+                PENDIENTE: document.getElementById("filtroPendiente"),
+                ENTREGADO: document.getElementById("filtroEntregado")
             };
 
             Object.keys(botones).forEach(estado => {
-                const btn = document.getElementById(botones[estado]);
-                if (btn) {
-                    if (filtroActual === estado) {
-                        btn.className = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-emerald-600 text-white shadow-sm whitespace-nowrap touch-active";
-                    } else {
-                        btn.className = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all bg-slate-100 text-slate-600 whitespace-nowrap touch-active";
-                    }
+                const btn = botones[estado];
+                if (!btn) return;
+                if (filtroActual === estado) {
+                    btn.className = "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all bg-emerald-600 text-white shadow-sm whitespace-nowrap";
+                } else {
+                    btn.className = "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all bg-white text-slate-600 border border-slate-200 whitespace-nowrap shadow-xs";
                 }
             });
         }
 
-        function mostrarSinDatos() {
-            const container = document.getElementById("listaDespachos");
-            container.innerHTML = `
-                <div class="text-center py-16 text-slate-400 italic">
-                    <i data-lucide="database" class="w-16 h-16 mx-auto mb-3 opacity-50"></i>
-                    <p class="text-sm">No hay pedidos registrados</p>
-                </div>
+        function mostrarMensajeSinDatos() {
+            const tbody = document.getElementById("tbodyDespachos");
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="text-center py-16 text-slate-400 italic">
+                        <i data-lucide="database" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                        No hay despachos registrados
+                    </td>
+                </tr>
             `;
             lucide.createIcons();
         }
 
         async function recargarDatos() {
-            Swal.fire({
-                title: 'Actualizando...',
-                text: 'Obteniendo la información más reciente',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-            
+            Swal.fire({ title: 'Actualizando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             await cargarDespachos();
-            
-            Swal.fire({
-                title: '¡Actualizado!',
-                text: 'Los datos están al día',
-                icon: 'success',
-                timer: 1500,
-                showConfirmButton: false
-            });
+            Swal.close();
         }
     </script>
 </body>

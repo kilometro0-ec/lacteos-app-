@@ -260,6 +260,7 @@
         let esConsumoInterno = false;
 
         let clienteSeleccionado = null;
+        let telefonoClienteSeleccionado = ""; // Guardará el teléfono para la API de WhatsApp
         let productoSeleccionado = null;
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -329,13 +330,15 @@
 
             const autoId = "CLI-" + Math.floor(Date.now() / 1000);
             const fechaRegistro = new Date().toISOString().split('T')[0];
+            const telInput = document.getElementById("modalTelefono").value.trim();
+            const nombreInput = document.getElementById("modalNombre").value.trim();
 
             const payloadCliente = {
                 action: "registrarCliente", 
                 id: autoId,
-                nombre: document.getElementById("modalNombre").value.trim(),
+                nombre: nombreInput,
                 ci_ruc: document.getElementById("modalRuc").value.trim(),
-                telefono: document.getElementById("modalTelefono").value.trim(),
+                telefono: telInput,
                 direccion: document.getElementById("modalDireccion").value.trim(),
                 referencia: document.getElementById("modalReferencia").value.trim(),
                 sector: document.getElementById("modalSector").value,
@@ -359,7 +362,7 @@
                 cerrarModalCliente();
                 
                 await inicializarModulo();
-                seleccionarCliente(payloadCliente.nombre);
+                seleccionarCliente(nombreInput, telInput);
 
             } catch (error) {
                 console.error(error);
@@ -383,10 +386,11 @@
             } else {
                 listaDiv.innerHTML = filtrados.map(c => {
                     const ruc = String(c.ci_ruc || c.id || "").trim();
+                    const tel = String(c.telefono || "").trim();
                     return `
-                        <div onclick="seleccionarCliente('${c.nombre}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex flex-col">
+                        <div onclick="seleccionarCliente('${c.nombre}', '${tel}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex flex-col">
                             <span class="font-bold text-slate-900">${c.nombre}</span>
-                            <span class="text-[10px] text-slate-400">RUC/CI: ${ruc} | Sector: ${c.sector || 'S/S'}</span>
+                            <span class="text-[10px] text-slate-400">RUC/CI: ${ruc} | Telf: ${tel || 'S/N'}</span>
                         </div>
                     `;
                 }).join('');
@@ -394,8 +398,10 @@
             listaDiv.classList.remove("hidden");
         }
 
-        function seleccionarCliente(nombre) {
-            clienteSeleccionado = nombre; // Tu backend busca coincidencias por el texto literal del Nombre del cliente
+        function seleccionarCliente(nombre, telefono) {
+            clienteSeleccionado = nombre;
+            telefonoClienteSeleccionado = telefono; // Guardamos el número de forma segura
+            
             const input = document.getElementById("buscarCliente");
             input.value = nombre; 
             input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
@@ -406,6 +412,7 @@
 
         function limpiarSeleccionCliente() {
             clienteSeleccionado = null;
+            telefonoClienteSeleccionado = "";
             const input = document.getElementById("buscarCliente");
             input.value = "";
             input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
@@ -482,6 +489,7 @@
 
             if (esConsumoInterno) {
                 clienteSeleccionado = "CONSUMO INTERNO";
+                telefonoClienteSeleccionado = "";
                 buscarCli.value = "CONSUMO INTERNO";
                 buscarCli.disabled = true;
                 btnModalCli.classList.add("hidden");
@@ -544,7 +552,7 @@
             } else {
                 carrito.push({
                     id: productoSeleccionado,
-                    producto: prod.producto, // Guardamos la cadena de texto literal
+                    producto: prod.producto,
                     cantidad: cantidad,
                     precio: precio,
                     subtotal: cantidad * precio
@@ -614,7 +622,7 @@
             }
         }
 
-        /* CORRECCIÓN INTEGRADA: Cumple la firma exacta requerida por la acción "registrarVenta" en tu backend */
+        /* NUEVA LOGICA DE WHATSAPP INTEGRADA */
         async function confirmarYEnviarVenta() {
             if (carrito.length === 0 || !clienteSeleccionado) return;
 
@@ -639,13 +647,16 @@
             });
 
             const fechaOp = document.getElementById("fechaEntrega").value;
+            let totalAcumulado = 0;
 
-            // Mapeo adaptado: Tu backend lee 'prod.producto' para buscar coincidencia exacta de texto en la pestaña Inventario
-            const productosMapeados = carrito.map(item => ({
-                producto: item.producto, 
-                cantidad: item.cantidad,
-                precio: item.precio
-            }));
+            const productosMapeados = carrito.map(item => {
+                totalAcumulado += item.subtotal;
+                return {
+                    producto: item.producto, 
+                    cantidad: item.cantidad,
+                    precio: item.precio
+                };
+            });
 
             const payloadVenta = {
                 action: "registrarVenta", 
@@ -668,8 +679,44 @@
                     throw new Error(data.message || "Error devuelto por el servidor.");
                 }
 
+                // Generación automatizada del mensaje para WhatsApp
+                let mensajeWa = `*🥛 LÓGICA LÁCTEA - NOTIFICACIÓN DE DESPACHO *\n\n`;
+                mensajeWa += `*Cliente:* ${clienteSeleccionado}\n`;
+                mensajeWa += `*Código Operación:* ${data.idVenta}\n`;
+                mensajeWa += `*Fecha de Entrega:* ${fechaOp}\n`;
+                if(esConsumoInterno) {
+                    mensajeWa += `*Tipo:* Consumo Interno Interno\n`;
+                }
+                mensajeWa += `----------------------------------------\n`;
+                
+                carrito.forEach(item => {
+                    mensajeWa += `• ${item.cantidad}x ${item.producto} ($${item.precio.toFixed(2)} c/u) -> *$${item.subtotal.toFixed(2)}*\n`;
+                });
+                
+                mensajeWa += `----------------------------------------\n`;
+                mensajeWa += `*TOTAL NETO A LIQUIDAR: $${totalAcumulado.toFixed(2)}*\n\n`;
+                mensajeWa += `Muchas gracias por su confianza. Su pedido ha sido procesado e ingresado en nuestra hoja de ruta.`;
+
+                // Si el cliente tiene un teléfono válido registrado y no es consumo interno, abre WhatsApp
+                if (telefonoClienteSeleccionado && !esConsumoInterno) {
+                    // Limpiamos caracteres extraños del teléfono si los hubiera
+                    let numLimpio = telefonoClienteSeleccionado.replace(/[^0-9]/g, '');
+                    
+                    // Si el número empieza con '0' (ej: Ecuador 09xxxxxxxx) le anteponemos el código de país por defecto (593)
+                    if (numLimpio.startsWith('0')) {
+                        numLimpio = '593' + numLimpio.substring(1);
+                    }
+                    
+                    const urlWhatsapp = `https://wa.me/${numLimpio}?text=${encodeURIComponent(mensajeWa)}`;
+                    
+                    // Abrimos WhatsApp en una pestaña nueva
+                    window.open(urlWhatsapp, '_blank');
+                }
+
+                // Notificación visual rápida de éxito
                 await Swal.fire("¡Éxito!", `La transacción se guardó correctamente. ID: ${data.idVenta}`, "success");
                 
+                // CIERRE AUTOMÁTICO DE LA VENTA (Limpieza absoluta del Punto de Venta)
                 carrito = [];
                 renderCarritoYTotales();
                 limpiarSeleccionProducto();

@@ -52,12 +52,17 @@
                 </h2>
 
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Escriba para buscar Cliente</label>
-                        <input type="text" id="buscarCliente" oninput="filtrarClientes()" placeholder="Buscar por nombre o RUC..." class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs mb-1 outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
-                        <select id="selectCliente" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed font-medium">
-                            <option value="">-- Buscando Cartera de Clientes --</option>
-                        </select>
+                    <!-- BUSCADOR INTELIGENTE DE CLIENTES -->
+                    <div class="relative">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Buscar Cliente</label>
+                        <div class="relative">
+                            <input type="text" id="buscarCliente" oninput="filtrarClientes()" onfocus="filtrarClientes()" placeholder="Escriba nombre o RUC..." class="w-full border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
+                            <button id="btnLimpiarCliente" onclick="limpiarSeleccionCliente()" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <!-- Dropdown Flotante -->
+                        <div id="listaClientesFlotante" class="hidden absolute z-50 w-full bg-white mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 shadow-xl divide-y divide-slate-100"></div>
                     </div>
 
                     <div>
@@ -75,20 +80,25 @@
                 </h2>
 
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Escriba para buscar Producto (Solo con Stock)</label>
-                        <input type="text" id="buscarProducto" oninput="filtrarProductos()" placeholder="Buscar producto..." class="w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs mb-1 outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
-                        <select id="selectProducto" onchange="verificarStockDisponible()" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
-                            <option value="">-- Seleccione un ítem --</option>
-                        </select>
+                    <!-- BUSCADOR INTELIGENTE DE PRODUCTOS -->
+                    <div class="relative">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Buscar Producto</label>
+                        <div class="relative">
+                            <input type="text" id="buscarProducto" oninput="filtrarProductos()" onfocus="filtrarProductos()" placeholder="Escriba nombre del producto..." class="w-full border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 font-medium">
+                            <button id="btnLimpiarProducto" onclick="limpiarSeleccionProducto()" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+                                <i data-lucide="x" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <!-- Dropdown Flotante -->
+                        <div id="listaProductosFlotante" class="hidden absolute z-50 w-full bg-white mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 shadow-xl divide-y divide-slate-100"></div>
                     </div>
 
-                    <div id="wrapperStock" class="hidden p-3 rounded-lg border text-xs flex justify-between items-center transition-all">
+                    <div id="wrapperStock" class="hidden p-3 rounded-lg border text-xs flex justify-between items-center transition-all bg-slate-50">
                         <div>
                             <span class="font-bold block text-slate-600">Disponibilidad en Kárdex:</span>
                             <span id="txtStockMinimo" class="text-base font-black">0 Uds</span>
                         </div>
-                        <span id="badgeEstadoStock" class="px-2 py-1 rounded font-bold uppercase text-[10px]"></span>
+                        <span id="badgeEstadoStock" class="px-2 py-1 rounded font-bold uppercase text-[10px] bg-emerald-100 text-emerald-800">Disponible</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
@@ -170,10 +180,24 @@
         let carrito = [];
         let esConsumoInterno = false;
 
+        // Variables de control de lo seleccionado actualmente
+        let clienteSeleccionado = null;
+        let productoSeleccionado = null;
+
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
             establecerFechaPorDefecto();
             inicializarModulo();
+
+            // Cerrar listas flotantes al hacer clic afuera
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest('#buscarCliente') && !e.target.closest('#listaClientesFlotante')) {
+                    document.getElementById("listaClientesFlotante").classList.add("hidden");
+                }
+                if (!e.target.closest('#buscarProducto') && !e.target.closest('#listaProductosFlotante')) {
+                    document.getElementById("listaProductosFlotante").classList.add("hidden");
+                }
+            });
         });
 
         function establecerFechaPorDefecto() {
@@ -192,12 +216,10 @@
             try {
                 const datosClientes = await DairyAPI.obtenerDatos("Clientes");
                 clientesGlobal = datosClientes || [];
-                renderizarSelectorClientes(clientesGlobal);
 
                 const datosInventario = await DairyAPI.obtenerDatos("Inventario");
-                // CORRECCIÓN: Filtrar el catálogo eliminando de raíz productos con Stock <= 0
+                // Filtrar el catálogo eliminando productos sin stock
                 catalogoProductos = (datosInventario || []).filter(p => parseInt(p.stock || 0) > 0);
-                renderizarSelectorProductos(catalogoProductos);
 
             } catch (err) {
                 console.error(err);
@@ -205,95 +227,146 @@
             }
         }
 
-        function renderizarSelectorClientes(lista) {
-            const selectCli = document.getElementById("selectCliente");
-            selectCli.innerHTML = '<option value="">-- Seleccione un Cliente --</option>';
-            lista.forEach(c => {
-                const ruc = String(c.ci_ruc || c.id || "").trim();
-                const nombre = c.nombre || "Cliente";
-                selectCli.innerHTML += `<option value="${ruc}">${nombre} (${ruc})</option>`;
-            });
-        }
-
-        function renderizarSelectorProductos(lista) {
-            const selectProd = document.getElementById("selectProducto");
-            selectProd.innerHTML = '<option value="">-- Seleccione un ítem --</option>';
-            lista.forEach(p => {
-                const id = String(p.id || "").trim();
-                if (!id) return;
-                selectProd.innerHTML += `<option value="${id}">${p.producto}</option>`;
-            });
-        }
-
-        // FUNCIONES DE BÚSQUEDA RÁPIDA (FILTROS)
+        // LÓGICA DE BÚSQUEDA Y SELECCIÓN DE CLIENTES FLOTANTE
         function filtrarClientes() {
+            if (esConsumoInterno) return;
+            
             const termino = document.getElementById("buscarCliente").value.toLowerCase().trim();
+            const listaDiv = document.getElementById("listaClientesFlotante");
+            
             const filtrados = clientesGlobal.filter(c => 
                 (c.nombre || "").toLowerCase().includes(termino) || 
                 String(c.ci_ruc || c.id || "").toLowerCase().includes(termino)
             );
-            renderizarSelectorClientes(filtrados);
+
+            if (filtrados.length === 0) {
+                listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic bg-white">No se encontraron clientes</div>`;
+            } else {
+                listaDiv.innerHTML = filtrados.map(c => {
+                    const ruc = String(c.ci_ruc || c.id || "").trim();
+                    return `
+                        <div onclick="seleccionarCliente('${ruc}', '${c.nombre}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex flex-col">
+                            <span class="font-bold text-slate-900">${c.nombre}</span>
+                            <span class="text-[10px] text-slate-400">RUC/CI: ${ruc}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+            listaDiv.classList.remove("hidden");
         }
 
+        function seleccionarCliente(ruc, nombre) {
+            clienteSeleccionado = ruc;
+            const input = document.getElementById("buscarCliente");
+            input.value = `${nombre} (${ruc})`;
+            input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
+            document.getElementById("btnLimpiarCliente").classList.remove("hidden");
+            document.getElementById("listaClientesFlotante").classList.add("hidden");
+        }
+
+        function limpiarSeleccionCliente() {
+            clienteSeleccionado = null;
+            const input = document.getElementById("buscarCliente");
+            input.value = "";
+            input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
+            document.getElementById("btnLimpiarCliente").classList.add("hidden");
+        }
+
+        // LÓGICA DE BÚSQUEDA Y SELECCIÓN DE PRODUCTOS FLOTANTE
         function filtrarProductos() {
             const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
+            const listaDiv = document.getElementById("listaProductosFlotante");
+
             const filtrados = catalogoProductos.filter(p => 
                 (p.producto || "").toLowerCase().includes(termino)
             );
-            renderizarSelectorProductos(filtrados);
+
+            if (filtrados.length === 0) {
+                listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic bg-white">No hay productos disponibles</div>`;
+            } else {
+                listaDiv.innerHTML = filtrados.map(p => {
+                    const id = String(p.id || "").trim();
+                    return `
+                        <div onclick="seleccionarProducto('${id}', '${p.producto}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex justify-between items-center">
+                            <span class="font-bold text-slate-900">${p.producto}</span>
+                            <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-mono">Stock: ${p.stock}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+            listaDiv.classList.remove("hidden");
         }
 
-        function verificarStockDisponible() {
-            const idProd = document.getElementById("selectProducto").value;
-            if (!idProd) return;
+        function seleccionarProducto(id, nombre) {
+            productoSeleccionado = id;
+            const input = document.getElementById("buscarProducto");
+            input.value = nombre;
+            input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
+            document.getElementById("btnLimpiarProducto").classList.remove("hidden");
+            document.getElementById("listaProductosFlotante").classList.add("hidden");
 
-            const prod = catalogoProductos.find(p => String(p.id).trim() === idProd);
-            if (!prod) return;
+            // Cargar Stock y Precios
+            const prod = catalogoProductos.find(p => String(p.id).trim() === id);
+            if (prod) {
+                const stock = parseInt(prod.stock || 0);
+                const precio = limpiarMoneda(prod.precioVenta || 0);
 
-            const stock = parseInt(prod.stock || 0);
-            const precio = limpiarMoneda(prod.precioVenta || 0);
+                document.getElementById("wrapperStock").classList.remove("hidden");
+                document.getElementById("txtStockMinimo").innerText = `${stock} Unidades`;
+                document.getElementById("numPrecioUnitario").value = esConsumoInterno ? "0.00" : precio.toFixed(2);
+            }
+        }
 
-            document.getElementById("wrapperStock").classList.remove("hidden");
-            document.getElementById("txtStockMinimo").innerText = `${stock} Unidades`;
-
-            document.getElementById("numPrecioUnitario").value = esConsumoInterno ? "0.00" : precio.toFixed(2);
+        function limpiarSeleccionProducto() {
+            productoSeleccionado = null;
+            const input = document.getElementById("buscarProducto");
+            input.value = "";
+            input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
+            document.getElementById("btnLimpiarProducto").classList.add("hidden");
+            document.getElementById("wrapperStock").classList.add("hidden");
+            document.getElementById("numPrecioUnitario").value = "";
         }
 
         function alternarConsumoInterno() {
             esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
-            const selectCli = document.getElementById("selectCliente");
             const buscarCli = document.getElementById("buscarCliente");
             const badgeTipo = document.getElementById("badgeTipoVenta");
 
+            limpiarSeleccionCliente();
+
             if (esConsumoInterno) {
-                selectCli.innerHTML = '<option value="CONSUMO INTERNO">CONSUMO INTERNO</option>';
-                selectCli.disabled = true;
+                clienteSeleccionado = "CONSUMO INTERNO";
+                buscarCli.value = "CONSUMO INTERNO";
                 buscarCli.disabled = true;
-                buscarCli.value = "";
+                buscarCli.classList.add("bg-amber-50", "border-amber-300", "font-bold", "text-amber-900");
                 badgeTipo.innerText = "Consumo Interno";
                 badgeTipo.className = "bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
             } else {
-                selectCli.disabled = false;
                 buscarCli.disabled = false;
+                buscarCli.classList.remove("bg-amber-50", "border-amber-300", "font-bold", "text-amber-900");
                 badgeTipo.innerText = "Venta Comercial";
                 badgeTipo.className = "bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
-                renderizarSelectorClientes(clientesGlobal);
             }
-            verificarStockDisponible();
+            
+            if(productoSeleccionado) {
+                seleccionarProducto(productoSeleccionado, document.getElementById("buscarProducto").value);
+            }
         }
 
         function agregarItemAlCarrito() {
-            const idProd = document.getElementById("selectProducto").value;
-            const cantidad = parseInt(document.getElementById("numCantidadVenta").value) || 0;
-
-            if (!idProd || cantidad <= 0) {
-                Swal.fire("Datos inválidos", "Seleccione producto y cantidad", "warning");
+            if (!productoSeleccionado) {
+                Swal.fire("Falta Producto", "Por favor busque y seleccione un producto válido.", "warning");
                 return;
             }
 
-            const prod = catalogoProductos.find(p => String(p.id).trim() === idProd);
+            const cantidad = parseInt(document.getElementById("numCantidadVenta").value) || 0;
+            if (cantidad <= 0) {
+                Swal.fire("Cantidad inválida", "Defina una cantidad mayor a 0", "warning");
+                return;
+            }
+
+            const prod = catalogoProductos.find(p => String(p.id).trim() === productoSeleccionado);
             
-            // Validación local preventiva de stock antes de meter al carrito
             if (cantidad > parseInt(prod.stock || 0)) {
                 Swal.fire("Stock Insuficiente", `Solo quedan ${prod.stock} unidades de este producto.`, "error");
                 return;
@@ -301,7 +374,7 @@
 
             const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.precioVenta);
 
-            const itemExistente = carrito.find(item => item.id === idProd);
+            const itemExistente = carrito.find(item => item.id === productoSeleccionado);
             if (itemExistente) {
                 if ((itemExistente.cantidad + cantidad) > parseInt(prod.stock || 0)) {
                     Swal.fire("Excede el inventario", "La cantidad total acumulada supera el stock disponible.", "error");
@@ -311,7 +384,7 @@
                 itemExistente.subtotal = itemExistente.cantidad * itemExistente.precio;
             } else {
                 carrito.push({
-                    id: idProd,
+                    id: productoSeleccionado,
                     producto: prod.producto,
                     cantidad: cantidad,
                     precio: precio,
@@ -320,12 +393,8 @@
             }
 
             renderizarCarrito();
-            
-            document.getElementById("selectProducto").value = "";
-            document.getElementById("buscarProducto").value = "";
-            renderizarSelectorProductos(catalogoProductos);
+            limpiarSeleccionProducto();
             document.getElementById("numCantidadVenta").value = "1";
-            document.getElementById("wrapperStock").classList.add("hidden");
         }
 
         function eliminarItem(index) {
@@ -386,26 +455,25 @@
         }
 
         async function confirmarYEnviarVenta() {
-            const valueCliente = document.getElementById("selectCliente").value;
             const fEntrega = document.getElementById("fechaEntrega").value;
 
-            if (!valueCliente) {
-                return Swal.fire("Cliente requerido", "Seleccione cliente", "warning");
+            if (!clienteSeleccionado) {
+                return Swal.fire("Cliente requerido", "Por favor seleccione un cliente de la lista", "warning");
             }
 
             if (carrito.length === 0) {
                 return Swal.fire("Carrito vacío", "Agregue productos", "warning");
             }
 
-            let nombreCliente = valueCliente;
+            let nombreCliente = clienteSeleccionado;
             let telefonoCliente = "";
             
             const objCliente = clientesGlobal.find(
-                c => String(c.ci_ruc || c.id || "").trim() === valueCliente
+                c => String(c.ci_ruc || c.id || "").trim() === clienteSeleccionado
             );
 
             if (!esConsumoInterno) {
-                nombreCliente = objCliente ? objCliente.nombre : valueCliente;
+                nombreCliente = objCliente ? objCliente.nombre : clienteSeleccionado;
                 telefonoCliente = objCliente ? String(objCliente.telefono || "").replace(/\s+/g, '') : "";
             } else {
                 nombreCliente = "CONSUMO INTERNO";
@@ -475,7 +543,7 @@
 
                 const urlWhatsApp = `https://api.whatsapp.com/send?phone=${telefonoCliente}&text=${encodeURIComponent(mensajeWhatsApp)}`;
 
-                // ALERTA DE ÉXITO CON EL BOTÓN EXCLUSIVO DE WHATSAPP
+                // ALERTA DE ÉXITO CON BOTÓN PERSONALIZADO
                 Swal.fire({
                     title: 'Transacción Registrada',
                     html: `
@@ -493,10 +561,11 @@
                     confirmButtonText: 'Cerrar Ventana'
                 });
 
-                // Limpieza de interfaz móvil / PWA local
+                // Limpieza post-venta
                 carrito = [];
-                document.getElementById("buscarCliente").value = "";
-                document.getElementById("buscarProducto").value = "";
+                limpiarSeleccionCliente();
+                limpiarSeleccionProducto();
+                if(esConsumoInterno) { alternarConsumoInterno(); }
                 renderizarCarrito();
                 inicializarModulo();
 

@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Finanzas Lácteas - Sistema Completo</title>
+    <title>Finanzas Lácteas - Sistema de Pagos</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Work Sans', sans-serif;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
             background: #f5f0fa;
-            padding: 16px 12px;
+            padding: 12px;
             padding-bottom: 30px;
         }
 
         /* Header */
         .header {
             background: white;
-            padding: 16px;
+            padding: 14px;
             border-radius: 24px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             border: 1px solid #e9d5ff;
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 800;
             background: linear-gradient(135deg, #a21caf, #db2777);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         /* Filtros */
@@ -47,11 +47,11 @@
         }
 
         .filtros select, .filtros input, .filtros button {
-            padding: 10px 14px;
+            padding: 10px 12px;
             border-radius: 40px;
             border: 1px solid #e9d5ff;
             background: white;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
 
@@ -60,35 +60,33 @@
             color: white;
             border: none;
             cursor: pointer;
-            font-weight: 600;
         }
 
-        /* Tarjetas de KPIs */
+        /* Tarjetas KPI */
         .grid-cards {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 16px;
         }
 
         .card {
             background: white;
-            padding: 14px;
-            border-radius: 20px;
+            padding: 12px;
+            border-radius: 18px;
             border-left: 4px solid;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .card h3 {
-            font-size: 11px;
+            font-size: 10px;
             color: #666;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .card span {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             font-weight: 800;
             display: block;
         }
@@ -104,26 +102,25 @@
         .panel {
             background: white;
             border-radius: 24px;
-            padding: 16px;
-            margin-bottom: 16px;
+            padding: 14px;
+            margin-bottom: 14px;
             border: 1px solid #e9d5ff;
         }
 
         .panel h2 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 700;
             margin-bottom: 12px;
             border-left: 4px solid #a21caf;
-            padding-left: 12px;
+            padding-left: 10px;
         }
 
-        /* Formularios */
         .form-group {
             margin-bottom: 12px;
         }
 
         label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             color: #666;
             display: block;
@@ -132,11 +129,11 @@
 
         select, input {
             width: 100%;
-            padding: 12px;
+            padding: 10px 12px;
             border-radius: 40px;
             border: 1px solid #e2d6f0;
             background: #fefcff;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             box-sizing: border-box;
         }
 
@@ -152,52 +149,62 @@
             font-size: 0.9rem;
         }
 
-        button.secondary {
-            background: #6b21a8;
-        }
-
         button.success {
             background: #10b981;
         }
 
-        /* Checkbox grupo */
         .checkbox-group {
-            max-height: 200px;
+            max-height: 250px;
             overflow-y: auto;
             border: 1px solid #e2d6f0;
             border-radius: 20px;
-            padding: 12px;
+            padding: 10px;
             background: #fefcff;
         }
 
         .checkbox-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             padding: 8px 0;
             border-bottom: 1px solid #f0e6ff;
         }
 
         .checkbox-item input {
-            width: auto;
+            width: 20px;
             margin: 0;
         }
 
         .checkbox-item label {
             margin: 0;
             flex: 1;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            font-weight: normal;
+            color: #333;
         }
 
         .select-all {
             background: #f0e9ff;
             padding: 8px;
             border-radius: 40px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             text-align: center;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
+        }
+
+        .total-pago {
+            background: #f0e9ff;
+            padding: 10px;
+            border-radius: 40px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .total-pago strong {
+            font-size: 1.2rem;
+            color: #a21caf;
         }
 
         /* Historial */
@@ -222,6 +229,7 @@
         .historial-item .detalle {
             font-weight: 600;
             margin: 4px 0;
+            font-size: 0.85rem;
         }
 
         .historial-item .monto {
@@ -273,9 +281,9 @@
     <div class="card items"><h3>📦 Items Vendidos</h3><span id="items">0</span></div>
 </div>
 
-<!-- PANEL: CANCELACIÓN A PROVEEDORES -->
+<!-- PANEL: PAGO A PROVEEDORES -->
 <div class="panel">
-    <h2>🏭 Cancelar Pago a Proveedor</h2>
+    <h2>🏭 Registrar Pago a Proveedor</h2>
     <div class="form-group">
         <label>Seleccionar Proveedor</label>
         <select id="selectProveedor">
@@ -287,20 +295,19 @@
         <input type="date" id="fechaPagoProveedor">
     </div>
     <div class="form-group">
-        <label>Productos a Cancelar</label>
+        <label>Productos a Pagar (Precio Distribuidor)</label>
         <div class="select-all" id="btnSeleccionarTodos">✅ Seleccionar Todos</div>
         <div id="listaProductosProveedor" class="checkbox-group">
             <div class="checkbox-item">Cargando productos...</div>
         </div>
     </div>
-    <div class="form-group">
-        <label>Total a Pagar: </label>
-        <strong id="totalPagarProveedor" style="font-size:1.3rem; color:#a21caf;">$0.00</strong>
+    <div class="total-pago">
+        💰 Total a Pagar: <strong id="totalPagarProveedor">$0.00</strong>
     </div>
-    <button id="btnRegistrarPagoProveedor" class="success">💰 Registrar Pago a Proveedor</button>
+    <button id="btnRegistrarPagoProveedor" class="success">💸 Registrar Pago a Proveedor</button>
 </div>
 
-<!-- HISTORIAL DE PAGOS A PROVEEDORES -->
+<!-- HISTORIAL DE PAGOS -->
 <div class="panel">
     <h2>📋 Historial de Pagos a Proveedores</h2>
     <div id="historialPagos" class="historial">
@@ -309,14 +316,14 @@
 </div>
 
 <script>
-    // ==================== VARIABLES GLOBALES ====================
+    // ==================== VARIABLES ====================
     let proveedores = [];
-    let productosPorProveedor = {};
+    let inventario = [];
     let productosSeleccionados = [];
     let historialPagos = [];
     let filtroActual = { tipo: 'dia', valor: '' };
 
-    // ==================== FUNCIONES DE CARGA ====================
+    // ==================== CARGAR DATOS DESDE API ====================
     async function cargarProveedores() {
         try {
             const response = await fetch(`${DairyConfig.SCRIPT_URL}?pestana=Proveedores&accion=leer`);
@@ -326,10 +333,13 @@
                 const select = document.getElementById('selectProveedor');
                 select.innerHTML = '<option value="">Seleccionar proveedor</option>';
                 proveedores.forEach(prov => {
-                    const option = document.createElement('option');
-                    option.value = prov.nombre || prov.Nombre || prov.empresa || prov.Nombre_Empresa;
-                    option.textContent = prov.nombre || prov.Nombre || prov.empresa || prov.Nombre_Empresa || 'Sin nombre';
-                    select.appendChild(option);
+                    const nombre = prov['Nombre del Proveedor'] || prov.Nombre_del_Proveedor || prov.nombre || 'Sin nombre';
+                    if (nombre && nombre !== 'Sin nombre') {
+                        const option = document.createElement('option');
+                        option.value = nombre;
+                        option.textContent = nombre;
+                        select.appendChild(option);
+                    }
                 });
             }
         } catch (error) {
@@ -337,35 +347,31 @@
         }
     }
 
-    async function cargarProductosPorProveedor(proveedorNombre) {
-        if (!proveedorNombre) return;
-        
+    async function cargarInventario() {
         try {
-            // Cargar productos del inventario
             const response = await fetch(`${DairyConfig.SCRIPT_URL}?pestana=Inventario&accion=leer`);
             const data = await response.json();
-            
             if (Array.isArray(data)) {
-                // Filtrar productos por proveedor (si el campo proveedorHabitual coincide)
-                productosPorProveedor[proveedorNombre] = data.filter(p => 
-                    (p.proveedorHabitual && p.proveedorHabitual.toLowerCase() === proveedorNombre.toLowerCase()) ||
-                    (p.proveedor && p.proveedor.toLowerCase() === proveedorNombre.toLowerCase())
-                );
-                
-                if (productosPorProveedor[proveedorNombre].length === 0) {
-                    // Si no hay productos específicos, mostrar todos
-                    productosPorProveedor[proveedorNombre] = data;
-                }
-                
-                renderListaProductos(proveedorNombre);
+                inventario = data;
             }
         } catch (error) {
-            console.error('Error cargando productos:', error);
+            console.error('Error cargando inventario:', error);
         }
     }
 
+    function filtrarProductosPorProveedor(proveedorNombre) {
+        if (!proveedorNombre) return [];
+        
+        const productosFiltrados = inventario.filter(p => {
+            const proveedorProducto = p['Proveedor Habitual'] || p.Proveedor_Habitual || p.proveedorHabitual || '';
+            return proveedorProducto.toLowerCase() === proveedorNombre.toLowerCase();
+        });
+        
+        return productosFiltrados;
+    }
+
     function renderListaProductos(proveedorNombre) {
-        const productos = productosPorProveedor[proveedorNombre] || [];
+        const productos = filtrarProductosPorProveedor(proveedorNombre);
         const container = document.getElementById('listaProductosProveedor');
         
         if (productos.length === 0) {
@@ -373,14 +379,20 @@
             return;
         }
         
-        container.innerHTML = productos.map((p, idx) => `
-            <div class="checkbox-item">
-                <input type="checkbox" value="${p.producto || p.Nombre || 'Producto'}" data-precio="${p.precioDistribuidor || p.PrecioDistribuidor || 0}" data-idx="${idx}">
-                <label>${p.producto || p.Nombre || 'Producto'} - $${(p.precioDistribuidor || p.PrecioDistribuidor || 0).toFixed(2)}</label>
-            </div>
-        `).join('');
+        container.innerHTML = productos.map((p, idx) => {
+            const nombreProducto = p.Producto || p.producto || p.nombre || 'Producto';
+            const precioDist = parseFloat(String(p.Precio_Distribuidor || p.precioDistribuidor || p.PrecioDistribuidor || 0).replace('$', '').replace(',', '.'));
+            const stock = p.Stock || p.stock || 0;
+            
+            return `
+                <div class="checkbox-item">
+                    <input type="checkbox" value="${nombreProducto}" data-precio="${precioDist}" data-stock="${stock}" data-idx="${idx}">
+                    <label>${nombreProducto} - $${precioDist.toFixed(2)} (Stock: ${stock})</label>
+                </div>
+            `;
+        }).join('');
         
-        // Agregar eventos a los checkboxes
+        // Agregar eventos
         document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]').forEach(cb => {
             cb.addEventListener('change', calcularTotalPago);
         });
@@ -393,7 +405,8 @@
         document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]:checked').forEach(cb => {
             total += parseFloat(cb.dataset.precio || 0);
         });
-        document.getElementById('totalPagarProveedor').innerText = `$${total.toFixed(2)}`;
+        document.getElementById('totalPagarProveedor').innerHTML = `$${total.toFixed(2)}`;
+        
         productosSeleccionados = Array.from(document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]:checked')).map(cb => ({
             producto: cb.value,
             precio: parseFloat(cb.dataset.precio || 0)
@@ -402,33 +415,34 @@
 
     function seleccionarTodosProductos() {
         const checkboxes = document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]');
-        const todosCheckados = Array.from(checkboxes).every(cb => cb.checked);
+        const todosCheckados = Array.from(checkboxes).length > 0 && Array.from(checkboxes).every(cb => cb.checked);
         checkboxes.forEach(cb => cb.checked = !todosCheckados);
         calcularTotalPago();
     }
 
-    // ==================== REGISTRAR PAGO A PROVEEDOR ====================
+    // ==================== REGISTRAR PAGO ====================
     async function registrarPagoProveedor() {
         const proveedor = document.getElementById('selectProveedor').value;
         const fecha = document.getElementById('fechaPagoProveedor').value;
         
         if (!proveedor) {
-            alert('Seleccione un proveedor');
+            alert('❌ Seleccione un proveedor');
             return;
         }
         if (!fecha) {
-            alert('Seleccione la fecha de pago');
+            alert('❌ Seleccione la fecha de pago');
             return;
         }
         if (productosSeleccionados.length === 0) {
-            alert('Seleccione al menos un producto');
+            alert('❌ Seleccione al menos un producto');
             return;
         }
         
         const total = productosSeleccionados.reduce((sum, p) => sum + p.precio, 0);
         const productosTexto = productosSeleccionados.map(p => p.producto).join(', ');
         
-        const pago = {
+        // Crear comprobante
+        const comprobante = {
             id: Date.now(),
             proveedor: proveedor,
             fecha: fecha,
@@ -439,12 +453,12 @@
         };
         
         // Guardar en localStorage
-        historialPagos.unshift(pago);
+        historialPagos.unshift(comprobante);
         if (historialPagos.length > 50) historialPagos.pop();
         localStorage.setItem('historialPagosProveedores', JSON.stringify(historialPagos));
         
-        // Mostrar confirmación
-        alert(`✅ Pago registrado a ${proveedor}\nTotal: $${total.toFixed(2)}\nProductos: ${productosTexto}`);
+        // Mostrar comprobante
+        alert(`✅ PAGO REGISTRADO EXITOSAMENTE\n\n📦 Proveedor: ${proveedor}\n📅 Fecha: ${fecha}\n💰 Total: $${total.toFixed(2)}\n📋 Productos: ${productosTexto}\n\n🖨️ Comprobante generado correctamente`);
         
         // Limpiar selección
         document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]').forEach(cb => cb.checked = false);
@@ -453,8 +467,9 @@
         productosSeleccionados = [];
         calcularTotalPago();
         
-        // Recargar historial
+        // Recargar historial y resumen
         renderHistorialPagos();
+        await cargarResumenFinanciero();
     }
 
     function renderHistorialPagos() {
@@ -466,15 +481,15 @@
         
         container.innerHTML = historialPagos.map(p => `
             <div class="historial-item">
-                <div class="fecha">📅 ${p.fecha}</div>
+                <div class="fecha">📅 ${p.fecha} | #${p.id}</div>
                 <div class="detalle">🏭 ${p.proveedor}</div>
-                <div class="detalle">📦 ${p.productos}</div>
+                <div class="detalle">📦 ${p.productos.substring(0, 60)}${p.productos.length > 60 ? '...' : ''}</div>
                 <div class="monto">💰 $${p.total.toFixed(2)} (${p.items} productos)</div>
             </div>
         `).join('');
     }
 
-    // ==================== CARGAR RESUMEN FINANCIERO ====================
+    // ==================== RESUMEN FINANCIERO ====================
     async function cargarResumenFinanciero() {
         try {
             let url = `${DairyConfig.SCRIPT_URL}?accion=resumenFinanciero`;
@@ -492,14 +507,14 @@
             
             if (data.status === 'success' && data.resumen) {
                 const r = data.resumen;
-                document.getElementById('ventas').innerHTML = `$${r.totalVentas?.toFixed(2) || '0'}`;
-                document.getElementById('cobrado').innerHTML = `$${r.totalCobrado?.toFixed(2) || '0'}`;
-                document.getElementById('pendiente').innerHTML = `$${r.totalPendiente?.toFixed(2) || '0'}`;
+                document.getElementById('ventas').innerHTML = `$${(r.totalVentas || 0).toFixed(2)}`;
+                document.getElementById('cobrado').innerHTML = `$${(r.totalCobrado || 0).toFixed(2)}`;
+                document.getElementById('pendiente').innerHTML = `$${(r.totalPendiente || 0).toFixed(2)}`;
                 
                 // Sumar pagos a proveedores del historial
                 const totalPagadoProveedores = historialPagos.reduce((sum, p) => sum + p.total, 0);
-                document.getElementById('proveedor').innerHTML = `$${(r.totalCostoProveedor + totalPagadoProveedores).toFixed(2)}`;
-                document.getElementById('ganancia').innerHTML = `$${(r.totalGanancia - totalPagadoProveedores).toFixed(2)}`;
+                document.getElementById('proveedor').innerHTML = `$${totalPagadoProveedores.toFixed(2)}`;
+                document.getElementById('ganancia').innerHTML = `$${((r.totalGanancia || 0) - totalPagadoProveedores).toFixed(2)}`;
                 document.getElementById('items').innerHTML = r.totalItems || 0;
             }
         } catch (error) {
@@ -537,17 +552,24 @@
 
     // ==================== INICIALIZACIÓN ====================
     window.addEventListener('DOMContentLoaded', async () => {
-        // Cargar historial de localStorage
+        // Mostrar loading
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading';
+        loadingDiv.innerText = 'Cargando datos...';
+        document.body.prepend(loadingDiv);
+        
+        // Cargar historial
         const stored = localStorage.getItem('historialPagosProveedores');
         if (stored) historialPagos = JSON.parse(stored);
         renderHistorialPagos();
         
-        // Cargar proveedores y productos
+        // Cargar datos
         await cargarProveedores();
+        await cargarInventario();
         
         // Eventos
         document.getElementById('selectProveedor').addEventListener('change', (e) => {
-            if (e.target.value) cargarProductosPorProveedor(e.target.value);
+            if (e.target.value) renderListaProductos(e.target.value);
         });
         document.getElementById('btnSeleccionarTodos').addEventListener('click', seleccionarTodosProductos);
         document.getElementById('btnRegistrarPagoProveedor').addEventListener('click', registrarPagoProveedor);
@@ -564,6 +586,9 @@
         actualizarVisibilidad();
         filtroActual = { tipo: 'dia', valor: hoy };
         await cargarResumenFinanciero();
+        
+        // Remover loading
+        loadingDiv.remove();
     });
 </script>
 </body>

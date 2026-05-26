@@ -181,8 +181,8 @@
             </div>
         </div>
 
-        <!-- MÓDULO DE ACCESOS DIRECTOS -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        <!-- MÓDULO DE ACCESOS DIRECTOS (Agregado el botón Finanzas) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-3">
             <!-- VENDER -->
             <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95 transition-all">
                 <div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1">
@@ -224,6 +224,14 @@
                     <span class="material-symbols-outlined text-3xl">shopping_cart</span>
                 </div>
                 <span class="text-[11px] font-black uppercase text-slate-800">Compras</span>
+            </button>
+
+            <!-- FINANZAS (Nuevo) -->
+            <button id="btn-finanzas" onclick="location.href='finanzas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95 transition-all">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1">
+                    <span class="material-symbols-outlined text-3xl">account_balance</span>
+                </div>
+                <span class="text-[11px] font-black uppercase text-slate-800">Finanzas</span>
             </button>
 
             <!-- PROVEEDORES -->

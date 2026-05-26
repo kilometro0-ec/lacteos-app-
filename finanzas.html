@@ -212,15 +212,44 @@
         calcularTotal();
     }
 
-    // ==================== ENVIAR WHATSAPP ====================
+    // ==================== ENVIAR WHATSAPP CON MENSAJE MEJORADO ====================
     async function enviarPorWhatsApp(proveedor, fecha, productos, total) {
-        const mensaje = `*🥛 LÓGICA LÁCTEA - COMPROBANTE DE PAGO*\n\n` +
-                        `*Proveedor:* ${proveedor}\n` +
-                        `*Fecha:* ${fecha}\n` +
-                        `*Total Pagado:* $${total.toFixed(2)}\n` +
-                        `*Items pagados:* ${productos.length}\n\n` +
-                        `*Detalle:*\n${productos.map(p => `- ${p.producto} (${p.cliente}): $${p.costoProveedor.toFixed(2)}`).join('\n')}\n\n` +
-                        `¡Gracias trabajndo por Ecuador!`;
+        // Crear detalle de productos con formato de tabla
+        let detalleProductos = "";
+        productos.forEach((p, index) => {
+            detalleProductos += `${index + 1}. ${p.producto}\n   🧑 Cliente: ${p.cliente}\n   💰 Valor pagado: $${p.costoProveedor.toFixed(2)}\n\n`;
+        });
+        
+        const mensaje = `╔══════════════════════════════════════╗
+║     🥛 LÓGICA LÁCTEA 🥛          ║
+║   COMPROBANTE DE PAGO A PROVEEDOR   ║
+╚══════════════════════════════════════╝
+
+┌─────────────────────────────────────┐
+│ 📋 INFORMACIÓN DEL PAGO             │
+├─────────────────────────────────────┤
+│ 🏭 Proveedor: ${proveedor}
+│ 📅 Fecha: ${fecha}
+│ 💵 Total Pagado: $${total.toFixed(2)}
+│ 📦 Items pagados: ${productos.length}
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ 📦 DETALLE DE PRODUCTOS PAGADOS     │
+├─────────────────────────────────────┤
+${detalleProductos}└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ 🌿 UN PAÍS SANO CON PRODUCTOS       │
+│    NATURALES Y ARTESANALES          │
+│                                      │
+│    "De nuestra tierra a tu mesa,    │
+│     con amor y tradición láctea"    │
+└─────────────────────────────────────┘
+
+✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨
+────────────────────────────────────────
+LÓGICA LÁCTEA - Calidad y Tradición desde el Campo Ecuatoriano`;
         
         const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
         window.open(url, '_blank');
@@ -266,7 +295,7 @@
                 body: JSON.stringify(payload)
             });
             
-            const enviarWA = confirm(`✅ Pago registrado exitosamente!\n\nProveedor: ${proveedor}\nTotal: $${total.toFixed(2)}\nItems: ${productosSeleccionados.length}\n\n¿Desea enviar el comprobante por WhatsApp?`);
+            const enviarWA = confirm(`✅ Pago registrado exitosamente!\n\n📊 Resumen:\n🏭 Proveedor: ${proveedor}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${productosSeleccionados.length}\n\n¿Desea enviar el comprobante por WhatsApp?`);
             
             if (enviarWA) {
                 await enviarPorWhatsApp(proveedor, fecha, productosSeleccionados, total);

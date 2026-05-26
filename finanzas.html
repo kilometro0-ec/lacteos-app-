@@ -5,222 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Finanzas Lácteos - Dashboard Completo</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Work Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-        }
-
-        body {
-            background: #faf5ff;
-            padding: 24px 20px;
-        }
-
-        /* Header con filtros */
-        .header-finanzas {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            gap: 15px;
-            background: white;
-            padding: 16px 24px;
-            border-radius: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #e9d5ff;
-        }
-
-        h1 {
-            font-size: 1.6rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #a21caf, #db2777);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: -0.02em;
-        }
-
-        .filtros-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-        }
-
-        .filtros-group select, .filtros-group input {
-            padding: 10px 16px;
-            border-radius: 40px;
-            border: 1px solid #e9d5ff;
-            background: white;
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #1f012a;
-            outline: none;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .filtros-group select:focus, .filtros-group input:focus {
-            border-color: #a21caf;
-            box-shadow: 0 0 0 2px rgba(162,28,175,0.2);
-        }
-
-        .btn-aplicar {
-            background: #a21caf;
-            border: none;
-            color: white;
-            font-weight: 700;
-            padding: 10px 24px;
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
-        }
-
-        .btn-aplicar:hover {
-            background: #6b21a8;
-            transform: scale(0.97);
-        }
-
-        .grid-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .card {
-            background: white;
-            padding: 22px 20px;
-            border-radius: 28px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            transition: all 0.25s;
-            border-left: 6px solid;
-        }
-
-        .card:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(0,0,0,0.08); }
-        .card h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; color: #5b5b6b; }
-        .card span { font-size: 32px; font-weight: 800; color: #111; display: block; line-height: 1.2; }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Work Sans', system-ui, sans-serif; }
+        body { background: #faf5ff; padding: 24px 20px; }
+        .header-finanzas { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 30px; gap: 15px; background: white; padding: 16px 24px; border-radius: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e9d5ff; }
+        h1 { font-size: 1.6rem; font-weight: 800; background: linear-gradient(135deg, #a21caf, #db2777); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .filtros-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .filtros-group select, .filtros-group input { padding: 10px 16px; border-radius: 40px; border: 1px solid #e9d5ff; background: white; font-weight: 600; font-size: 0.85rem; outline: none; }
+        .btn-aplicar { background: #a21caf; border: none; color: white; font-weight: 700; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
+        .btn-aplicar:hover { background: #6b21a8; }
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .card { background: white; padding: 22px 20px; border-radius: 28px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-left: 6px solid; }
+        .card h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; color: #5b5b6b; }
+        .card span { font-size: 32px; font-weight: 800; color: #111; display: block; }
         .ventas { border-left-color: #3498db; }
         .cobrado { border-left-color: #2ecc71; }
         .pendiente { border-left-color: #f39c12; }
         .proveedor { border-left-color: #e74c3c; }
         .ganancia { border-left-color: #9b59b6; }
         .items { border-left-color: #1abc9c; }
-
-        /* Secciones avanzadas */
-        .secciones-avanzadas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 28px;
-            margin-top: 20px;
-        }
-
-        .panel-gestion {
-            background: white;
-            border-radius: 2rem;
-            padding: 1.5rem;
-            border: 1px solid #e9d5ff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
-        }
-
-        .panel-gestion h2 {
-            font-size: 1.2rem;
-            font-weight: 800;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #1e1a2f;
-            border-left: 4px solid #a21caf;
-            padding-left: 12px;
-        }
-
-        .form-cancelacion, .form-productos {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 25px;
-        }
-
-        input, select, textarea {
-            padding: 12px 16px;
-            border-radius: 60px;
-            border: 1px solid #e2d6f0;
-            background: #fefcff;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-
-        input:focus, select:focus, textarea:focus {
-            border-color: #a21caf;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(162,28,175,0.2);
-        }
-
-        button {
-            background: #f0e9ff;
-            border: none;
-            padding: 12px;
-            border-radius: 60px;
-            font-weight: 700;
-            color: #4a1d6d;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        button.primary {
-            background: #a21caf;
-            color: white;
-        }
-
-        button.primary:hover {
-            background: #6b21a8;
-        }
-
-        .lista-registros {
-            margin-top: 20px;
-            max-height: 260px;
-            overflow-y: auto;
-        }
-
-        .item-registro {
-            background: #faf5ff;
-            border-radius: 20px;
-            padding: 12px;
-            margin-bottom: 8px;
-            border-left: 3px solid #a21caf;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: #a21caf;
-            font-weight: bold;
-        }
-
-        hr {
-            margin: 20px 0;
-            border-color: #f0e6ff;
-        }
-
-        .subtitulo {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: #7c6b8f;
-            margin-top: 8px;
-            font-weight: 600;
-        }
-
-        @media (max-width: 640px) {
-            body { padding: 16px; }
-            .card span { font-size: 24px; }
-        }
+        .secciones-avanzadas { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px; margin-top: 20px; }
+        .panel-gestion { background: white; border-radius: 2rem; padding: 1.5rem; border: 1px solid #e9d5ff; }
+        .panel-gestion h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem; border-left: 4px solid #a21caf; padding-left: 12px; }
+        .form-cancelacion, .form-productos { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; }
+        input, select { padding: 12px 16px; border-radius: 60px; border: 1px solid #e2d6f0; background: #fefcff; font-size: 0.9rem; }
+        button.primary { background: #a21caf; color: white; border: none; padding: 12px; border-radius: 60px; font-weight: 700; cursor: pointer; }
+        button.primary:hover { background: #6b21a8; }
+        .lista-registros { margin-top: 20px; max-height: 260px; overflow-y: auto; }
+        .item-registro { background: #faf5ff; border-radius: 20px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #a21caf; font-size: 0.8rem; }
+        .loading { text-align: center; padding: 30px; color: #a21caf; font-weight: bold; }
+        .subtitulo { font-size: 0.7rem; text-transform: uppercase; color: #7c6b8f; margin-top: 8px; font-weight: 600; }
+        @media (max-width: 640px) { body { padding: 16px; } .card span { font-size: 24px; } }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
@@ -234,14 +48,14 @@
             <option value="mes">🗓️ Mes</option>
             <option value="ano">📆 Año</option>
         </select>
-        <input type="date" id="fechaDia" value="2025-01-15">
+        <input type="date" id="fechaDia">
         <select id="fechaMes" style="display:none;">
             <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
             <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
             <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
             <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
         </select>
-        <input type="number" id="fechaAno" placeholder="Año" value="2025" style="display:none;">
+        <input type="number" id="fechaAno" placeholder="Año" style="display:none;">
         <button class="btn-aplicar" id="btnFiltrar">Aplicar filtro</button>
     </div>
 </div>
@@ -250,256 +64,162 @@
     <div class="card ventas"><h3>💰 Total Ventas</h3><span id="ventas">$0</span></div>
     <div class="card cobrado"><h3>✅ Total Cobrado</h3><span id="cobrado">$0</span></div>
     <div class="card pendiente"><h3>⏳ Por Cobrar</h3><span id="pendiente">$0</span></div>
-    <div class="card proveedor"><h3>🏭 Pagos a Proveedores</h3><span id="proveedor">$0</span></div>
+    <div class="card proveedor"><h3>🏭 Costo Proveedores</h3><span id="proveedor">$0</span></div>
     <div class="card ganancia"><h3>📈 Ganancia Neta</h3><span id="ganancia">$0</span></div>
     <div class="card items"><h3>📦 Productos Vendidos</h3><span id="items">0</span></div>
 </div>
 
-<!-- SECCIONES AVANZADAS: cancelaciones a proveedores / productos entregados -->
 <div class="secciones-avanzadas">
-    <!-- Panel: Cancelaciones a Proveedores / Fábrica -->
     <div class="panel-gestion">
-        <h2>🏭 Cancelaciones a Proveedor / Fábrica</h2>
+        <h2>🏭 Cancelaciones a Proveedor</h2>
         <div class="form-cancelacion">
-            <input type="text" id="proveedorNombre" placeholder="Nombre del proveedor / fábrica" autocomplete="off">
-            <input type="text" id="productoCancelado" placeholder="Producto(s) cancelado (ej: Queso, Leche)">
-            <input type="number" id="montoCancelado" placeholder="Monto cancelado (USD)" step="0.01">
+            <input type="text" id="proveedorNombre" placeholder="Nombre del proveedor">
+            <input type="text" id="productoCancelado" placeholder="Producto">
+            <input type="number" id="montoCancelado" placeholder="Monto (USD)" step="0.01">
             <input type="date" id="fechaCancelacion">
             <select id="estadoProveedor">
-                <option value="PENDIENTE">Pendiente por pagar</option>
-                <option value="CANCELADO">Pagado / Cancelado</option>
-                <option value="ANULADO">Anulado / No se entrega</option>
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="CANCELADO">Cancelado/Pagado</option>
             </select>
-            <button id="btnRegistrarCancelacion" class="primary">➕ Registrar cancelación / pago</button>
+            <button id="btnRegistrarCancelacion" class="primary">➕ Registrar</button>
         </div>
-        <div class="subtitulo">📋 Últimas cancelaciones registradas</div>
+        <div class="subtitulo">📋 Últimos registros</div>
         <div id="listaCancelaciones" class="lista-registros">
-            <div class="item-registro">No hay registros aún.</div>
+            <div class="item-registro">No hay registros.</div>
         </div>
     </div>
 
-    <!-- Panel: Productos Entregados y Estado de Entregas (con opción de marcar como cancelado si no se entrega) -->
     <div class="panel-gestion">
-        <h2>📦 Productos Entregados / Facturación a Clientes</h2>
+        <h2>📦 Entregas a Clientes</h2>
         <div class="form-productos">
-            <input type="text" id="clienteEntrega" placeholder="Cliente / Razón social">
-            <input type="text" id="productoEntregado" placeholder="Producto entregado (Nombre)">
+            <input type="text" id="clienteEntrega" placeholder="Cliente">
+            <input type="text" id="productoEntregado" placeholder="Producto">
             <input type="number" id="cantidadEntregada" placeholder="Cantidad" step="1">
-            <input type="number" id="precioUnitario" placeholder="Precio unitario (USD)" step="0.01">
+            <input type="number" id="precioUnitario" placeholder="Precio unitario" step="0.01">
             <input type="date" id="fechaEntrega">
             <select id="estadoEntrega">
                 <option value="ENTREGADO">✅ Entregado y cobrado</option>
-                <option value="PENDIENTE_PAGO">🚚 Entregado pero pendiente pago</option>
-                <option value="CANCELADO_CLIENTE">❌ Cancelado (no se entregó/ no pagará)</option>
+                <option value="PENDIENTE_PAGO">🚚 Pendiente de pago</option>
+                <option value="CANCELADO">❌ Cancelado</option>
             </select>
-            <button id="btnRegistrarEntrega" class="primary">➕ Registrar producto entregado</button>
+            <button id="btnRegistrarEntrega" class="primary">➕ Registrar</button>
         </div>
-        <div class="subtitulo">📄 Últimos registros de entregas / cancelaciones de cliente</div>
+        <div class="subtitulo">📄 Últimas entregas</div>
         <div id="listaEntregas" class="lista-registros">
-            <div class="item-registro">Sin movimientos recientes.</div>
+            <div class="item-registro">Sin registros.</div>
         </div>
     </div>
 </div>
 
 <script src="./js/api-config.js"></script>
 <script>
-    // ---------- Variables globales ----------
-    let filtroActual = { tipo: 'dia', valor: '2025-01-15' };
-
-    // Almacenes locales para las listas dinámicas (cancelaciones proveedor y entregas)
+    let filtroActual = { tipo: 'dia', valor: '' };
     let cancelacionesArray = [];
     let entregasArray = [];
 
-    // Helper: mostrar loading
     function mostrarLoading(visible) {
-        const loadingDiv = document.getElementById('loadingIndicator') || (() => {
-            let ld = document.createElement('div');
+        let ld = document.getElementById('loadingIndicator');
+        if (!ld && visible) {
+            ld = document.createElement('div');
             ld.id = 'loadingIndicator';
-            ld.style.position = 'fixed';
-            ld.style.bottom = '20px';
-            ld.style.right = '20px';
-            ld.style.background = '#a21caf';
-            ld.style.color = 'white';
-            ld.style.padding = '8px 16px';
-            ld.style.borderRadius = '40px';
-            ld.style.fontWeight = 'bold';
-            ld.style.zIndex = '999';
+            ld.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#a21caf;color:white;padding:8px16px;border-radius:40px;font-weight:bold;z-index:999';
             ld.innerText = 'Cargando...';
             document.body.appendChild(ld);
-            return ld;
-        })();
-        loadingDiv.style.display = visible ? 'block' : 'none';
+        }
+        if (ld) ld.style.display = visible ? 'block' : 'none';
     }
 
-    // ========== 1. FUNCIÓN PARA OBTENER RESUMEN FILTRADO (desde la API) ==========
     async function cargarResumenFinancieroConFiltro() {
         mostrarLoading(true);
         try {
-            let params = new URLSearchParams();
-            params.append('accion', 'resumenFinanciero');
-            if (filtroActual.tipo === 'dia') {
-                params.append('fecha', filtroActual.valor);
-            } else if (filtroActual.tipo === 'mes') {
-                params.append('mes', filtroActual.valor.split('-')[0]);
-                params.append('ano', filtroActual.valor.split('-')[1]);
-            } else if (filtroActual.tipo === 'ano') {
-                params.append('ano', filtroActual.valor);
+            let url = `${DairyConfig.SCRIPT_URL}?accion=resumenFinanciero`;
+            if (filtroActual.tipo === 'dia' && filtroActual.valor) {
+                url += `&fecha=${filtroActual.valor}`;
+            } else if (filtroActual.tipo === 'mes' && filtroActual.valor) {
+                const [mes, ano] = filtroActual.valor.split('-');
+                url += `&mes=${mes}&ano=${ano}`;
+            } else if (filtroActual.tipo === 'ano' && filtroActual.valor) {
+                url += `&ano=${filtroActual.valor}`;
             }
-
-            const response = await fetch(`${DairyConfig.SCRIPT_URL}?${params.toString()}`, {
-                method: "GET",
-                mode: "cors",
-                headers: { "Content-Type": "application/json" }
-            });
+            
+            const response = await fetch(url, { method: "GET", mode: "cors" });
             const data = await response.json();
-
-            if (data.status !== "success") {
-                console.warn("API sin éxito, usando datos mock integrados");
-                // Modo demostración con datos mock coherentes
-                const mock = generarMockPorFiltro();
-                actualizarCards(mock);
-            } else {
+            
+            if (data.status === "success" && data.resumen) {
                 const r = data.resumen;
-                actualizarCards({
-                    totalVentas: r.totalVentas || 0,
-                    totalCobrado: r.totalCobrado || 0,
-                    totalPendiente: r.totalPendiente || 0,
-                    totalCostoProveedor: r.totalCostoProveedor || 0,
-                    totalGanancia: r.totalGanancia || 0,
-                    totalItems: r.totalItems || 0
-                });
+                document.getElementById('ventas').innerHTML = `$${Number(r.totalVentas || 0).toFixed(2)}`;
+                document.getElementById('cobrado').innerHTML = `$${Number(r.totalCobrado || 0).toFixed(2)}`;
+                document.getElementById('pendiente').innerHTML = `$${Number(r.totalPendiente || 0).toFixed(2)}`;
+                document.getElementById('proveedor').innerHTML = `$${Number(r.totalCostoProveedor || 0).toFixed(2)}`;
+                document.getElementById('ganancia').innerHTML = `$${Number(r.totalGanancia || 0).toFixed(2)}`;
+                document.getElementById('items').innerHTML = Number(r.totalItems || 0);
+            } else {
+                console.warn("Respuesta inesperada:", data);
             }
         } catch (error) {
-            console.error("Error filtro:", error);
-            // fallback visual con datos simulados integrados
-            const mock = generarMockPorFiltro();
-            actualizarCards(mock);
+            console.error("Error cargando resumen:", error);
         } finally {
             mostrarLoading(false);
         }
     }
 
-    function actualizarCards(res) {
-        document.getElementById('ventas').innerHTML = `$${Number(res.totalVentas || 0).toFixed(2)}`;
-        document.getElementById('cobrado').innerHTML = `$${Number(res.totalCobrado || 0).toFixed(2)}`;
-        document.getElementById('pendiente').innerHTML = `$${Number(res.totalPendiente || 0).toFixed(2)}`;
-        document.getElementById('proveedor').innerHTML = `$${Number(res.totalCostoProveedor || 0).toFixed(2)}`;
-        document.getElementById('ganancia').innerHTML = `$${Number(res.totalGanancia || 0).toFixed(2)}`;
-        document.getElementById('items').innerHTML = Number(res.totalItems || 0);
-    }
-
-    function generarMockPorFiltro() {
-        // Mock inteligente que varía según el filtro para mostrar dinamismo
-        let baseVentas = 12580.50;
-        let baseCobrado = 9870.25;
-        if (filtroActual.tipo === 'dia') baseVentas = 2450.30;
-        if (filtroActual.tipo === 'mes') baseVentas = 18520.75;
-        if (filtroActual.tipo === 'ano') baseVentas = 189200.40;
-        const pendiente = baseVentas - baseCobrado;
-        const costoProveedor = baseVentas * 0.45;
-        const ganancia = baseVentas - costoProveedor - (pendiente * 0.1);
-        const items = Math.floor(baseVentas / 18.5);
-        return {
-            totalVentas: baseVentas,
-            totalCobrado: baseCobrado,
-            totalPendiente: pendiente > 0 ? pendiente : 0,
-            totalCostoProveedor: costoProveedor,
-            totalGanancia: ganancia,
-            totalItems: items
-        };
-    }
-
-    // ========== 2. GESTIÓN DE CANCELACIONES A PROVEEDORES (localStorage + render) ==========
-    function guardarCancelacionesLocal() {
-        localStorage.setItem('finanzas_cancelaciones_proveedor', JSON.stringify(cancelacionesArray));
-    }
+    // LocalStorage para cancelaciones
+    function guardarCancelacionesLocal() { localStorage.setItem('finanzas_cancelaciones', JSON.stringify(cancelacionesArray)); }
     function cargarCancelacionesLocal() {
-        const stored = localStorage.getItem('finanzas_cancelaciones_proveedor');
-        if (stored) cancelacionesArray = JSON.parse(stored);
-        else cancelacionesArray = [];
+        const stored = localStorage.getItem('finanzas_cancelaciones');
+        cancelacionesArray = stored ? JSON.parse(stored) : [];
         renderListaCancelaciones();
     }
-
     function renderListaCancelaciones() {
         const container = document.getElementById('listaCancelaciones');
         if (!cancelacionesArray.length) {
-            container.innerHTML = '<div class="item-registro">No hay cancelaciones registradas.</div>';
+            container.innerHTML = '<div class="item-registro">No hay registros.</div>';
             return;
         }
         container.innerHTML = cancelacionesArray.slice(-8).reverse().map(c => `
             <div class="item-registro">
                 <strong>${c.proveedor}</strong> - ${c.producto}<br>
-                Monto: $${Number(c.monto).toFixed(2)} | Fecha: ${c.fecha}<br>
-                Estado: ${c.estado} 
-                <span style="font-size:10px; background:#f0e6ff; padding:2px 6px; border-radius:30px;">${c.estado}</span>
+                $${Number(c.monto).toFixed(2)} | ${c.fecha}<br>
+                Estado: ${c.estado}
             </div>
         `).join('');
     }
-
     function registrarCancelacion() {
         const proveedor = document.getElementById('proveedorNombre').value.trim();
         const producto = document.getElementById('productoCancelado').value.trim();
         const monto = parseFloat(document.getElementById('montoCancelado').value);
         const fecha = document.getElementById('fechaCancelacion').value;
         const estado = document.getElementById('estadoProveedor').value;
-
-        if (!proveedor || !producto || isNaN(monto) || monto <= 0 || !fecha) {
-            alert("Completa todos los campos del proveedor (nombre, producto, monto, fecha)");
-            return;
-        }
-        cancelacionesArray.push({
-            id: Date.now(),
-            proveedor, producto, monto, fecha, estado,
-            timestamp: new Date().toISOString()
-        });
+        if (!proveedor || !producto || isNaN(monto) || !fecha) return alert("Complete todos los campos");
+        cancelacionesArray.push({ id: Date.now(), proveedor, producto, monto, fecha, estado });
         guardarCancelacionesLocal();
         renderListaCancelaciones();
-        // limpiar campos opcionales
         document.getElementById('proveedorNombre').value = '';
         document.getElementById('productoCancelado').value = '';
         document.getElementById('montoCancelado').value = '';
-        document.getElementById('fechaCancelacion').value = '';
-        alert("Cancelación / pago a proveedor registrado.");
-        // Adicional: actualizar el total de proveedor en el resumen (si se desea integrar)
-        recalcularTotalProveedoresEnCards();
+        alert("Registrado correctamente");
     }
 
-    async function recalcularTotalProveedoresEnCards() {
-        // Simula actualización del total de proveedor sumando los montos registrados como cancelados (estado CANCELADO)
-        const totalProveedores = cancelacionesArray.filter(c => c.estado === 'CANCELADO').reduce((acc, c) => acc + c.monto, 0);
-        const currentSpan = document.getElementById('proveedor');
-        let currentValue = parseFloat(currentSpan.innerText.replace('$', '').replace(',', '')) || 0;
-        // Solo para mostrar coherencia, sumamos los nuevos pero sin romper la API (opcional)
-        // Preferimos mantener el valor proveniente del backend; pero actualizamos visualmente sincronizado con registros adicionales.
-        // Esto es demostrativo: se podría integrar pero no pisamos la lógica principal.
-    }
-
-    // ========== 3. GESTIÓN DE ENTREGAS / CANCELACIONES DE CLIENTES ==========
-    function guardarEntregasLocal() {
-        localStorage.setItem('finanzas_entregas_clientes', JSON.stringify(entregasArray));
-    }
+    // LocalStorage para entregas
+    function guardarEntregasLocal() { localStorage.setItem('finanzas_entregas', JSON.stringify(entregasArray)); }
     function cargarEntregasLocal() {
-        const stored = localStorage.getItem('finanzas_entregas_clientes');
-        if (stored) entregasArray = JSON.parse(stored);
-        else entregasArray = [];
+        const stored = localStorage.getItem('finanzas_entregas');
+        entregasArray = stored ? JSON.parse(stored) : [];
         renderListaEntregas();
     }
-
     function renderListaEntregas() {
         const container = document.getElementById('listaEntregas');
         if (!entregasArray.length) {
-            container.innerHTML = '<div class="item-registro">Sin registros de entregas.</div>';
+            container.innerHTML = '<div class="item-registro">Sin registros.</div>';
             return;
         }
         container.innerHTML = entregasArray.slice(-8).reverse().map(e => `
             <div class="item-registro">
                 🧾 ${e.cliente} | ${e.producto} x${e.cantidad} → $${(e.cantidad * e.precioUnitario).toFixed(2)}<br>
-                Fecha: ${e.fechaEntrega} | Estado: <strong>${e.estado}</strong>
-                ${e.estado === 'CANCELADO_CLIENTE' ? '⚠️ Pedido cancelado (no se entregó)' : ''}
+                Fecha: ${e.fechaEntrega} | Estado: ${e.estado}
             </div>
         `).join('');
     }
-
     function registrarEntrega() {
         const cliente = document.getElementById('clienteEntrega').value.trim();
         const producto = document.getElementById('productoEntregado').value.trim();
@@ -507,93 +227,61 @@
         const precioUnitario = parseFloat(document.getElementById('precioUnitario').value);
         const fechaEntrega = document.getElementById('fechaEntrega').value;
         const estado = document.getElementById('estadoEntrega').value;
-
-        if (!cliente || !producto || isNaN(cantidad) || cantidad <= 0 || isNaN(precioUnitario) || precioUnitario <= 0 || !fechaEntrega) {
-            alert("Completa todos los campos: cliente, producto, cantidad, precio unitario y fecha.");
-            return;
-        }
-        entregasArray.push({
-            id: Date.now(),
-            cliente, producto, cantidad, precioUnitario, fechaEntrega, estado,
-            total: cantidad * precioUnitario
-        });
+        if (!cliente || !producto || isNaN(cantidad) || isNaN(precioUnitario) || !fechaEntrega) return alert("Complete todos los campos");
+        entregasArray.push({ id: Date.now(), cliente, producto, cantidad, precioUnitario, fechaEntrega, estado, total: cantidad * precioUnitario });
         guardarEntregasLocal();
         renderListaEntregas();
-        // Limpiar campos
         document.getElementById('clienteEntrega').value = '';
         document.getElementById('productoEntregado').value = '';
         document.getElementById('cantidadEntregada').value = '';
         document.getElementById('precioUnitario').value = '';
-        document.getElementById('fechaEntrega').value = '';
-        alert("Producto entregado / estado registrado correctamente.");
-        // Si el estado es CANCELADO_CLIENTE, se podría reflejar en por cobrar.
-        actualizarIndicadoresConEntregas();
+        alert("Entrega registrada");
     }
 
-    function actualizarIndicadoresConEntregas() {
-        // Sincronización opcional: ajustar monto pendiente/cobrado basado en entregas recientes en estado PENDIENTE_PAGO o ENTREGADO
-        // Para evitar complejidad, solo mostramos un efecto visual complementario: 
-        const totalEntregadoCobrado = entregasArray.filter(e => e.estado === 'ENTREGADO').reduce((acc, e) => acc + e.total, 0);
-        const totalPendientePago = entregasArray.filter(e => e.estado === 'PENDIENTE_PAGO').reduce((acc, e) => acc + e.total, 0);
-        // no modificamos directamente los valores principales de la API, pero mostramos un tooltip (opcional)
-        console.log(`Entregas: CobradoLocal=$${totalEntregadoCobrado}, PendienteLocal=$${totalPendientePago}`);
-    }
-
-    // ========== CONTROL DE FILTROS (días, meses, años) ==========
+    // Filtros
     function actualizarVisibilidadCamposFiltro() {
         const tipo = document.getElementById('filtroTipo').value;
         document.getElementById('fechaDia').style.display = tipo === 'dia' ? 'inline-block' : 'none';
         document.getElementById('fechaMes').style.display = tipo === 'mes' ? 'inline-block' : 'none';
         document.getElementById('fechaAno').style.display = tipo === 'ano' ? 'inline-block' : 'none';
-        if (tipo === 'mes') {
-            document.getElementById('fechaAno').style.display = 'inline-block';
-        }
+        if (tipo === 'mes') document.getElementById('fechaAno').style.display = 'inline-block';
     }
 
     function aplicarFiltro() {
         const tipo = document.getElementById('filtroTipo').value;
         if (tipo === 'dia') {
             const diaVal = document.getElementById('fechaDia').value;
-            if (!diaVal) return alert("Selecciona una fecha");
+            if (!diaVal) return alert("Seleccione una fecha");
             filtroActual = { tipo: 'dia', valor: diaVal };
         } else if (tipo === 'mes') {
             const mes = document.getElementById('fechaMes').value;
             const ano = document.getElementById('fechaAno').value;
-            if (!ano) return alert("Ingresa el año");
+            if (!ano) return alert("Ingrese el año");
             filtroActual = { tipo: 'mes', valor: `${mes}-${ano}` };
         } else if (tipo === 'ano') {
             const ano = document.getElementById('fechaAno').value;
-            if (!ano) return alert("Ingresa año");
+            if (!ano) return alert("Ingrese el año");
             filtroActual = { tipo: 'ano', valor: ano };
         }
         cargarResumenFinancieroConFiltro();
     }
 
-    // ========== INICIALIZACIÓN ==========
-    window.addEventListener('DOMContentLoaded', async () => {
-        // Cargar datos de localStorage para cancelaciones y entregas
+    // Inicialización
+    window.addEventListener('DOMContentLoaded', () => {
         cargarCancelacionesLocal();
         cargarEntregasLocal();
-
-        // Event listeners filtros
-        document.getElementById('filtroTipo').addEventListener('change', actualizarVisibilidadCamposFiltro);
-        document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
-        actualizarVisibilidadCamposFiltro();
-
-        // Definir fecha actual por defecto
         const hoy = new Date().toISOString().split('T')[0];
         document.getElementById('fechaDia').value = hoy;
         document.getElementById('fechaCancelacion').value = hoy;
         document.getElementById('fechaEntrega').value = hoy;
         document.getElementById('fechaAno').value = new Date().getFullYear();
-
-        // Registrar eventos para botones de gestión
+        document.getElementById('filtroTipo').addEventListener('change', actualizarVisibilidadCamposFiltro);
+        document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
         document.getElementById('btnRegistrarCancelacion').addEventListener('click', registrarCancelacion);
         document.getElementById('btnRegistrarEntrega').addEventListener('click', registrarEntrega);
-
-        // Cargar resumen inicial (sin filtro o por defecto día actual)
+        actualizarVisibilidadCamposFiltro();
         filtroActual = { tipo: 'dia', valor: hoy };
-        await cargarResumenFinancieroConFiltro();
+        cargarResumenFinancieroConFiltro();
     });
 </script>
 </body>

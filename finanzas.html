@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Finanzas Lácteos</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, sans-serif;
+}
+
+body{
+background:#f4f6f9;
+padding:20px;
+}
+
+h1{
+margin-bottom:20px;
+color:#111;
+}
+
+.grid{
+display:grid;
+grid-template-columns:
+repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+}
+
+.card{
+background:#fff;
+padding:20px;
+border-radius:18px;
+box-shadow:0 4px 10px rgba(0,0,0,.08);
+}
+
+.card h3{
+font-size:16px;
+margin-bottom:10px;
+color:#666;
+}
+
+.card span{
+font-size:28px;
+font-weight:bold;
+color:#111;
+}
+
+.ventas{
+border-left:6px solid #3498db;
+}
+
+.cobrado{
+border-left:6px solid #2ecc71;
+}
+
+.pendiente{
+border-left:6px solid #f39c12;
+}
+
+.proveedor{
+border-left:6px solid #e74c3c;
+}
+
+.ganancia{
+border-left:6px solid #9b59b6;
+}
+
+.items{
+border-left:6px solid #1abc9c;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>
+Resumen Financiero
+</h1>
+
+<div class="grid">
+
+<div class="card ventas">
+<h3>Total Ventas</h3>
+<span id="ventas">$0</span>
+</div>
+
+<div class="card cobrado">
+<h3>Total Cobrado</h3>
+<span id="cobrado">$0</span>
+</div>
+
+<div class="card pendiente">
+<h3>Por Cobrar</h3>
+<span id="pendiente">$0</span>
+</div>
+
+<div class="card proveedor">
+<h3>Pago Proveedor</h3>
+<span id="proveedor">$0</span>
+</div>
+
+<div class="card ganancia">
+<h3>Ganancia</h3>
+<span id="ganancia">$0</span>
+</div>
+
+<div class="card items">
+<h3>Productos Vendidos</h3>
+<span id="items">0</span>
+</div>
+
+</div>
+
+<script>
+
+/**
+ * ====================================================
+ * API
+ * ====================================================
+ */
+
+const API_URL =
+"https://script.google.com/macros/s/TU_DEPLOY/exec";
+
+/**
+ * ====================================================
+ * CARGAR RESUMEN
+ * ====================================================
+ */
+
+async function cargarResumen() {
+
+  try {
+
+    const response =
+      await fetch(
+        API_URL +
+        "?accion=resumenFinanciero"
+      );
+
+    const data =
+      await response.json();
+
+    console.log(data);
+
+    if (data.status !== "success") {
+
+      alert(data.message);
+
+      return;
+    }
+
+    const r = data.resumen;
+
+    document.getElementById(
+      "ventas"
+    ).innerText =
+      "$" + r.totalVentas.toFixed(2);
+
+    document.getElementById(
+      "cobrado"
+    ).innerText =
+      "$" + r.totalCobrado.toFixed(2);
+
+    document.getElementById(
+      "pendiente"
+    ).innerText =
+      "$" + r.totalPendiente.toFixed(2);
+
+    document.getElementById(
+      "proveedor"
+    ).innerText =
+      "$" + r.totalCostoProveedor.toFixed(2);
+
+    document.getElementById(
+      "ganancia"
+    ).innerText =
+      "$" + r.totalGanancia.toFixed(2);
+
+    document.getElementById(
+      "items"
+    ).innerText =
+      r.totalItems;
+
+  } catch(error) {
+
+    console.error(error);
+
+    alert(
+      "Error cargando resumen."
+    );
+
+  }
+}
+
+/**
+ * ====================================================
+ * INICIO
+ * ====================================================
+ */
+
+cargarResumen();
+
+</script>
+
+</body>
+</html>

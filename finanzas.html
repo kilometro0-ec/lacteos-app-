@@ -27,8 +27,9 @@
         .form-group { margin-bottom: 12px; }
         label { font-size: 0.7rem; font-weight: 600; color: #666; display: block; margin-bottom: 4px; }
         select, input { width: 100%; padding: 10px 12px; border-radius: 40px; border: 1px solid #e2d6f0; background: #fefcff; font-size: 0.85rem; box-sizing: border-box; }
-        button { background: #a21caf; color: white; border: none; padding: 12px; border-radius: 40px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.9rem; }
+        button { background: #a21caf; color: white; border: none; padding: 12px; border-radius: 40px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.9rem; transition: opacity 0.3s; }
         button.success { background: #10b981; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
         .checkbox-group { max-height: 300px; overflow-y: auto; border: 1px solid #e2d6f0; border-radius: 20px; padding: 10px; background: #fefcff; }
         .checkbox-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0e6ff; }
         .checkbox-item input { width: 20px; margin: 0; }
@@ -42,9 +43,11 @@
         .historial-item .fecha { font-size: 0.7rem; color: #888; }
         .historial-item .detalle { font-weight: 600; margin: 4px 0; font-size: 0.85rem; }
         .historial-item .monto { color: #10b981; font-weight: 800; }
+        .btn-whatsapp { background: #25D366; margin-top: 8px; }
+        .btn-whatsapp:hover { background: #128C7E; }
         @media (min-width: 768px) { body { padding: 20px; max-width: 900px; margin: 0 auto; } .grid-cards { grid-template-columns: repeat(3, 1fr); } }
     </style>
-       <script src="api-config.js"></script>
+    <script src="api-config.js"></script>
 </head>
 <body>
 <div class="header">
@@ -100,9 +103,9 @@
 </div>
 
 <div class="panel">
-    <h2>📋 Historial de Pagos</h2>
+    <h2>📋 Historial de Pagos a Proveedores</h2>
     <div id="historialPagos" class="historial">
-        <div class="historial-item">No hay pagos registrados</div>
+        <div class="historial-item">Cargando historial...</div>
     </div>
 </div>
 
@@ -110,9 +113,10 @@
     let proveedores = [];
     let productosDisponibles = [];
     let productosSeleccionados = [];
-    let historialPagos = [];
     let filtroActual = { tipo: 'dia', valor: '' };
+    let registrando = false;
 
+    // ==================== CARGAR PROVEEDORES ====================
     async function cargarProveedores() {
         try {
             const response = await fetch(`${DairyConfig.SCRIPT_URL}?accion=leer&pestana=Proveedores`);
@@ -122,8 +126,8 @@
                 const select = document.getElementById('selectProveedor');
                 select.innerHTML = '<option value="">Seleccionar proveedor</option>';
                 proveedores.forEach(prov => {
-                    const nombre = prov['Nombre del Proveedor'] || prov.nombre || 'Proveedor';
-                    if (nombre && nombre !== 'Proveedor') {
+                    const nombre = prov['Nombre del Proveedor'] || prov.nombre;
+                    if (nombre && nombre !== 'Seleccionar proveedor') {
                         const option = document.createElement('option');
                         option.value = nombre;
                         option.textContent = nombre;
@@ -136,6 +140,7 @@
         }
     }
 
+    // ==================== CARGAR PRODUCTOS PENDIENTES ====================
     async function cargarProductosPorProveedor(proveedor) {
         if (!proveedor) return;
         try {
@@ -155,7 +160,7 @@
     function renderListaProductos() {
         const container = document.getElementById('listaProductos');
         if (productosDisponibles.length === 0) {
-            container.innerHTML = '<div class="checkbox-item">No hay productos pendientes de pago para este proveedor</div>';
+            container.innerHTML = '<div class="checkbox-item">✅ No hay productos pendientes de pago para este proveedor</div>';
             return;
         }
         
@@ -207,7 +212,82 @@
         calcularTotal();
     }
 
+    // ==================== GENERAR COMPROBANTE PDF Y WHATSAPP ====================
+    function generarComprobanteHTML(proveedor, fecha, productos, total) {
+        const ahora = new Date().toLocaleString();
+        const productosLista = productos.map(p => `
+            <tr>
+                <td style="border:1px solid #ddd; padding:8px">${p.producto}</td>
+                <td style="border:1px solid #ddd; padding:8px">${p.cliente}</td>
+                <td style="border:1px solid #ddd; padding:8px; text-align:right">$${p.costoProveedor.toFixed(2)}</td>
+            </tr>
+        `).join('');
+        
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Comprobante Pago Proveedor</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .header { text-align: center; margin-bottom: 20px; }
+                    .logo { font-size: 24px; font-weight: bold; color: #a21caf; }
+                    .comprobante { border: 1px solid #ccc; padding: 20px; border-radius: 10px; max-width: 600px; margin: 0 auto; }
+                    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+                    th { background: #a21caf; color: white; padding: 10px; }
+                    .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 15px; }
+                    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
+                </style>
+            </head>
+            <body>
+                <div class="comprobante">
+                    <div class="header">
+                        <div class="logo">🥛 Lógica Láctea</div>
+                        <h2>COMPROBANTE DE PAGO A PROVEEDOR</h2>
+                    </div>
+                    <p><strong>Proveedor:</strong> ${proveedor}</p>
+                    <p><strong>Fecha de Pago:</strong> ${fecha}</p>
+                    <p><strong>Hora:</strong> ${ahora}</p>
+                    <table>
+                        <thead>
+                            <tr><th>Producto</th><th>Cliente</th><th>Monto Pagado</th></tr>
+                        </thead>
+                        <tbody>
+                            ${productosLista}
+                        </tbody>
+                    </table>
+                    <div class="total">TOTAL PAGADO: $${total.toFixed(2)}</div>
+                    <div class="footer">
+                        <p>Este comprobante es generado automáticamente por el sistema Finanzas Lácteas.</p>
+                        <p>Total de items pagados: ${productos.length}</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+    }
+
+    async function enviarPorWhatsApp(proveedor, fecha, productos, total) {
+        const mensaje = `*🥛 LÓGICA LÁCTEA - COMPROBANTE DE PAGO*\n\n` +
+                        `*Proveedor:* ${proveedor}\n` +
+                        `*Fecha:* ${fecha}\n` +
+                        `*Total Pagado:* $${total.toFixed(2)}\n` +
+                        `*Items pagados:* ${productos.length}\n\n` +
+                        `*Detalle:*\n${productos.map(p => `- ${p.producto} (${p.cliente}): $${p.costoProveedor.toFixed(2)}`).join('\n')}\n\n` +
+                        `¡Gracias por su pago!`;
+        
+        const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+        window.open(url, '_blank');
+    }
+
+    // ==================== REGISTRAR PAGO ====================
     async function registrarPago() {
+        if (registrando) {
+            alert('⏳ Procesando pago, espere...');
+            return;
+        }
+        
         const proveedor = document.getElementById('selectProveedor').value;
         const fecha = document.getElementById('fechaPagoProveedor').value;
         
@@ -215,25 +295,16 @@
         if (!fecha) return alert('❌ Seleccione la fecha de pago');
         if (productosSeleccionados.length === 0) return alert('❌ Seleccione al menos un producto');
         
+        registrando = true;
+        const btn = document.getElementById('btnRegistrarPago');
+        btn.disabled = true;
+        btn.textContent = '⏳ Procesando...';
+        
         const total = productosSeleccionados.reduce((sum, p) => sum + p.costoProveedor, 0);
         const productosTexto = productosSeleccionados.map(p => `${p.producto} (${p.cliente})`).join(', ');
         
-        // Guardar en localStorage
-        const pago = { 
-            id: Date.now(), 
-            proveedor, 
-            fecha, 
-            productos: productosTexto, 
-            total, 
-            items: productosSeleccionados.length, 
-            timestamp: new Date().toISOString() 
-        };
-        historialPagos.unshift(pago);
-        if (historialPagos.length > 50) historialPagos.pop();
-        localStorage.setItem('historialPagos', JSON.stringify(historialPagos));
-        
-        // Enviar al servidor para actualizar la columna L
         try {
+            // Enviar al servidor
             const payload = {
                 action: 'registrarPagoProveedor',
                 proveedor: proveedor,
@@ -250,38 +321,91 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            
+            // Preguntar si quiere enviar por WhatsApp
+            const enviarWA = confirm(`✅ Pago registrado exitosamente!\n\nProveedor: ${proveedor}\nTotal: $${total.toFixed(2)}\nItems: ${productosSeleccionados.length}\n\n¿Desea enviar el comprobante por WhatsApp?`);
+            
+            if (enviarWA) {
+                await enviarPorWhatsApp(proveedor, fecha, productosSeleccionados, total);
+            }
+            
+            // Limpiar selección
+            document.querySelectorAll('#listaProductos input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById('selectProveedor').value = '';
+            productosSeleccionados = [];
+            calcularTotal();
+            
+            // Recargar datos
+            await cargarHistorialPagos();
+            await cargarResumenFinanciero();
+            document.getElementById('listaProductos').innerHTML = '<div class="checkbox-item">Seleccione un proveedor</div>';
+            
         } catch (error) {
-            console.error('Error al enviar al servidor:', error);
+            console.error('Error:', error);
+            alert('❌ Error al registrar pago');
+        } finally {
+            registrando = false;
+            btn.disabled = false;
+            btn.textContent = '💸 Registrar Pago';
         }
-        
-        alert(`✅ Pago registrado\nProveedor: ${proveedor}\nTotal pagado: $${total.toFixed(2)}\nItems: ${productosSeleccionados.length}`);
-        
-        // Limpiar selección
-        document.querySelectorAll('#listaProductos input[type="checkbox"]').forEach(cb => cb.checked = false);
-        document.getElementById('selectProveedor').value = '';
-        productosSeleccionados = [];
-        calcularTotal();
-        renderHistorial();
-        await cargarResumenFinanciero();
-        document.getElementById('listaProductos').innerHTML = '<div class="checkbox-item">Seleccione un proveedor</div>';
     }
 
-    function renderHistorial() {
+    // ==================== CARGAR HISTORIAL DESDE HOJA FINANZAS ====================
+    async function cargarHistorialPagos() {
+        try {
+            const response = await fetch(`${DairyConfig.SCRIPT_URL}?accion=leer&pestana=Finanzas`);
+            const data = await response.json();
+            
+            if (data.status === 'success' && Array.isArray(data.data)) {
+                // Filtrar solo los que tienen fecha de pago (columna L)
+                const pagosRealizados = data.data.filter(fila => fila['Fecha Pago'] && fila['Fecha Pago'].toString().trim() !== '');
+                
+                // Agrupar por fecha de pago y proveedor
+                const pagosAgrupados = {};
+                pagosRealizados.forEach(fila => {
+                    const key = `${fila['Fecha Pago']}_${fila['Proveedor']}`;
+                    if (!pagosAgrupados[key]) {
+                        pagosAgrupados[key] = {
+                            fecha: fila['Fecha Pago'],
+                            proveedor: fila['Proveedor'],
+                            total: 0,
+                            items: 0,
+                            productos: []
+                        };
+                    }
+                    const costo = parseFloat(String(fila['Costo Proveedor'] || 0).replace(',', '.'));
+                    pagosAgrupados[key].total += costo;
+                    pagosAgrupados[key].items++;
+                    pagosAgrupados[key].productos.push(fila['Producto']);
+                });
+                
+                const historial = Object.values(pagosAgrupados).sort((a, b) => b.fecha.localeCompare(a.fecha));
+                renderHistorial(historial);
+            }
+        } catch (error) {
+            console.error('Error cargando historial:', error);
+            document.getElementById('historialPagos').innerHTML = '<div class="historial-item">Error cargando historial</div>';
+        }
+    }
+
+    function renderHistorial(historial) {
         const container = document.getElementById('historialPagos');
-        if (historialPagos.length === 0) {
+        if (!historial || historial.length === 0) {
             container.innerHTML = '<div class="historial-item">No hay pagos registrados</div>';
             return;
         }
-        container.innerHTML = historialPagos.map(p => `
+        
+        container.innerHTML = historial.map(p => `
             <div class="historial-item">
                 <div class="fecha">📅 ${p.fecha}</div>
                 <div class="detalle">🏭 ${p.proveedor}</div>
-                <div class="detalle">📦 ${p.items} productos</div>
-                <div class="monto">💰 $${(p.total || 0).toFixed(2)}</div>
+                <div class="detalle">📦 ${p.items} productos pagados</div>
+                <div class="monto">💰 $${p.total.toFixed(2)}</div>
             </div>
         `).join('');
     }
 
+    // ==================== RESUMEN FINANCIERO ====================
     async function cargarResumenFinanciero() {
         try {
             let url = `${DairyConfig.SCRIPT_URL}?accion=resumenFinanciero`;
@@ -307,6 +431,7 @@
         }
     }
 
+    // ==================== FILTROS ====================
     function actualizarVisibilidad() {
         const tipo = document.getElementById('filtroTipo').value;
         document.getElementById('fechaDia').style.display = tipo === 'dia' ? 'inline-block' : 'none';
@@ -334,12 +459,10 @@
         cargarResumenFinanciero();
     }
 
+    // ==================== INICIALIZACIÓN ====================
     window.addEventListener('DOMContentLoaded', async () => {
-        const stored = localStorage.getItem('historialPagos');
-        if (stored) historialPagos = JSON.parse(stored);
-        renderHistorial();
-        
         await cargarProveedores();
+        await cargarHistorialPagos();
         
         document.getElementById('selectProveedor').addEventListener('change', (e) => {
             if (e.target.value) cargarProductosPorProveedor(e.target.value);

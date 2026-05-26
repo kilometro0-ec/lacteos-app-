@@ -45,6 +45,7 @@
         .historial-item .monto { color: #10b981; font-weight: 800; }
         @media (min-width: 768px) { body { padding: 20px; max-width: 900px; margin: 0 auto; } .grid-cards { grid-template-columns: repeat(3, 1fr); } }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 <div class="header">
@@ -212,47 +213,229 @@
         calcularTotal();
     }
 
-    // ==================== ENVIAR WHATSAPP CON MENSAJE MEJORADO ====================
-    async function enviarPorWhatsApp(proveedor, fecha, productos, total) {
-        // Crear detalle de productos con formato de tabla
+    // ==================== GENERAR PDF Y ENVIAR POR WHATSAPP ====================
+    function generarHTMLComprobante(proveedor, fecha, productos, total, numeroComprobante) {
+        const ahora = new Date();
+        const fechaHora = ahora.toLocaleString('es-EC');
+        
         let detalleProductos = "";
         productos.forEach((p, index) => {
-            detalleProductos += `${index + 1}. ${p.producto}\n   🧑 Cliente: ${p.cliente}\n   💰 Valor pagado: $${p.costoProveedor.toFixed(2)}\n\n`;
+            detalleProductos += `
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 8px; text-align: center;">${index + 1}</td>
+                    <td style="padding: 8px;">${p.producto}</td>
+                    <td style="padding: 8px; text-align: right;">$${p.costoProveedor.toFixed(2)}</td>
+                </tr>
+            `;
         });
         
-        const mensaje = `╔══════════════════════════════════════╗
-║     🥛 LÓGICA LÁCTEA 🥛          ║
-║   COMPROBANTE DE PAGO A PROVEEDOR   ║
-╚══════════════════════════════════════╝
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Comprobante Pago Proveedor</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Arial, sans-serif;
+                        padding: 30px;
+                        background: white;
+                    }
+                    .comprobante {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        border: 2px solid #a21caf;
+                        border-radius: 20px;
+                        padding: 25px;
+                        background: linear-gradient(135deg, #fff 0%, #faf0ff 100%);
+                    }
+                    .header {
+                        text-align: center;
+                        border-bottom: 2px solid #a21caf;
+                        padding-bottom: 15px;
+                        margin-bottom: 20px;
+                    }
+                    .logo {
+                        font-size: 28px;
+                        font-weight: bold;
+                        color: #a21caf;
+                    }
+                    .sub-logo {
+                        font-size: 14px;
+                        color: #666;
+                        margin-top: 5px;
+                    }
+                    .titulo {
+                        text-align: center;
+                        font-size: 18px;
+                        font-weight: bold;
+                        background: #a21caf;
+                        color: white;
+                        padding: 10px;
+                        border-radius: 40px;
+                        margin: 15px 0;
+                    }
+                    .info {
+                        background: #f5f0fa;
+                        padding: 15px;
+                        border-radius: 15px;
+                        margin: 15px 0;
+                    }
+                    .info p {
+                        margin: 8px 0;
+                        font-size: 14px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 15px 0;
+                    }
+                    th {
+                        background: #a21caf;
+                        color: white;
+                        padding: 10px;
+                        font-size: 12px;
+                    }
+                    td {
+                        padding: 8px;
+                        font-size: 12px;
+                    }
+                    .total {
+                        text-align: right;
+                        font-size: 18px;
+                        font-weight: bold;
+                        margin: 15px 0;
+                        padding: 10px;
+                        background: #f0e9ff;
+                        border-radius: 40px;
+                    }
+                    .footer {
+                        text-align: center;
+                        margin-top: 20px;
+                        padding-top: 15px;
+                        border-top: 1px solid #ddd;
+                        font-size: 12px;
+                        color: #666;
+                    }
+                    .eslogan {
+                        text-align: center;
+                        font-size: 14px;
+                        font-style: italic;
+                        color: #a21caf;
+                        margin: 15px 0;
+                    }
+                    .comprobante-numero {
+                        text-align: right;
+                        font-size: 10px;
+                        color: #999;
+                        margin-bottom: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="comprobante">
+                    <div class="comprobante-numero">
+                        Comprobante #: ${numeroComprobante}
+                    </div>
+                    <div class="header">
+                        <div class="logo">🥛 LÓGICA LÁCTEA</div>
+                        <div class="sub-logo">Productos Naturales y Artesanales</div>
+                    </div>
+                    
+                    <div class="titulo">COMPROBANTE DE PAGO A PROVEEDOR</div>
+                    
+                    <div class="info">
+                        <p><strong>📅 Fecha de emisión:</strong> ${fechaHora}</p>
+                        <p><strong>🏭 Proveedor:</strong> ${proveedor}</p>
+                        <p><strong>📅 Fecha de pago:</strong> ${fecha}</p>
+                        <p><strong>📦 Total de items pagados:</strong> ${productos.length}</p>
+                    </div>
+                    
+                    <table>
+                        <thead>
+                            <tr><th>#</th><th>Producto</th><th>Cliente</th><th>Valor Pagado</th></tr>
+                        </thead>
+                        <tbody>
+                            ${detalleProductos}
+                        </tbody>
+                    </table>
+                    
+                    <div class="total">
+                        💰 TOTAL PAGADO: $${total.toFixed(2)}
+                    </div>
+                    
+                    <div class="eslogan">
+                        🌿 "De nuestra tierra a tu mesa, con amor y tradición láctea" 🌿
+                    </div>
+                    
+                    <div class="footer">
+                        <p>Un país sano con productos naturales y artesanales</p>
+                        <p>✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨</p>
+                        <p>LÓGICA LÁCTEA - Calidad y Tradición desde el Campo Ecuatoriano</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+    }
 
-┌─────────────────────────────────────┐
-│ 📋 INFORMACIÓN DEL PAGO             │
-├─────────────────────────────────────┤
-│ 🏭 Proveedor: ${proveedor}
-│ 📅 Fecha: ${fecha}
-│ 💵 Total Pagado: $${total.toFixed(2)}
-│ 📦 Items pagados: ${productos.length}
-└─────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│ 📦 DETALLE DE PRODUCTOS PAGADOS     │
-├─────────────────────────────────────┤
-${detalleProductos}└─────────────────────────────────────┘
-
-┌─────────────────────────────────────┐
-│ 🌿 UN PAÍS SANO CON PRODUCTOS       │
-│    NATURALES Y ARTESANALES          │
-│                                      │
-│    "De nuestra tierra a tu mesa,    │
-│     con amor y tradición láctea"    │
-└─────────────────────────────────────┘
-
-✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨
-────────────────────────────────────────
-LÓGICA LÁCTEA - Calidad y Tradición desde el Campo Ecuatoriano`;
+    async function generarYEnviarPDF(proveedor, fecha, productos, total) {
+        const numeroComprobante = 'PAG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        const htmlContent = generarHTMLComprobante(proveedor, fecha, productos, total, numeroComprobante);
         
-        const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-        window.open(url, '_blank');
+        // Crear un elemento temporal para el PDF
+        const element = document.createElement('div');
+        element.innerHTML = htmlContent;
+        element.style.position = 'absolute';
+        element.style.left = '-9999px';
+        document.body.appendChild(element);
+        
+        const opt = {
+            margin: [0.5, 0.5, 0.5, 0.5],
+            filename: `Comprobante_Pago_${proveedor.replace(/\s/g, '_')}_${fecha}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        
+        try {
+            // Generar PDF
+            const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+            
+            // Crear URL del blob
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            
+            // Crear mensaje para WhatsApp
+            const mensaje = `*🥛 LÓGICA LÁCTEA - COMPROBANTE DE PAGO PDF* 🥛\n\n` +
+                            `🏭 *Proveedor:* ${proveedor}\n` +
+                            `📅 *Fecha:* ${fecha}\n` +
+                            `💰 *Total Pagado:* $${total.toFixed(2)}\n` +
+                            `📦 *Items pagados:* ${productos.length}\n` +
+                            `🆔 *Comprobante #:* ${numeroComprobante}\n\n` +
+                            `🌿 *"De nuestra tierra a tu mesa, con amor y tradición láctea"* 🌿\n\n` +
+                            `✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨\n\n` +
+                            `📎 Se adjunta comprobante PDF.`;
+            
+            // Abrir WhatsApp con el mensaje
+            const waUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+            window.open(waUrl, '_blank');
+            
+            // También descargar el PDF localmente
+            const link = document.createElement('a');
+            link.href = pdfUrl;
+            link.download = `Comprobante_Pago_${proveedor.replace(/\s/g, '_')}_${fecha}.pdf`;
+            link.click();
+            
+            // Limpiar
+            URL.revokeObjectURL(pdfUrl);
+            document.body.removeChild(element);
+            
+            return true;
+        } catch (error) {
+            console.error('Error generando PDF:', error);
+            document.body.removeChild(element);
+            return false;
+        }
     }
 
     // ==================== REGISTRAR PAGO ====================
@@ -295,10 +478,11 @@ LÓGICA LÁCTEA - Calidad y Tradición desde el Campo Ecuatoriano`;
                 body: JSON.stringify(payload)
             });
             
-            const enviarWA = confirm(`✅ Pago registrado exitosamente!\n\n📊 Resumen:\n🏭 Proveedor: ${proveedor}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${productosSeleccionados.length}\n\n¿Desea enviar el comprobante por WhatsApp?`);
+            const enviarWA = confirm(`✅ Pago registrado exitosamente!\n\n📊 Resumen:\n🏭 Proveedor: ${proveedor}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${productosSeleccionados.length}\n\n¿Desea generar el comprobante PDF y enviarlo por WhatsApp?`);
             
             if (enviarWA) {
-                await enviarPorWhatsApp(proveedor, fecha, productosSeleccionados, total);
+                await generarYEnviarPDF(proveedor, fecha, productosSeleccionados, total);
+                alert('📄 PDF generado y enviado correctamente');
             }
             
             document.querySelectorAll('#listaProductos input[type="checkbox"]').forEach(cb => cb.checked = false);

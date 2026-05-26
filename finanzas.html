@@ -45,7 +45,6 @@
         .historial-item .monto { color: #10b981; font-weight: 800; }
         @media (min-width: 768px) { body { padding: 20px; max-width: 900px; margin: 0 auto; } .grid-cards { grid-template-columns: repeat(3, 1fr); } }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 <div class="header">
@@ -212,7 +211,7 @@
     }
 
     // ==================== GENERAR COMPROBANTE PDF ====================
-    function abrirVistaPreviaPDF(proveedor, fecha, productos, total) {
+    function generarYDescargarPDF(proveedor, fecha, productos, total) {
         const numeroComprobante = 'PAG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
         const ahora = new Date();
         const fechaHora = ahora.toLocaleString('es-EC');
@@ -220,88 +219,70 @@
         let detalleProductos = "";
         productos.forEach((p, index) => {
             detalleProductos += `
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 8px; text-align: center;">${index + 1}</td>
-                    <td style="padding: 8px;">${p.producto}</td>
-                    <td style="padding: 8px;">${p.cliente}</td>
-                    <td style="padding: 8px; text-align: right;">$${p.costoProveedor.toFixed(2)}</td>
+                <tr>
+                    <td style="border:1px solid #ddd; padding:8px; text-align:center;">${index + 1}</td>
+                    <td style="border:1px solid #ddd; padding:8px;">${p.producto}</td>
+                    <td style="border:1px solid #ddd; padding:8px;">${p.cliente}</td>
+                    <td style="border:1px solid #ddd; padding:8px; text-align:right;">$${p.costoProveedor.toFixed(2)}</td>
                 </tr>
             `;
         });
         
         const htmlContent = `
-            <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="UTF-8">
                 <title>Comprobante Pago Proveedor</title>
                 <style>
-                    body { font-family: 'Segoe UI', Arial, sans-serif; padding: 30px; background: white; }
-                    .comprobante { max-width: 800px; margin: 0 auto; border: 2px solid #a21caf; border-radius: 20px; padding: 25px; background: linear-gradient(135deg, #fff 0%, #faf0ff 100%); }
-                    .header { text-align: center; border-bottom: 2px solid #a21caf; padding-bottom: 15px; margin-bottom: 20px; }
-                    .logo { font-size: 28px; font-weight: bold; color: #a21caf; }
-                    .sub-logo { font-size: 14px; color: #666; margin-top: 5px; }
-                    .titulo { text-align: center; font-size: 18px; font-weight: bold; background: #a21caf; color: white; padding: 10px; border-radius: 40px; margin: 15px 0; }
-                    .info { background: #f5f0fa; padding: 15px; border-radius: 15px; margin: 15px 0; }
-                    .info p { margin: 8px 0; font-size: 14px; }
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .header { text-align: center; margin-bottom: 20px; }
+                    .logo { font-size: 24px; font-weight: bold; color: #a21caf; }
+                    .titulo { text-align: center; font-size: 18px; font-weight: bold; background: #a21caf; color: white; padding: 10px; margin: 15px 0; }
+                    .info { background: #f5f0fa; padding: 15px; margin: 15px 0; }
                     table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                    th { background: #a21caf; color: white; padding: 10px; font-size: 12px; }
-                    td { padding: 8px; font-size: 12px; }
-                    .total { text-align: right; font-size: 18px; font-weight: bold; margin: 15px 0; padding: 10px; background: #f0e9ff; border-radius: 40px; }
-                    .footer { text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+                    th { background: #a21caf; color: white; padding: 10px; }
+                    .total { text-align: right; font-size: 18px; font-weight: bold; margin: 15px 0; padding: 10px; background: #f0e9ff; }
+                    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
                     .eslogan { text-align: center; font-size: 14px; font-style: italic; color: #a21caf; margin: 15px 0; }
-                    .comprobante-numero { text-align: right; font-size: 10px; color: #999; margin-bottom: 10px; }
-                    @media print {
-                        body { margin: 0; padding: 0; }
-                        .comprobante { box-shadow: none; border: 1px solid #ccc; }
-                        button { display: none; }
-                    }
                 </style>
             </head>
             <body>
-                <div class="comprobante">
-                    <div class="comprobante-numero">Comprobante #: ${numeroComprobante}</div>
-                    <div class="header">
-                        <div class="logo">🥛 LÓGICA LÁCTEA</div>
-                        <div class="sub-logo">Productos Naturales y Artesanales</div>
-                    </div>
-                    <div class="titulo">COMPROBANTE DE PAGO A PROVEEDOR</div>
-                    <div class="info">
-                        <p><strong>📅 Fecha de emisión:</strong> ${fechaHora}</p>
-                        <p><strong>🏭 Proveedor:</strong> ${proveedor}</p>
-                        <p><strong>📅 Fecha de pago:</strong> ${fecha}</p>
-                        <p><strong>📦 Total de items pagados:</strong> ${productos.length}</p>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr><th>#</th><th>Producto</th><th>Cliente</th><th>Valor Pagado</th></tr>
-                        </thead>
-                        <tbody>${detalleProductos}</tbody>
-                    </table>
-                    <div class="total">💰 TOTAL PAGADO: $${total.toFixed(2)}</div>
-                    <div class="eslogan">🌿 "De nuestra tierra a tu mesa, con amor y tradición láctea" 🌿</div>
-                    <div class="footer">
-                        <p>Un país sano con productos naturales y artesanales</p>
-                        <p>✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨</p>
-                        <p>LÓGICA LÁCTEA - Calidad y Tradición desde el Campo Ecuatoriano</p>
-                    </div>
+                <div class="header">
+                    <div class="logo">🥛 LÓGICA LÁCTEA</div>
+                    <div>Productos Naturales y Artesanales</div>
                 </div>
-                <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="window.print()" style="background: #a21caf; color: white; border: none; padding: 12px 24px; border-radius: 40px; font-size: 14px; cursor: pointer;">🖨️ Imprimir / Guardar como PDF</button>
-                    <button onclick="window.close()" style="background: #666; color: white; border: none; padding: 12px 24px; border-radius: 40px; font-size: 14px; cursor: pointer; margin-left: 10px;">❌ Cerrar</button>
+                <div class="titulo">COMPROBANTE DE PAGO A PROVEEDOR</div>
+                <div class="info">
+                    <p><strong>📅 Comprobante #:</strong> ${numeroComprobante}</p>
+                    <p><strong>📅 Fecha de emisión:</strong> ${fechaHora}</p>
+                    <p><strong>🏭 Proveedor:</strong> ${proveedor}</p>
+                    <p><strong>📅 Fecha de pago:</strong> ${fecha}</p>
+                    <p><strong>📦 Total de items pagados:</strong> ${productos.length}</p>
                 </div>
-                <script>
-                    // Auto-imprimir después de 1 segundo
-                    setTimeout(() => { window.print(); }, 1000);
-                </script>
+                <table>
+                    <thead><tr><th>#</th><th>Producto</th><th>Cliente</th><th>Valor Pagado</th></tr></thead>
+                    <tbody>${detalleProductos}</tbody>
+                </table>
+                <div class="total">💰 TOTAL PAGADO: $${total.toFixed(2)}</div>
+                <div class="eslogan">🌿 "De nuestra tierra a tu mesa, con amor y tradición láctea" 🌿</div>
+                <div class="footer">
+                    <p>Un país sano con productos naturales y artesanales</p>
+                    <p>✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨</p>
+                </div>
             </body>
             </html>
         `;
         
-        // Abrir ventana nueva con el comprobante
-        const ventana = window.open();
-        ventana.document.write(htmlContent);
-        ventana.document.close();
+        // Crear blob y descargar
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Comprobante_${proveedor.replace(/\s/g, '_')}_${fecha}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
         
         return numeroComprobante;
     }
@@ -315,16 +296,12 @@
                         `📦 *Items pagados:* ${items}\n` +
                         `🆔 *Comprobante #:* ${numeroComprobante}\n\n` +
                         `🌿 *"De nuestra tierra a tu mesa, con amor y tradición láctea"* 🌿\n\n` +
-                        `✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨\n\n` +
-                        `📎 *Adjunte el comprobante PDF que se abrirá en una nueva ventana*`;
+                        `✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨`;
         
-        // Usar whatsapp:// para abrir la aplicación
-        const waUrl = `whatsapp://send?text=${encodeURIComponent(mensaje)}`;
+        // Intentar abrir la aplicación de WhatsApp
+        window.location.href = `whatsapp://send?text=${encodeURIComponent(mensaje)}`;
         
-        // Intentar abrir la aplicación
-        window.location.href = waUrl;
-        
-        // Fallback: si no funciona, abrir web
+        // Fallback después de 1 segundo
         setTimeout(() => {
             window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
         }, 500);
@@ -370,19 +347,15 @@
                 body: JSON.stringify(payload)
             });
             
-            const accion = confirm(`✅ Pago registrado exitosamente!\n\n📊 Resumen:\n🏭 Proveedor: ${proveedor}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${productosSeleccionados.length}\n\n¿Desea generar el comprobante PDF y compartirlo por WhatsApp?`);
+            const accion = confirm(`✅ Pago registrado exitosamente!\n\n📊 Resumen:\n🏭 Proveedor: ${proveedor}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${productosSeleccionados.length}\n\n¿Desea generar el comprobante y enviarlo por WhatsApp?`);
             
             if (accion) {
-                // Abrir ventana con el comprobante para imprimir/guardar PDF
-                const numeroComprobante = abrirVistaPreviaPDF(proveedor, fecha, productosSeleccionados, total);
+                // Generar y descargar comprobante
+                const numeroComprobante = generarYDescargarPDF(proveedor, fecha, productosSeleccionados, total);
+                alert(`📄 Comprobante descargado!\n\nArchivo: Comprobante_${proveedor.replace(/\s/g, '_')}_${fecha}.html\n\nSe abrirá WhatsApp para que pueda enviar el mensaje.`);
                 
-                setTimeout(() => {
-                    const enviarWA = confirm(`📄 ¿El comprobante se abrió en una nueva ventana?\n\nUna vez que guarde el PDF (Ctrl+S o Imprimir > Guardar como PDF), ¿desea abrir WhatsApp para enviarlo?`);
-                    
-                    if (enviarWA) {
-                        abrirWhatsApp(proveedor, fecha, total, productosSeleccionados.length, numeroComprobante);
-                    }
-                }, 2000);
+                // Abrir WhatsApp
+                abrirWhatsApp(proveedor, fecha, total, productosSeleccionados.length, numeroComprobante);
             }
             
             document.querySelectorAll('#listaProductos input[type="checkbox"]').forEach(cb => cb.checked = false);

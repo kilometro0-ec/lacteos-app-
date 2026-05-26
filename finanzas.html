@@ -17,7 +17,7 @@ content="width=device-width, initial-scale=1.0">
 margin:0;
 padding:0;
 box-sizing:border-box;
-font-family:Arial, sans-serif;
+font-family:Arial,sans-serif;
 }
 
 body{
@@ -41,17 +41,22 @@ gap:20px;
 background:#fff;
 padding:20px;
 border-radius:18px;
-box-shadow:0 4px 10px rgba(0,0,0,.08);
+box-shadow:0 4px 12px rgba(0,0,0,.08);
+transition:.3s;
+}
+
+.card:hover{
+transform:translateY(-5px);
 }
 
 .card h3{
-font-size:16px;
+font-size:15px;
 margin-bottom:10px;
-color:#666;
+color:#777;
 }
 
 .card span{
-font-size:28px;
+font-size:30px;
 font-weight:bold;
 color:#111;
 }
@@ -78,6 +83,13 @@ border-left:6px solid #9b59b6;
 
 .items{
 border-left:6px solid #1abc9c;
+}
+
+.loading{
+text-align:center;
+margin-top:40px;
+font-size:18px;
+color:#555;
 }
 
 </style>
@@ -124,95 +136,147 @@ Resumen Financiero
 
 </div>
 
+<div class="loading" id="loading">
+Cargando resumen financiero...
+</div>
+
+<!-- ================================================= -->
+<!-- API CENTRAL -->
+<!-- ================================================= -->
+
+<script src="./js/api-config.js"></script>
+
 <script>
 
 /**
- * ====================================================
- * API
- * ====================================================
- */
-
-const API_URL =
-"https://script.google.com/macros/s/TU_DEPLOY/exec";
-
-/**
- * ====================================================
+ * =====================================================
  * CARGAR RESUMEN
- * ====================================================
+ * =====================================================
  */
 
-async function cargarResumen() {
+async function cargarResumenFinanciero() {
 
-  try {
+    try {
 
-    const response =
-      await fetch(
-        API_URL +
-        "?accion=resumenFinanciero"
-      );
+        const loading =
+            document.getElementById("loading");
 
-    const data =
-      await response.json();
+        loading.style.display = "block";
 
-    console.log(data);
+        /**
+         * =============================================
+         * PETICIÓN DIRECTA
+         * =============================================
+         */
 
-    if (data.status !== "success") {
+        const response = await fetch(
+            `${DairyConfig.SCRIPT_URL}?accion=resumenFinanciero`,
+            {
+                method: "GET",
+                mode: "cors",
+                headers: {
+                    "Content-Type": "text/plain"
+                }
+            }
+        );
 
-      alert(data.message);
+        const data = await response.json();
 
-      return;
+        console.log(
+            "Resumen financiero:",
+            data
+        );
+
+        if (data.status !== "success") {
+
+            alert(
+                data.message ||
+                "Error obteniendo resumen."
+            );
+
+            return;
+        }
+
+        const r = data.resumen;
+
+        /**
+         * =============================================
+         * RENDER
+         * =============================================
+         */
+
+        document.getElementById(
+            "ventas"
+        ).innerText =
+            "$" +
+            Number(
+                r.totalVentas || 0
+            ).toFixed(2);
+
+        document.getElementById(
+            "cobrado"
+        ).innerText =
+            "$" +
+            Number(
+                r.totalCobrado || 0
+            ).toFixed(2);
+
+        document.getElementById(
+            "pendiente"
+        ).innerText =
+            "$" +
+            Number(
+                r.totalPendiente || 0
+            ).toFixed(2);
+
+        document.getElementById(
+            "proveedor"
+        ).innerText =
+            "$" +
+            Number(
+                r.totalCostoProveedor || 0
+            ).toFixed(2);
+
+        document.getElementById(
+            "ganancia"
+        ).innerText =
+            "$" +
+            Number(
+                r.totalGanancia || 0
+            ).toFixed(2);
+
+        document.getElementById(
+            "items"
+        ).innerText =
+            Number(
+                r.totalItems || 0
+            );
+
+        loading.style.display = "none";
+
+    } catch(error) {
+
+        console.error(
+            "Error cargando finanzas:",
+            error
+        );
+
+        alert(
+            "No se pudo cargar el resumen."
+        );
     }
-
-    const r = data.resumen;
-
-    document.getElementById(
-      "ventas"
-    ).innerText =
-      "$" + r.totalVentas.toFixed(2);
-
-    document.getElementById(
-      "cobrado"
-    ).innerText =
-      "$" + r.totalCobrado.toFixed(2);
-
-    document.getElementById(
-      "pendiente"
-    ).innerText =
-      "$" + r.totalPendiente.toFixed(2);
-
-    document.getElementById(
-      "proveedor"
-    ).innerText =
-      "$" + r.totalCostoProveedor.toFixed(2);
-
-    document.getElementById(
-      "ganancia"
-    ).innerText =
-      "$" + r.totalGanancia.toFixed(2);
-
-    document.getElementById(
-      "items"
-    ).innerText =
-      r.totalItems;
-
-  } catch(error) {
-
-    console.error(error);
-
-    alert(
-      "Error cargando resumen."
-    );
-
-  }
 }
 
 /**
- * ====================================================
+ * =====================================================
  * INICIO
- * ====================================================
+ * =====================================================
  */
 
-cargarResumen();
+document.addEventListener(
+    "DOMContentLoaded",
+    cargarResumenFinanciero
+);
 
 </script>
 

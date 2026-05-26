@@ -2,135 +2,480 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Finanzas Lácteos - Dashboard Completo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Finanzas Lácteas - Sistema Completo</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Work Sans', system-ui, sans-serif; }
-        body { background: #faf5ff; padding: 24px 20px; }
-        .header-finanzas { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 30px; gap: 15px; background: white; padding: 16px 24px; border-radius: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #e9d5ff; }
-        h1 { font-size: 1.6rem; font-weight: 800; background: linear-gradient(135deg, #a21caf, #db2777); -webkit-background-clip: text; background-clip: text; color: transparent; }
-        .filtros-group { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-        .filtros-group select, .filtros-group input { padding: 10px 16px; border-radius: 40px; border: 1px solid #e9d5ff; background: white; font-weight: 600; font-size: 0.85rem; outline: none; }
-        .btn-aplicar { background: #a21caf; border: none; color: white; font-weight: 700; padding: 10px 24px; border-radius: 40px; cursor: pointer; }
-        .btn-aplicar:hover { background: #6b21a8; }
-        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .card { background: white; padding: 22px 20px; border-radius: 28px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); border-left: 6px solid; }
-        .card h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; color: #5b5b6b; }
-        .card span { font-size: 32px; font-weight: 800; color: #111; display: block; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Work Sans', sans-serif;
+        }
+
+        body {
+            background: #f5f0fa;
+            padding: 16px 12px;
+            padding-bottom: 30px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 16px;
+            border-radius: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e9d5ff;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a21caf, #db2777);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 12px;
+        }
+
+        /* Filtros */
+        .filtros {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .filtros select, .filtros input, .filtros button {
+            padding: 10px 14px;
+            border-radius: 40px;
+            border: 1px solid #e9d5ff;
+            background: white;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .filtros button {
+            background: #a21caf;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Tarjetas de KPIs */
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 14px;
+            border-radius: 20px;
+            border-left: 4px solid;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card h3 {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card span {
+            font-size: 1.5rem;
+            font-weight: 800;
+            display: block;
+        }
+
         .ventas { border-left-color: #3498db; }
         .cobrado { border-left-color: #2ecc71; }
         .pendiente { border-left-color: #f39c12; }
         .proveedor { border-left-color: #e74c3c; }
         .ganancia { border-left-color: #9b59b6; }
         .items { border-left-color: #1abc9c; }
-        .secciones-avanzadas { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 28px; margin-top: 20px; }
-        .panel-gestion { background: white; border-radius: 2rem; padding: 1.5rem; border: 1px solid #e9d5ff; }
-        .panel-gestion h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem; border-left: 4px solid #a21caf; padding-left: 12px; }
-        .form-cancelacion, .form-productos { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; }
-        input, select { padding: 12px 16px; border-radius: 60px; border: 1px solid #e2d6f0; background: #fefcff; font-size: 0.9rem; }
-        button.primary { background: #a21caf; color: white; border: none; padding: 12px; border-radius: 60px; font-weight: 700; cursor: pointer; }
-        button.primary:hover { background: #6b21a8; }
-        .lista-registros { margin-top: 20px; max-height: 260px; overflow-y: auto; }
-        .item-registro { background: #faf5ff; border-radius: 20px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #a21caf; font-size: 0.8rem; }
-        .loading { text-align: center; padding: 30px; color: #a21caf; font-weight: bold; }
-        .subtitulo { font-size: 0.7rem; text-transform: uppercase; color: #7c6b8f; margin-top: 8px; font-weight: 600; }
-        @media (max-width: 640px) { body { padding: 16px; } .card span { font-size: 24px; } }
+
+        /* Paneles */
+        .panel {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e9d5ff;
+        }
+
+        .panel h2 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-left: 4px solid #a21caf;
+            padding-left: 12px;
+        }
+
+        /* Formularios */
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #666;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 40px;
+            border: 1px solid #e2d6f0;
+            background: #fefcff;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #a21caf;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        button.secondary {
+            background: #6b21a8;
+        }
+
+        button.success {
+            background: #10b981;
+        }
+
+        /* Checkbox grupo */
+        .checkbox-group {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e2d6f0;
+            border-radius: 20px;
+            padding: 12px;
+            background: #fefcff;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0e6ff;
+        }
+
+        .checkbox-item input {
+            width: auto;
+            margin: 0;
+        }
+
+        .checkbox-item label {
+            margin: 0;
+            flex: 1;
+            font-size: 0.85rem;
+        }
+
+        .select-all {
+            background: #f0e9ff;
+            padding: 8px;
+            border-radius: 40px;
+            margin-bottom: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Historial */
+        .historial {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .historial-item {
+            background: #faf5ff;
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 3px solid #a21caf;
+        }
+
+        .historial-item .fecha {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        .historial-item .detalle {
+            font-weight: 600;
+            margin: 4px 0;
+        }
+
+        .historial-item .monto {
+            color: #10b981;
+            font-weight: 800;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #a21caf;
+        }
+
+        @media (min-width: 768px) {
+            body { padding: 20px; max-width: 800px; margin: 0 auto; }
+            .grid-cards { grid-template-columns: repeat(3, 1fr); }
+        }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="./js/api-config.js"></script>
 </head>
 <body>
 
-<div class="header-finanzas">
+<div class="header">
     <h1>📊 Finanzas Lácteas</h1>
-    <div class="filtros-group">
-        <select id="filtroTipo">
-            <option value="dia">📅 Día específico</option>
+    <div class="filtros">
+        <select id="filtroTipo" style="flex:1">
+            <option value="dia">📅 Día</option>
             <option value="mes">🗓️ Mes</option>
             <option value="ano">📆 Año</option>
         </select>
-        <input type="date" id="fechaDia">
-        <select id="fechaMes" style="display:none;">
+        <input type="date" id="fechaDia" style="flex:1">
+        <select id="fechaMes" style="flex:1; display:none;">
             <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
             <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
             <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
             <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
         </select>
-        <input type="number" id="fechaAno" placeholder="Año" style="display:none;">
-        <button class="btn-aplicar" id="btnFiltrar">Aplicar filtro</button>
+        <input type="number" id="fechaAno" placeholder="Año" style="flex:1; display:none;">
+        <button id="btnFiltrar" style="flex:0.5">🔍</button>
     </div>
 </div>
 
 <div class="grid-cards">
     <div class="card ventas"><h3>💰 Total Ventas</h3><span id="ventas">$0</span></div>
-    <div class="card cobrado"><h3>✅ Total Cobrado</h3><span id="cobrado">$0</span></div>
+    <div class="card cobrado"><h3>✅ Cobrado</h3><span id="cobrado">$0</span></div>
     <div class="card pendiente"><h3>⏳ Por Cobrar</h3><span id="pendiente">$0</span></div>
-    <div class="card proveedor"><h3>🏭 Costo Proveedores</h3><span id="proveedor">$0</span></div>
-    <div class="card ganancia"><h3>📈 Ganancia Neta</h3><span id="ganancia">$0</span></div>
-    <div class="card items"><h3>📦 Productos Vendidos</h3><span id="items">0</span></div>
+    <div class="card proveedor"><h3>🏭 Pagado Proveedores</h3><span id="proveedor">$0</span></div>
+    <div class="card ganancia"><h3>📈 Ganancia</h3><span id="ganancia">$0</span></div>
+    <div class="card items"><h3>📦 Items Vendidos</h3><span id="items">0</span></div>
 </div>
 
-<div class="secciones-avanzadas">
-    <div class="panel-gestion">
-        <h2>🏭 Cancelaciones a Proveedor</h2>
-        <div class="form-cancelacion">
-            <input type="text" id="proveedorNombre" placeholder="Nombre del proveedor">
-            <input type="text" id="productoCancelado" placeholder="Producto">
-            <input type="number" id="montoCancelado" placeholder="Monto (USD)" step="0.01">
-            <input type="date" id="fechaCancelacion">
-            <select id="estadoProveedor">
-                <option value="PENDIENTE">Pendiente</option>
-                <option value="CANCELADO">Cancelado/Pagado</option>
-            </select>
-            <button id="btnRegistrarCancelacion" class="primary">➕ Registrar</button>
-        </div>
-        <div class="subtitulo">📋 Últimos registros</div>
-        <div id="listaCancelaciones" class="lista-registros">
-            <div class="item-registro">No hay registros.</div>
+<!-- PANEL: CANCELACIÓN A PROVEEDORES -->
+<div class="panel">
+    <h2>🏭 Cancelar Pago a Proveedor</h2>
+    <div class="form-group">
+        <label>Seleccionar Proveedor</label>
+        <select id="selectProveedor">
+            <option value="">Cargando proveedores...</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Fecha de Pago</label>
+        <input type="date" id="fechaPagoProveedor">
+    </div>
+    <div class="form-group">
+        <label>Productos a Cancelar</label>
+        <div class="select-all" id="btnSeleccionarTodos">✅ Seleccionar Todos</div>
+        <div id="listaProductosProveedor" class="checkbox-group">
+            <div class="checkbox-item">Cargando productos...</div>
         </div>
     </div>
+    <div class="form-group">
+        <label>Total a Pagar: </label>
+        <strong id="totalPagarProveedor" style="font-size:1.3rem; color:#a21caf;">$0.00</strong>
+    </div>
+    <button id="btnRegistrarPagoProveedor" class="success">💰 Registrar Pago a Proveedor</button>
+</div>
 
-    <div class="panel-gestion">
-        <h2>📦 Entregas a Clientes</h2>
-        <div class="form-productos">
-            <input type="text" id="clienteEntrega" placeholder="Cliente">
-            <input type="text" id="productoEntregado" placeholder="Producto">
-            <input type="number" id="cantidadEntregada" placeholder="Cantidad" step="1">
-            <input type="number" id="precioUnitario" placeholder="Precio unitario" step="0.01">
-            <input type="date" id="fechaEntrega">
-            <select id="estadoEntrega">
-                <option value="ENTREGADO">✅ Entregado y cobrado</option>
-                <option value="PENDIENTE_PAGO">🚚 Pendiente de pago</option>
-                <option value="CANCELADO">❌ Cancelado</option>
-            </select>
-            <button id="btnRegistrarEntrega" class="primary">➕ Registrar</button>
-        </div>
-        <div class="subtitulo">📄 Últimas entregas</div>
-        <div id="listaEntregas" class="lista-registros">
-            <div class="item-registro">Sin registros.</div>
-        </div>
+<!-- HISTORIAL DE PAGOS A PROVEEDORES -->
+<div class="panel">
+    <h2>📋 Historial de Pagos a Proveedores</h2>
+    <div id="historialPagos" class="historial">
+        <div class="historial-item">No hay pagos registrados</div>
     </div>
 </div>
 
-<script src="api-config.js"></script>
 <script>
+    // ==================== VARIABLES GLOBALES ====================
+    let proveedores = [];
+    let productosPorProveedor = {};
+    let productosSeleccionados = [];
+    let historialPagos = [];
     let filtroActual = { tipo: 'dia', valor: '' };
-    let cancelacionesArray = [];
-    let entregasArray = [];
 
-    function mostrarLoading(visible) {
-        let ld = document.getElementById('loadingIndicator');
-        if (!ld && visible) {
-            ld = document.createElement('div');
-            ld.id = 'loadingIndicator';
-            ld.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#a21caf;color:white;padding:8px16px;border-radius:40px;font-weight:bold;z-index:999';
-            ld.innerText = 'Cargando...';
-            document.body.appendChild(ld);
+    // ==================== FUNCIONES DE CARGA ====================
+    async function cargarProveedores() {
+        try {
+            const response = await fetch(`${DairyConfig.SCRIPT_URL}?pestana=Proveedores&accion=leer`);
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                proveedores = data;
+                const select = document.getElementById('selectProveedor');
+                select.innerHTML = '<option value="">Seleccionar proveedor</option>';
+                proveedores.forEach(prov => {
+                    const option = document.createElement('option');
+                    option.value = prov.nombre || prov.Nombre || prov.empresa || prov.Nombre_Empresa;
+                    option.textContent = prov.nombre || prov.Nombre || prov.empresa || prov.Nombre_Empresa || 'Sin nombre';
+                    select.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('Error cargando proveedores:', error);
         }
-        if (ld) ld.style.display = visible ? 'block' : 'none';
     }
 
-    async function cargarResumenFinancieroConFiltro() {
-        mostrarLoading(true);
+    async function cargarProductosPorProveedor(proveedorNombre) {
+        if (!proveedorNombre) return;
+        
+        try {
+            // Cargar productos del inventario
+            const response = await fetch(`${DairyConfig.SCRIPT_URL}?pestana=Inventario&accion=leer`);
+            const data = await response.json();
+            
+            if (Array.isArray(data)) {
+                // Filtrar productos por proveedor (si el campo proveedorHabitual coincide)
+                productosPorProveedor[proveedorNombre] = data.filter(p => 
+                    (p.proveedorHabitual && p.proveedorHabitual.toLowerCase() === proveedorNombre.toLowerCase()) ||
+                    (p.proveedor && p.proveedor.toLowerCase() === proveedorNombre.toLowerCase())
+                );
+                
+                if (productosPorProveedor[proveedorNombre].length === 0) {
+                    // Si no hay productos específicos, mostrar todos
+                    productosPorProveedor[proveedorNombre] = data;
+                }
+                
+                renderListaProductos(proveedorNombre);
+            }
+        } catch (error) {
+            console.error('Error cargando productos:', error);
+        }
+    }
+
+    function renderListaProductos(proveedorNombre) {
+        const productos = productosPorProveedor[proveedorNombre] || [];
+        const container = document.getElementById('listaProductosProveedor');
+        
+        if (productos.length === 0) {
+            container.innerHTML = '<div class="checkbox-item">No hay productos para este proveedor</div>';
+            return;
+        }
+        
+        container.innerHTML = productos.map((p, idx) => `
+            <div class="checkbox-item">
+                <input type="checkbox" value="${p.producto || p.Nombre || 'Producto'}" data-precio="${p.precioDistribuidor || p.PrecioDistribuidor || 0}" data-idx="${idx}">
+                <label>${p.producto || p.Nombre || 'Producto'} - $${(p.precioDistribuidor || p.PrecioDistribuidor || 0).toFixed(2)}</label>
+            </div>
+        `).join('');
+        
+        // Agregar eventos a los checkboxes
+        document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener('change', calcularTotalPago);
+        });
+        
+        calcularTotalPago();
+    }
+
+    function calcularTotalPago() {
+        let total = 0;
+        document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]:checked').forEach(cb => {
+            total += parseFloat(cb.dataset.precio || 0);
+        });
+        document.getElementById('totalPagarProveedor').innerText = `$${total.toFixed(2)}`;
+        productosSeleccionados = Array.from(document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]:checked')).map(cb => ({
+            producto: cb.value,
+            precio: parseFloat(cb.dataset.precio || 0)
+        }));
+    }
+
+    function seleccionarTodosProductos() {
+        const checkboxes = document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]');
+        const todosCheckados = Array.from(checkboxes).every(cb => cb.checked);
+        checkboxes.forEach(cb => cb.checked = !todosCheckados);
+        calcularTotalPago();
+    }
+
+    // ==================== REGISTRAR PAGO A PROVEEDOR ====================
+    async function registrarPagoProveedor() {
+        const proveedor = document.getElementById('selectProveedor').value;
+        const fecha = document.getElementById('fechaPagoProveedor').value;
+        
+        if (!proveedor) {
+            alert('Seleccione un proveedor');
+            return;
+        }
+        if (!fecha) {
+            alert('Seleccione la fecha de pago');
+            return;
+        }
+        if (productosSeleccionados.length === 0) {
+            alert('Seleccione al menos un producto');
+            return;
+        }
+        
+        const total = productosSeleccionados.reduce((sum, p) => sum + p.precio, 0);
+        const productosTexto = productosSeleccionados.map(p => p.producto).join(', ');
+        
+        const pago = {
+            id: Date.now(),
+            proveedor: proveedor,
+            fecha: fecha,
+            productos: productosTexto,
+            total: total,
+            items: productosSeleccionados.length,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Guardar en localStorage
+        historialPagos.unshift(pago);
+        if (historialPagos.length > 50) historialPagos.pop();
+        localStorage.setItem('historialPagosProveedores', JSON.stringify(historialPagos));
+        
+        // Mostrar confirmación
+        alert(`✅ Pago registrado a ${proveedor}\nTotal: $${total.toFixed(2)}\nProductos: ${productosTexto}`);
+        
+        // Limpiar selección
+        document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]').forEach(cb => cb.checked = false);
+        document.getElementById('selectProveedor').value = '';
+        document.getElementById('fechaPagoProveedor').value = new Date().toISOString().split('T')[0];
+        productosSeleccionados = [];
+        calcularTotalPago();
+        
+        // Recargar historial
+        renderHistorialPagos();
+    }
+
+    function renderHistorialPagos() {
+        const container = document.getElementById('historialPagos');
+        if (historialPagos.length === 0) {
+            container.innerHTML = '<div class="historial-item">No hay pagos registrados</div>';
+            return;
+        }
+        
+        container.innerHTML = historialPagos.map(p => `
+            <div class="historial-item">
+                <div class="fecha">📅 ${p.fecha}</div>
+                <div class="detalle">🏭 ${p.proveedor}</div>
+                <div class="detalle">📦 ${p.productos}</div>
+                <div class="monto">💰 $${p.total.toFixed(2)} (${p.items} productos)</div>
+            </div>
+        `).join('');
+    }
+
+    // ==================== CARGAR RESUMEN FINANCIERO ====================
+    async function cargarResumenFinanciero() {
         try {
             let url = `${DairyConfig.SCRIPT_URL}?accion=resumenFinanciero`;
             if (filtroActual.tipo === 'dia' && filtroActual.valor) {
@@ -142,104 +487,28 @@
                 url += `&ano=${filtroActual.valor}`;
             }
             
-            const response = await fetch(url, { method: "GET", mode: "cors" });
+            const response = await fetch(url);
             const data = await response.json();
             
-            if (data.status === "success" && data.resumen) {
+            if (data.status === 'success' && data.resumen) {
                 const r = data.resumen;
-                document.getElementById('ventas').innerHTML = `$${Number(r.totalVentas || 0).toFixed(2)}`;
-                document.getElementById('cobrado').innerHTML = `$${Number(r.totalCobrado || 0).toFixed(2)}`;
-                document.getElementById('pendiente').innerHTML = `$${Number(r.totalPendiente || 0).toFixed(2)}`;
-                document.getElementById('proveedor').innerHTML = `$${Number(r.totalCostoProveedor || 0).toFixed(2)}`;
-                document.getElementById('ganancia').innerHTML = `$${Number(r.totalGanancia || 0).toFixed(2)}`;
-                document.getElementById('items').innerHTML = Number(r.totalItems || 0);
-            } else {
-                console.warn("Respuesta inesperada:", data);
+                document.getElementById('ventas').innerHTML = `$${r.totalVentas?.toFixed(2) || '0'}`;
+                document.getElementById('cobrado').innerHTML = `$${r.totalCobrado?.toFixed(2) || '0'}`;
+                document.getElementById('pendiente').innerHTML = `$${r.totalPendiente?.toFixed(2) || '0'}`;
+                
+                // Sumar pagos a proveedores del historial
+                const totalPagadoProveedores = historialPagos.reduce((sum, p) => sum + p.total, 0);
+                document.getElementById('proveedor').innerHTML = `$${(r.totalCostoProveedor + totalPagadoProveedores).toFixed(2)}`;
+                document.getElementById('ganancia').innerHTML = `$${(r.totalGanancia - totalPagadoProveedores).toFixed(2)}`;
+                document.getElementById('items').innerHTML = r.totalItems || 0;
             }
         } catch (error) {
-            console.error("Error cargando resumen:", error);
-        } finally {
-            mostrarLoading(false);
+            console.error('Error cargando resumen:', error);
         }
     }
 
-    // LocalStorage para cancelaciones
-    function guardarCancelacionesLocal() { localStorage.setItem('finanzas_cancelaciones', JSON.stringify(cancelacionesArray)); }
-    function cargarCancelacionesLocal() {
-        const stored = localStorage.getItem('finanzas_cancelaciones');
-        cancelacionesArray = stored ? JSON.parse(stored) : [];
-        renderListaCancelaciones();
-    }
-    function renderListaCancelaciones() {
-        const container = document.getElementById('listaCancelaciones');
-        if (!cancelacionesArray.length) {
-            container.innerHTML = '<div class="item-registro">No hay registros.</div>';
-            return;
-        }
-        container.innerHTML = cancelacionesArray.slice(-8).reverse().map(c => `
-            <div class="item-registro">
-                <strong>${c.proveedor}</strong> - ${c.producto}<br>
-                $${Number(c.monto).toFixed(2)} | ${c.fecha}<br>
-                Estado: ${c.estado}
-            </div>
-        `).join('');
-    }
-    function registrarCancelacion() {
-        const proveedor = document.getElementById('proveedorNombre').value.trim();
-        const producto = document.getElementById('productoCancelado').value.trim();
-        const monto = parseFloat(document.getElementById('montoCancelado').value);
-        const fecha = document.getElementById('fechaCancelacion').value;
-        const estado = document.getElementById('estadoProveedor').value;
-        if (!proveedor || !producto || isNaN(monto) || !fecha) return alert("Complete todos los campos");
-        cancelacionesArray.push({ id: Date.now(), proveedor, producto, monto, fecha, estado });
-        guardarCancelacionesLocal();
-        renderListaCancelaciones();
-        document.getElementById('proveedorNombre').value = '';
-        document.getElementById('productoCancelado').value = '';
-        document.getElementById('montoCancelado').value = '';
-        alert("Registrado correctamente");
-    }
-
-    // LocalStorage para entregas
-    function guardarEntregasLocal() { localStorage.setItem('finanzas_entregas', JSON.stringify(entregasArray)); }
-    function cargarEntregasLocal() {
-        const stored = localStorage.getItem('finanzas_entregas');
-        entregasArray = stored ? JSON.parse(stored) : [];
-        renderListaEntregas();
-    }
-    function renderListaEntregas() {
-        const container = document.getElementById('listaEntregas');
-        if (!entregasArray.length) {
-            container.innerHTML = '<div class="item-registro">Sin registros.</div>';
-            return;
-        }
-        container.innerHTML = entregasArray.slice(-8).reverse().map(e => `
-            <div class="item-registro">
-                🧾 ${e.cliente} | ${e.producto} x${e.cantidad} → $${(e.cantidad * e.precioUnitario).toFixed(2)}<br>
-                Fecha: ${e.fechaEntrega} | Estado: ${e.estado}
-            </div>
-        `).join('');
-    }
-    function registrarEntrega() {
-        const cliente = document.getElementById('clienteEntrega').value.trim();
-        const producto = document.getElementById('productoEntregado').value.trim();
-        const cantidad = parseInt(document.getElementById('cantidadEntregada').value);
-        const precioUnitario = parseFloat(document.getElementById('precioUnitario').value);
-        const fechaEntrega = document.getElementById('fechaEntrega').value;
-        const estado = document.getElementById('estadoEntrega').value;
-        if (!cliente || !producto || isNaN(cantidad) || isNaN(precioUnitario) || !fechaEntrega) return alert("Complete todos los campos");
-        entregasArray.push({ id: Date.now(), cliente, producto, cantidad, precioUnitario, fechaEntrega, estado, total: cantidad * precioUnitario });
-        guardarEntregasLocal();
-        renderListaEntregas();
-        document.getElementById('clienteEntrega').value = '';
-        document.getElementById('productoEntregado').value = '';
-        document.getElementById('cantidadEntregada').value = '';
-        document.getElementById('precioUnitario').value = '';
-        alert("Entrega registrada");
-    }
-
-    // Filtros
-    function actualizarVisibilidadCamposFiltro() {
+    // ==================== FILTROS ====================
+    function actualizarVisibilidad() {
         const tipo = document.getElementById('filtroTipo').value;
         document.getElementById('fechaDia').style.display = tipo === 'dia' ? 'inline-block' : 'none';
         document.getElementById('fechaMes').style.display = tipo === 'mes' ? 'inline-block' : 'none';
@@ -250,38 +519,51 @@
     function aplicarFiltro() {
         const tipo = document.getElementById('filtroTipo').value;
         if (tipo === 'dia') {
-            const diaVal = document.getElementById('fechaDia').value;
-            if (!diaVal) return alert("Seleccione una fecha");
-            filtroActual = { tipo: 'dia', valor: diaVal };
+            const dia = document.getElementById('fechaDia').value;
+            if (!dia) return alert('Seleccione fecha');
+            filtroActual = { tipo: 'dia', valor: dia };
         } else if (tipo === 'mes') {
             const mes = document.getElementById('fechaMes').value;
             const ano = document.getElementById('fechaAno').value;
-            if (!ano) return alert("Ingrese el año");
+            if (!ano) return alert('Ingrese año');
             filtroActual = { tipo: 'mes', valor: `${mes}-${ano}` };
         } else if (tipo === 'ano') {
             const ano = document.getElementById('fechaAno').value;
-            if (!ano) return alert("Ingrese el año");
+            if (!ano) return alert('Ingrese año');
             filtroActual = { tipo: 'ano', valor: ano };
         }
-        cargarResumenFinancieroConFiltro();
+        cargarResumenFinanciero();
     }
 
-    // Inicialización
-    window.addEventListener('DOMContentLoaded', () => {
-        cargarCancelacionesLocal();
-        cargarEntregasLocal();
+    // ==================== INICIALIZACIÓN ====================
+    window.addEventListener('DOMContentLoaded', async () => {
+        // Cargar historial de localStorage
+        const stored = localStorage.getItem('historialPagosProveedores');
+        if (stored) historialPagos = JSON.parse(stored);
+        renderHistorialPagos();
+        
+        // Cargar proveedores y productos
+        await cargarProveedores();
+        
+        // Eventos
+        document.getElementById('selectProveedor').addEventListener('change', (e) => {
+            if (e.target.value) cargarProductosPorProveedor(e.target.value);
+        });
+        document.getElementById('btnSeleccionarTodos').addEventListener('click', seleccionarTodosProductos);
+        document.getElementById('btnRegistrarPagoProveedor').addEventListener('click', registrarPagoProveedor);
+        
+        document.getElementById('filtroTipo').addEventListener('change', actualizarVisibilidad);
+        document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
+        
+        // Fechas por defecto
         const hoy = new Date().toISOString().split('T')[0];
         document.getElementById('fechaDia').value = hoy;
-        document.getElementById('fechaCancelacion').value = hoy;
-        document.getElementById('fechaEntrega').value = hoy;
+        document.getElementById('fechaPagoProveedor').value = hoy;
         document.getElementById('fechaAno').value = new Date().getFullYear();
-        document.getElementById('filtroTipo').addEventListener('change', actualizarVisibilidadCamposFiltro);
-        document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
-        document.getElementById('btnRegistrarCancelacion').addEventListener('click', registrarCancelacion);
-        document.getElementById('btnRegistrarEntrega').addEventListener('click', registrarEntrega);
-        actualizarVisibilidadCamposFiltro();
+        
+        actualizarVisibilidad();
         filtroActual = { tipo: 'dia', valor: hoy };
-        cargarResumenFinancieroConFiltro();
+        await cargarResumenFinanciero();
     });
 </script>
 </body>

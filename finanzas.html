@@ -211,8 +211,9 @@
         calcularTotal();
     }
 
-    // ==================== GENERAR PDF ====================
-    function generarHTMLComprobante(proveedor, fecha, productos, total, numeroComprobante) {
+    // ==================== GENERAR COMPROBANTE PDF ====================
+    function abrirVistaPreviaPDF(proveedor, fecha, productos, total) {
+        const numeroComprobante = 'PAG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
         const ahora = new Date();
         const fechaHora = ahora.toLocaleString('es-EC');
         
@@ -228,7 +229,7 @@
             `;
         });
         
-        return `
+        const htmlContent = `
             <!DOCTYPE html>
             <html>
             <head>
@@ -250,6 +251,11 @@
                     .footer { text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
                     .eslogan { text-align: center; font-size: 14px; font-style: italic; color: #a21caf; margin: 15px 0; }
                     .comprobante-numero { text-align: right; font-size: 10px; color: #999; margin-bottom: 10px; }
+                    @media print {
+                        body { margin: 0; padding: 0; }
+                        .comprobante { box-shadow: none; border: 1px solid #ccc; }
+                        button { display: none; }
+                    }
                 </style>
             </head>
             <body>
@@ -267,7 +273,9 @@
                         <p><strong>📦 Total de items pagados:</strong> ${productos.length}</p>
                     </div>
                     <table>
-                        <thead><tr><th>#</th><th>Producto</th><th>Cliente</th><th>Valor Pagado</th></tr></thead>
+                        <thead>
+                            <tr><th>#</th><th>Producto</th><th>Cliente</th><th>Valor Pagado</th></tr>
+                        </thead>
                         <tbody>${detalleProductos}</tbody>
                     </table>
                     <div class="total">💰 TOTAL PAGADO: $${total.toFixed(2)}</div>
@@ -278,38 +286,48 @@
                         <p>LÓGICA LÁCTEA - Calidad y Tradición desde el Campo Ecuatoriano</p>
                     </div>
                 </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="window.print()" style="background: #a21caf; color: white; border: none; padding: 12px 24px; border-radius: 40px; font-size: 14px; cursor: pointer;">🖨️ Imprimir / Guardar como PDF</button>
+                    <button onclick="window.close()" style="background: #666; color: white; border: none; padding: 12px 24px; border-radius: 40px; font-size: 14px; cursor: pointer; margin-left: 10px;">❌ Cerrar</button>
+                </div>
+                <script>
+                    // Auto-imprimir después de 1 segundo
+                    setTimeout(() => { window.print(); }, 1000);
+                </script>
             </body>
             </html>
         `;
+        
+        // Abrir ventana nueva con el comprobante
+        const ventana = window.open();
+        ventana.document.write(htmlContent);
+        ventana.document.close();
+        
+        return numeroComprobante;
     }
 
-    async function generarPDF(proveedor, fecha, productos, total) {
-        const numeroComprobante = 'PAG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-        const htmlContent = generarHTMLComprobante(proveedor, fecha, productos, total, numeroComprobante);
+    // ==================== ABRIR WHATSAPP ====================
+    function abrirWhatsApp(proveedor, fecha, total, items, numeroComprobante) {
+        const mensaje = `*🥛 LÓGICA LÁCTEA - COMPROBANTE DE PAGO* 🥛\n\n` +
+                        `🏭 *Proveedor:* ${proveedor}\n` +
+                        `📅 *Fecha:* ${fecha}\n` +
+                        `💰 *Total Pagado:* $${total.toFixed(2)}\n` +
+                        `📦 *Items pagados:* ${items}\n` +
+                        `🆔 *Comprobante #:* ${numeroComprobante}\n\n` +
+                        `🌿 *"De nuestra tierra a tu mesa, con amor y tradición láctea"* 🌿\n\n` +
+                        `✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨\n\n` +
+                        `📎 *Adjunte el comprobante PDF que se abrirá en una nueva ventana*`;
         
-        const element = document.createElement('div');
-        element.innerHTML = htmlContent;
-        element.style.position = 'absolute';
-        element.style.left = '-9999px';
-        document.body.appendChild(element);
+        // Usar whatsapp:// para abrir la aplicación
+        const waUrl = `whatsapp://send?text=${encodeURIComponent(mensaje)}`;
         
-        const opt = {
-            margin: [0.5, 0.5, 0.5, 0.5],
-            filename: `Comprobante_Pago_${proveedor.replace(/\s/g, '_')}_${fecha}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
+        // Intentar abrir la aplicación
+        window.location.href = waUrl;
         
-        try {
-            await html2pdf().set(opt).from(element).save();
-            document.body.removeChild(element);
-            return { success: true, numeroComprobante };
-        } catch (error) {
-            console.error('Error generando PDF:', error);
-            document.body.removeChild(element);
-            return { success: false, error: error.message };
-        }
+        // Fallback: si no funciona, abrir web
+        setTimeout(() => {
+            window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
+        }, 500);
     }
 
     // ==================== REGISTRAR PAGO ====================
@@ -352,31 +370,19 @@
                 body: JSON.stringify(payload)
             });
             
-            const accion = confirm(`✅ Pago registrado exitosamente!\n\n📊 Resumen:\n🏭 Proveedor: ${proveedor}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${productosSeleccionados.length}\n\n¿Desea generar el comprobante PDF?`);
+            const accion = confirm(`✅ Pago registrado exitosamente!\n\n📊 Resumen:\n🏭 Proveedor: ${proveedor}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${productosSeleccionados.length}\n\n¿Desea generar el comprobante PDF y compartirlo por WhatsApp?`);
             
             if (accion) {
-                const pdfResult = await generarPDF(proveedor, fecha, productosSeleccionados, total);
+                // Abrir ventana con el comprobante para imprimir/guardar PDF
+                const numeroComprobante = abrirVistaPreviaPDF(proveedor, fecha, productosSeleccionados, total);
                 
-                if (pdfResult.success) {
-                    const enviarWA = confirm(`📄 PDF generado correctamente!\n\n¿Desea abrir WhatsApp para enviar el comprobante?\n\n📌 INSTRUCCIÓN: Adjunte el PDF que acaba de descargar en el chat.`);
+                setTimeout(() => {
+                    const enviarWA = confirm(`📄 ¿El comprobante se abrió en una nueva ventana?\n\nUna vez que guarde el PDF (Ctrl+S o Imprimir > Guardar como PDF), ¿desea abrir WhatsApp para enviarlo?`);
                     
                     if (enviarWA) {
-                        const mensaje = `*🥛 LÓGICA LÁCTEA - COMPROBANTE DE PAGO* 🥛\n\n` +
-                                        `🏭 *Proveedor:* ${proveedor}\n` +
-                                        `📅 *Fecha:* ${fecha}\n` +
-                                        `💰 *Total Pagado:* $${total.toFixed(2)}\n` +
-                                        `📦 *Items pagados:* ${productosSeleccionados.length}\n` +
-                                        `🆔 *Comprobante #:* ${pdfResult.numeroComprobante}\n\n` +
-                                        `🌿 *"De nuestra tierra a tu mesa, con amor y tradición láctea"* 🌿\n\n` +
-                                        `✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨\n\n` +
-                                        `📎 *Adjunte el PDF que se descargó automáticamente*`;
-                        
-                        const waUrl = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-                        window.open(waUrl, '_blank');
+                        abrirWhatsApp(proveedor, fecha, total, productosSeleccionados.length, numeroComprobante);
                     }
-                } else {
-                    alert('❌ Error al generar el PDF');
-                }
+                }, 2000);
             }
             
             document.querySelectorAll('#listaProductos input[type="checkbox"]').forEach(cb => cb.checked = false);

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Finanzas Lácteas - Sistema de Pagos</title>
+    <title>Finanzas Lácteas - Pagos a Proveedores</title>
     <style>
         * {
             margin: 0;
@@ -18,13 +18,11 @@
             padding-bottom: 30px;
         }
 
-        /* Header */
         .header {
             background: white;
             padding: 14px;
             border-radius: 24px;
             margin-bottom: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             border: 1px solid #e9d5ff;
         }
 
@@ -38,7 +36,6 @@
             margin-bottom: 10px;
         }
 
-        /* Filtros */
         .filtros {
             display: flex;
             flex-wrap: wrap;
@@ -52,7 +49,6 @@
             border: 1px solid #e9d5ff;
             background: white;
             font-size: 0.8rem;
-            font-weight: 500;
         }
 
         .filtros button {
@@ -62,7 +58,6 @@
             cursor: pointer;
         }
 
-        /* Tarjetas KPI */
         .grid-cards {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -75,7 +70,6 @@
             padding: 12px;
             border-radius: 18px;
             border-left: 4px solid;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .card h3 {
@@ -98,7 +92,6 @@
         .ganancia { border-left-color: #9b59b6; }
         .items { border-left-color: #1abc9c; }
 
-        /* Paneles */
         .panel {
             background: white;
             border-radius: 24px;
@@ -154,7 +147,7 @@
         }
 
         .checkbox-group {
-            max-height: 250px;
+            max-height: 300px;
             overflow-y: auto;
             border: 1px solid #e2d6f0;
             border-radius: 20px;
@@ -166,7 +159,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #f0e6ff;
         }
 
@@ -181,6 +174,11 @@
             font-size: 0.8rem;
             font-weight: normal;
             color: #333;
+        }
+
+        .checkbox-item .cliente {
+            font-size: 0.7rem;
+            color: #888;
         }
 
         .select-all {
@@ -207,9 +205,17 @@
             color: #a21caf;
         }
 
-        /* Historial */
+        .resumen-seleccion {
+            background: #e8f5e9;
+            padding: 8px;
+            border-radius: 16px;
+            margin-top: 8px;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
         .historial {
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
         }
 
@@ -244,7 +250,7 @@
         }
 
         @media (min-width: 768px) {
-            body { padding: 20px; max-width: 800px; margin: 0 auto; }
+            body { padding: 20px; max-width: 900px; margin: 0 auto; }
             .grid-cards { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
@@ -281,7 +287,7 @@
     <div class="card items"><h3>📦 Items Vendidos</h3><span id="items">0</span></div>
 </div>
 
-<!-- PANEL: PAGO A PROVEEDORES -->
+<!-- PANEL: PAGO A PROVEEDORES (basado en Ventas Entregadas) -->
 <div class="panel">
     <h2>🏭 Registrar Pago a Proveedor</h2>
     <div class="form-group">
@@ -295,14 +301,17 @@
         <input type="date" id="fechaPagoProveedor">
     </div>
     <div class="form-group">
-        <label>Productos a Pagar (Precio Distribuidor)</label>
+        <label>Productos Vendidos a Pagar (seleccionar entregas)</label>
         <div class="select-all" id="btnSeleccionarTodos">✅ Seleccionar Todos</div>
         <div id="listaProductosProveedor" class="checkbox-group">
-            <div class="checkbox-item">Cargando productos...</div>
+            <div class="checkbox-item">Cargando productos vendidos...</div>
         </div>
     </div>
     <div class="total-pago">
-        💰 Total a Pagar: <strong id="totalPagarProveedor">$0.00</strong>
+        💰 Total a Pagar al Proveedor: <strong id="totalPagarProveedor">$0.00</strong>
+    </div>
+    <div class="resumen-seleccion" id="resumenSeleccion">
+        📊 0 productos seleccionados
     </div>
     <button id="btnRegistrarPagoProveedor" class="success">💸 Registrar Pago a Proveedor</button>
 </div>
@@ -318,7 +327,8 @@
 <script>
     // ==================== VARIABLES ====================
     let proveedores = [];
-    let inventario = [];
+    let ventas = [];
+    let productosPorProveedor = {};
     let productosSeleccionados = [];
     let historialPagos = [];
     let filtroActual = { tipo: 'dia', valor: '' };
@@ -333,8 +343,8 @@
                 const select = document.getElementById('selectProveedor');
                 select.innerHTML = '<option value="">Seleccionar proveedor</option>';
                 proveedores.forEach(prov => {
-                    const nombre = prov['Nombre del Proveedor'] || prov.Nombre_del_Proveedor || prov.nombre || 'Sin nombre';
-                    if (nombre && nombre !== 'Sin nombre') {
+                    const nombre = prov['Nombre del Proveedor'] || prov.Nombre_del_Proveedor || prov.nombre;
+                    if (nombre && nombre !== 'Seleccionar proveedor') {
                         const option = document.createElement('option');
                         option.value = nombre;
                         option.textContent = nombre;
@@ -347,50 +357,107 @@
         }
     }
 
-    async function cargarInventario() {
+    async function cargarVentas() {
+        try {
+            const response = await fetch(`${DairyConfig.SCRIPT_URL}?pestana=Ventas&accion=leer`);
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                ventas = data;
+            }
+        } catch (error) {
+            console.error('Error cargando ventas:', error);
+        }
+    }
+
+    async function cargarInventarioParaPrecios() {
         try {
             const response = await fetch(`${DairyConfig.SCRIPT_URL}?pestana=Inventario&accion=leer`);
             const data = await response.json();
             if (Array.isArray(data)) {
-                inventario = data;
+                // Crear mapa de precios distribuidor por producto
+                window.preciosDistribuidor = {};
+                data.forEach(p => {
+                    const nombre = p.Producto || p.producto;
+                    const precio = parseFloat(String(p.Precio_Distribuidor || p.precioDistribuidor || 0).replace('$', '').replace(',', '.'));
+                    if (nombre) {
+                        window.preciosDistribuidor[nombre] = precio;
+                    }
+                });
             }
         } catch (error) {
             console.error('Error cargando inventario:', error);
+            window.preciosDistribuidor = {};
         }
     }
 
-    function filtrarProductosPorProveedor(proveedorNombre) {
+    function filtrarVentasPorProveedor(proveedorNombre) {
         if (!proveedorNombre) return [];
         
-        const productosFiltrados = inventario.filter(p => {
-            const proveedorProducto = p['Proveedor Habitual'] || p.Proveedor_Habitual || p.proveedorHabitual || '';
-            return proveedorProducto.toLowerCase() === proveedorNombre.toLowerCase();
+        // Filtrar ventas ENTREGADAS y que el proveedor coincida
+        // Nota: La relación producto-proveedor viene del inventario
+        const ventasFiltradas = ventas.filter(v => {
+            const estado = (v.Estado || '').toString().toUpperCase();
+            const producto = v.Producto || '';
+            
+            // Buscar el proveedor de este producto en el inventario
+            return estado === 'ENTREGADO' && producto;
         });
         
-        return productosFiltrados;
+        // Agrupar por ID_Venta y producto para evitar duplicados
+        const mapaVentas = new Map();
+        ventasFiltradas.forEach(v => {
+            const idVenta = v.ID_Venta || v.id_venta || v.Id;
+            const producto = v.Producto || '';
+            const cliente = v.Cliente || '';
+            const cantidad = parseFloat(String(v.Cantidad || 1).replace(',', '.'));
+            const precioUnitario = parseFloat(String(v.Precio_PVP || v.precio || 0).replace(',', '.'));
+            const totalVenta = parseFloat(String(v.Total || cantidad * precioUnitario || 0).replace(',', '.'));
+            
+            // Obtener precio distribuidor del producto
+            const precioDistribuidor = window.preciosDistribuidor?.[producto] || (totalVenta * 0.65);
+            
+            const key = `${idVenta}_${producto}`;
+            if (!mapaVentas.has(key)) {
+                mapaVentas.set(key, {
+                    idVenta: idVenta,
+                    producto: producto,
+                    cliente: cliente,
+                    cantidad: cantidad,
+                    precioVenta: precioUnitario,
+                    totalVenta: totalVenta,
+                    precioDistribuidor: precioDistribuidor,
+                    totalDistribuidor: precioDistribuidor * cantidad
+                });
+            }
+        });
+        
+        return Array.from(mapaVentas.values());
     }
 
     function renderListaProductos(proveedorNombre) {
-        const productos = filtrarProductosPorProveedor(proveedorNombre);
+        const productos = filtrarVentasPorProveedor(proveedorNombre);
         const container = document.getElementById('listaProductosProveedor');
         
         if (productos.length === 0) {
-            container.innerHTML = '<div class="checkbox-item">No hay productos para este proveedor</div>';
+            container.innerHTML = '<div class="checkbox-item">No hay productos entregados para este proveedor</div>';
             return;
         }
         
-        container.innerHTML = productos.map((p, idx) => {
-            const nombreProducto = p.Producto || p.producto || p.nombre || 'Producto';
-            const precioDist = parseFloat(String(p.Precio_Distribuidor || p.precioDistribuidor || p.PrecioDistribuidor || 0).replace('$', '').replace(',', '.'));
-            const stock = p.Stock || p.stock || 0;
-            
-            return `
-                <div class="checkbox-item">
-                    <input type="checkbox" value="${nombreProducto}" data-precio="${precioDist}" data-stock="${stock}" data-idx="${idx}">
-                    <label>${nombreProducto} - $${precioDist.toFixed(2)} (Stock: ${stock})</label>
-                </div>
-            `;
-        }).join('');
+        container.innerHTML = productos.map((p, idx) => `
+            <div class="checkbox-item">
+                <input type="checkbox" value="${p.producto}" 
+                       data-idventa="${p.idVenta}"
+                       data-cliente="${p.cliente}"
+                       data-cantidad="${p.cantidad}"
+                       data-preciodist="${p.precioDistribuidor}"
+                       data-totaldist="${p.totalDistribuidor}"
+                       data-idx="${idx}">
+                <label>
+                    <strong>${p.producto}</strong><br>
+                    <span class="cliente">🧑 ${p.cliente} | ${p.cantidad} und | $${p.totalDistribuidor.toFixed(2)} (costo)</span>
+                </label>
+            </div>
+        `).join('');
         
         // Agregar eventos
         document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]').forEach(cb => {
@@ -402,14 +469,22 @@
 
     function calcularTotalPago() {
         let total = 0;
+        let items = 0;
+        
         document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]:checked').forEach(cb => {
-            total += parseFloat(cb.dataset.precio || 0);
+            total += parseFloat(cb.dataset.totaldist || 0);
+            items++;
         });
+        
         document.getElementById('totalPagarProveedor').innerHTML = `$${total.toFixed(2)}`;
+        document.getElementById('resumenSeleccion').innerHTML = `📊 ${items} productos seleccionados | Total: $${total.toFixed(2)}`;
         
         productosSeleccionados = Array.from(document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]:checked')).map(cb => ({
+            idVenta: cb.dataset.idventa,
             producto: cb.value,
-            precio: parseFloat(cb.dataset.precio || 0)
+            cliente: cb.dataset.cliente,
+            cantidad: cb.dataset.cantidad,
+            totalDistribuidor: parseFloat(cb.dataset.totaldist || 0)
         }));
     }
 
@@ -434,19 +509,20 @@
             return;
         }
         if (productosSeleccionados.length === 0) {
-            alert('❌ Seleccione al menos un producto');
+            alert('❌ Seleccione al menos un producto entregado');
             return;
         }
         
-        const total = productosSeleccionados.reduce((sum, p) => sum + p.precio, 0);
-        const productosTexto = productosSeleccionados.map(p => p.producto).join(', ');
+        const total = productosSeleccionados.reduce((sum, p) => sum + p.totalDistribuidor, 0);
+        const productosTexto = productosSeleccionados.map(p => `${p.producto} (${p.cantidad} und - ${p.cliente})`).join(', ');
         
         // Crear comprobante
         const comprobante = {
             id: Date.now(),
             proveedor: proveedor,
             fecha: fecha,
-            productos: productosTexto,
+            productos: productosSeleccionados,
+            productosTexto: productosTexto,
             total: total,
             items: productosSeleccionados.length,
             timestamp: new Date().toISOString()
@@ -458,7 +534,7 @@
         localStorage.setItem('historialPagosProveedores', JSON.stringify(historialPagos));
         
         // Mostrar comprobante
-        alert(`✅ PAGO REGISTRADO EXITOSAMENTE\n\n📦 Proveedor: ${proveedor}\n📅 Fecha: ${fecha}\n💰 Total: $${total.toFixed(2)}\n📋 Productos: ${productosTexto}\n\n🖨️ Comprobante generado correctamente`);
+        alert(`✅ PAGO REGISTRADO EXITOSAMENTE\n\n📦 Proveedor: ${proveedor}\n📅 Fecha: ${fecha}\n💰 Total Pagado: $${total.toFixed(2)}\n📋 Items: ${productosSeleccionados.length} productos\n\n🖨️ Comprobante generado correctamente`);
         
         // Limpiar selección
         document.querySelectorAll('#listaProductosProveedor input[type="checkbox"]').forEach(cb => cb.checked = false);
@@ -483,8 +559,8 @@
             <div class="historial-item">
                 <div class="fecha">📅 ${p.fecha} | #${p.id}</div>
                 <div class="detalle">🏭 ${p.proveedor}</div>
-                <div class="detalle">📦 ${p.productos.substring(0, 60)}${p.productos.length > 60 ? '...' : ''}</div>
-                <div class="monto">💰 $${p.total.toFixed(2)} (${p.items} productos)</div>
+                <div class="detalle">📦 ${p.items} productos pagados</div>
+                <div class="monto">💰 $${p.total.toFixed(2)}</div>
             </div>
         `).join('');
     }
@@ -552,7 +628,6 @@
 
     // ==================== INICIALIZACIÓN ====================
     window.addEventListener('DOMContentLoaded', async () => {
-        // Mostrar loading
         const loadingDiv = document.createElement('div');
         loadingDiv.className = 'loading';
         loadingDiv.innerText = 'Cargando datos...';
@@ -565,11 +640,13 @@
         
         // Cargar datos
         await cargarProveedores();
-        await cargarInventario();
+        await cargarVentas();
+        await cargarInventarioParaPrecios();
         
         // Eventos
         document.getElementById('selectProveedor').addEventListener('change', (e) => {
             if (e.target.value) renderListaProductos(e.target.value);
+            else document.getElementById('listaProductosProveedor').innerHTML = '<div class="checkbox-item">Seleccione un proveedor</div>';
         });
         document.getElementById('btnSeleccionarTodos').addEventListener('click', seleccionarTodosProductos);
         document.getElementById('btnRegistrarPagoProveedor').addEventListener('click', registrarPagoProveedor);
@@ -587,7 +664,6 @@
         filtroActual = { tipo: 'dia', valor: hoy };
         await cargarResumenFinanciero();
         
-        // Remover loading
         loadingDiv.remove();
     });
 </script>

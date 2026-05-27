@@ -4,13 +4,13 @@
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3050/3050158.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ],
   "start_url": "./index.html",
+  "display": "standalone",
   "background_color": "#f4f7f6",
   "theme_color": "#1e3a8a",
-  "display": "standalone",
   "orientation": "portrait"
 }

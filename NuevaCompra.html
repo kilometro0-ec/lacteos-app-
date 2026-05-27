@@ -56,9 +56,10 @@
         </div>
     </header>
 
-
-        <!-- Panel Izquierdo - PASO 1: Realizar Compra -->
-        <div id="step1-panel" class="space-y-6 lg:col-span-1 fade-in">
+  
+        
+        <!-- Panel Izquierdo -->
+        <div id="panel-compra" class="space-y-6 lg:col-span-1">
             <div class="bg-white p-5 rounded-xl shadow-sm border">
                 <h2 class="text-sm font-bold mb-4 flex items-center gap-2">
                     <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i> Datos de la Compra
@@ -71,10 +72,6 @@
                     <label class="block text-xs font-bold mb-1">Proveedor *</label>
                     <select id="com_proveedor" class="w-full border rounded-lg px-3 py-2 text-sm bg-white">
                         <option value="">-- Seleccione un proveedor --</option>
-                        <option value="Grupo del Campo Artesano">Grupo del Campo Artesano</option>
-                        <option value="Kilómetro 0">Kilómetro 0</option>
-                        <option value="Lácteos La Vaquita">Lácteos La Vaquita</option>
-                        <option value="Ganadería Los Andes">Ganadería Los Andes</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -107,41 +104,44 @@
                     + Agregar Producto
                 </button>
             </div>
-            
-            <button id="btnSiguiente1" onclick="siguientePaso()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2">
-                <i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Generar PDF
-            </button>
         </div>
 
-        <!-- Panel Central - Tabla Carrito -->
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-slate-50 border-b">
-                        <tr>
-                            <th class="py-3 px-4 text-left">Código</th>
-                            <th class="py-3 px-4 text-left">Producto</th>
-                            <th class="py-3 px-4 text-center">Cantidad</th>
-                            <th class="py-3 px-4 text-right">Precio</th>
-                            <th class="py-3 px-4 text-right">Subtotal</th>
-                            <th class="py-3 px-4 text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbodyCarrito">
-                        <tr>
-                            <td colspan="6" class="text-center py-20 text-slate-400">
-                                <i data-lucide="shopping-cart" class="w-10 h-10 mx-auto mb-2"></i>
-                                Carrito vacío - Agrega productos
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <!-- Tabla Carrito y Total -->
+        <div class="lg:col-span-2 flex flex-col gap-4">
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 border-b">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Código</th>
+                                <th class="py-3 px-4 text-left">Producto</th>
+                                <th class="py-3 px-4 text-center">Cantidad</th>
+                                <th class="py-3 px-4 text-right">Precio</th>
+                                <th class="py-3 px-4 text-right">Subtotal</th>
+                                <th class="py-3 px-4 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyCarrito">
+                            <tr>
+                                <td colspan="6" class="text-center py-20 text-slate-400">
+                                    <i data-lucide="shopping-cart" class="w-10 h-10 mx-auto mb-2"></i>
+                                    Carrito vacío - Agrega productos
+                                 </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-            <div class="bg-slate-50 p-5 border-t flex justify-between items-center">
-                <div>
-                    <span class="text-xs text-slate-400 uppercase font-bold">Total Compra</span>
-                    <span id="lblTotalCompra" class="text-3xl font-bold text-slate-900 ml-2">$0.00</span>
+                <div class="bg-slate-50 p-5 border-t">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-xs text-slate-400 uppercase font-bold">Total Compra</span>
+                            <span id="lblTotalCompra" class="text-3xl font-bold text-slate-900 ml-2">$0.00</span>
+                        </div>
+                        <button id="btnSiguiente" onclick="siguientePaso()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg font-bold transition-all flex items-center gap-2">
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Generar PDF
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -149,7 +149,7 @@
 
     <script>
         // ==================== CONFIGURACIÓN ====================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxd8JyMA9NRqsxqoH762o3iR2khHpemBoVxCl-aMOEtxdp2FTnHE68p-hgnDGg-q83tog/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4m1Xe19wjVXzcaxkiIFBXm9G2cAgWgwrjjVuK2CBSnCj6uWzWX5vLr7IUrGCOILUkLw/exec";
         
         let catalogoProductos = [];
         let catalogoProveedores = [];
@@ -225,7 +225,7 @@
             if (catalogoProveedores.length > 0) {
                 select.innerHTML = '<option value="">-- Seleccione un proveedor --</option>';
                 catalogoProveedores.forEach(p => {
-                    select.innerHTML += `<option value="${p.nombre}" data-telefono="${p.telefono}" data-direccion="${p.direccion}" data-ruc="${p.ruc}" data-ciudad="${p.ciudad}">${p.nombre} - ${p.ciudad || ''}</option>`;
+                    select.innerHTML += `<option value="${p.nombre}" data-telefono="${p.telefono || ''}" data-direccion="${p.direccion || ''}" data-ruc="${p.ruc || ''}" data-ciudad="${p.ciudad || ''}">${p.nombre} ${p.ciudad ? '- ' + p.ciudad : ''}</option>`;
                 });
             }
             select.addEventListener("change", (e) => {
@@ -254,7 +254,9 @@
                     catalogoProductos = [
                         { id: "P-103", producto: "Yogurt de Fruta 1/2 L", precio: 0.70 },
                         { id: "P-128", producto: "Queso Mozarella 500g", precio: 3.50 },
-                        { id: "P-164", producto: "Queso Cremoso 500 g", precio: 3.00 }
+                        { id: "P-164", producto: "Queso Cremoso 500 g", precio: 3.00 },
+                        { id: "P-169", producto: "Yogurt Griego semi Endulzado 1L", precio: 2.93 },
+                        { id: "P-172", producto: "Yogurt Griego 0 Azucar 1L", precio: 3.58 }
                     ];
                 }
                 const select = document.getElementById("sel_producto");
@@ -340,8 +342,8 @@
             let total = 0;
 
             if (carritoDeCompras.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-20 text-slate-400"><i data-lucide="shopping-cart" class="w-10 h-10 mx-auto mb-2"></i>Carrito vacío</td></tr>`;
-                document.getElementById("lblTotalCompra").innerText = "$0.00";
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-20 text-slate-400"><i data-lucide="shopping-cart" class="w-10 h-10 mx-auto mb-2"></i>Carrito vacío - Agrega productos</td></tr>`;
+                document.getElementById("lblTotalCompra").innerHTML = "$0.00";
                 lucide.createIcons();
                 return;
             }
@@ -365,43 +367,66 @@
                     </tr>
                 `;
             });
-            document.getElementById("lblTotalCompra").innerText = `$${total.toFixed(2)}`;
+            document.getElementById("lblTotalCompra").innerHTML = `$${total.toFixed(2)}`;
             lucide.createIcons();
         }
 
-        // ==================== PASOS ====================
+        // ==================== ACTUALIZAR PASOS ====================
         function actualizarPasos() {
-            const steps = [
-                { id: 'step1-indicator', panel: 'step1-panel', paso: 1 },
-                { id: 'step2-indicator', paso: 2 },
-                { id: 'step3-indicator', paso: 3 },
-                { id: 'step4-indicator', paso: 4 }
-            ];
+            const step1 = document.getElementById("step1");
+            const step2 = document.getElementById("step2");
+            const step3 = document.getElementById("step3");
+            const step4 = document.getElementById("step4");
+            const btnSiguiente = document.getElementById("btnSiguiente");
             
-            steps.forEach(step => {
-                const element = document.getElementById(step.id);
-                if (step.paso < pasoActual) {
-                    element.className = 'step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all';
-                    element.innerHTML = step.paso === 1 ? '✅ Realizar Compra' : 
-                                       step.paso === 2 ? '📄 Descargar PDF' :
-                                       step.paso === 3 ? '📱 Enviar WhatsApp' : '💾 Guardar en BD';
-                } else if (step.paso === pasoActual) {
-                    element.className = 'step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all';
-                    element.innerHTML = step.paso === 1 ? '1️⃣ Realizar Compra' : 
-                                       step.paso === 2 ? '2️⃣ Descargar PDF' :
-                                       step.paso === 3 ? '3️⃣ Enviar WhatsApp' : '4️⃣ Guardar en BD';
-                } else {
-                    element.className = 'step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all';
-                    element.innerHTML = step.paso === 1 ? '1️⃣ Realizar Compra' : 
-                                       step.paso === 2 ? '2️⃣ Descargar PDF' :
-                                       step.paso === 3 ? '3️⃣ Enviar WhatsApp' : '4️⃣ Guardar en BD';
-                }
-            });
-            
-            // Mostrar/ocultar paneles
-            document.getElementById('step1-panel').style.display = pasoActual === 1 ? 'block' : 'none';
+            if (pasoActual === 1) {
+                step1.className = "step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step2.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step3.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step4.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step1.innerHTML = "1️⃣ Realizar Compra";
+                step2.innerHTML = "2️⃣ Descargar PDF";
+                step3.innerHTML = "3️⃣ Enviar WhatsApp";
+                step4.innerHTML = "4️⃣ Guardar en BD";
+                btnSiguiente.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Generar PDF';
+                lucide.createIcons();
+            } else if (pasoActual === 2) {
+                step1.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step2.className = "step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step3.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step4.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step1.innerHTML = "✅ Realizar Compra";
+                step2.innerHTML = "2️⃣ Descargar PDF";
+                step3.innerHTML = "3️⃣ Enviar WhatsApp";
+                step4.innerHTML = "4️⃣ Guardar en BD";
+                btnSiguiente.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Enviar WhatsApp';
+                lucide.createIcons();
+            } else if (pasoActual === 3) {
+                step1.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step2.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step3.className = "step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step4.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step1.innerHTML = "✅ Realizar Compra";
+                step2.innerHTML = "📄 Descargar PDF";
+                step3.innerHTML = "3️⃣ Enviar WhatsApp";
+                step4.innerHTML = "4️⃣ Guardar en BD";
+                btnSiguiente.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Guardar en BD';
+                lucide.createIcons();
+            } else if (pasoActual === 4) {
+                step1.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step2.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step3.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step4.className = "step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
+                step1.innerHTML = "✅ Realizar Compra";
+                step2.innerHTML = "📄 Descargar PDF";
+                step3.innerHTML = "📱 Enviar WhatsApp";
+                step4.innerHTML = "4️⃣ Guardar en BD";
+                btnSiguiente.style.display = "none";
+                lucide.createIcons();
+            }
         }
 
+        // ==================== SIGUIENTE PASO ====================
         function siguientePaso() {
             if (pasoActual === 1) {
                 const proveedor = document.getElementById("com_proveedor").value;
@@ -501,11 +526,14 @@
                     fecha: new Date().toISOString().split('T')[0],
                     items: carritoDeCompras.map(item => ({ producto_id: item.id, producto_nombre: item.producto, cantidad: item.cantidad, costo: item.precio }))
                 });
-                Swal.fire({ title: '✅ Compra Guardada', text: `Factura: ${factura}\nProveedor: ${proveedor}`, icon: 'success' });
+                Swal.fire({ title: '✅ Compra Guardada', text: `Factura: ${factura}\nProveedor: ${proveedor}\nGuardado en ComprasPendientes`, icon: 'success' });
                 carritoDeCompras = [];
                 renderizarCarrito();
                 document.getElementById("com_proveedor").value = "";
                 generarFacturaAuto();
+                pasoActual = 1;
+                actualizarPasos();
+                document.getElementById("btnSiguiente").style.display = "flex";
             } catch (err) {
                 Swal.fire("Error", "No se pudo guardar", "error");
             }

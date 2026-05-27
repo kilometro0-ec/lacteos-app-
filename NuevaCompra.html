@@ -43,7 +43,7 @@
                     <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i> Datos de la Compra
                 </h2>
                 <div class="mb-3">
-                    <label class="block text-xs font-bold mb-1">Factura N°</label>
+                    <label class="block text-xs font-bold mb-1">Orden de Compra N°</label>
                     <input type="text" id="com_factura" class="w-full border rounded-lg px-3 py-2 text-sm font-mono bg-slate-100" readonly>
                 </div>
                 <div class="mb-3">
@@ -137,7 +137,7 @@
         let catalogoProveedores = [];
         let carritoDeCompras = [];
         let pasoActual = 1;
-        let facturasGeneradas = new Set(); // Para evitar facturas repetidas
+        let ordenesGeneradas = new Set(); // Para evitar órdenes repetidas
 
         // ==================== API ====================
         const DairyAPI = {
@@ -189,16 +189,16 @@
             }
         });
 
-        // Generar factura única (no repetible)
-        function generarFacturaAuto() {
+        // Generar orden de compra única (no repetible)
+        function generarOrdenAuto() {
             const fecha = new Date();
-            let factura;
+            let orden;
             do {
-                factura = `FAC-${fecha.getFullYear()}${String(fecha.getMonth()+1).padStart(2,'0')}${String(fecha.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*10000000)}`;
-            } while (facturasGeneradas.has(factura));
-            facturasGeneradas.add(factura);
-            document.getElementById("com_factura").value = factura;
-            return factura;
+                orden = `COM-${fecha.getFullYear()}${String(fecha.getMonth()+1).padStart(2,'0')}${String(fecha.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*1000000)}`;
+            } while (ordenesGeneradas.has(orden));
+            ordenesGeneradas.add(orden);
+            document.getElementById("com_factura").value = orden;
+            return orden;
         }
 
         function configurarFecha() {
@@ -369,7 +369,7 @@
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </td>
-                    </tr>
+                     </tr>
                 `;
             });
             document.getElementById("lblTotalCompra").innerHTML = `$${total.toFixed(2)}`;
@@ -402,7 +402,7 @@
                     Swal.fire("Error", "Agrega al menos un producto", "warning");
                     return;
                 }
-                generarFacturaAuto(); // Generar factura única
+                generarOrdenAuto(); // Generar orden única
                 pasoActual = 2;
                 actualizarBoton();
                 descargarPDF();
@@ -416,7 +416,7 @@
         // ==================== GENERAR PDF COMPLETO ====================
         function generarHTMLPDF() {
             const proveedor = document.getElementById("com_proveedor").value;
-            const factura = document.getElementById("com_factura").value;
+            const ordenCompra = document.getElementById("com_factura").value;
             const fecha = document.getElementById("fecha_pedido").value;
             const total = carritoDeCompras.reduce((s, i) => s + (i.cantidad * i.precio), 0);
             
@@ -438,7 +438,7 @@
             <html>
             <head>
                 <meta charset="UTF-8">
-                <title>Orden de Compra - ${factura}</title>
+                <title>Orden de Compra - ${ordenCompra}</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body {
@@ -593,8 +593,8 @@
                         <div class="info-title">📋 INFORMACIÓN DE LA ORDEN</div>
                         <div class="info-content">
                             <div class="info-item">
-                                <div class="info-label">N° Factura/Orden:</div>
-                                <div class="info-value">${factura}</div>
+                                <div class="info-label">Orden de Compra N°:</div>
+                                <div class="info-value">${ordenCompra}</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Fecha de Emisión:</div>
@@ -627,7 +627,7 @@
                                     <th>Cantidad</th>
                                     <th>Precio Unitario</th>
                                     <th>Subtotal</th>
-                                  </tr>
+                                   </tr>
                             </thead>
                             <tbody>
                                 ${tablaProductos}
@@ -669,7 +669,7 @@
         // ==================== ENVIAR WHATSAPP Y GUARDAR ====================
         function enviarWhatsAppYGuardar() {
             const proveedor = document.getElementById("com_proveedor").value;
-            const factura = document.getElementById("com_factura").value;
+            const ordenCompra = document.getElementById("com_factura").value;
             const fecha = document.getElementById("fecha_pedido").value;
             const total = carritoDeCompras.reduce((s, i) => s + (i.cantidad * i.precio), 0);
             const telefono = document.getElementById("telefono_proveedor").value;
@@ -681,7 +681,7 @@
             if (!numeroWhatsApp) {
                 numeroWhatsApp = "593984016027"; // Número por defecto
             }
-            if (!numeroWhatsApp.startsWith('593')) {
+            if (!numeroWhatsApp.startsWith('593') && !numeroWhatsApp.startsWith('58')) {
                 numeroWhatsApp = '593' + numeroWhatsApp;
             }
             
@@ -689,7 +689,7 @@
             const mensaje = `🛒 ORDEN DE COMPRA - LÓGICA LÁCTEA
 
 Proveedor: ${proveedor}
-Factura: ${factura}
+Orden de Compra N°: ${ordenCompra}
 Fecha: ${fecha}
 TOTAL: $${total.toFixed(2)}
 
@@ -705,7 +705,8 @@ TOTAL: $${total.toFixed(2)}
             setTimeout(async () => {
                 try {
                     await DairyAPI.registrarCompra({
-                        factura, proveedor,
+                        factura: ordenCompra, 
+                        proveedor, 
                         fecha: new Date().toISOString().split('T')[0],
                         items: carritoDeCompras.map(item => ({ 
                             producto_id: item.id, 
@@ -717,7 +718,7 @@ TOTAL: $${total.toFixed(2)}
                     
                     Swal.fire({ 
                         title: '✅ Compra Completada', 
-                        text: `Factura: ${factura}\nProveedor: ${proveedor}\nGuardado en ComprasPendientes`, 
+                        text: `Orden: ${ordenCompra}\nProveedor: ${proveedor}\nGuardado en ComprasPendientes`, 
                         icon: 'success' 
                     });
                     

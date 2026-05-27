@@ -4,21 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nueva Compra - Lógica Láctea</title>
-    <!-- CONEXIÓN A ARCHIVOS RAÍZ -->
     <link rel="stylesheet" href="estilos-lacteos.css">
-    <!-- Tailwind CSS para diseño y estructura ágil -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SweetAlert2 para alertas transaccionales -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
-    <!-- EL MENÚ SE INYECTA DINÁMICAMENTE DESDE menu-logic.js -->
     <div id="menu-container"></div>
 
-    <!-- Encabezado del Módulo -->
     <header class="bg-amber-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <i data-lucide="shopping-bag" class="w-8 h-8 text-amber-400"></i>
@@ -29,19 +23,16 @@
         </div>
     </header>
 
-    <!-- Zona de Trabajo Operativa -->
     <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <!-- Bloque Izquierdo: Datos de la Factura y Selector de Item -->
         <div class="space-y-6 lg:col-span-1">
-            <!-- Formulario de Cabecera con Búsqueda de Proveedor -->
             <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider border-b pb-2 flex items-center gap-2">
                     <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i> Datos del Proveedor
                 </h2>
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Factura / Comprobante N° *</label>
-                    <input type="text" id="com_factura" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none" placeholder="Ej: 001-002-0004567" autocomplete="off">
+                    <input type="text" id="com_factura" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none" autocomplete="off">
                 </div>
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Nombre del Proveedor *</label>
@@ -55,7 +46,6 @@
                 </div>
             </div>
 
-            <!-- Selector de Añadido de Items -->
             <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider border-b pb-2 flex items-center gap-2">
                     <i data-lucide="package-plus" class="w-4 h-4 text-amber-600"></i> Añadir al Carrito
@@ -82,7 +72,6 @@
             </div>
         </div>
 
-        <!-- Bloque Derecho: Tabla de Items Añadidos y Cierre de Transacción -->
         <div class="lg:col-span-2 flex flex-col justify-between bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="overflow-x-auto flex-1">
                 <table class="w-full text-left border-collapse text-xs md:text-sm">
@@ -107,7 +96,6 @@
                 </table>
             </div>
 
-            <!-- Panel Inferior de Totales y Liquidación -->
             <div class="bg-slate-50 p-6 border-t border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div class="text-center sm:text-left">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Total Inversión</span>
@@ -147,7 +135,6 @@
                 try {
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -158,9 +145,8 @@
                         })
                     });
                     
-                    // Con no-cors no podemos leer la respuesta, asumimos éxito
-                    console.log(`Datos guardados en ${hoja}:`, data);
-                    return { status: 'success' };
+                    const result = await response.json();
+                    return result;
                 } catch (error) {
                     console.error(`Error en guardarDatos (${hoja}):`, error);
                     throw error;
@@ -171,7 +157,6 @@
                 try {
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
                         headers: {
                             'Content-Type': 'application/json',
                         },
@@ -181,8 +166,8 @@
                         })
                     });
                     
-                    console.log('Compra registrada:', compraData);
-                    return { status: 'success' };
+                    const result = await response.json();
+                    return result;
                 } catch (error) {
                     console.error('Error al registrar compra:', error);
                     throw error;
@@ -205,7 +190,6 @@
             generarNumeroFacturaAuto();
         });
 
-        // Generar número de factura automático
         function generarNumeroFacturaAuto() {
             const fecha = new Date();
             const anio = fecha.getFullYear();
@@ -216,33 +200,28 @@
             document.getElementById("com_factura").value = currentFacturaNumero;
         }
 
-        // Cargar proveedores
         async function cargarProveedores() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Proveedores");
                 if (Array.isArray(datos) && datos.length > 0) {
                     catalogoProveedores = datos;
-                    console.log(`✅ ${catalogoProveedores.length} proveedores cargados`);
                 } else {
-                    // Datos de ejemplo
                     catalogoProveedores = [
-                        { nombre: "Ganadería Los Andes", ruc: "20123456789", telefono: "555-0101" },
-                        { nombre: "Lácteos La Vaquita", ruc: "20987654321", telefono: "555-0102" },
-                        { nombre: "Distribuidora Quesera Central", ruc: "20456789012", telefono: "555-0103" }
+                        { nombre: "Ganadería Los Andes", ruc: "20123456789" },
+                        { nombre: "Lácteos La Vaquita", ruc: "20987654321" },
+                        { nombre: "Grupo del Campo Artesano", ruc: "20456789012" }
                     ];
-                    console.log("📦 Usando proveedores de ejemplo");
                 }
             } catch (err) {
                 console.warn("Error cargando proveedores:", err);
                 catalogoProveedores = [
-                    { nombre: "Ganadería Los Andes", ruc: "20123456789", telefono: "555-0101" },
-                    { nombre: "Lácteos La Vaquita", ruc: "20987654321", telefono: "555-0102" },
-                    { nombre: "Distribuidora Quesera Central", ruc: "20456789012", telefono: "555-0103" }
+                    { nombre: "Ganadería Los Andes", ruc: "20123456789" },
+                    { nombre: "Lácteos La Vaquita", ruc: "20987654321" },
+                    { nombre: "Grupo del Campo Artesano", ruc: "20456789012" }
                 ];
             }
         }
 
-        // Configurar buscador de proveedores
         function configurarBuscadorProveedor() {
             const inputProveedor = document.getElementById("com_proveedor");
             const sugerenciasDiv = document.getElementById("sugerenciasProveedor");
@@ -255,7 +234,7 @@
                 }
 
                 const filtrados = catalogoProveedores.filter(prov => 
-                    prov.nombre.toLowerCase().includes(texto) ||
+                    (prov.nombre && prov.nombre.toLowerCase().includes(texto)) ||
                     (prov.ruc && prov.ruc.includes(texto))
                 );
 
@@ -285,34 +264,35 @@
             });
         }
 
-        // Cargar catálogo de productos
         async function cargarCatalogoRemoto() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
                 
                 if (Array.isArray(datos) && datos.length > 0) {
-                    catalogoProductos = datos;
-                    console.log(`✅ ${catalogoProductos.length} productos cargados`);
+                    // Mapear correctamente los nombres de las columnas de tu hoja
+                    catalogoProductos = datos.map(item => ({
+                        id: item.ID || item.id,
+                        producto: item.Producto || item.producto,
+                        Precio_Distribuidor: parseFloat(String(item.Precio_Distribuidor || item.precio_distribuidor || 0).replace('$', '').replace(',', '.')),
+                        stock: item.Stock || item.stock || 0
+                    }));
+                    console.log(`✅ ${catalogoProductos.length} productos cargados desde Google Sheets`);
                 } else {
-                    // Datos de ejemplo
-                    catalogoProductos = [
-                        { id: "L001", producto: "Leche Pasteurizada", Precio_Distribuidor: 1.25, stock: 150 },
-                        { id: "L002", producto: "Queso Fresco", Precio_Distribuidor: 4.50, stock: 80 },
-                        { id: "L003", producto: "Yogurt Natural", Precio_Distribuidor: 0.95, stock: 200 },
-                        { id: "L004", producto: "Mantequilla", Precio_Distribuidor: 2.30, stock: 60 },
-                        { id: "L005", producto: "Crema de Leche", Precio_Distribuidor: 1.80, stock: 45 }
-                    ];
-                    console.log("📦 Usando productos de ejemplo");
+                    throw new Error('No hay datos en Inventario');
                 }
                 poblarSelectorProductos(catalogoProductos);
             } catch (err) {
                 console.error("Error cargando productos:", err);
+                // Datos de ejemplo basados en tu hoja
                 catalogoProductos = [
-                    { id: "L001", producto: "Leche Pasteurizada", Precio_Distribuidor: 1.25, stock: 150 },
-                    { id: "L002", producto: "Queso Fresco", Precio_Distribuidor: 4.50, stock: 80 }
+                    { id: "P-103", producto: "Yogurt de Fruta 1/2 L", Precio_Distribuidor: 0.70, stock: 7 },
+                    { id: "P-128", producto: "Queso Mozarella 500g", Precio_Distribuidor: 3.50, stock: 17 },
+                    { id: "P-164", producto: "Queso Cremoso 500 g", Precio_Distribuidor: 3.00, stock: 3 },
+                    { id: "P-169", producto: "Yogurt Griego semi Endulzado 1L", Precio_Distribuidor: 2.93, stock: 32 },
+                    { id: "P-172", producto: "Yogurt Griego 0 Azucar 1L", Precio_Distribuidor: 3.58, stock: 31 }
                 ];
                 poblarSelectorProductos(catalogoProductos);
-                Swal.fire("Modo Demostración", "Usando datos de ejemplo para productos.", "info");
+                Swal.fire("Modo Demostración", "Usando datos de ejemplo. Verifica la conexión con Google Sheets.", "warning");
             }
         }
 
@@ -320,10 +300,9 @@
             const select = document.getElementById("sel_producto");
             select.innerHTML = '<option value="">-- Selecciona el Producto --</option>';
             lista.forEach(p => {
-                const idProd = p.id || p.ID || p.codigo;
-                const nombreProd = p.producto || p.Producto || p.descripcion;
-                if (idProd && nombreProd) {
-                    select.innerHTML += `<option value="${idProd}" data-precio="${p.Precio_Distribuidor || p.precio_distribuidor || 0}">${nombreProd} (${idProd})</option>`;
+                if (p.id && p.producto) {
+                    const precio = p.Precio_Distribuidor || 0;
+                    select.innerHTML += `<option value="${p.id}" data-precio="${precio}">${p.producto} (${p.id}) - $${precio.toFixed(2)}</option>`;
                 }
             });
             
@@ -354,8 +333,8 @@
                 return Swal.fire("Costo inválido", "El costo unitario debe ser mayor a 0.", "warning");
             }
 
-            const matchProd = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === idSel);
-            const nombreProd = matchProd ? (matchProd.producto || matchProd.Producto || "Producto") : "Producto";
+            const matchProd = catalogoProductos.find(p => p.id === idSel);
+            const nombreProd = matchProd ? matchProd.producto : "Producto";
             
             const existeIndex = carritoDeCompras.findIndex(item => item.id === idSel);
             if (existeIndex > -1) {
@@ -465,11 +444,13 @@
             try {
                 await DairyAPI.registrarCompra(ordenCompra);
                 
+                const total = carritoDeCompras.reduce((sum, item) => sum + (item.cantidad * item.costo), 0);
+                
                 Swal.fire({
-                    title: 'Compra Registrada con Éxito',
+                    title: '✅ Compra Registrada con Éxito',
                     html: `<strong>Factura N°:</strong> ${nroFactura}<br>
                            <strong>Proveedor:</strong> ${proveedor}<br>
-                           <strong>Total:</strong> $${carritoDeCompras.reduce((sum, item) => sum + (item.cantidad * item.costo), 0).toFixed(2)}<br><br>
+                           <strong>Total:</strong> $${total.toFixed(2)}<br><br>
                            <span class="text-amber-600">⚠️ El stock NO se ha modificado.</span><br>
                            Debes ir a <strong>"Confirmar Recepción"</strong> para actualizar el inventario.`,
                     icon: 'success',

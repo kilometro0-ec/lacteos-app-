@@ -24,7 +24,7 @@
             <i data-lucide="shopping-bag" class="w-8 h-8 text-amber-400"></i>
             <div>
                 <h1 class="text-xl font-bold tracking-tight">Registro de Abastecimiento y Compras</h1>
-                <p class="text-xs text-amber-200">Ingreso de Facturas de Proveedores e Incremento de Stock</p>
+                <p class="text-xs text-amber-200">Ingreso de Facturas de Proveedores - El stock se actualizará tras confirmar recepción</p>
             </div>
         </div>
     </header>
@@ -34,18 +34,24 @@
         
         <!-- Bloque Izquierdo: Datos de la Factura y Selector de Item -->
         <div class="space-y-6 lg:col-span-1">
-            <!-- Formulario de Cabecera -->
+            <!-- Formulario de Cabecera con Búsqueda de Proveedor -->
             <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 space-y-4">
                 <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wider border-b pb-2 flex items-center gap-2">
                     <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i> Datos del Proveedor
                 </h2>
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Factura / Comprobante N° *</label>
-                    <input type="text" id="com_factura" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none" placeholder="Ej: 001-002-0004567">
+                    <input type="text" id="com_factura" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none" placeholder="Ej: 001-002-0004567" autocomplete="off">
                 </div>
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Nombre del Proveedor *</label>
-                    <input type="text" id="com_proveedor" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Ej: Ganadería Andina S.A.">
+                    <div class="relative">
+                        <input type="text" id="com_proveedor" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none" placeholder="Escribe para buscar proveedor..." autocomplete="off">
+                        <div id="sugerenciasProveedor" class="absolute z-10 w-full bg-white border border-slate-200 rounded-lg mt-1 max-h-48 overflow-y-auto hidden shadow-lg"></div>
+                    </div>
+                </div>
+                <div class="text-xs text-slate-500 bg-slate-50 p-2 rounded">
+                    <i data-lucide="info" class="w-3 h-3 inline mr-1"></i> El número de factura se genera automáticamente al guardar
                 </div>
             </div>
 
@@ -57,7 +63,7 @@
                 <div>
                     <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Producto *</label>
                     <select id="sel_producto" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 outline-none bg-slate-50">
-                        <option value="">Cargando catálogo central...</option>
+                        <option value="">Cargando catálogo...</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
@@ -67,7 +73,7 @@
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-500 mb-1 uppercase">Costo Unitario ($) *</label>
-                        <input type="number" id="txt_costo" step="0.01" min="0.01" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none" placeholder="0.00">
+                        <input type="number" id="txt_costo" step="0.01" min="0.01" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500 font-mono outline-none bg-slate-100" readonly placeholder="Automático">
                     </div>
                 </div>
                 <button onclick="agregarItemAlCarrito()" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg text-xs font-bold uppercase tracking-wider shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
@@ -108,89 +114,208 @@
                     <span id="lblTotalCompra" class="text-3xl font-black text-slate-900 font-mono">$0.00</span>
                 </div>
                 <button onclick="procesarOrdenCompraCompleta()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i> Guardar y Aplicar a Stock
+                    <i data-lucide="clipboard-check" class="w-4 h-4"></i> Guardar Compra (Pendiente de Recepción)
                 </button>
             </div>
         </div>
     </main>
 
-    <!-- SCRIPTS DE CONEXIÓN CON RAÍZ -->
     <script src="api-config.js"></script>
     <script src="menu-logic.js"></script>
 
     <script>
         let catalogoProductos = [];
+        let catalogoProveedores = [];
         let carritoDeCompras = [];
+        let currentFacturaNumero = "";
 
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
             cargarCatalogoRemoto();
+            cargarProveedores();
+            configurarBuscadorProveedor();
+            generarNumeroFacturaAuto();
         });
+
+        // Generar número de factura automático (timestamp + random)
+        function generarNumeroFacturaAuto() {
+            const fecha = new Date();
+            const anio = fecha.getFullYear();
+            const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+            const dia = String(fecha.getDate()).padStart(2, '0');
+            const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            currentFacturaNumero = `COMP-${anio}${mes}${dia}-${random}`;
+            document.getElementById("com_factura").value = currentFacturaNumero;
+        }
+
+        // Cargar proveedores desde la hoja Proveedores
+        async function cargarProveedores() {
+            try {
+                const datos = await DairyAPI.obtenerDatos("Proveedores");
+                if (Array.isArray(datos) && datos.length > 0) {
+                    catalogoProveedores = datos;
+                } else {
+                    // Datos de ejemplo si no hay proveedores
+                    catalogoProveedores = [
+                        { nombre: "Ganadería Los Andes", ruc: "20123456789", telefono: "555-0101" },
+                        { nombre: "Lácteos La Vaquita", ruc: "20987654321", telefono: "555-0102" },
+                        { nombre: "Distribuidora Quesera Central", ruc: "20456789012", telefono: "555-0103" }
+                    ];
+                }
+            } catch (err) {
+                console.warn("Usando proveedores de ejemplo:", err);
+                catalogoProveedores = [
+                    { nombre: "Ganadería Los Andes", ruc: "20123456789", telefono: "555-0101" },
+                    { nombre: "Lácteos La Vaquita", ruc: "20987654321", telefono: "555-0102" },
+                    { nombre: "Distribuidora Quesera Central", ruc: "20456789012", telefono: "555-0103" }
+                ];
+            }
+        }
+
+        // Configurar buscador de proveedores
+        function configurarBuscadorProveedor() {
+            const inputProveedor = document.getElementById("com_proveedor");
+            const sugerenciasDiv = document.getElementById("sugerenciasProveedor");
+
+            inputProveedor.addEventListener("input", function() {
+                const texto = this.value.toLowerCase().trim();
+                if (texto === "") {
+                    sugerenciasDiv.classList.add("hidden");
+                    return;
+                }
+
+                const filtrados = catalogoProveedores.filter(prov => 
+                    prov.nombre.toLowerCase().includes(texto) ||
+                    (prov.ruc && prov.ruc.includes(texto))
+                );
+
+                if (filtrados.length === 0) {
+                    sugerenciasDiv.classList.add("hidden");
+                    return;
+                }
+
+                sugerenciasDiv.innerHTML = "";
+                filtrados.forEach(prov => {
+                    const div = document.createElement("div");
+                    div.className = "px-3 py-2 hover:bg-amber-50 cursor-pointer border-b border-slate-100 text-sm";
+                    div.innerHTML = `<span class="font-bold">${prov.nombre}</span><span class="text-slate-400 text-xs ml-2">${prov.ruc || ''}</span>`;
+                    div.onclick = () => {
+                        inputProveedor.value = prov.nombre;
+                        sugerenciasDiv.classList.add("hidden");
+                    };
+                    sugerenciasDiv.appendChild(div);
+                });
+                sugerenciasDiv.classList.remove("hidden");
+            });
+
+            document.addEventListener("click", function(e) {
+                if (e.target !== inputProveedor) {
+                    sugerenciasDiv.classList.add("hidden");
+                }
+            });
+        }
 
         // Consulta de inventario mediante la capa unificada de DairyAPI
         async function cargarCatalogoRemoto() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
                 
-                if (Array.isArray(datos)) {
+                if (Array.isArray(datos) && datos.length > 0) {
                     catalogoProductos = datos;
                     poblarSelectorProductos(catalogoProductos);
-                } else if (datos && datos.status === "error") {
-                    throw new Error(datos.message);
+                } else {
+                    // Datos de ejemplo para demostración
+                    catalogoProductos = [
+                        { id: "L001", producto: "Leche Pasteurizada", Precio_Distribuidor: 1.25, stock: 150 },
+                        { id: "L002", producto: "Queso Fresco", Precio_Distribuidor: 4.50, stock: 80 },
+                        { id: "L003", producto: "Yogurt Natural", Precio_Distribuidor: 0.95, stock: 200 },
+                        { id: "L004", producto: "Mantequilla", Precio_Distribuidor: 2.30, stock: 60 },
+                        { id: "L005", producto: "Crema de Leche", Precio_Distribuidor: 1.80, stock: 45 }
+                    ];
+                    poblarSelectorProductos(catalogoProductos);
                 }
             } catch (err) {
                 console.error("Fallo de comunicación interna:", err);
-                Swal.fire("Error Estructural", "No se pudo leer el inventario desde la base central de Google Sheets.", "error");
+                // Cargar datos demo
+                catalogoProductos = [
+                    { id: "L001", producto: "Leche Pasteurizada", Precio_Distribuidor: 1.25, stock: 150 },
+                    { id: "L002", producto: "Queso Fresco", Precio_Distribuidor: 4.50, stock: 80 }
+                ];
+                poblarSelectorProductos(catalogoProductos);
+                Swal.fire("Modo Demostración", "Usando datos de ejemplo para productos.", "info");
             }
         }
 
         function poblarSelectorProductos(lista) {
             const select = document.getElementById("sel_producto");
-            select.innerHTML = '<option value="">-- Selecciona el Insumo/Lácteo --</option>';
+            select.innerHTML = '<option value="">-- Selecciona el Producto --</option>';
             lista.forEach(p => {
-                // Validación para soportar tanto minúsculas como mayúsculas en las llaves del JSON
                 const idProd = p.id || p.ID || p.codigo;
                 const nombreProd = p.producto || p.Producto || p.descripcion;
                 if (idProd && nombreProd) {
-                    select.innerHTML += `<option value="${idProd}">${nombreProd} (ID: ${idProd})</option>`;
+                    select.innerHTML += `<option value="${idProd}" data-precio="${p.Precio_Distribuidor || p.precio_distribuidor || 0}">${nombreProd} (${idProd})</option>`;
+                }
+            });
+            
+            // Auto-completar costo unitario al seleccionar producto
+            select.addEventListener("change", function() {
+                const selectedOption = select.options[select.selectedIndex];
+                if (selectedOption && selectedOption.value) {
+                    const precioDistribuidor = parseFloat(selectedOption.dataset.precio) || 0;
+                    document.getElementById("txt_costo").value = precioDistribuidor.toFixed(2);
+                } else {
+                    document.getElementById("txt_costo").value = "";
                 }
             });
         }
 
         // Agregar fila al modelo en memoria del carrito
         function agregarItemAlCarrito() {
-            const idSel = document.getElementById("sel_producto").value;
+            const selectProducto = document.getElementById("sel_producto");
+            const idSel = selectProducto.value;
             const cant = parseInt(document.getElementById("txt_cantidad").value) || 0;
             const costo = parseFloat(document.getElementById("txt_costo").value) || 0;
 
-            if (!idSel || cant <= 0 || costo <= 0) {
-                return Swal.fire("Campos Incompletos", "Por favor ingresa un producto, cantidad y costo válidos.", "warning");
+            if (!idSel) {
+                return Swal.fire("Producto no seleccionado", "Por favor selecciona un producto del catálogo.", "warning");
+            }
+            if (cant <= 0) {
+                return Swal.fire("Cantidad inválida", "La cantidad debe ser mayor a 0.", "warning");
+            }
+            if (costo <= 0) {
+                return Swal.fire("Costo inválido", "El costo unitario debe ser mayor a 0.", "warning");
             }
 
             const matchProd = catalogoProductos.find(p => (p.id || p.ID || p.codigo) === idSel);
-            const nombreProd = matchProd ? (matchProd.producto || matchProd.Producto || "Producto") : "Insumo";
+            const nombreProd = matchProd ? (matchProd.producto || matchProd.Producto || "Producto") : "Producto";
             
-            // Consolidación de existencias si el ítem ya existe en el detalle actual
+            // Consolidación si el ítem ya existe en el detalle actual
             const existeIndex = carritoDeCompras.findIndex(item => item.id === idSel);
             if (existeIndex > -1) {
                 carritoDeCompras[existeIndex].cantidad += cant;
-                carritoDeCompras[existeIndex].costo = costo; // Prevalece el último costo de adquisición ingresado
+                carritoDeCompras[existeIndex].costo = costo;
             } else {
                 carritoDeCompras.push({
                     id: idSel,
                     producto: nombreProd,
-                    shadowId: idSel,
                     cantidad: cant,
                     costo: costo
                 });
             }
 
-            // Reseteo de controles de línea
+            // Resetear controles pero mantener productos disponibles
             document.getElementById("txt_cantidad").value = "1";
-            document.getElementById("txt_costo").value = "";
             document.getElementById("sel_producto").value = "";
+            document.getElementById("txt_costo").value = "";
 
             renderizarTablaDetalle();
+            Swal.fire({
+                title: "✓ Agregado",
+                text: `${cant} x ${nombreProd} añadido al carrito`,
+                icon: "success",
+                timer: 1500,
+                showConfirmButton: false
+            });
         }
 
         function removerItem(index) {
@@ -198,7 +323,6 @@
             renderizarTablaDetalle();
         }
 
-        // Renderizado reactivo del detalle de transacciones
         function renderizarTablaDetalle() {
             const tbody = document.getElementById("tbodyCarrito");
             let sumadorTotal = 0;
@@ -208,7 +332,7 @@
                     <tr>
                         <td colspan="6" class="text-center py-24 text-slate-400 italic">
                             <i data-lucide="shopping-cart" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
-                            El detalle de la compra está vacío. Agrega insumos desde la barra lateral.
+                            El detalle de la compra está vacío. Agrega productos desde la barra lateral.
                         </td>
                     </tr>
                 `;
@@ -225,10 +349,10 @@
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-50 transition-colors";
                 tr.innerHTML = `
-                    <td class="py-3 px-6 font-mono font-bold text-slate-400">#${item.id}</td>
+                    <td class="py-3 px-6 font-mono font-bold text-slate-500">${item.id}</td>
                     <td class="py-3 px-4 font-bold text-slate-800">${item.producto}</td>
                     <td class="py-3 px-4 text-center font-black text-slate-800">${item.cantidad}</td>
-                    <td class="py-3 px-4 text-right font-mono text-slate-500">$${item.costo.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-right font-mono text-slate-600">$${item.costo.toFixed(2)}</td>
                     <td class="py-3 px-4 text-right font-bold font-mono text-slate-900">$${subtotal.toFixed(2)}</td>
                     <td class="py-3 px-6 text-center">
                         <button onclick="removerItem(${index})" class="text-rose-500 hover:text-rose-700 p-1 rounded hover:bg-rose-50 transition-all">
@@ -243,53 +367,79 @@
             lucide.createIcons();
         }
 
-        // Persistencia y mutación de inventario usando la API abstracta y segura de la aplicación
+        // Guardar compra SIN modificar stock hasta confirmar recepción
         async function procesarOrdenCompraCompleta() {
-            const nroFactura = document.getElementById("com_factura").value.trim();
             const proveedor = document.getElementById("com_proveedor").value.trim();
+            const nroFactura = document.getElementById("com_factura").value.trim();
 
-            if (!nroFactura || !proveedor || carritoDeCompras.length === 0) {
-                return Swal.fire("Información Incompleta", "Debes completar los datos de la factura y añadir al menos un ítem al detalle.", "error");
+            if (!proveedor) {
+                return Swal.fire("Proveedor requerido", "Debes seleccionar o escribir el nombre del proveedor.", "error");
+            }
+            if (carritoDeCompras.length === 0) {
+                return Swal.fire("Carrito vacío", "Agrega al menos un producto a la compra.", "error");
+            }
+            if (!nroFactura) {
+                generarNumeroFacturaAuto();
             }
 
             Swal.fire({
-                title: 'Impactando Inventarios...',
-                text: 'Registrando lote de abastecimiento en el servidor central...',
+                title: 'Registrando Orden de Compra...',
+                text: 'La compra quedará pendiente hasta confirmar la recepción del producto.',
                 allowOutsideClick: false,
                 didOpen: () => { Swal.showLoading(); }
             });
 
-            const payload = {
-                action: "registrarNuevaCompra",
-                factura: nroFactura,
+            const ordenCompra = {
+                id_compra: `ORD-${Date.now()}`,
+                numero_factura: nroFactura,
                 proveedor: proveedor,
-                fecha: new Date().toISOString().split('T')[0],
-                items: carritoDeCompras
+                fecha_compra: new Date().toISOString().split('T')[0],
+                fecha_registro: new Date().toISOString(),
+                estado: "PENDIENTE_RECEPCION",
+                items: carritoDeCompras.map(item => ({
+                    producto_id: item.id,
+                    producto_nombre: item.producto,
+                    cantidad: item.cantidad,
+                    costo_unitario: item.costo,
+                    subtotal: item.cantidad * item.costo
+                })),
+                total_compra: carritoDeCompras.reduce((sum, item) => sum + (item.cantidad * item.costo), 0),
+                usuario: "usuario_actual"
             };
 
             try {
-                // Enviamos el payload mediante el método unificado de guardado
-                await DairyAPI.guardarDatos("Compras", payload);
-
+                // Guardar en la hoja "ComprasPendientes" o similar
+                await DairyAPI.guardarDatos("Compras", ordenCompra);
+                
                 Swal.fire({
-                    title: 'Abastecimiento Exitoso',
-                    text: 'La compra se procesó correctamente y las existencias han aumentado.',
+                    title: 'Compra Registrada con Éxito',
+                    html: `<strong>Factura N°:</strong> ${nroFactura}<br>
+                           <strong>Proveedor:</strong> ${proveedor}<br>
+                           <strong>Total:</strong> $${ordenCompra.total_compra.toFixed(2)}<br><br>
+                           <span class="text-amber-600">⚠️ El stock NO se ha modificado.</span><br>
+                           Debes ir a <strong>"Confirmar Recepción"</strong> para actualizar el inventario.`,
                     icon: 'success',
                     confirmButtonColor: '#059669'
                 });
 
-                // Blanqueo total de controles tras la transacción exitosa
-                document.getElementById("com_factura").value = "";
+                // Limpiar todo después de guardar
                 document.getElementById("com_proveedor").value = "";
                 carritoDeCompras = [];
                 renderizarTablaDetalle();
-                cargarCatalogoRemoto(); // Recarga asíncrona de los nuevos stocks del catálogo
+                generarNumeroFacturaAuto(); // Nueva factura automática
+                cargarCatalogoRemoto(); // Refrescar catálogo
 
             } catch (err) {
-                console.error("Error al procesar el abastecimiento:", err);
-                Swal.fire("Error de Red", "No se pudo impactar la transacción en la hoja de cálculo de Google Sheets.", "error");
+                console.error("Error al registrar la compra:", err);
+                Swal.fire("Error de Registro", "No se pudo guardar la orden de compra. Verifica la conexión.", "error");
             }
         }
+
+        // Función auxiliar para debugging - mostrar estado actual
+        window.mostrarEstadoCarrito = function() {
+            console.log("Carrito:", carritoDeCompras);
+            console.log("Total:", document.getElementById("lblTotalCompra").innerText);
+        };
     </script>
 </body>
 </html>

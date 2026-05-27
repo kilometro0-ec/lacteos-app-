@@ -13,6 +13,47 @@
             .print-only { display: block !important; }
         }
         .print-only { display: none; }
+        
+        /* Estilos para los selects con búsqueda */
+        .search-select-container {
+            position: relative;
+            width: 100%;
+        }
+        .search-select-input {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: white;
+        }
+        .search-select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            z-index: 50;
+            display: none;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .search-select-option {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .search-select-option:hover {
+            background-color: #fef3c7;
+        }
+        .search-select-option.selected {
+            background-color: #fef3c7;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -48,9 +89,11 @@
                 </div>
                 <div class="mb-3">
                     <label class="block text-xs font-bold mb-1">Proveedor *</label>
-                    <select id="com_proveedor" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" onchange="cargarProductosPorProveedor()">
-                        <option value="">-- Seleccione un proveedor --</option>
-                    </select>
+                    <div class="search-select-container">
+                        <input type="text" id="proveedorInput" class="search-select-input" placeholder="Escribe para buscar proveedor..." autocomplete="off">
+                        <div id="proveedorDropdown" class="search-select-dropdown"></div>
+                        <input type="hidden" id="com_proveedor" value="">
+                    </div>
                 </div>
                 <div class="mb-3">
                     <label class="block text-xs font-bold mb-1">Teléfono Proveedor</label>
@@ -68,9 +111,11 @@
                 </h2>
                 <div class="mb-3">
                     <label class="block text-xs font-bold mb-1">Producto</label>
-                    <select id="sel_producto" class="w-full border rounded-lg px-3 py-2 text-sm">
-                        <option value="">-- Seleccione un proveedor primero --</option>
-                    </select>
+                    <div class="search-select-container">
+                        <input type="text" id="productoInput" class="search-select-input" placeholder="Escribe para buscar producto..." autocomplete="off" disabled>
+                        <div id="productoDropdown" class="search-select-dropdown"></div>
+                        <input type="hidden" id="sel_producto" value="">
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <div>
@@ -135,9 +180,10 @@
         
         let catalogoProductos = [];
         let catalogoProveedores = [];
+        let productosFiltrados = [];
         let carritoDeCompras = [];
         let pasoActual = 1;
-        let ordenesGeneradas = new Set(); // Para evitar órdenes repetidas
+        let ordenesGeneradas = new Set();
 
         // ==================== API ====================
         const DairyAPI = {
@@ -183,13 +229,15 @@
                 await cargarProveedores();
                 await cargarProductos();
                 configurarFecha();
+                generarOrdenAuto();
+                inicializarSelectProveedor();
                 Swal.close();
             } catch (error) {
                 Swal.fire('Error', 'No se pudieron cargar los datos', 'error');
             }
         });
 
-        // Generar orden de compra única (no repetible)
+        // Generar orden de compra única
         function generarOrdenAuto() {
             const fecha = new Date();
             let orden;
@@ -205,6 +253,88 @@
             const fecha = new Date();
             const fechaStr = fecha.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
             document.getElementById("fecha_pedido").value = fechaStr;
+        }
+
+        // ==================== SELECTOR DE PROVEEDOR CON BÚSQUEDA ====================
+        function inicializarSelectProveedor() {
+            const input = document.getElementById("proveedorInput");
+            const dropdown = document.getElementById("proveedorDropdown");
+            
+            input.addEventListener("input", function() {
+                const texto = this.value.toLowerCase();
+                const filtrados = catalogoProveedores.filter(p => 
+                    p.nombre.toLowerCase().includes(texto)
+                );
+                
+                if (filtrados.length === 0) {
+                    dropdown.style.display = "none";
+                    return;
+                }
+                
+                dropdown.innerHTML = "";
+                filtrados.forEach(p => {
+                    const div = document.createElement("div");
+                    div.className = "search-select-option";
+                    div.innerHTML = `<div class="font-medium">${p.nombre}</div><div class="text-xs text-slate-500">📞 ${p.telefono || 'N/A'}</div>`;
+                    div.onclick = () => {
+                        input.value = p.nombre;
+                        document.getElementById("com_proveedor").value = p.nombre;
+                        document.getElementById("telefono_proveedor").value = p.telefono || '';
+                        dropdown.style.display = "none";
+                        cargarProductosPorProveedor(p.nombre);
+                    };
+                    dropdown.appendChild(div);
+                });
+                dropdown.style.display = "block";
+            });
+            
+            document.addEventListener("click", (e) => {
+                if (e.target !== input && !dropdown.contains(e.target)) {
+                    dropdown.style.display = "none";
+                }
+            });
+        }
+
+        // ==================== SELECTOR DE PRODUCTO CON BÚSQUEDA ====================
+        function inicializarSelectProducto() {
+            const input = document.getElementById("productoInput");
+            const dropdown = document.getElementById("productoDropdown");
+            
+            input.removeEventListener("input", this);
+            dropdown.innerHTML = "";
+            
+            input.addEventListener("input", function() {
+                const texto = this.value.toLowerCase();
+                const filtrados = productosFiltrados.filter(p => 
+                    p.producto.toLowerCase().includes(texto)
+                );
+                
+                if (filtrados.length === 0 || !productosFiltrados.length) {
+                    dropdown.style.display = "none";
+                    return;
+                }
+                
+                dropdown.innerHTML = "";
+                filtrados.forEach(p => {
+                    const div = document.createElement("div");
+                    div.className = "search-select-option";
+                    div.innerHTML = `<div class="font-medium">${p.producto}</div><div class="text-xs text-slate-500">${p.id} - $${p.precio.toFixed(2)}</div>`;
+                    div.onclick = () => {
+                        input.value = p.producto;
+                        document.getElementById("sel_producto").value = p.id;
+                        document.getElementById("txt_costo").value = p.precio.toFixed(2);
+                        dropdown.style.display = "none";
+                    };
+                    dropdown.appendChild(div);
+                });
+                dropdown.style.display = "block";
+            });
+            
+            document.addEventListener("click", (e) => {
+                if (e.target !== input && !dropdown.contains(e.target)) {
+                    dropdown.style.display = "none";
+                }
+            });
         }
 
         // ==================== PROVEEDORES ====================
@@ -225,18 +355,12 @@
                         { nombre: "Kilómetro 0", telefono: "0984016027", ciudad: "Quito" }
                     ];
                 }
-                
-                const select = document.getElementById("com_proveedor");
-                select.innerHTML = '<option value="">-- Seleccione un proveedor --</option>';
-                catalogoProveedores.forEach(p => {
-                    select.innerHTML += `<option value="${p.nombre}" data-telefono="${p.telefono}" data-ciudad="${p.ciudad}" data-direccion="${p.direccion}" data-ruc="${p.ruc}">${p.nombre} ${p.ciudad ? '- ' + p.ciudad : ''}</option>`;
-                });
             } catch (err) {
                 console.error("Error cargando proveedores:", err);
             }
         }
 
-        // ==================== PRODUCTOS (filtrados por proveedor) ====================
+        // ==================== PRODUCTOS ====================
         async function cargarProductos() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
@@ -250,8 +374,7 @@
                 } else {
                     catalogoProductos = [
                         { id: "P-103", producto: "Yogurt de Fruta 1/2 L", precio: 0.70, proveedorHabitual: "Grupo del Campo Artesano" },
-                        { id: "P-128", producto: "Queso Mozarella 500g", precio: 3.50, proveedorHabitual: "Grupo del Campo Artesano" },
-                        { id: "P-164", producto: "Queso Cremoso 500 g", precio: 3.00, proveedorHabitual: "Grupo del Campo Artesano" }
+                        { id: "P-128", producto: "Queso Mozarella 500g", precio: 3.50, proveedorHabitual: "Grupo del Campo Artesano" }
                     ];
                 }
             } catch (err) {
@@ -260,53 +383,45 @@
             }
         }
 
-        function cargarProductosPorProveedor() {
-            const selectProveedor = document.getElementById("com_proveedor");
-            const proveedorSeleccionado = selectProveedor.value;
-            const selectedOption = selectProveedor.options[selectProveedor.selectedIndex];
-            const telefono = selectedOption?.dataset?.telefono || '';
-            document.getElementById("telefono_proveedor").value = telefono;
-            
+        function cargarProductosPorProveedor(proveedorSeleccionado) {
             if (!proveedorSeleccionado) {
-                const selectProducto = document.getElementById("sel_producto");
-                selectProducto.innerHTML = '<option value="">-- Seleccione un proveedor primero --</option>';
+                productosFiltrados = [];
+                document.getElementById("productoInput").disabled = true;
+                document.getElementById("productoInput").placeholder = "Seleccione un proveedor primero";
                 return;
             }
             
-            // Filtrar productos por proveedor habitual
-            const productosFiltrados = catalogoProductos.filter(p => 
+            productosFiltrados = catalogoProductos.filter(p => 
                 p.proveedorHabitual === proveedorSeleccionado
             );
             
-            const selectProducto = document.getElementById("sel_producto");
+            const productoInput = document.getElementById("productoInput");
             if (productosFiltrados.length === 0) {
-                selectProducto.innerHTML = '<option value="">-- No hay productos para este proveedor --</option>';
+                productoInput.disabled = false;
+                productoInput.placeholder = "No hay productos para este proveedor";
+                productoInput.value = "";
                 Swal.fire("Info", "Este proveedor no tiene productos registrados", "info");
                 return;
             }
             
-            selectProducto.innerHTML = '<option value="">-- Selecciona un producto --</option>';
-            productosFiltrados.forEach(p => {
-                selectProducto.innerHTML += `<option value="${p.id}" data-precio="${p.precio}">${p.producto} (${p.id}) - $${p.precio.toFixed(2)}</option>`;
-            });
+            productoInput.disabled = false;
+            productoInput.placeholder = "Escribe para buscar producto...";
+            productoInput.value = "";
+            document.getElementById("sel_producto").value = "";
+            document.getElementById("txt_costo").value = "";
             
-            document.getElementById("sel_producto").addEventListener("change", (e) => {
-                const opt = e.target.options[e.target.selectedIndex];
-                const precio = parseFloat(opt.dataset.precio) || 0;
-                document.getElementById("txt_costo").value = precio.toFixed(2);
-            });
+            inicializarSelectProducto();
         }
 
         // ==================== CARRITO ====================
         function agregarItemAlCarrito() {
-            const selectProveedor = document.getElementById("com_proveedor").value;
-            if (!selectProveedor) {
+            const proveedor = document.getElementById("com_proveedor").value;
+            if (!proveedor) {
                 Swal.fire("Error", "Primero selecciona un proveedor", "warning");
                 return;
             }
             
-            const select = document.getElementById("sel_producto");
-            const id = select.value;
+            const id = document.getElementById("sel_producto").value;
             const cantidad = parseInt(document.getElementById("txt_cantidad").value);
             const precio = parseFloat(document.getElementById("txt_costo").value);
 
@@ -315,7 +430,7 @@
                 return;
             }
 
-            const producto = catalogoProductos.find(p => p.id === id);
+            const producto = productosFiltrados.find(p => p.id === id);
             const existente = carritoDeCompras.find(i => i.id === id);
             
             if (existente) {
@@ -330,6 +445,7 @@
             }
 
             document.getElementById("txt_cantidad").value = "1";
+            document.getElementById("productoInput").value = "";
             document.getElementById("sel_producto").value = "";
             document.getElementById("txt_costo").value = "";
             renderizarCarrito();
@@ -369,7 +485,7 @@
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </td>
-                     </tr>
+                    </tr>
                 `;
             });
             document.getElementById("lblTotalCompra").innerHTML = `$${total.toFixed(2)}`;
@@ -402,7 +518,6 @@
                     Swal.fire("Error", "Agrega al menos un producto", "warning");
                     return;
                 }
-                generarOrdenAuto(); // Generar orden única
                 pasoActual = 2;
                 actualizarBoton();
                 descargarPDF();
@@ -413,7 +528,7 @@
             }
         }
 
-        // ==================== GENERAR PDF COMPLETO ====================
+        // ==================== GENERAR PDF ====================
         function generarHTMLPDF() {
             const proveedor = document.getElementById("com_proveedor").value;
             const ordenCompra = document.getElementById("com_factura").value;
@@ -423,239 +538,43 @@
             let tablaProductos = '';
             carritoDeCompras.forEach(item => {
                 const subtotal = item.cantidad * item.precio;
-                tablaProductos += `
-                    <tr style="border-bottom: 1px solid #e2e8f0;">
-                        <td style="padding: 8px; text-align: left;">${item.id}</td>
-                        <td style="padding: 8px; text-align: left;">${item.producto}</td>
-                        <td style="padding: 8px; text-align: center;">${item.cantidad}</td>
-                        <td style="padding: 8px; text-align: right;">$${item.precio.toFixed(2)}</td>
-                        <td style="padding: 8px; text-align: right;">$${subtotal.toFixed(2)}</td>
-                      </tr>
-                `;
+                tablaProductos += `<tr style="border-bottom:1px solid #e2e8f0;"><td style="padding:8px">${item.id}</td><td style="padding:8px">${item.producto}</td><td style="padding:8px;text-align:center">${item.cantidad}</td><td style="padding:8px;text-align:right">$${item.precio.toFixed(2)}</td><td style="padding:8px;text-align:right">$${subtotal.toFixed(2)}</td></tr>`;
             });
 
             return `<!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Orden de Compra - ${ordenCompra}</title>
-                <style>
-                    * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body {
-                        font-family: 'Arial', sans-serif;
-                        background: white;
-                        padding: 40px;
-                        font-size: 14px;
-                    }
-                    .container {
-                        max-width: 900px;
-                        margin: 0 auto;
-                        background: white;
-                    }
-                    .header {
-                        text-align: center;
-                        margin-bottom: 30px;
-                        border-bottom: 3px solid #b45309;
-                        padding-bottom: 20px;
-                    }
-                    .header h1 {
-                        color: #b45309;
-                        font-size: 28px;
-                        margin-bottom: 5px;
-                    }
-                    .header h2 {
-                        color: #78350f;
-                        font-size: 16px;
-                        font-weight: normal;
-                    }
-                    .titulo-orden {
-                        background: #fef3c7;
-                        text-align: center;
-                        padding: 10px;
-                        margin: 20px 0;
-                        border-radius: 8px;
-                    }
-                    .titulo-orden h3 {
-                        color: #b45309;
-                        font-size: 18px;
-                    }
-                    .info-section {
-                        margin-bottom: 20px;
-                        border: 1px solid #e2e8f0;
-                        border-radius: 10px;
-                        overflow: hidden;
-                    }
-                    .info-title {
-                        background: #fef3c7;
-                        padding: 10px 15px;
-                        font-weight: bold;
-                        color: #b45309;
-                        font-size: 14px;
-                        border-bottom: 1px solid #e2e8f0;
-                    }
-                    .info-content {
-                        padding: 15px;
-                        display: grid;
-                        grid-template-columns: 1fr 1fr;
-                        gap: 10px;
-                    }
-                    .info-item {
-                        margin-bottom: 5px;
-                    }
-                    .info-label {
-                        font-weight: bold;
-                        color: #4a5568;
-                        font-size: 11px;
-                        text-transform: uppercase;
-                    }
-                    .info-value {
-                        font-size: 13px;
-                        color: #1a202c;
-                    }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin: 0;
-                    }
-                    th {
-                        background: #fef3c7;
-                        padding: 10px;
-                        text-align: left;
-                        font-weight: bold;
-                        color: #78350f;
-                        font-size: 12px;
-                        border-bottom: 2px solid #b45309;
-                    }
-                    td {
-                        padding: 8px;
-                        border-bottom: 1px solid #e2e8f0;
-                    }
-                    .total-section {
-                        text-align: right;
-                        margin-top: 20px;
-                        padding: 15px;
-                        background: #fef3c7;
-                        border-radius: 8px;
-                    }
-                    .total-label {
-                        font-size: 16px;
-                        font-weight: bold;
-                        color: #4a5568;
-                    }
-                    .total-amount {
-                        font-size: 24px;
-                        font-weight: bold;
-                        color: #b45309;
-                        margin-left: 15px;
-                    }
-                    .status {
-                        display: inline-block;
-                        background: #fef3c7;
-                        color: #b45309;
-                        padding: 4px 12px;
-                        border-radius: 20px;
-                        font-size: 11px;
-                        font-weight: bold;
-                    }
-                    .footer {
-                        margin-top: 40px;
-                        text-align: center;
-                        font-size: 10px;
-                        color: #718096;
-                        border-top: 1px solid #e2e8f0;
-                        padding-top: 15px;
-                    }
-                    .observaciones {
-                        margin-top: 20px;
-                        padding: 15px;
-                        background: #f8fafc;
-                        border-radius: 8px;
-                        font-size: 11px;
-                        color: #4a5568;
-                    }
-                    .observaciones p {
-                        margin: 5px 0;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>🥛 LÓGICA LÁCTEA</h1>
-                        <h2>Productos Lácteos Artesanales</h2>
-                    </div>
-                    
-                    <div class="titulo-orden">
-                        <h3>📄 ORDEN DE COMPRA A PROVEEDOR</h3>
-                    </div>
-
-                    <div class="info-section">
-                        <div class="info-title">📋 INFORMACIÓN DE LA ORDEN</div>
-                        <div class="info-content">
-                            <div class="info-item">
-                                <div class="info-label">Orden de Compra N°:</div>
-                                <div class="info-value">${ordenCompra}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Fecha de Emisión:</div>
-                                <div class="info-value">${fecha}</div>
-                            </div>
-                            <div class="info-item">
-                                <div class="info-label">Estado:</div>
-                                <div class="info-value"><span class="status">⏳ PENDIENTE DE RECEPCIÓN</span></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="info-section">
-                        <div class="info-title">🏢 DATOS DEL PROVEEDOR</div>
-                        <div class="info-content">
-                            <div class="info-item">
-                                <div class="info-label">Razón Social:</div>
-                                <div class="info-value">${proveedor}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="info-section">
-                        <div class="info-title">📦 PRODUCTOS SOLICITADOS</div>
-                        <table style="width: 100%;">
-                            <thead>
-                                <tr>
-                                    <th>Código</th>
-                                    <th>Producto</th>
-                                    <th>Cantidad</th>
-                                    <th>Precio Unitario</th>
-                                    <th>Subtotal</th>
-                                   </tr>
-                            </thead>
-                            <tbody>
-                                ${tablaProductos}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="total-section">
-                        <span class="total-label">TOTAL DE LA COMPRA:</span>
-                        <span class="total-amount">$${total.toFixed(2)}</span>
-                    </div>
-
-                    <div class="observaciones">
-                        <strong>📌 OBSERVACIONES IMPORTANTES:</strong>
-                        <p>• Esta orden está pendiente de confirmar recepción de mercadería.</p>
-                        <p>• El stock se actualizará una vez que se confirme la recepción en el sistema.</p>
-                        <p>• Favor entregar los productos en: <strong>Lógica Láctea - Centro de Acopio</strong></p>
-                        <p>• Horario de recepción: Lunes a Viernes de 8:00 a 17:00</p>
-                        <p>• Esta orden no es un comprobante de pago.</p>
-                    </div>
-
-                    <div class="footer">
-                        <p>Lógica Láctea - Todos los derechos reservados © ${new Date().getFullYear()}</p>
-                        <p>Este documento es una orden de compra generada automáticamente.</p>
-                    </div>
-                </div>
-            </body>
-            </html>`;
+            <html><head><meta charset="UTF-8"><title>Orden de Compra - ${ordenCompra}</title>
+            <style>
+                *{margin:0;padding:0;box-sizing:border-box}
+                body{font-family:Arial;padding:40px;background:white}
+                .container{max-width:900px;margin:0 auto}
+                .header{text-align:center;border-bottom:3px solid #b45309;padding-bottom:20px;margin-bottom:30px}
+                .header h1{color:#b45309;font-size:28px}
+                .titulo-orden{background:#fef3c7;text-align:center;padding:10px;border-radius:8px;margin:20px 0}
+                .titulo-orden h3{color:#b45309}
+                .info-section{border:1px solid #e2e8f0;border-radius:10px;margin-bottom:20px;overflow:hidden}
+                .info-title{background:#fef3c7;padding:10px 15px;font-weight:bold;color:#b45309}
+                .info-content{padding:15px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+                table{width:100%;border-collapse:collapse}
+                th{background:#fef3c7;padding:10px;text-align:left;border-bottom:2px solid #b45309}
+                td{padding:8px;border-bottom:1px solid #e2e8f0}
+                .total-section{text-align:right;margin-top:20px;padding:15px;background:#fef3c7;border-radius:8px}
+                .total-section span{font-size:20px;font-weight:bold;color:#b45309}
+                .footer{margin-top:30px;text-align:center;font-size:10px;color:#718096;border-top:1px solid #e2e8f0;padding-top:15px}
+            </style>
+            </head><body>
+            <div class="container">
+                <div class="header"><h1>🥛 LÓGICA LÁCTEA</h1></div>
+                <div class="titulo-orden"><h3>📄 ORDEN DE COMPRA A PROVEEDOR</h3></div>
+                <div class="info-section"><div class="info-title">📋 INFORMACIÓN DE LA ORDEN</div>
+                <div class="info-content"><div><strong>Orden de Compra N°:</strong><br>${ordenCompra}</div><div><strong>Fecha:</strong><br>${fecha}</div><div><strong>Estado:</strong><br><span style="background:#fef3c7;padding:4px 12px;border-radius:20px">⏳ PENDIENTE</span></div></div></div>
+                <div class="info-section"><div class="info-title">🏢 DATOS DEL PROVEEDOR</div>
+                <div class="info-content"><div><strong>Proveedor:</strong><br>${proveedor}</div></div></div>
+                <div class="info-section"><div class="info-title">📦 PRODUCTOS SOLICITADOS</div>
+                <table><thead><tr><th>Código</th><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead><tbody>${tablaProductos}</tbody></table></div>
+                <div class="total-section"><strong>TOTAL:</strong> <span>$${total.toFixed(2)}</span></div>
+                <div class="footer"><p>Lógica Láctea - Pedido pendiente de confirmar recepción</p></div>
+            </div>
+            </body></html>`;
         }
 
         function descargarPDF() {
@@ -663,7 +582,7 @@
             ventana.document.write(generarHTMLPDF());
             ventana.document.close();
             setTimeout(() => ventana.print(), 500);
-            Swal.fire({ title: '📄 PDF Generado', text: 'Descarga el PDF para enviar al proveedor', icon: 'success', timer: 2000, showConfirmButton: false });
+            Swal.fire({ title: '📄 PDF Generado', text: 'Descarga el PDF', icon: 'success', timer: 2000, showConfirmButton: false });
         }
 
         // ==================== ENVIAR WHATSAPP Y GUARDAR ====================
@@ -672,68 +591,42 @@
             const ordenCompra = document.getElementById("com_factura").value;
             const fecha = document.getElementById("fecha_pedido").value;
             const total = carritoDeCompras.reduce((s, i) => s + (i.cantidad * i.precio), 0);
-            const telefono = document.getElementById("telefono_proveedor").value;
+            let telefono = document.getElementById("telefono_proveedor").value;
             
             if (!proveedor || carritoDeCompras.length === 0) return;
             
-            // Limpiar número de teléfono (solo dígitos)
             let numeroWhatsApp = telefono.replace(/\D/g, '');
-            if (!numeroWhatsApp) {
-                numeroWhatsApp = "593984016027"; // Número por defecto
-            }
-            if (!numeroWhatsApp.startsWith('593') && !numeroWhatsApp.startsWith('58')) {
-                numeroWhatsApp = '593' + numeroWhatsApp;
-            }
+            if (!numeroWhatsApp) numeroWhatsApp = "593984016027";
+            if (!numeroWhatsApp.startsWith('593')) numeroWhatsApp = '593' + numeroWhatsApp;
             
-            // Mensaje simplificado
-            const mensaje = `🛒 ORDEN DE COMPRA - LÓGICA LÁCTEA
-
-Proveedor: ${proveedor}
-Orden de Compra N°: ${ordenCompra}
-Fecha: ${fecha}
-TOTAL: $${total.toFixed(2)}
-
-📌 Adjunto encontrarás el PDF de la orden.
-📍 Entregar en: Lógica Láctea`;
+            const mensaje = `🛒 ORDEN DE COMPRA - LÓGICA LÁCTEA\n\nProveedor: ${proveedor}\nOrden de Compra N°: ${ordenCompra}\nFecha: ${fecha}\nTOTAL: $${total.toFixed(2)}\n\n📌 Adjunto encontrarás el PDF de la orden.\n📍 Entregar en: Lógica Láctea`;
             
-            // Abrir WhatsApp con el número del proveedor
             window.open(`https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`, '_blank');
             
-            // Guardar en Google Sheets
-            Swal.fire({ title: 'Guardando compra...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            Swal.fire({ title: 'Guardando...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
             
             setTimeout(async () => {
                 try {
                     await DairyAPI.registrarCompra({
-                        factura: ordenCompra, 
-                        proveedor, 
+                        factura: ordenCompra, proveedor,
                         fecha: new Date().toISOString().split('T')[0],
-                        items: carritoDeCompras.map(item => ({ 
-                            producto_id: item.id, 
-                            producto_nombre: item.producto, 
-                            cantidad: item.cantidad, 
-                            costo: item.precio 
-                        }))
+                        items: carritoDeCompras.map(item => ({ producto_id: item.id, producto_nombre: item.producto, cantidad: item.cantidad, costo: item.precio }))
                     });
-                    
-                    Swal.fire({ 
-                        title: '✅ Compra Completada', 
-                        text: `Orden: ${ordenCompra}\nProveedor: ${proveedor}\nGuardado en ComprasPendientes`, 
-                        icon: 'success' 
-                    });
-                    
-                    // Limpiar todo
+                    Swal.fire({ title: '✅ Compra Completada', text: `Orden: ${ordenCompra}\nGuardado en ComprasPendientes`, icon: 'success' });
                     carritoDeCompras = [];
                     renderizarCarrito();
+                    document.getElementById("proveedorInput").value = "";
                     document.getElementById("com_proveedor").value = "";
                     document.getElementById("telefono_proveedor").value = "";
-                    document.getElementById("sel_producto").innerHTML = '<option value="">-- Seleccione un proveedor primero --</option>';
+                    document.getElementById("productoInput").value = "";
+                    document.getElementById("productoInput").disabled = true;
+                    document.getElementById("sel_producto").value = "";
+                    generarOrdenAuto();
                     pasoActual = 1;
                     actualizarBoton();
                     document.getElementById("btnSiguiente").style.display = "flex";
-                    
                 } catch (err) {
-                    Swal.fire("Error", "No se pudo guardar la compra", "error");
+                    Swal.fire("Error", "No se pudo guardar", "error");
                 }
             }, 1000);
         }

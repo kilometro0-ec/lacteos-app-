@@ -8,28 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .step-active {
-            background-color: #b45309;
-            color: white;
-            border-color: #b45309;
-        }
-        .step-completed {
-            background-color: #10b981;
-            color: white;
-            border-color: #10b981;
-        }
-        .step-pending {
-            background-color: #e2e8f0;
-            color: #64748b;
-            border-color: #cbd5e1;
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
@@ -51,15 +29,15 @@
             <i data-lucide="shopping-bag" class="w-8 h-8 text-amber-300"></i>
             <div>
                 <h1 class="text-xl font-bold">Orden de Compra a Proveedor</h1>
-                <p class="text-xs text-amber-200">Sigue los pasos para completar tu pedido</p>
+                <p class="text-xs text-amber-200">Genera tu pedido en 4 pasos sencillos</p>
             </div>
         </div>
     </header>
 
-  
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- Panel Izquierdo -->
-        <div id="panel-compra" class="space-y-6 lg:col-span-1">
+        <div class="space-y-6 lg:col-span-1">
             <div class="bg-white p-5 rounded-xl shadow-sm border">
                 <h2 class="text-sm font-bold mb-4 flex items-center gap-2">
                     <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i> Datos de la Compra
@@ -133,7 +111,7 @@
                 </div>
 
                 <div class="bg-slate-50 p-5 border-t">
-                    <div class="flex justify-between items-center">
+                    <div class="flex justify-between items-center flex-wrap gap-4">
                         <div>
                             <span class="text-xs text-slate-400 uppercase font-bold">Total Compra</span>
                             <span id="lblTotalCompra" class="text-3xl font-bold text-slate-900 ml-2">$0.00</span>
@@ -149,13 +127,12 @@
 
     <script>
         // ==================== CONFIGURACIÓN ====================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4m1Xe19wjVXzcaxkiIFBXm9G2cAgWgwrjjVuK2CBSnCj6uWzWX5vLr7IUrGCOILUkLw/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxd8JyMA9NRqsxqoH762o3iR2khHpemBoVxCl-aMOEtxdp2FTnHE68p-hgnDGg-q83tog/exec";
         
         let catalogoProductos = [];
         let catalogoProveedores = [];
         let carritoDeCompras = [];
         let pasoActual = 1;
-        let datosProveedorSeleccionado = {};
 
         // ==================== API ====================
         const DairyAPI = {
@@ -173,7 +150,7 @@
             },
             async registrarCompra(data) {
                 try {
-                    const response = await fetch(SCRIPT_URL, {
+                    await fetch(SCRIPT_URL, {
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
@@ -228,16 +205,6 @@
                     select.innerHTML += `<option value="${p.nombre}" data-telefono="${p.telefono || ''}" data-direccion="${p.direccion || ''}" data-ruc="${p.ruc || ''}" data-ciudad="${p.ciudad || ''}">${p.nombre} ${p.ciudad ? '- ' + p.ciudad : ''}</option>`;
                 });
             }
-            select.addEventListener("change", (e) => {
-                const opt = e.target.options[e.target.selectedIndex];
-                datosProveedorSeleccionado = {
-                    nombre: opt.value,
-                    telefono: opt.dataset.telefono || '',
-                    direccion: opt.dataset.direccion || '',
-                    ruc: opt.dataset.ruc || '',
-                    ciudad: opt.dataset.ciudad || ''
-                };
-            });
         }
 
         // ==================== PRODUCTOS ====================
@@ -371,59 +338,19 @@
             lucide.createIcons();
         }
 
-        // ==================== ACTUALIZAR PASOS ====================
-        function actualizarPasos() {
-            const step1 = document.getElementById("step1");
-            const step2 = document.getElementById("step2");
-            const step3 = document.getElementById("step3");
-            const step4 = document.getElementById("step4");
-            const btnSiguiente = document.getElementById("btnSiguiente");
-            
+        // ==================== CAMBIAR TEXTO DEL BOTÓN ====================
+        function actualizarBoton() {
+            const btn = document.getElementById("btnSiguiente");
             if (pasoActual === 1) {
-                step1.className = "step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step2.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step3.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step4.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step1.innerHTML = "1️⃣ Realizar Compra";
-                step2.innerHTML = "2️⃣ Descargar PDF";
-                step3.innerHTML = "3️⃣ Enviar WhatsApp";
-                step4.innerHTML = "4️⃣ Guardar en BD";
-                btnSiguiente.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Generar PDF';
-                lucide.createIcons();
+                btn.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Generar PDF';
             } else if (pasoActual === 2) {
-                step1.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step2.className = "step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step3.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step4.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step1.innerHTML = "✅ Realizar Compra";
-                step2.innerHTML = "2️⃣ Descargar PDF";
-                step3.innerHTML = "3️⃣ Enviar WhatsApp";
-                step4.innerHTML = "4️⃣ Guardar en BD";
-                btnSiguiente.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Enviar WhatsApp';
-                lucide.createIcons();
+                btn.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Enviar WhatsApp';
             } else if (pasoActual === 3) {
-                step1.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step2.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step3.className = "step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step4.className = "step-pending flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step1.innerHTML = "✅ Realizar Compra";
-                step2.innerHTML = "📄 Descargar PDF";
-                step3.innerHTML = "3️⃣ Enviar WhatsApp";
-                step4.innerHTML = "4️⃣ Guardar en BD";
-                btnSiguiente.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Guardar en BD';
-                lucide.createIcons();
+                btn.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Guardar en BD';
             } else if (pasoActual === 4) {
-                step1.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step2.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step3.className = "step-completed flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step4.className = "step-active flex-1 text-center py-2 mx-1 rounded-lg font-bold transition-all";
-                step1.innerHTML = "✅ Realizar Compra";
-                step2.innerHTML = "📄 Descargar PDF";
-                step3.innerHTML = "📱 Enviar WhatsApp";
-                step4.innerHTML = "4️⃣ Guardar en BD";
-                btnSiguiente.style.display = "none";
-                lucide.createIcons();
+                btn.style.display = "none";
             }
+            lucide.createIcons();
         }
 
         // ==================== SIGUIENTE PASO ====================
@@ -439,15 +366,15 @@
                     return;
                 }
                 pasoActual = 2;
-                actualizarPasos();
+                actualizarBoton();
                 descargarPDF();
             } else if (pasoActual === 2) {
                 pasoActual = 3;
-                actualizarPasos();
+                actualizarBoton();
                 enviarWhatsApp();
             } else if (pasoActual === 3) {
                 pasoActual = 4;
-                actualizarPasos();
+                actualizarBoton();
                 guardarCompra();
             }
         }
@@ -532,7 +459,7 @@
                 document.getElementById("com_proveedor").value = "";
                 generarFacturaAuto();
                 pasoActual = 1;
-                actualizarPasos();
+                actualizarBoton();
                 document.getElementById("btnSiguiente").style.display = "flex";
             } catch (err) {
                 Swal.fire("Error", "No se pudo guardar", "error");

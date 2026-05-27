@@ -29,7 +29,7 @@
             <i data-lucide="shopping-bag" class="w-8 h-8 text-amber-300"></i>
             <div>
                 <h1 class="text-xl font-bold">Orden de Compra a Proveedor</h1>
-                <p class="text-xs text-amber-200">Genera tu pedido en 3 pasos sencillos</p>
+                <p class="text-xs text-amber-200">Selecciona un proveedor y agrega sus productos</p>
             </div>
         </div>
     </header>
@@ -48,9 +48,13 @@
                 </div>
                 <div class="mb-3">
                     <label class="block text-xs font-bold mb-1">Proveedor *</label>
-                    <select id="com_proveedor" class="w-full border rounded-lg px-3 py-2 text-sm bg-white">
+                    <select id="com_proveedor" class="w-full border rounded-lg px-3 py-2 text-sm bg-white" onchange="cargarProductosPorProveedor()">
                         <option value="">-- Seleccione un proveedor --</option>
                     </select>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-bold mb-1">Teléfono Proveedor</label>
+                    <input type="text" id="telefono_proveedor" class="w-full border rounded-lg px-3 py-2 text-sm bg-slate-100" readonly>
                 </div>
                 <div class="mb-3">
                     <label class="block text-xs font-bold mb-1">Fecha de Pedido</label>
@@ -65,7 +69,7 @@
                 <div class="mb-3">
                     <label class="block text-xs font-bold mb-1">Producto</label>
                     <select id="sel_producto" class="w-full border rounded-lg px-3 py-2 text-sm">
-                        <option value="">Cargando productos...</option>
+                        <option value="">-- Seleccione un proveedor primero --</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3 mb-3">
@@ -103,7 +107,7 @@
                             <tr>
                                 <td colspan="6" class="text-center py-20 text-slate-400">
                                     <i data-lucide="shopping-cart" class="w-10 h-10 mx-auto mb-2"></i>
-                                    Carrito vacío - Agrega productos
+                                    Carrito vacío - Selecciona un proveedor y agrega productos
                                  </td>
                             </tr>
                         </tbody>
@@ -127,12 +131,13 @@
 
     <script>
         // ==================== CONFIGURACIÓN ====================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxd8JyMA9NRqsxqoH762o3iR2khHpemBoVxCl-aMOEtxdp2FTnHE68p-hgnDGg-q83tog/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz4m1Xe19wjVXzcaxkiIFBXm9G2cAgWgwrjjVuK2CBSnCj6uWzWX5vLr7IUrGCOILUkLw/exec";
         
         let catalogoProductos = [];
         let catalogoProveedores = [];
         let carritoDeCompras = [];
         let pasoActual = 1;
+        let facturasGeneradas = new Set(); // Para evitar facturas repetidas
 
         // ==================== API ====================
         const DairyAPI = {
@@ -175,20 +180,25 @@
             });
             
             try {
-                await Promise.all([cargarProductos(), cargarProveedores()]);
-                generarFacturaAuto();
+                await cargarProveedores();
+                await cargarProductos();
                 configurarFecha();
-                await cargarProveedoresEnSelect();
                 Swal.close();
             } catch (error) {
                 Swal.fire('Error', 'No se pudieron cargar los datos', 'error');
             }
         });
 
+        // Generar factura única (no repetible)
         function generarFacturaAuto() {
             const fecha = new Date();
-            const factura = `FAC-${fecha.getFullYear()}${String(fecha.getMonth()+1).padStart(2,'0')}${String(fecha.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*1000000)}`;
+            let factura;
+            do {
+                factura = `FAC-${fecha.getFullYear()}${String(fecha.getMonth()+1).padStart(2,'0')}${String(fecha.getDate()).padStart(2,'0')}-${Math.floor(Math.random()*10000000)}`;
+            } while (facturasGeneradas.has(factura));
+            facturasGeneradas.add(factura);
             document.getElementById("com_factura").value = factura;
+            return factura;
         }
 
         function configurarFecha() {
@@ -197,17 +207,36 @@
             document.getElementById("fecha_pedido").value = fechaStr;
         }
 
-        async function cargarProveedoresEnSelect() {
-            const select = document.getElementById("com_proveedor");
-            if (catalogoProveedores.length > 0) {
+        // ==================== PROVEEDORES ====================
+        async function cargarProveedores() {
+            try {
+                const datos = await DairyAPI.obtenerDatos("Proveedores");
+                if (datos && datos.length > 0) {
+                    catalogoProveedores = datos.filter(p => p["Nombre del Proveedor"]).map(p => ({
+                        nombre: p["Nombre del Proveedor"],
+                        telefono: p["Contacto / Teléfono"] || '',
+                        ciudad: p.Ciudad || '',
+                        direccion: p.Direccion || '',
+                        ruc: p.RUC || ''
+                    }));
+                } else {
+                    catalogoProveedores = [
+                        { nombre: "Grupo del Campo Artesano", telefono: "984016027", ciudad: "CAYAMBE" },
+                        { nombre: "Kilómetro 0", telefono: "0984016027", ciudad: "Quito" }
+                    ];
+                }
+                
+                const select = document.getElementById("com_proveedor");
                 select.innerHTML = '<option value="">-- Seleccione un proveedor --</option>';
                 catalogoProveedores.forEach(p => {
-                    select.innerHTML += `<option value="${p.nombre}">${p.nombre} ${p.ciudad ? '- ' + p.ciudad : ''}</option>`;
+                    select.innerHTML += `<option value="${p.nombre}" data-telefono="${p.telefono}" data-ciudad="${p.ciudad}" data-direccion="${p.direccion}" data-ruc="${p.ruc}">${p.nombre} ${p.ciudad ? '- ' + p.ciudad : ''}</option>`;
                 });
+            } catch (err) {
+                console.error("Error cargando proveedores:", err);
             }
         }
 
-        // ==================== PRODUCTOS ====================
+        // ==================== PRODUCTOS (filtrados por proveedor) ====================
         async function cargarProductos() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
@@ -215,57 +244,67 @@
                     catalogoProductos = datos.filter(p => p.ID && p.Producto).map(p => ({
                         id: p.ID,
                         producto: p.Producto,
-                        precio: parseFloat(String(p.Precio_Distribuidor).replace('$', '').replace(',', '.')) || 0
+                        precio: parseFloat(String(p.Precio_Distribuidor).replace('$', '').replace(',', '.')) || 0,
+                        proveedorHabitual: p["Proveedor Habitual"] || p.Proveedor || ''
                     }));
                 } else {
                     catalogoProductos = [
-                        { id: "P-103", producto: "Yogurt de Fruta 1/2 L", precio: 0.70 },
-                        { id: "P-128", producto: "Queso Mozarella 500g", precio: 3.50 },
-                        { id: "P-164", producto: "Queso Cremoso 500 g", precio: 3.00 },
-                        { id: "P-169", producto: "Yogurt Griego semi Endulzado 1L", precio: 2.93 },
-                        { id: "P-172", producto: "Yogurt Griego 0 Azucar 1L", precio: 3.58 }
+                        { id: "P-103", producto: "Yogurt de Fruta 1/2 L", precio: 0.70, proveedorHabitual: "Grupo del Campo Artesano" },
+                        { id: "P-128", producto: "Queso Mozarella 500g", precio: 3.50, proveedorHabitual: "Grupo del Campo Artesano" },
+                        { id: "P-164", producto: "Queso Cremoso 500 g", precio: 3.00, proveedorHabitual: "Grupo del Campo Artesano" }
                     ];
                 }
-                const select = document.getElementById("sel_producto");
-                select.innerHTML = '<option value="">-- Selecciona un producto --</option>';
-                catalogoProductos.forEach(p => {
-                    select.innerHTML += `<option value="${p.id}" data-precio="${p.precio}">${p.producto} (${p.id}) - $${p.precio.toFixed(2)}</option>`;
-                });
-                document.getElementById("sel_producto").addEventListener("change", (e) => {
-                    const opt = e.target.options[e.target.selectedIndex];
-                    const precio = parseFloat(opt.dataset.precio) || 0;
-                    document.getElementById("txt_costo").value = precio.toFixed(2);
-                });
             } catch (err) {
                 console.error("Error cargando productos:", err);
+                catalogoProductos = [];
             }
         }
 
-        async function cargarProveedores() {
-            try {
-                const datos = await DairyAPI.obtenerDatos("Proveedores");
-                if (datos && datos.length > 0) {
-                    catalogoProveedores = datos.filter(p => p["Nombre del Proveedor"] || p.Nombre).map(p => ({
-                        nombre: p["Nombre del Proveedor"] || p.Nombre,
-                        telefono: p["Contacto / Teléfono"] || p.telefono || '',
-                        ciudad: p.Ciudad || p.ciudad || '',
-                        direccion: p.Direccion || p.direccion || '',
-                        ruc: p.RUC || p.ruc || ''
-                    }));
-                } else {
-                    catalogoProveedores = [
-                        { nombre: "Grupo del Campo Artesano", telefono: "984016027", ciudad: "CAYAMBE", direccion: "Calle Rivas", ruc: "123456789" },
-                        { nombre: "Kilómetro 0", telefono: "0984016027", ciudad: "Quito", direccion: "Moro Moro", ruc: "1111111111" },
-                        { nombre: "Lácteos La Vaquita", telefono: "555-0102", ciudad: "Quito", direccion: "Av. Principal", ruc: "20987654321" }
-                    ];
-                }
-            } catch (err) {
-                console.error("Error cargando proveedores:", err);
+        function cargarProductosPorProveedor() {
+            const selectProveedor = document.getElementById("com_proveedor");
+            const proveedorSeleccionado = selectProveedor.value;
+            const selectedOption = selectProveedor.options[selectProveedor.selectedIndex];
+            const telefono = selectedOption?.dataset?.telefono || '';
+            document.getElementById("telefono_proveedor").value = telefono;
+            
+            if (!proveedorSeleccionado) {
+                const selectProducto = document.getElementById("sel_producto");
+                selectProducto.innerHTML = '<option value="">-- Seleccione un proveedor primero --</option>';
+                return;
             }
+            
+            // Filtrar productos por proveedor habitual
+            const productosFiltrados = catalogoProductos.filter(p => 
+                p.proveedorHabitual === proveedorSeleccionado
+            );
+            
+            const selectProducto = document.getElementById("sel_producto");
+            if (productosFiltrados.length === 0) {
+                selectProducto.innerHTML = '<option value="">-- No hay productos para este proveedor --</option>';
+                Swal.fire("Info", "Este proveedor no tiene productos registrados", "info");
+                return;
+            }
+            
+            selectProducto.innerHTML = '<option value="">-- Selecciona un producto --</option>';
+            productosFiltrados.forEach(p => {
+                selectProducto.innerHTML += `<option value="${p.id}" data-precio="${p.precio}">${p.producto} (${p.id}) - $${p.precio.toFixed(2)}</option>`;
+            });
+            
+            document.getElementById("sel_producto").addEventListener("change", (e) => {
+                const opt = e.target.options[e.target.selectedIndex];
+                const precio = parseFloat(opt.dataset.precio) || 0;
+                document.getElementById("txt_costo").value = precio.toFixed(2);
+            });
         }
 
         // ==================== CARRITO ====================
         function agregarItemAlCarrito() {
+            const selectProveedor = document.getElementById("com_proveedor").value;
+            if (!selectProveedor) {
+                Swal.fire("Error", "Primero selecciona un proveedor", "warning");
+                return;
+            }
+            
             const select = document.getElementById("sel_producto");
             const id = select.value;
             const cantidad = parseInt(document.getElementById("txt_cantidad").value);
@@ -330,7 +369,7 @@
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </td>
-                     </tr>
+                    </tr>
                 `;
             });
             document.getElementById("lblTotalCompra").innerHTML = `$${total.toFixed(2)}`;
@@ -342,6 +381,7 @@
             const btn = document.getElementById("btnSiguiente");
             if (pasoActual === 1) {
                 btn.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Generar PDF';
+                btn.style.display = "flex";
             } else if (pasoActual === 2) {
                 btn.innerHTML = '<i data-lucide="arrow-right" class="w-4 h-4"></i> Siguiente: Enviar WhatsApp';
             } else if (pasoActual === 3) {
@@ -362,6 +402,7 @@
                     Swal.fire("Error", "Agrega al menos un producto", "warning");
                     return;
                 }
+                generarFacturaAuto(); // Generar factura única
                 pasoActual = 2;
                 actualizarBoton();
                 descargarPDF();
@@ -389,7 +430,7 @@
                         <td style="padding: 8px; text-align: center;">${item.cantidad}</td>
                         <td style="padding: 8px; text-align: right;">$${item.precio.toFixed(2)}</td>
                         <td style="padding: 8px; text-align: right;">$${subtotal.toFixed(2)}</td>
-                     </tr>
+                      </tr>
                 `;
             });
 
@@ -586,7 +627,7 @@
                                     <th>Cantidad</th>
                                     <th>Precio Unitario</th>
                                     <th>Subtotal</th>
-                                 </tr>
+                                  </tr>
                             </thead>
                             <tbody>
                                 ${tablaProductos}
@@ -631,8 +672,18 @@
             const factura = document.getElementById("com_factura").value;
             const fecha = document.getElementById("fecha_pedido").value;
             const total = carritoDeCompras.reduce((s, i) => s + (i.cantidad * i.precio), 0);
+            const telefono = document.getElementById("telefono_proveedor").value;
             
             if (!proveedor || carritoDeCompras.length === 0) return;
+            
+            // Limpiar número de teléfono (solo dígitos)
+            let numeroWhatsApp = telefono.replace(/\D/g, '');
+            if (!numeroWhatsApp) {
+                numeroWhatsApp = "593984016027"; // Número por defecto
+            }
+            if (!numeroWhatsApp.startsWith('593')) {
+                numeroWhatsApp = '593' + numeroWhatsApp;
+            }
             
             // Mensaje simplificado
             const mensaje = `🛒 ORDEN DE COMPRA - LÓGICA LÁCTEA
@@ -645,8 +696,8 @@ TOTAL: $${total.toFixed(2)}
 📌 Adjunto encontrarás el PDF de la orden.
 📍 Entregar en: Lógica Láctea`;
             
-            // Abrir WhatsApp
-            window.open(`https://wa.me/593984016027?text=${encodeURIComponent(mensaje)}`, '_blank');
+            // Abrir WhatsApp con el número del proveedor
+            window.open(`https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`, '_blank');
             
             // Guardar en Google Sheets
             Swal.fire({ title: 'Guardando compra...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
@@ -674,7 +725,8 @@ TOTAL: $${total.toFixed(2)}
                     carritoDeCompras = [];
                     renderizarCarrito();
                     document.getElementById("com_proveedor").value = "";
-                    generarFacturaAuto();
+                    document.getElementById("telefono_proveedor").value = "";
+                    document.getElementById("sel_producto").innerHTML = '<option value="">-- Seleccione un proveedor primero --</option>';
                     pasoActual = 1;
                     actualizarBoton();
                     document.getElementById("btnSiguiente").style.display = "flex";

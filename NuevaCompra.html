@@ -7,14 +7,37 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .sugerencias-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .sugerencia-item {
+            transition: all 0.2s ease;
+        }
+        .sugerencia-item:hover {
+            background-color: #fef3c7;
+            transform: translateX(5px);
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <div id="menu-container"></div>
+    <!-- Menú (opcional) -->
+    <div id="menu-container" class="bg-amber-900 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">🍷 Lógica Láctea</h1>
+            <nav class="flex gap-4">
+                <a href="#" class="hover:text-amber-300">Inicio</a>
+                <a href="#" class="hover:text-amber-300">Compras</a>
+                <a href="#" class="hover:text-amber-300">Inventario</a>
+            </nav>
+        </div>
+    </div>
 
-    <header class="bg-amber-900 text-white shadow-md px-6 py-4">
+    <header class="bg-amber-800 text-white shadow-md px-6 py-4">
         <div class="flex items-center gap-3">
-            <i data-lucide="shopping-bag" class="w-8 h-8 text-amber-400"></i>
+            <i data-lucide="shopping-bag" class="w-8 h-8 text-amber-300"></i>
             <div>
                 <h1 class="text-xl font-bold">Registro de Compras</h1>
                 <p class="text-xs text-amber-200">El stock se actualizará al confirmar recepción</p>
@@ -24,7 +47,9 @@
 
     <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
         
+        <!-- Panel Izquierdo -->
         <div class="space-y-6 lg:col-span-1">
+            <!-- Datos Proveedor -->
             <div class="bg-white p-5 rounded-xl shadow-sm border">
                 <h2 class="text-sm font-bold mb-4 flex items-center gap-2">
                     <i data-lucide="file-text" class="w-4 h-4 text-amber-600"></i> Datos de la Compra
@@ -36,12 +61,18 @@
                 <div class="mb-3">
                     <label class="block text-xs font-bold mb-1">Proveedor *</label>
                     <div class="relative">
-                        <input type="text" id="com_proveedor" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Escribe para buscar proveedor..." autocomplete="off">
-                        <div id="sugerenciasProveedor" class="absolute z-10 w-full bg-white border rounded-lg mt-1 max-h-48 overflow-y-auto hidden shadow-lg"></div>
+                        <input type="text" id="com_proveedor" 
+                               class="w-full border rounded-lg px-3 py-2 text-sm" 
+                               placeholder="Escribe para buscar proveedor..." 
+                               autocomplete="off">
+                        <div id="sugerenciasProveedor" 
+                             class="absolute z-20 w-full bg-white border rounded-lg mt-1 hidden shadow-lg sugerencias-list">
+                        </div>
                     </div>
                 </div>
             </div>
 
+            <!-- Agregar Producto -->
             <div class="bg-white p-5 rounded-xl shadow-sm border">
                 <h2 class="text-sm font-bold mb-4 flex items-center gap-2">
                     <i data-lucide="package-plus" class="w-4 h-4 text-amber-600"></i> Agregar Producto
@@ -68,6 +99,7 @@
             </div>
         </div>
 
+        <!-- Tabla Carrito -->
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -85,7 +117,7 @@
                         <tr>
                             <td colspan="6" class="text-center py-20 text-slate-400">
                                 <i data-lucide="shopping-cart" class="w-10 h-10 mx-auto mb-2"></i>
-                                Carrito vacío - Agrega productos
+                                Carrito vacío
                             </td>
                         </tr>
                     </tbody>
@@ -121,8 +153,10 @@
             async obtenerDatos(hoja) {
                 try {
                     const url = `${SCRIPT_URL}?action=obtenerDatos&hoja=${encodeURIComponent(hoja)}`;
+                    console.log(`📡 Consultando: ${url}`);
                     const response = await fetch(url);
                     const result = await response.json();
+                    console.log(`📦 Respuesta de ${hoja}:`, result);
                     if (result.status === 'success') return result.data;
                     throw new Error(result.message);
                 } catch (error) {
@@ -132,14 +166,17 @@
             },
             async registrarCompra(data) {
                 try {
+                    console.log('📝 Registrando compra:', data);
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'registrarNuevaCompra', ...data })
                     });
-                    return await response.json();
+                    const result = await response.json();
+                    console.log('✅ Respuesta:', result);
+                    return result;
                 } catch (error) {
-                    console.error('Error al registrar compra:', error);
+                    console.error('❌ Error al registrar compra:', error);
                     throw error;
                 }
             }
@@ -147,10 +184,25 @@
 
         // ==================== INICIALIZACIÓN ====================
         document.addEventListener("DOMContentLoaded", async () => {
+            console.log("🚀 Iniciando aplicación...");
             lucide.createIcons();
-            await Promise.all([cargarProductos(), cargarProveedores()]);
-            generarFacturaAuto();
-            configurarBuscadorProveedores();
+            
+            // Mostrar loading
+            Swal.fire({
+                title: 'Cargando datos...',
+                text: 'Por favor espera',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+            
+            try {
+                await Promise.all([cargarProductos(), cargarProveedores()]);
+                generarFacturaAuto();
+                configurarBuscadorProveedores();
+                Swal.close();
+            } catch (error) {
+                Swal.fire('Error', 'No se pudieron cargar los datos', 'error');
+            }
         });
 
         function generarFacturaAuto() {
@@ -167,6 +219,8 @@
         async function cargarProductos() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
+                console.log("📦 Datos de inventario:", datos);
+                
                 if (datos && datos.length > 0) {
                     catalogoProductos = datos.filter(p => p.ID && p.Producto).map(p => ({
                         id: p.ID,
@@ -199,7 +253,10 @@
                 console.log(`✅ ${catalogoProductos.length} productos cargados`);
             } catch (err) {
                 console.error("Error cargando productos:", err);
-                Swal.fire("Error", "No se pudieron cargar los productos", "error");
+                // Datos de emergencia
+                catalogoProductos = [
+                    { id: "P-103", producto: "Yogurt de Fruta 1/2 L", precio: 0.70 }
+                ];
             }
         }
 
@@ -207,17 +264,30 @@
         async function cargarProveedores() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Proveedores");
+                console.log("🏢 Datos de proveedores:", datos);
+                
                 if (datos && datos.length > 0) {
-                    catalogoProveedores = datos.filter(p => p["Nombre del Proveedor"]);
-                    console.log(`✅ ${catalogoProveedores.length} proveedores cargados`);
+                    // Buscar diferentes nombres de columna posibles
+                    catalogoProveedores = datos.filter(p => {
+                        return p["Nombre del Proveedor"] || p.Nombre || p.proveedor || p.name;
+                    }).map(p => ({
+                        nombre: p["Nombre del Proveedor"] || p.Nombre || p.proveedor || p.name,
+                        telefono: p["Contacto / Teléfono"] || p.telefono || p.Telefono || '',
+                        ciudad: p.Ciudad || p.ciudad || '',
+                        ruc: p.RUC || p.ruc || ''
+                    }));
                 } else {
                     catalogoProveedores = [
-                        { "Nombre del Proveedor": "Grupo del Campo Artesano", "Contacto / Teléfono": "984016027", Ciudad: "CAYAMBE" }
+                        { nombre: "Grupo del Campo Artesano", telefono: "984016027", ciudad: "CAYAMBE" },
+                        { nombre: "Kilómetro 0", telefono: "0984016027", ciudad: "Quito" }
                     ];
                 }
+                console.log(`✅ ${catalogoProveedores.length} proveedores cargados`);
             } catch (err) {
                 console.error("Error cargando proveedores:", err);
-                catalogoProveedores = [];
+                catalogoProveedores = [
+                    { nombre: "Grupo del Campo Artesano", telefono: "984016027", ciudad: "CAYAMBE" }
+                ];
             }
         }
 
@@ -227,14 +297,18 @@
 
             input.addEventListener("input", () => {
                 const texto = input.value.toLowerCase().trim();
+                console.log("🔍 Buscando:", texto);
+                
                 if (texto.length < 1) {
                     sugerencias.classList.add("hidden");
                     return;
                 }
                 
                 const filtrados = catalogoProveedores.filter(p => 
-                    p["Nombre del Proveedor"] && p["Nombre del Proveedor"].toLowerCase().includes(texto)
+                    p.nombre && p.nombre.toLowerCase().includes(texto)
                 );
+                
+                console.log(`📋 Encontrados: ${filtrados.length} proveedores`);
                 
                 if (filtrados.length === 0) {
                     sugerencias.classList.add("hidden");
@@ -244,11 +318,15 @@
                 sugerencias.innerHTML = "";
                 filtrados.forEach(p => {
                     const div = document.createElement("div");
-                    div.className = "px-3 py-2 hover:bg-amber-50 cursor-pointer border-b text-sm";
-                    div.innerHTML = `<b>${p["Nombre del Proveedor"]}</b><br><small class="text-slate-500">📞 ${p["Contacto / Teléfono"] || 'N/A'} | 📍 ${p.Ciudad || 'N/A'}</small>`;
+                    div.className = "sugerencia-item px-3 py-2 cursor-pointer border-b text-sm";
+                    div.innerHTML = `
+                        <div class="font-bold text-amber-800">${p.nombre}</div>
+                        <div class="text-xs text-slate-500">📞 ${p.telefono || 'N/A'} | 📍 ${p.ciudad || 'N/A'}</div>
+                    `;
                     div.onclick = () => {
-                        input.value = p["Nombre del Proveedor"];
+                        input.value = p.nombre;
                         sugerencias.classList.add("hidden");
+                        console.log("✅ Proveedor seleccionado:", p.nombre);
                     };
                     sugerencias.appendChild(div);
                 });
@@ -256,7 +334,9 @@
             });
 
             document.addEventListener("click", (e) => {
-                if (e.target !== input) sugerencias.classList.add("hidden");
+                if (e.target !== input) {
+                    sugerencias.classList.add("hidden");
+                }
             });
         }
 
@@ -292,7 +372,7 @@
             renderizarCarrito();
             
             Swal.fire({
-                title: "Agregado",
+                title: "✓ Agregado",
                 text: `${cantidad} x ${producto.producto}`,
                 icon: "success",
                 timer: 1500,
@@ -351,26 +431,19 @@
             mensaje += `*Proveedor:* ${proveedor}\n`;
             mensaje += `*Fecha:* ${new Date().toLocaleDateString()}\n`;
             mensaje += `*Factura:* ${document.getElementById("com_factura").value}\n\n`;
-            mensaje += `*📋 PRODUCTOS SOLICITADOS:*\n`;
-            mensaje += `┌─────────────────────────┐\n`;
+            mensaje += `*📋 PRODUCTOS:*\n`;
             
             let total = 0;
             carritoDeCompras.forEach(item => {
                 const subtotal = item.cantidad * item.precio;
                 total += subtotal;
-                mensaje += `│ ${item.cantidad} x ${item.producto}\n`;
-                mensaje += `│   $${item.precio.toFixed(2)} c/u → $${subtotal.toFixed(2)}\n`;
+                mensaje += `▸ ${item.cantidad} x ${item.producto} = $${subtotal.toFixed(2)}\n`;
             });
             
-            mensaje += `└─────────────────────────┘\n\n`;
-            mensaje += `*💰 TOTAL A PAGAR: $${total.toFixed(2)}*\n\n`;
-            mensaje += `📌 *Estado:* Pendiente de recepción\n`;
-            mensaje += `🔔 *Entregar en:* Lógica Láctea\n\n`;
-            mensaje += `_Este es un pedido generado automáticamente_`;
+            mensaje += `\n*💰 TOTAL: $${total.toFixed(2)}*\n`;
+            mensaje += `\n📌 Estado: PENDIENTE DE RECEPCIÓN`;
             
-            // Número de WhatsApp (cambiar según necesidad)
-            const numeroWhatsApp = "593984016027";
-            const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensaje)}`;
+            const url = `https://wa.me/593984016027?text=${encodeURIComponent(mensaje)}`;
             window.open(url, '_blank');
         }
 
@@ -386,7 +459,6 @@
 
             Swal.fire({ 
                 title: 'Guardando compra...', 
-                text: 'Por favor espera',
                 didOpen: () => Swal.showLoading(), 
                 allowOutsideClick: false 
             });
@@ -413,15 +485,11 @@
                         title: '✅ Compra Guardada',
                         html: `<strong>Factura:</strong> ${factura}<br>
                                <strong>Proveedor:</strong> ${proveedor}<br>
-                               <strong>Productos:</strong> ${carritoDeCompras.length}<br>
                                <strong>Total:</strong> $${total.toFixed(2)}<br><br>
-                               <span class="text-amber-600">⚠️ El stock NO se ha modificado</span><br>
-                               <span class="text-blue-600">📌 Debes confirmar la recepción en la pantalla de "Confirmar Recepción"</span>`,
-                        icon: 'success',
-                        confirmButtonColor: '#059669'
+                               <span class="text-amber-600">⚠️ Stock NO modificado</span>`,
+                        icon: 'success'
                     });
 
-                    // Limpiar carrito
                     carritoDeCompras = [];
                     renderizarCarrito();
                     document.getElementById("com_proveedor").value = "";
@@ -431,7 +499,7 @@
                 }
             } catch (err) {
                 console.error("Error:", err);
-                Swal.fire("Error", "No se pudo guardar la compra. Verifica la conexión.", "error");
+                Swal.fire("Error", "No se pudo guardar la compra", "error");
             }
         }
     </script>

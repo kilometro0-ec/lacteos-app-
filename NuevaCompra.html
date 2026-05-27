@@ -7,7 +7,27 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- html2pdf para generar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
+        @media print {
+            body {
+                background: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .order-pdf {
+                padding: 20px;
+                font-size: 12px;
+            }
+        }
+        .print-only {
+            display: none;
+        }
         .sugerencias-list {
             max-height: 250px;
             overflow-y: auto;
@@ -17,16 +37,15 @@
         }
         .sugerencia-item:hover {
             background-color: #fef3c7;
-            transform: translateX(5px);
         }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Menú (opcional) -->
-    <div id="menu-container" class="bg-amber-900 text-white p-4">
+    <!-- Menú -->
+    <div id="menu-container" class="bg-amber-900 text-white p-4 no-print">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">🍷 Lógica Láctea</h1>
+            <h1 class="text-xl font-bold">🥛 Lógica Láctea</h1>
             <nav class="flex gap-4">
                 <a href="#" class="hover:text-amber-300">Inicio</a>
                 <a href="#" class="hover:text-amber-300">Compras</a>
@@ -35,7 +54,8 @@
         </div>
     </div>
 
-    <header class="bg-amber-800 text-white shadow-md px-6 py-4">
+    <!-- Encabezado -->
+    <header class="bg-amber-800 text-white shadow-md px-6 py-4 no-print">
         <div class="flex items-center gap-3">
             <i data-lucide="shopping-bag" class="w-8 h-8 text-amber-300"></i>
             <div>
@@ -48,7 +68,7 @@
     <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         <!-- Panel Izquierdo -->
-        <div class="space-y-6 lg:col-span-1">
+        <div class="space-y-6 lg:col-span-1 no-print">
             <!-- Datos Proveedor -->
             <div class="bg-white p-5 rounded-xl shadow-sm border">
                 <h2 class="text-sm font-bold mb-4 flex items-center gap-2">
@@ -69,6 +89,10 @@
                              class="absolute z-20 w-full bg-white border rounded-lg mt-1 hidden shadow-lg sugerencias-list">
                         </div>
                     </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-bold mb-1">Fecha de Pedido</label>
+                    <input type="text" id="fecha_pedido" class="w-full border rounded-lg px-3 py-2 text-sm bg-slate-100" readonly>
                 </div>
             </div>
 
@@ -99,9 +123,10 @@
             </div>
         </div>
 
-        <!-- Tabla Carrito -->
+        <!-- Tabla Carrito y PDF -->
         <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border overflow-hidden">
-            <div class="overflow-x-auto">
+            <!-- Vista normal del carrito -->
+            <div class="overflow-x-auto no-print">
                 <table class="w-full text-sm">
                     <thead class="bg-slate-50 border-b">
                         <tr>
@@ -123,14 +148,23 @@
                     </tbody>
                 </table>
             </div>
-            <div class="bg-slate-50 p-5 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+
+            <!-- Vista para PDF (oculta normalmente) -->
+            <div id="pdfContent" class="print-only order-pdf" style="padding: 20px; font-family: Arial, sans-serif;">
+                <!-- El contenido se llenará dinámicamente -->
+            </div>
+
+            <div class="bg-slate-50 p-5 border-t flex flex-col sm:flex-row justify-between items-center gap-4 no-print">
                 <div>
                     <span class="text-xs text-slate-400 uppercase font-bold">Total Compra</span>
                     <span id="lblTotalCompra" class="text-3xl font-bold text-slate-900">$0.00</span>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex gap-3 flex-wrap justify-center">
                     <button onclick="enviarWhatsApp()" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
                         <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
+                    </button>
+                    <button onclick="descargarPDF()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
+                        <i data-lucide="file-pdf" class="w-4 h-4"></i> Descargar PDF
                     </button>
                     <button onclick="procesarOrdenCompraCompleta()" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-bold flex items-center gap-2 transition-all">
                         <i data-lucide="save" class="w-4 h-4"></i> Guardar Compra
@@ -153,10 +187,8 @@
             async obtenerDatos(hoja) {
                 try {
                     const url = `${SCRIPT_URL}?action=obtenerDatos&hoja=${encodeURIComponent(hoja)}`;
-                    console.log(`📡 Consultando: ${url}`);
                     const response = await fetch(url);
                     const result = await response.json();
-                    console.log(`📦 Respuesta de ${hoja}:`, result);
                     if (result.status === 'success') return result.data;
                     throw new Error(result.message);
                 } catch (error) {
@@ -166,17 +198,14 @@
             },
             async registrarCompra(data) {
                 try {
-                    console.log('📝 Registrando compra:', data);
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'registrarNuevaCompra', ...data })
                     });
-                    const result = await response.json();
-                    console.log('✅ Respuesta:', result);
-                    return result;
+                    return await response.json();
                 } catch (error) {
-                    console.error('❌ Error al registrar compra:', error);
+                    console.error('Error al registrar compra:', error);
                     throw error;
                 }
             }
@@ -184,13 +213,10 @@
 
         // ==================== INICIALIZACIÓN ====================
         document.addEventListener("DOMContentLoaded", async () => {
-            console.log("🚀 Iniciando aplicación...");
             lucide.createIcons();
             
-            // Mostrar loading
             Swal.fire({
                 title: 'Cargando datos...',
-                text: 'Por favor espera',
                 allowOutsideClick: false,
                 didOpen: () => Swal.showLoading()
             });
@@ -198,6 +224,7 @@
             try {
                 await Promise.all([cargarProductos(), cargarProveedores()]);
                 generarFacturaAuto();
+                configurarFecha();
                 configurarBuscadorProveedores();
                 Swal.close();
             } catch (error) {
@@ -215,11 +242,20 @@
             document.getElementById("com_factura").value = factura;
         }
 
+        function configurarFecha() {
+            const fecha = new Date();
+            const fechaStr = fecha.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById("fecha_pedido").value = fechaStr;
+        }
+
         // ==================== PRODUCTOS ====================
         async function cargarProductos() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Inventario");
-                console.log("📦 Datos de inventario:", datos);
                 
                 if (datos && datos.length > 0) {
                     catalogoProductos = datos.filter(p => p.ID && p.Producto).map(p => ({
@@ -228,7 +264,6 @@
                         precio: parseFloat(String(p.Precio_Distribuidor).replace('$', '').replace(',', '.')) || 0
                     }));
                 } else {
-                    // Datos de ejemplo
                     catalogoProductos = [
                         { id: "P-103", producto: "Yogurt de Fruta 1/2 L", precio: 0.70 },
                         { id: "P-128", producto: "Queso Mozarella 500g", precio: 3.50 },
@@ -249,14 +284,8 @@
                     const precio = parseFloat(opt.dataset.precio) || 0;
                     document.getElementById("txt_costo").value = precio.toFixed(2);
                 });
-                
-                console.log(`✅ ${catalogoProductos.length} productos cargados`);
             } catch (err) {
                 console.error("Error cargando productos:", err);
-                // Datos de emergencia
-                catalogoProductos = [
-                    { id: "P-103", producto: "Yogurt de Fruta 1/2 L", precio: 0.70 }
-                ];
             }
         }
 
@@ -264,25 +293,23 @@
         async function cargarProveedores() {
             try {
                 const datos = await DairyAPI.obtenerDatos("Proveedores");
-                console.log("🏢 Datos de proveedores:", datos);
                 
                 if (datos && datos.length > 0) {
-                    // Buscar diferentes nombres de columna posibles
                     catalogoProveedores = datos.filter(p => {
-                        return p["Nombre del Proveedor"] || p.Nombre || p.proveedor || p.name;
+                        return p["Nombre del Proveedor"] || p.Nombre || p.proveedor;
                     }).map(p => ({
-                        nombre: p["Nombre del Proveedor"] || p.Nombre || p.proveedor || p.name,
-                        telefono: p["Contacto / Teléfono"] || p.telefono || p.Telefono || '',
+                        nombre: p["Nombre del Proveedor"] || p.Nombre || p.proveedor,
+                        telefono: p["Contacto / Teléfono"] || p.telefono || '',
                         ciudad: p.Ciudad || p.ciudad || '',
+                        direccion: p.Direccion || p.direccion || '',
                         ruc: p.RUC || p.ruc || ''
                     }));
                 } else {
                     catalogoProveedores = [
-                        { nombre: "Grupo del Campo Artesano", telefono: "984016027", ciudad: "CAYAMBE" },
-                        { nombre: "Kilómetro 0", telefono: "0984016027", ciudad: "Quito" }
+                        { nombre: "Grupo del Campo Artesano", telefono: "984016027", ciudad: "CAYAMBE", direccion: "Calle Rivas" },
+                        { nombre: "Kilómetro 0", telefono: "0984016027", ciudad: "Quito", direccion: "Moro Moro" }
                     ];
                 }
-                console.log(`✅ ${catalogoProveedores.length} proveedores cargados`);
             } catch (err) {
                 console.error("Error cargando proveedores:", err);
                 catalogoProveedores = [
@@ -297,7 +324,6 @@
 
             input.addEventListener("input", () => {
                 const texto = input.value.toLowerCase().trim();
-                console.log("🔍 Buscando:", texto);
                 
                 if (texto.length < 1) {
                     sugerencias.classList.add("hidden");
@@ -307,8 +333,6 @@
                 const filtrados = catalogoProveedores.filter(p => 
                     p.nombre && p.nombre.toLowerCase().includes(texto)
                 );
-                
-                console.log(`📋 Encontrados: ${filtrados.length} proveedores`);
                 
                 if (filtrados.length === 0) {
                     sugerencias.classList.add("hidden");
@@ -326,7 +350,6 @@
                     div.onclick = () => {
                         input.value = p.nombre;
                         sugerencias.classList.add("hidden");
-                        console.log("✅ Proveedor seleccionado:", p.nombre);
                     };
                     sugerencias.appendChild(div);
                 });
@@ -419,6 +442,253 @@
             lucide.createIcons();
         }
 
+        // ==================== GENERAR PDF ====================
+        function generarHTMLPDF() {
+            const proveedor = document.getElementById("com_proveedor").value.trim();
+            const factura = document.getElementById("com_factura").value;
+            const fecha = document.getElementById("fecha_pedido").value;
+            const total = carritoDeCompras.reduce((s, i) => s + (i.cantidad * i.precio), 0);
+            
+            // Buscar datos completos del proveedor
+            const proveedorData = catalogoProveedores.find(p => p.nombre === proveedor) || { nombre: proveedor, telefono: '', direccion: '', ruc: '' };
+            
+            let tablaProductos = '';
+            carritoDeCompras.forEach(item => {
+                const subtotal = item.cantidad * item.precio;
+                tablaProductos += `
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 8px; text-align: left;">${item.id}</td>
+                        <td style="padding: 8px; text-align: left;">${item.producto}</td>
+                        <td style="padding: 8px; text-align: center;">${item.cantidad}</td>
+                        <td style="padding: 8px; text-align: right;">$${item.precio.toFixed(2)}</td>
+                        <td style="padding: 8px; text-align: right;">$${subtotal.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Orden de Compra - ${factura}</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 20px;
+                            background: white;
+                        }
+                        .header {
+                            text-align: center;
+                            margin-bottom: 30px;
+                            border-bottom: 2px solid #b45309;
+                            padding-bottom: 15px;
+                        }
+                        .header h1 {
+                            color: #b45309;
+                            margin: 0;
+                            font-size: 24px;
+                        }
+                        .header h2 {
+                            color: #78350f;
+                            margin: 5px 0 0;
+                            font-size: 14px;
+                            font-weight: normal;
+                        }
+                        .info-section {
+                            margin-bottom: 20px;
+                            border: 1px solid #e2e8f0;
+                            padding: 15px;
+                            border-radius: 8px;
+                        }
+                        .info-title {
+                            font-weight: bold;
+                            color: #b45309;
+                            margin-bottom: 10px;
+                            font-size: 16px;
+                            border-left: 4px solid #b45309;
+                            padding-left: 10px;
+                        }
+                        .info-grid {
+                            display: grid;
+                            grid-template-columns: 1fr 1fr;
+                            gap: 10px;
+                        }
+                        .info-item {
+                            margin-bottom: 5px;
+                        }
+                        .info-label {
+                            font-weight: bold;
+                            color: #4a5568;
+                            font-size: 12px;
+                        }
+                        .info-value {
+                            font-size: 14px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 15px 0;
+                        }
+                        th {
+                            background-color: #fef3c7;
+                            padding: 10px;
+                            text-align: left;
+                            font-weight: bold;
+                            color: #78350f;
+                            border-bottom: 2px solid #b45309;
+                        }
+                        td {
+                            padding: 8px;
+                            border-bottom: 1px solid #e2e8f0;
+                        }
+                        .total-section {
+                            text-align: right;
+                            margin-top: 20px;
+                            padding-top: 15px;
+                            border-top: 2px solid #b45309;
+                        }
+                        .total-amount {
+                            font-size: 20px;
+                            font-weight: bold;
+                            color: #b45309;
+                        }
+                        .footer {
+                            margin-top: 40px;
+                            text-align: center;
+                            font-size: 10px;
+                            color: #718096;
+                            border-top: 1px solid #e2e8f0;
+                            padding-top: 15px;
+                        }
+                        .status {
+                            display: inline-block;
+                            background-color: #fef3c7;
+                            color: #b45309;
+                            padding: 5px 10px;
+                            border-radius: 20px;
+                            font-size: 12px;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>🥛 LÓGICA LÁCTEA</h1>
+                        <h2>ORDEN DE COMPRA A PROVEEDOR</h2>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-title">📄 INFORMACIÓN DE LA ORDEN</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">N° Factura/Orden:</div>
+                                <div class="info-value">${factura}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Fecha de Emisión:</div>
+                                <div class="info-value">${fecha}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Estado:</div>
+                                <div class="info-value"><span class="status">PENDIENTE DE RECEPCIÓN</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-title">🏢 DATOS DEL PROVEEDOR</div>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Razón Social:</div>
+                                <div class="info-value">${proveedorData.nombre}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">RUC:</div>
+                                <div class="info-value">${proveedorData.ruc || '---'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Dirección:</div>
+                                <div class="info-value">${proveedorData.direccion || '---'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Teléfono:</div>
+                                <div class="info-value">${proveedorData.telefono || '---'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-title">📦 PRODUCTOS SOLICITADOS</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${tablaProductos}
+                            </tbody>
+                        </table>
+                        
+                        <div class="total-section">
+                            <div class="info-label">TOTAL DE LA COMPRA:</div>
+                            <div class="total-amount">$${total.toFixed(2)}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="info-title">📌 OBSERVACIONES</div>
+                        <div class="info-value">
+                            • Esta orden está pendiente de confirmar recepción de mercadería.<br>
+                            • El stock se actualizará una vez que se confirme la recepción.<br>
+                            • Favor entregar los productos en: Lógica Láctea - Centro de Acopio<br>
+                            • Horario de recepción: Lunes a Viernes 8:00 - 17:00
+                        </div>
+                    </div>
+
+                    <div class="footer">
+                        <p>Este documento es una orden de compra generada automáticamente. No es un comprobante de pago.</p>
+                        <p>Lógica Láctea - Todos los derechos reservados © ${new Date().getFullYear()}</p>
+                    </div>
+                </body>
+                </html>
+            `;
+        }
+
+        function descargarPDF() {
+            const proveedor = document.getElementById("com_proveedor").value.trim();
+            
+            if (!proveedor || carritoDeCompras.length === 0) {
+                Swal.fire("Error", "Agrega productos y selecciona un proveedor", "warning");
+                return;
+            }
+
+            Swal.fire({
+                title: 'Generando PDF...',
+                text: 'Por favor espera',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const htmlContent = generarHTMLPDF();
+            
+            // Crear un iframe temporal para generar el PDF
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(htmlContent);
+            printWindow.document.close();
+            
+            setTimeout(() => {
+                printWindow.print();
+                Swal.close();
+            }, 500);
+        }
+
         // ==================== WHATSAPP ====================
         function enviarWhatsApp() {
             const proveedor = document.getElementById("com_proveedor").value.trim();
@@ -427,11 +697,11 @@
                 return;
             }
 
-            let mensaje = `*🛒 SOLICITUD DE COMPRA - LÓGICA LÁCTEA*\n\n`;
+            let mensaje = `*🛒 ORDEN DE COMPRA - LÓGICA LÁCTEA*\n\n`;
             mensaje += `*Proveedor:* ${proveedor}\n`;
-            mensaje += `*Fecha:* ${new Date().toLocaleDateString()}\n`;
+            mensaje += `*Fecha:* ${document.getElementById("fecha_pedido").value}\n`;
             mensaje += `*Factura:* ${document.getElementById("com_factura").value}\n\n`;
-            mensaje += `*📋 PRODUCTOS:*\n`;
+            mensaje += `*📋 PRODUCTOS SOLICITADOS:*\n`;
             
             let total = 0;
             carritoDeCompras.forEach(item => {
@@ -441,7 +711,9 @@
             });
             
             mensaje += `\n*💰 TOTAL: $${total.toFixed(2)}*\n`;
-            mensaje += `\n📌 Estado: PENDIENTE DE RECEPCIÓN`;
+            mensaje += `\n📌 Estado: PENDIENTE DE RECEPCIÓN\n`;
+            mensaje += `📍 Entregar en: Lógica Láctea\n\n`;
+            mensaje += `_Este pedido fue generado automáticamente_`;
             
             const url = `https://wa.me/593984016027?text=${encodeURIComponent(mensaje)}`;
             window.open(url, '_blank');
@@ -486,7 +758,8 @@
                         html: `<strong>Factura:</strong> ${factura}<br>
                                <strong>Proveedor:</strong> ${proveedor}<br>
                                <strong>Total:</strong> $${total.toFixed(2)}<br><br>
-                               <span class="text-amber-600">⚠️ Stock NO modificado</span>`,
+                               <span class="text-amber-600">⚠️ Stock NO modificado</span><br>
+                               <span class="text-green-600">📄 Puedes descargar el PDF para enviar al proveedor</span>`,
                         icon: 'success'
                     });
 

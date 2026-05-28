@@ -1,4 +1,4 @@
-const CACHE_NAME = "logica-lactea-v3";
+const CACHE_NAME = "logica-lactea-v4";
 
 const URLS_TO_CACHE = [
 

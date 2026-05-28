@@ -2,508 +2,372 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Finanzas Lácteas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Ventas - Lógica Láctea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <meta name="theme-color" content="#059669">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { background: #f5f0fa; padding: 12px; padding-bottom: 30px; }
-        .header { background: white; padding: 14px; border-radius: 24px; margin-bottom: 14px; border: 1px solid #e9d5ff; }
-        h1 { font-size: 1.3rem; font-weight: 800; background: linear-gradient(135deg, #a21caf, #db2777); -webkit-background-clip: text; background-clip: text; color: transparent; margin-bottom: 10px; }
-        .filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-        .filtros select, .filtros input, .filtros button { padding: 10px 12px; border-radius: 40px; border: 1px solid #e9d5ff; background: white; font-size: 0.8rem; }
-        .filtros button { background: #a21caf; color: white; border: none; cursor: pointer; }
-        .grid-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
-        .card { background: white; padding: 12px; border-radius: 18px; border-left: 4px solid; }
-        .card h3 { font-size: 10px; color: #666; margin-bottom: 5px; text-transform: uppercase; }
-        .card span { font-size: 1.3rem; font-weight: 800; display: block; }
-        .ventas { border-left-color: #3498db; }
-        .cobrado { border-left-color: #2ecc71; }
-        .pendiente { border-left-color: #f39c12; }
-        .proveedor { border-left-color: #e74c3c; }
-        .ganancia { border-left-color: #9b59b6; }
-        .items { border-left-color: #1abc9c; }
-        .panel { background: white; border-radius: 24px; padding: 14px; margin-bottom: 14px; border: 1px solid #e9d5ff; }
-        .panel h2 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; border-left: 4px solid #a21caf; padding-left: 10px; }
-        .form-group { margin-bottom: 12px; }
-        label { font-size: 0.7rem; font-weight: 600; color: #666; display: block; margin-bottom: 4px; }
-        select, input { width: 100%; padding: 10px 12px; border-radius: 40px; border: 1px solid #e2d6f0; background: #fefcff; font-size: 0.85rem; box-sizing: border-box; }
-        button { background: #a21caf; color: white; border: none; padding: 12px; border-radius: 40px; font-weight: 700; cursor: pointer; width: 100%; font-size: 0.9rem; transition: opacity 0.3s; }
-        button.success { background: #10b981; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .checkbox-group { max-height: 300px; overflow-y: auto; border: 1px solid #e2d6f0; border-radius: 20px; padding: 10px; background: #fefcff; }
-        .checkbox-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0e6ff; }
-        .checkbox-item input { width: 20px; margin: 0; }
-        .checkbox-item label { margin: 0; flex: 1; font-size: 0.8rem; color: #333; }
-        .checkbox-item .cliente { font-size: 0.7rem; color: #888; }
-        .select-all { background: #f0e9ff; padding: 8px; border-radius: 40px; margin-bottom: 10px; text-align: center; cursor: pointer; font-size: 0.75rem; font-weight: 600; }
-        .total-pago { background: #f0e9ff; padding: 10px; border-radius: 40px; text-align: center; margin-top: 10px; }
-        .total-pago strong { font-size: 1.2rem; color: #a21caf; }
-        .historial { max-height: 350px; overflow-y: auto; }
-        .historial-item { background: #faf5ff; border-radius: 16px; padding: 12px; margin-bottom: 8px; border-left: 3px solid #a21caf; }
-        .historial-item .fecha { font-size: 0.7rem; color: #888; }
-        .historial-item .detalle { font-weight: 600; margin: 4px 0; font-size: 0.85rem; }
-        .historial-item .monto { color: #10b981; font-weight: 800; }
-        @media (min-width: 768px) { body { padding: 20px; max-width: 900px; margin: 0 auto; } .grid-cards { grid-template-columns: repeat(3, 1fr); } }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
     </style>
 </head>
-<body>
-<div class="header">
-    <h1>📊 Finanzas Lácteas</h1>
-    <div class="filtros">
-        <select id="filtroTipo" style="flex:1">
-            <option value="dia">📅 Día</option>
-            <option value="mes">🗓️ Mes</option>
-            <option value="ano">📆 Año</option>
-        </select>
-        <input type="date" id="fechaDia" style="flex:1">
-        <select id="fechaMes" style="flex:1; display:none;">
-            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
-            <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-            <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
-            <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-        </select>
-        <input type="number" id="fechaAno" placeholder="Año" style="flex:1; display:none;">
-        <button id="btnFiltrar" style="flex:0.5">🔍</button>
-    </div>
-</div>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16 relative">
 
-<div class="grid-cards">
-    <div class="card ventas"><h3>💰 Total Ventas</h3><span id="ventas">$0</span></div>
-    <div class="card cobrado"><h3>✅ Cobrado</h3><span id="cobrado">$0</span></div>
-    <div class="card pendiente"><h3>⏳ Por Cobrar</h3><span id="pendiente">$0</span></div>
-    <div class="card proveedor"><h3>🏭 Pagado Proveedores</h3><span id="proveedor">$0</span></div>
-    <div class="card ganancia"><h3>📈 Ganancia</h3><span id="ganancia">$0</span></div>
-    <div class="card items"><h3>📦 Items Vendidos</h3><span id="items">0</span></div>
-</div>
-
-<div class="panel">
-    <h2>🏭 Registrar Pago a Proveedor</h2>
-    <div class="form-group">
-        <label>Seleccionar Proveedor</label>
-        <select id="selectProveedor">
-            <option value="">Cargando proveedores...</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Fecha de Pago</label>
-        <input type="date" id="fechaPagoProveedor">
-    </div>
-    <div class="form-group">
-        <label>Productos Entregados a Pagar (Costo Proveedor)</label>
-        <div class="select-all" id="btnSeleccionarTodos">✅ Seleccionar Todos</div>
-        <div id="listaProductos" class="checkbox-group">
-            <div class="checkbox-item">Seleccione un proveedor</div>
+    <!-- Pantalla de carga -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl border border-slate-100 flex flex-col items-center gap-4 max-w-xs w-full mx-4">
+            <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
+            <div class="text-center">
+                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Lógica Láctea</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Sincronizando kárdex y clientes...</p>
+            </div>
         </div>
     </div>
-    <div class="total-pago">💰 Total a Pagar: <strong id="totalPagar">$0.00</strong></div>
-    <button id="btnRegistrarPago" class="success">💸 Registrar Pago</button>
-</div>
 
-<div class="panel">
-    <h2>📋 Historial de Pagos a Proveedores</h2>
-    <div id="historialPagos" class="historial">
-        <div class="historial-item">Cargando historial...</div>
+    <!-- Modal nuevo cliente -->
+    <div id="modalNuevoCliente" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+            <div class="bg-emerald-600 px-6 py-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2"><i data-lucide="user-plus" class="w-5 h-5"></i><h3 class="font-bold text-base">Registrar Nuevo Cliente</h3></div>
+                <button onclick="cerrarModalCliente()" class="text-emerald-100 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)" class="p-6 space-y-4">
+                <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Nombre Completo *</label><input type="text" id="modalNombre" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50"></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">CI / RUC *</label><input type="text" id="modalRuc" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50"></div>
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Teléfono *</label><input type="tel" id="modalTelefono" required placeholder="09xxxxxxxx" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50"></div>
+                </div>
+                <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Sector *</label>
+                    <select id="modalSector" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                        <option value="" disabled selected>Seleccione un sector...</option>
+                        <option value="NORTE">NORTE</option><option value="CENTRO">CENTRO</option><option value="SUR">SUR</option><option value="VALLES">VALLES</option>
+                    </select>
+                </div>
+                <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Dirección</label><input type="text" id="modalDireccion" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50"></div>
+                <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Referencia de Ubicación</label><input type="text" id="modalReferencia" placeholder="Ej: Junto a la tienda, portón verde..." class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50"></div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="cerrarModalCliente()" class="w-1/2 border border-slate-200 text-slate-500 font-bold py-2.5 rounded-lg text-xs hover:bg-slate-50">Cancelar</button>
+                    <button type="submit" class="w-1/2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs flex items-center justify-center gap-2 shadow-sm"><i data-lucide="save" class="w-4 h-4"></i>Guardar Cliente</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<script>
-    // ==================== CONFIGURACIÓN ====================
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSmFlZgNGHTWX8PSr2pL4nz9XPeVjYoTUhmi0MarbZIGRmsFTAOe5be2dVoGzPiVJ3Ew/exec";
-    
-    let proveedores = [];
-    let productosDisponibles = [];
-    let productosSeleccionados = [];
-    let filtroActual = { tipo: 'dia', valor: '' };
-    let registrando = false;
+    <div id="menu-container"></div>
+    <header class="bg-emerald-600 text-white shadow-md px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-3"><i data-lucide="shopping-cart" class="w-8 h-8"></i><div><h1 class="text-xl font-bold tracking-tight">Punto de Venta / Salidas</h1><p class="text-xs text-emerald-100">Facturación, Despachos y Consumo Interno</p></div></div>
+        <div class="flex items-center gap-2">
+            <label class="inline-flex items-center cursor-pointer bg-emerald-700/50 px-3 py-1.5 rounded-lg border border-emerald-500">
+                <input type="checkbox" id="chkConsumoInterno" onchange="alternarConsumoInterno()" class="sr-only peer">
+                <span class="text-xs font-bold mr-2 text-emerald-100 peer-checked:text-white">CONSUMO INTERNO</span>
+                <div class="relative w-9 h-5 bg-emerald-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+            </label>
+        </div>
+    </header>
 
-    async function cargarProveedores() {
-        try {
-            const response = await fetch(`${SCRIPT_URL}?accion=leer&pestana=Proveedores`);
-            const data = await response.json();
-            if (data.status === 'success' && Array.isArray(data.data)) {
-                proveedores = data.data;
-                const select = document.getElementById('selectProveedor');
-                select.innerHTML = '<option value="">Seleccionar proveedor</option>';
-                proveedores.forEach(prov => {
-                    const nombre = prov['Nombre del Proveedor'] || prov.nombre;
-                    if (nombre && nombre !== 'Seleccionar proveedor') {
-                        const option = document.createElement('option');
-                        option.value = nombre;
-                        option.textContent = nombre;
-                        select.appendChild(option);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Error cargando proveedores:', error);
-        }
-    }
-
-    async function cargarProductosPorProveedor(proveedor) {
-        if (!proveedor) return;
-        try {
-            const response = await fetch(`${SCRIPT_URL}?accion=obtenerProductosPorProveedor&proveedor=${encodeURIComponent(proveedor)}`);
-            const data = await response.json();
-            if (data.status === 'success' && Array.isArray(data.data)) {
-                productosDisponibles = data.data;
-                renderListaProductos();
-            } else {
-                document.getElementById('listaProductos').innerHTML = '<div class="checkbox-item">No hay productos pendientes de pago</div>';
-            }
-        } catch (error) {
-            console.error('Error cargando productos:', error);
-        }
-    }
-
-    function renderListaProductos() {
-        const container = document.getElementById('listaProductos');
-        if (productosDisponibles.length === 0) {
-            container.innerHTML = '<div class="checkbox-item">✅ No hay productos pendientes de pago para este proveedor</div>';
-            return;
-        }
-        
-        container.innerHTML = productosDisponibles.map((p, idx) => `
-            <div class="checkbox-item">
-                <input type="checkbox" 
-                       value="${p.uniqueId || p.idVenta + '_' + p.producto}"
-                       data-idventa="${p.idVenta}"
-                       data-producto="${p.producto}"
-                       data-cliente="${p.cliente}"
-                       data-costo="${p.costoProveedor}"
-                       data-idx="${idx}">
-                <label>
-                    <strong>${p.producto}</strong><br>
-                    <span class="cliente">🧑 ${p.cliente} | ID: ${p.idVenta}</span><br>
-                    <span style="color:#e74c3c; font-weight:600;">💰 A pagar: $${(p.costoProveedor || 0).toFixed(2)}</span>
-                </label>
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Izquierda -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-black text-slate-700 uppercase tracking-wider flex items-center gap-2"><i data-lucide="user" class="w-4 h-4 text-emerald-600"></i>Datos de la Transacción</h2>
+                    <button type="button" id="btnAbrirModalCliente" onclick="abrirModalCliente()" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i>+ Nuevo Cliente</button>
+                </div>
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Buscar Cliente</label>
+                        <div class="relative">
+                            <input type="text" id="buscarCliente" oninput="filtrarClientes()" onfocus="filtrarClientes()" placeholder="Escriba nombre o RUC..." class="w-full border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                            <button id="btnLimpiarCliente" onclick="limpiarSeleccionCliente()" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                        <div id="listaClientesFlotante" class="hidden absolute z-50 w-full bg-white mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 shadow-xl divide-y divide-slate-100"></div>
+                    </div>
+                    <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Fecha de Entrega *</label><input type="date" id="fechaEntrega" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50"></div>
+                </div>
             </div>
-        `).join('');
-        
-        document.querySelectorAll('#listaProductos input[type="checkbox"]').forEach(cb => {
-            cb.addEventListener('change', calcularTotal);
-        });
-        
-        calcularTotal();
-    }
-
-    function calcularTotal() {
-        let total = 0;
-        productosSeleccionados = [];
-        document.querySelectorAll('#listaProductos input[type="checkbox"]:checked').forEach(cb => {
-            const costo = parseFloat(cb.dataset.costo || 0);
-            total += costo;
-            productosSeleccionados.push({
-                idVenta: cb.dataset.idventa,
-                producto: cb.dataset.producto,
-                cliente: cb.dataset.cliente,
-                costoProveedor: costo
-            });
-        });
-        document.getElementById('totalPagar').innerHTML = `$${total.toFixed(2)}`;
-    }
-
-    function seleccionarTodos() {
-        const cbs = document.querySelectorAll('#listaProductos input[type="checkbox"]');
-        if (cbs.length === 0) return;
-        const todosCheckeados = Array.from(cbs).every(cb => cb.checked);
-        cbs.forEach(cb => cb.checked = !todosCheckeados);
-        calcularTotal();
-    }
-
-    // ==================== GENERAR COMPROBANTE PDF ====================
-    function generarYDescargarPDF(proveedor, fecha, productos, total) {
-        const numeroComprobante = 'PAG-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-        const ahora = new Date();
-        const fechaHora = ahora.toLocaleString('es-EC');
-        
-        let detalleProductos = "";
-        productos.forEach((p, index) => {
-            detalleProductos += `
-                <tr>
-                    <td style="border:1px solid #ddd; padding:8px; text-align:center;">${index + 1}</td>
-                    <td style="border:1px solid #ddd; padding:8px;">${p.producto}</td>
-                    <td style="border:1px solid #ddd; padding:8px;">${p.cliente}</td>
-                    <td style="border:1px solid #ddd; padding:8px; text-align:right;">$${p.costoProveedor.toFixed(2)}</td>
-                </tr>
-            `;
-        });
-        
-        const htmlContent = `
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Comprobante Pago Proveedor</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    .header { text-align: center; margin-bottom: 20px; }
-                    .logo { font-size: 24px; font-weight: bold; color: #a21caf; }
-                    .titulo { text-align: center; font-size: 18px; font-weight: bold; background: #a21caf; color: white; padding: 10px; margin: 15px 0; }
-                    .info { background: #f5f0fa; padding: 15px; margin: 15px 0; }
-                    table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-                    th { background: #a21caf; color: white; padding: 10px; }
-                    .total { text-align: right; font-size: 18px; font-weight: bold; margin: 15px 0; padding: 10px; background: #f0e9ff; }
-                    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #666; }
-                    .eslogan { text-align: center; font-size: 14px; font-style: italic; color: #a21caf; margin: 15px 0; }
-                </style>
-            </head>
-            <body>
-                <div class="header">
-                    <div class="logo">🥛 LÓGICA LÁCTEA</div>
-                    <div>Productos Naturales y Artesanales</div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2"><i data-lucide="package" class="w-4 h-4 text-emerald-600"></i>Agregar Producto</h2>
+                <div class="space-y-4">
+                    <div class="relative">
+                        <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Buscar Producto</label>
+                        <div class="relative">
+                            <input type="text" id="buscarProducto" oninput="filtrarProductos()" onfocus="filtrarProductos()" placeholder="Escriba nombre del producto..." class="w-full border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+                            <button id="btnLimpiarProducto" onclick="limpiarSeleccionProducto()" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        </div>
+                        <div id="listaProductosFlotante" class="hidden absolute z-50 w-full bg-white mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 shadow-xl divide-y divide-slate-100"></div>
+                    </div>
+                    <div id="wrapperStock" class="hidden p-3 rounded-lg border text-xs flex justify-between items-center bg-slate-50"><div><span class="font-bold block text-slate-600">Disponibilidad:</span><span id="txtStockMinimo" class="text-base font-black">0 Uds</span></div><span id="badgeEstadoStock" class="px-2 py-1 rounded font-bold uppercase text-[10px] bg-emerald-100 text-emerald-800">Disponible</span></div>
+                    <div class="grid grid-cols-2 gap-3"><div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Precio Unitario ($)</label><input type="number" id="numPrecioUnitario" readonly class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-100 font-bold text-slate-600 outline-none"></div><div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Cantidad a Vender</label><input type="number" id="numCantidadVenta" min="1" value="1" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 font-black outline-none"></div></div>
+                    <button type="button" onclick="agregarItemAlCarrito()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-95 animate-pulse"><i data-lucide="list-plus" class="w-4 h-4"></i>Insertar a la Lista</button>
                 </div>
-                <div class="titulo">COMPROBANTE DE PAGO A PROVEEDOR</div>
-                <div class="info">
-                    <p><strong>📅 Comprobante #:</strong> ${numeroComprobante}</p>
-                    <p><strong>📅 Fecha de emisión:</strong> ${fechaHora}</p>
-                    <p><strong>🏭 Proveedor:</strong> ${proveedor}</p>
-                    <p><strong>📅 Fecha de pago:</strong> ${fecha}</p>
-                    <p><strong>📦 Total de items pagados:</strong> ${productos.length}</p>
-                </div>
-                <table>
-                    <thead><tr><th>#</th><th>Producto</th><th>Cliente</th><th>Valor Pagado</th></tr></thead>
-                    <tbody>${detalleProductos}</tbody>
-                </table>
-                <div class="total">💰 TOTAL PAGADO: $${total.toFixed(2)}</div>
-                <div class="eslogan">🌿 "De nuestra tierra a tu mesa, con amor y tradición láctea" 🌿</div>
-                <div class="footer">
-                    <p>Un país sano con productos naturales y artesanales</p>
-                    <p>✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨</p>
-                </div>
-            </body>
-            </html>
-        `;
-        
-        // Crear blob y descargar
-        const blob = new Blob([htmlContent], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Comprobante_${proveedor.replace(/\s/g, '_')}_${fecha}.html`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        return numeroComprobante;
-    }
-
-    // ==================== ABRIR WHATSAPP ====================
-    function abrirWhatsApp(proveedor, fecha, total, items, numeroComprobante) {
-        const mensaje = `*🥛 LÓGICA LÁCTEA - COMPROBANTE DE PAGO* 🥛\n\n` +
-                        `🏭 *Proveedor:* ${proveedor}\n` +
-                        `📅 *Fecha:* ${fecha}\n` +
-                        `💰 *Total Pagado:* $${total.toFixed(2)}\n` +
-                        `📦 *Items pagados:* ${items}\n` +
-                        `🆔 *Comprobante #:* ${numeroComprobante}\n\n` +
-                        `🌿 *"De nuestra tierra a tu mesa, con amor y tradición láctea"* 🌿\n\n` +
-                        `✨ ¡Gracias por trabajar juntos por un Ecuador más saludable! ✨`;
-        
-        // Intentar abrir la aplicación de WhatsApp
-        window.location.href = `whatsapp://send?text=${encodeURIComponent(mensaje)}`;
-        
-        // Fallback después de 1 segundo
-        setTimeout(() => {
-            window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
-        }, 500);
-    }
-
-    // ==================== REGISTRAR PAGO ====================
-    async function registrarPago() {
-        if (registrando) {
-            alert('⏳ Procesando pago, espere...');
-            return;
-        }
-        
-        const proveedor = document.getElementById('selectProveedor').value;
-        const fecha = document.getElementById('fechaPagoProveedor').value;
-        
-        if (!proveedor) return alert('❌ Seleccione un proveedor');
-        if (!fecha) return alert('❌ Seleccione la fecha de pago');
-        if (productosSeleccionados.length === 0) return alert('❌ Seleccione al menos un producto');
-        
-        registrando = true;
-        const btn = document.getElementById('btnRegistrarPago');
-        btn.disabled = true;
-        btn.textContent = '⏳ Procesando...';
-        
-        const total = productosSeleccionados.reduce((sum, p) => sum + p.costoProveedor, 0);
-        const productosTexto = productosSeleccionados.map(p => `${p.producto} (${p.cliente})`).join(', ');
-        
-        try {
-            const payload = {
-                action: 'registrarPagoProveedor',
-                proveedor: proveedor,
-                fecha: fecha,
-                productosJson: JSON.stringify(productosSeleccionados),
-                productosTexto: productosTexto,
-                total: total,
-                items: productosSeleccionados.length
-            };
-            
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            
-            const accion = confirm(`✅ Pago registrado exitosamente!\n\n📊 Resumen:\n🏭 Proveedor: ${proveedor}\n💰 Total: $${total.toFixed(2)}\n📦 Items: ${productosSeleccionados.length}\n\n¿Desea generar el comprobante y enviarlo por WhatsApp?`);
-            
-            if (accion) {
-                // Generar y descargar comprobante
-                const numeroComprobante = generarYDescargarPDF(proveedor, fecha, productosSeleccionados, total);
-                alert(`📄 Comprobante descargado!\n\nArchivo: Comprobante_${proveedor.replace(/\s/g, '_')}_${fecha}.html\n\nSe abrirá WhatsApp para que pueda enviar el mensaje.`);
-                
-                // Abrir WhatsApp
-                abrirWhatsApp(proveedor, fecha, total, productosSeleccionados.length, numeroComprobante);
-            }
-            
-            document.querySelectorAll('#listaProductos input[type="checkbox"]').forEach(cb => cb.checked = false);
-            document.getElementById('selectProveedor').value = '';
-            productosSeleccionados = [];
-            calcularTotal();
-            
-            await cargarHistorialPagos();
-            await cargarResumenFinanciero();
-            document.getElementById('listaProductos').innerHTML = '<div class="checkbox-item">Seleccione un proveedor</div>';
-            
-        } catch (error) {
-            console.error('Error:', error);
-            alert('❌ Error al registrar pago');
-        } finally {
-            registrando = false;
-            btn.disabled = false;
-            btn.textContent = '💸 Registrar Pago';
-        }
-    }
-
-    // ==================== CARGAR HISTORIAL ====================
-    async function cargarHistorialPagos() {
-        try {
-            const response = await fetch(`${SCRIPT_URL}?accion=leer&pestana=Finanzas`);
-            const data = await response.json();
-            
-            if (data.status === 'success' && Array.isArray(data.data)) {
-                const pagosRealizados = data.data.filter(fila => fila['Fecha Pago'] && fila['Fecha Pago'].toString().trim() !== '');
-                
-                const pagosAgrupados = {};
-                pagosRealizados.forEach(fila => {
-                    const key = `${fila['Fecha Pago']}_${fila['Proveedor']}`;
-                    if (!pagosAgrupados[key]) {
-                        pagosAgrupados[key] = {
-                            fecha: fila['Fecha Pago'],
-                            proveedor: fila['Proveedor'],
-                            total: 0,
-                            items: 0
-                        };
-                    }
-                    const costo = parseFloat(String(fila['Costo Proveedor'] || 0).replace(',', '.'));
-                    pagosAgrupados[key].total += costo;
-                    pagosAgrupados[key].items++;
-                });
-                
-                const historial = Object.values(pagosAgrupados).sort((a, b) => b.fecha.localeCompare(a.fecha));
-                renderHistorial(historial);
-            }
-        } catch (error) {
-            console.error('Error cargando historial:', error);
-            document.getElementById('historialPagos').innerHTML = '<div class="historial-item">Error cargando historial</div>';
-        }
-    }
-
-    function renderHistorial(historial) {
-        const container = document.getElementById('historialPagos');
-        if (!historial || historial.length === 0) {
-            container.innerHTML = '<div class="historial-item">No hay pagos registrados</div>';
-            return;
-        }
-        
-        container.innerHTML = historial.map(p => `
-            <div class="historial-item">
-                <div class="fecha">📅 ${p.fecha}</div>
-                <div class="detalle">🏭 ${p.proveedor}</div>
-                <div class="detalle">📦 ${p.items} productos pagados</div>
-                <div class="monto">💰 $${p.total.toFixed(2)}</div>
             </div>
-        `).join('');
-    }
+        </div>
+        <!-- Derecha -->
+        <div class="lg:col-span-7 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between h-[calc(100vh-12rem)] min-h-[500px]">
+            <div class="flex flex-col flex-1 overflow-hidden">
+                <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center"><h2 class="font-black text-slate-700 uppercase tracking-wider text-sm flex items-center gap-2"><i data-lucide="receipt" class="w-4 h-4 text-emerald-600"></i>Detalle de la Operación</h2><span id="badgeTipoVenta" class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider">Venta Comercial</span></div>
+                <div class="flex-1 overflow-y-auto pr-1">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead><tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]"><th class="py-3 px-4">Producto</th><th class="py-3 px-2 text-center">Cant.</th><th class="py-3 px-2 text-right">P. Unit</th><th class="py-3 px-2 text-right">Subtotal</th><th class="py-3 px-4 text-center">Acción</th></tr></thead>
+                        <tbody id="tbodyCarrito"><tr><td colspan="5" class="text-center py-16 text-slate-400 italic"><i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>No hay productos agregados.</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="border-t border-slate-100 pt-4 mt-4 space-y-4">
+                <div class="flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-100"><span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Neto a Liquidar:</span><span id="txtTotalFactura" class="text-3xl font-black text-slate-800">$0.00</span></div>
+                <button type="button" id="btnRegistrarVenta" onclick="confirmarYEnviarVenta()" disabled class="w-full bg-slate-400 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm"><i data-lucide="check-square" class="w-5 h-5"></i>Registrar y Descontar Stock</button>
+            </div>
+        </div>
+    </main>
 
-    // ==================== RESUMEN FINANCIERO ====================
-    async function cargarResumenFinanciero() {
-        try {
-            let url = `${SCRIPT_URL}?accion=resumenFinanciero`;
-            if (filtroActual.tipo === 'dia' && filtroActual.valor) url += `&fecha=${filtroActual.valor}`;
-            else if (filtroActual.tipo === 'mes' && filtroActual.valor) {
-                const [mes, ano] = filtroActual.valor.split('-');
-                url += `&mes=${mes}&ano=${ano}`;
-            } else if (filtroActual.tipo === 'ano' && filtroActual.valor) url += `&ano=${filtroActual.valor}`;
-            
+    <script>
+        // ==================== CONFIGURACIÓN ====================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBIeQQ22yBye1IGcbtVbAbF0_J2BTTxuD4ayhNZa9sY51VIKBet2QKoPUBaaBlOe070Q/exec"; // Misma URL que en Finanzas
+
+        let catalogoProductos = [];
+        let clientesGlobal = [];
+        let carrito = [];
+        let esConsumoInterno = false;
+        let clienteSeleccionado = null;
+        let telefonoClienteSeleccionado = "";
+        let productoSeleccionado = null;
+
+        // Helper para llamadas GET
+        async function getRequest(params) {
+            const url = new URL(SCRIPT_URL);
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
             const response = await fetch(url);
-            const data = await response.json();
-            if (data.status === 'success' && data.resumen) {
-                const r = data.resumen;
-                document.getElementById('ventas').innerHTML = `$${(r.totalVentas || 0).toFixed(2)}`;
-                document.getElementById('cobrado').innerHTML = `$${(r.totalCobrado || 0).toFixed(2)}`;
-                document.getElementById('pendiente').innerHTML = `$${(r.totalPendiente || 0).toFixed(2)}`;
-                document.getElementById('proveedor').innerHTML = `$${(r.totalCostoProveedor || 0).toFixed(2)}`;
-                document.getElementById('ganancia').innerHTML = `$${(r.totalGanancia || 0).toFixed(2)}`;
-                document.getElementById('items').innerHTML = r.totalItems || 0;
-            }
-        } catch (error) {
-            console.error('Error cargando resumen:', error);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            return response.json();
         }
-    }
 
-    // ==================== FILTROS ====================
-    function actualizarVisibilidad() {
-        const tipo = document.getElementById('filtroTipo').value;
-        document.getElementById('fechaDia').style.display = tipo === 'dia' ? 'inline-block' : 'none';
-        document.getElementById('fechaMes').style.display = tipo === 'mes' ? 'inline-block' : 'none';
-        document.getElementById('fechaAno').style.display = tipo === 'ano' ? 'inline-block' : 'none';
-        if (tipo === 'mes') document.getElementById('fechaAno').style.display = 'inline-block';
-    }
-
-    function aplicarFiltro() {
-        const tipo = document.getElementById('filtroTipo').value;
-        if (tipo === 'dia') {
-            const dia = document.getElementById('fechaDia').value;
-            if (!dia) return alert('Seleccione fecha');
-            filtroActual = { tipo: 'dia', valor: dia };
-        } else if (tipo === 'mes') {
-            const mes = document.getElementById('fechaMes').value;
-            const ano = document.getElementById('fechaAno').value;
-            if (!ano) return alert('Ingrese año');
-            filtroActual = { tipo: 'mes', valor: `${mes}-${ano}` };
-        } else if (tipo === 'ano') {
-            const ano = document.getElementById('fechaAno').value;
-            if (!ano) return alert('Ingrese año');
-            filtroActual = { tipo: 'ano', valor: ano };
-        }
-        cargarResumenFinanciero();
-    }
-
-    // ==================== INICIALIZACIÓN ====================
-    window.addEventListener('DOMContentLoaded', async () => {
-        await cargarProveedores();
-        await cargarHistorialPagos();
+        // Helper para POST (para registrar cliente/venta usaremos GET con parámetros, pero también podemos usar POST si hace falta. Usaremos GET por simplicidad)
+        // En realidad registraremos venta y cliente con GET (acción en URL) porque el script ya está preparado.
         
-        document.getElementById('selectProveedor').addEventListener('change', (e) => {
-            if (e.target.value) cargarProductosPorProveedor(e.target.value);
-            else document.getElementById('listaProductos').innerHTML = '<div class="checkbox-item">Seleccione un proveedor</div>';
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            establecerFechaPorDefecto();
+            inicializarModulo();
+            cargarMenuSimple();
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest('#buscarCliente') && !e.target.closest('#listaClientesFlotante')) document.getElementById("listaClientesFlotante").classList.add("hidden");
+                if (!e.target.closest('#buscarProducto') && !e.target.closest('#listaProductosFlotante')) document.getElementById("listaProductosFlotante").classList.add("hidden");
+            });
         });
-        document.getElementById('btnSeleccionarTodos').addEventListener('click', seleccionarTodos);
-        document.getElementById('btnRegistrarPago').addEventListener('click', registrarPago);
-        document.getElementById('filtroTipo').addEventListener('change', actualizarVisibilidad);
-        document.getElementById('btnFiltrar').addEventListener('click', aplicarFiltro);
-        
-        const hoy = new Date().toISOString().split('T')[0];
-        document.getElementById('fechaDia').value = hoy;
-        document.getElementById('fechaPagoProveedor').value = hoy;
-        document.getElementById('fechaAno').value = new Date().getFullYear();
-        actualizarVisibilidad();
-        filtroActual = { tipo: 'dia', valor: hoy };
-        await cargarResumenFinanciero();
-    });
-</script>
+
+        function cargarMenuSimple() {
+            const menuDiv = document.getElementById("menu-container");
+            if (menuDiv) menuDiv.innerHTML = `<div class="bg-white shadow-sm border-b border-slate-200 px-4 py-2 text-xs text-slate-500">🧀 Lógica Láctea - Sistema de Ventas (Fetch directo sin CORS)</div>`;
+        }
+        function establecerFechaPorDefecto() { document.getElementById("fechaEntrega").value = new Date().toISOString().split('T')[0]; }
+        const limpiarMoneda = (valor) => { if (!valor) return 0; let texto = String(valor).replace(/[^0-9.,-]/g, '').replace(',', '.'); let num = parseFloat(texto); return isNaN(num) ? 0 : num; };
+
+        async function inicializarModulo() {
+            const overlay = document.getElementById("loadingOverlay");
+            overlay.classList.remove("hidden", "opacity-0");
+            try {
+                const clientesData = await getRequest({ accion: "getClientes" });
+                if (clientesData.status === "success") clientesGlobal = clientesData.data || [];
+                const inventarioData = await getRequest({ accion: "getInventario" });
+                if (inventarioData.status === "success") catalogoProductos = (inventarioData.data || []).filter(p => parseInt(p.stock) > 0);
+            } catch (err) {
+                console.error(err);
+                Swal.fire("Error", "No se pudo conectar con Google Sheets: " + err.message, "error");
+            } finally {
+                overlay.classList.add("opacity-0");
+                setTimeout(() => overlay.classList.add("hidden"), 300);
+            }
+        }
+
+        // CLIENTES
+        function abrirModalCliente() { document.getElementById("formNuevoCliente").reset(); document.getElementById("modalNuevoCliente").classList.remove("hidden"); }
+        function cerrarModalCliente() { document.getElementById("modalNuevoCliente").classList.add("hidden"); }
+        async function guardarNuevoCliente(e) {
+            e.preventDefault();
+            Swal.fire({ title: 'Registrando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const autoId = "CLI-" + Math.floor(Date.now() / 1000);
+            const fechaRegistro = new Date().toISOString().split('T')[0];
+            const params = {
+                accion: 'registrarCliente',
+                id: autoId,
+                nombre: document.getElementById("modalNombre").value.trim(),
+                ci_ruc: document.getElementById("modalRuc").value.trim(),
+                telefono: document.getElementById("modalTelefono").value.trim(),
+                direccion: document.getElementById("modalDireccion").value.trim(),
+                referencia: document.getElementById("modalReferencia").value.trim(),
+                sector: document.getElementById("modalSector").value,
+                fechaRegistro: fechaRegistro
+            };
+            try {
+                const resp = await getRequest(params);
+                if (resp.status !== "success") throw new Error(resp.message);
+                Swal.fire("¡Éxito!", `Cliente registrado con ID: ${autoId}`, "success");
+                cerrarModalCliente();
+                await inicializarModulo();
+                seleccionarCliente(params.nombre, params.telefono);
+            } catch (error) {
+                Swal.fire("Error", "No se pudo registrar: " + error.message, "error");
+            }
+        }
+        function filtrarClientes() {
+            if (esConsumoInterno) return;
+            const termino = document.getElementById("buscarCliente").value.toLowerCase().trim();
+            const listaDiv = document.getElementById("listaClientesFlotante");
+            const filtrados = clientesGlobal.filter(c => (c.nombre || "").toLowerCase().includes(termino) || String(c.ci_ruc || c.id || "").toLowerCase().includes(termino));
+            if (filtrados.length === 0) listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No se encontraron clientes</div>`;
+            else listaDiv.innerHTML = filtrados.map(c => `<div onclick="seleccionarCliente('${escapeHtml(c.nombre)}', '${escapeHtml(c.telefono || '')}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer"><span class="font-bold">${escapeHtml(c.nombre)}</span><br><span class="text-[10px] text-slate-400">RUC/CI: ${c.ci_ruc || c.id || ''} | Telf: ${c.telefono || 'S/N'}</span></div>`).join('');
+            listaDiv.classList.remove("hidden");
+        }
+        function seleccionarCliente(nombre, telefono) {
+            clienteSeleccionado = nombre; telefonoClienteSeleccionado = telefono;
+            const input = document.getElementById("buscarCliente"); input.value = nombre;
+            input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
+            document.getElementById("btnLimpiarCliente").classList.remove("hidden");
+            document.getElementById("listaClientesFlotante").classList.add("hidden");
+            evaluarEstadoBotonRegistrar();
+        }
+        function limpiarSeleccionCliente() {
+            clienteSeleccionado = null; telefonoClienteSeleccionado = "";
+            const input = document.getElementById("buscarCliente"); input.value = "";
+            input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
+            document.getElementById("btnLimpiarCliente").classList.add("hidden");
+            evaluarEstadoBotonRegistrar();
+        }
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+        // PRODUCTOS
+        function filtrarProductos() {
+            const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
+            const listaDiv = document.getElementById("listaProductosFlotante");
+            const filtrados = catalogoProductos.filter(p => (p.producto || "").toLowerCase().includes(termino));
+            if (filtrados.length === 0) listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No hay productos disponibles</div>`;
+            else listaDiv.innerHTML = filtrados.map(p => `<div onclick="seleccionarProducto('${p.id}', '${escapeHtml(p.producto)}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer flex justify-between"><span class="font-bold">${escapeHtml(p.producto)}</span><span class="bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">Stock: ${p.stock}</span></div>`).join('');
+            listaDiv.classList.remove("hidden");
+        }
+        function seleccionarProducto(id, nombre) {
+            productoSeleccionado = id;
+            const input = document.getElementById("buscarProducto"); input.value = nombre;
+            input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
+            document.getElementById("btnLimpiarProducto").classList.remove("hidden");
+            document.getElementById("listaProductosFlotante").classList.add("hidden");
+            const prod = catalogoProductos.find(p => String(p.id).trim() === id);
+            if (prod) {
+                const stock = parseInt(prod.stock || 0);
+                const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.precioVenta || 0);
+                document.getElementById("wrapperStock").classList.remove("hidden");
+                document.getElementById("txtStockMinimo").innerText = `${stock} Unidades`;
+                document.getElementById("numPrecioUnitario").value = precio.toFixed(2);
+                document.querySelector("button[onclick='agregarItemAlCarrito()']")?.classList.remove("animate-pulse");
+            }
+        }
+        function limpiarSeleccionProducto() {
+            productoSeleccionado = null;
+            const input = document.getElementById("buscarProducto"); input.value = "";
+            input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
+            document.getElementById("btnLimpiarProducto").classList.add("hidden");
+            document.getElementById("wrapperStock").classList.add("hidden");
+            document.getElementById("numPrecioUnitario").value = "";
+            document.querySelector("button[onclick='agregarItemAlCarrito()']")?.classList.add("animate-pulse");
+        }
+        function alternarConsumoInterno() {
+            esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
+            const buscarCli = document.getElementById("buscarCliente");
+            const btnModalCli = document.getElementById("btnAbrirModalCliente");
+            const badgeTipo = document.getElementById("badgeTipoVenta");
+            limpiarSeleccionCliente();
+            if (esConsumoInterno) {
+                clienteSeleccionado = "CONSUMO INTERNO";
+                buscarCli.value = "CONSUMO INTERNO"; buscarCli.disabled = true;
+                btnModalCli.classList.add("hidden");
+                buscarCli.classList.add("bg-amber-50", "border-amber-300", "font-bold", "text-amber-900");
+                badgeTipo.innerText = "Consumo Interno"; badgeTipo.className = "bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded uppercase";
+            } else {
+                buscarCli.disabled = false; btnModalCli.classList.remove("hidden");
+                buscarCli.classList.remove("bg-amber-50", "border-amber-300", "font-bold", "text-amber-900");
+                badgeTipo.innerText = "Venta Comercial"; badgeTipo.className = "bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase";
+            }
+            if(productoSeleccionado) seleccionarProducto(productoSeleccionado, document.getElementById("buscarProducto").value);
+            carrito = carrito.map(item => {
+                const prodOriginal = catalogoProductos.find(p => p.id === item.id);
+                const nuevoPrecio = esConsumoInterno ? 0 : limpiarMoneda(prodOriginal?.precioVenta || 0);
+                return { ...item, precio: nuevoPrecio, subtotal: item.cantidad * nuevoPrecio };
+            });
+            renderCarritoYTotales();
+        }
+        function agregarItemAlCarrito() {
+            if (!productoSeleccionado) return Swal.fire("Falta Producto", "Seleccione un producto", "warning");
+            const cantidad = parseInt(document.getElementById("numCantidadVenta").value) || 0;
+            if (cantidad <= 0) return Swal.fire("Cantidad inválida", "Mayor a 0", "warning");
+            const prod = catalogoProductos.find(p => String(p.id).trim() === productoSeleccionado);
+            if (cantidad > parseInt(prod.stock || 0)) return Swal.fire("Stock Insuficiente", `Solo ${prod.stock} unidades`, "error");
+            const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.precioVenta);
+            const existente = carrito.find(item => item.id === productoSeleccionado);
+            if (existente) {
+                if (existente.cantidad + cantidad > parseInt(prod.stock)) return Swal.fire("Excede stock", "Cantidad total supera stock", "error");
+                existente.cantidad += cantidad; existente.subtotal = existente.cantidad * existente.precio;
+            } else carrito.push({ id: productoSeleccionado, producto: prod.producto, cantidad, precio, subtotal: cantidad * precio });
+            renderCarritoYTotales();
+            limpiarSeleccionProducto();
+            document.getElementById("numCantidadVenta").value = "1";
+        }
+        function eliminarItem(index) { carrito.splice(index,1); renderCarritoYTotales(); }
+        function renderCarritoYTotales() {
+            const tbody = document.getElementById("tbodyCarrito");
+            if (carrito.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-16 text-slate-400 italic"><i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>No hay productos agregados.</td></tr>`;
+                document.getElementById("txtTotalFactura").innerText = "$0.00";
+                evaluarEstadoBotonRegistrar(); lucide.createIcons(); return;
+            }
+            let total = 0;
+            tbody.innerHTML = carrito.map((item,idx) => {
+                total += item.subtotal;
+                return `<tr class="border-b border-slate-100"><td class="py-3 px-4 font-bold">${escapeHtml(item.producto)}</td><td class="py-3 px-2 text-center">${item.cantidad}</td><td class="py-3 px-2 text-right">$${item.precio.toFixed(2)}</td><td class="py-3 px-2 text-right font-bold text-emerald-700">$${item.subtotal.toFixed(2)}</td><td class="py-3 px-4 text-center"><button onclick="eliminarItem(${idx})" class="text-rose-500 hover:text-rose-700"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td></tr>`;
+            }).join('');
+            document.getElementById("txtTotalFactura").innerText = `$${total.toFixed(2)}`;
+            evaluarEstadoBotonRegistrar(); lucide.createIcons();
+        }
+        function evaluarEstadoBotonRegistrar() {
+            const btn = document.getElementById("btnRegistrarVenta");
+            if (carrito.length > 0 && clienteSeleccionado) {
+                btn.disabled = false; btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-pointer transition-all uppercase tracking-widest text-sm";
+            } else {
+                btn.disabled = true; btn.className = "w-full bg-slate-400 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm";
+            }
+        }
+        async function confirmarYEnviarVenta() {
+            if (carrito.length===0 || !clienteSeleccionado) return;
+            const confirm = await Swal.fire({ title: '¿Confirmar?', text: `Registrar ${carrito.length} productos y actualizar stock`, icon:'question', showCancelButton:true, confirmButtonColor:'#059669', confirmButtonText:'Sí, despachar' });
+            if (!confirm.isConfirmed) return;
+            Swal.fire({ title:'Procesando...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+            const fechaOp = document.getElementById("fechaEntrega").value;
+            const productos = carrito.map(item => ({ producto: item.producto, cantidad: item.cantidad, precio: item.precio }));
+            const params = {
+                accion: 'registrarVenta',
+                cliente: clienteSeleccionado,
+                fecha: fechaOp,
+                esConsumoInterno: esConsumoInterno,
+                productos: JSON.stringify(productos)
+            };
+            try {
+                const resp = await getRequest(params);
+                if (resp.status !== "success") throw new Error(resp.message);
+                let total = carrito.reduce((s,item)=>s+item.subtotal,0);
+                // Mensaje WhatsApp
+                let msg = `*🥛 LÓGICA LÁCTEA - NOTIFICACIÓN DE DESPACHO*\n\nCliente: ${clienteSeleccionado}\nID: ${resp.idVenta}\nFecha: ${fechaOp}\n----------------------------------------\n${carrito.map(i=>`• ${i.cantidad}x ${i.producto} ($${i.precio.toFixed(2)} c/u) -> *$${i.subtotal.toFixed(2)}*`).join('\n')}\n----------------------------------------\n*TOTAL: $${total.toFixed(2)}*\n\n¡Gracias por su confianza!`;
+                if (telefonoClienteSeleccionado && !esConsumoInterno) {
+                    let num = telefonoClienteSeleccionado.replace(/[^0-9]/g,'');
+                    if (num.startsWith('0')) num = '593'+num.substring(1);
+                    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+                }
+                await Swal.fire("¡Éxito!", `Venta ID: ${resp.idVenta}`, "success");
+                carrito = []; renderCarritoYTotales(); limpiarSeleccionProducto();
+                if(esConsumoInterno) { document.getElementById("chkConsumoInterno").checked=false; alternarConsumoInterno(); }
+                else limpiarSeleccionCliente();
+                await inicializarModulo();
+            } catch(err) { Swal.fire("Error crítico", err.message, "error"); }
+        }
+    </script>
 </body>
 </html>

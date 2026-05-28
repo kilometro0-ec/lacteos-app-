@@ -2,84 +2,93 @@
 <html class="light" lang="es">
 <head>
     <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Lógica Láctea — Dashboard Brillante</title>
+    <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+    <title>Lógica Láctea — Dashboard Logístico</title>
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#6d28d9">
+    <meta name="theme-color" content="#a21caf">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <script>
         tailwind.config = {
+            darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        primary: "#8b5cf6",
-                        primaryDark: "#6d28d9",
-                        secondary: "#f59e0b",
-                        success: "#10b981",
-                        electric: "#3b82f6",
-                        background: "#fef9f5",
-                        outline: "#f3e8ff",
-                        card: "#ffffff",
-                        slateLight: "#f8fafc"
+                        "primary": "#a21caf",
+                        "secondary": "#db2777",
+                        "surface": "#faf5ff",
+                        "surface-container": "#ffffff",
+                        "on-surface": "#1a1c1e",
+                        "on-primary": "#ffffff",
+                        "outline": "#e9d5ff",
+                        "accent-green": "#22c55e",
+                        "accent-amber": "#f59e0b",
+                        "accent-blue": "#3b82f6"
+                    },
+                    borderRadius: {
+                        "xl": "1rem",
+                        "2xl": "1.5rem",
+                        "3xl": "2rem",
+                        "full": "9999px"
                     },
                     fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float': 'float 3s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0px)' },
-                            '50%': { transform: 'translateY(-5px)' },
-                        }
+                        "sans": ["Work Sans", "system-ui"]
                     }
                 }
             }
         }
     </script>
     <style>
-        * { transition: all 0.2s ease; }
+        body { background-color: #faf5ff; font-family: 'Work Sans', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .rotate-animation { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; }
-        
-        /* Tarjeta principal con brillo mejorado */
-        .glass-card-modern {
-            background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
-            box-shadow: 0 25px 50px -12px rgba(109, 40, 217, 0.4);
-            border: 1px solid rgba(255,255,255,0.2);
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(162, 28, 175, 0.05);
+        }
+        .glow-sales-card {
+            background: linear-gradient(135deg, #a21caf 0%, #701a75 100%);
+            box-shadow: 0 20px 50px rgba(162, 28, 175, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .glow-sales-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(219, 39, 119, 0.2) 0%, transparent 70%);
+            pointer-events: none;
         }
         .ventas-brillantes {
             animation: gentleGlow 2s ease-in-out infinite;
-            text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
-            display: inline-block;
+            text-shadow: 0 0 8px rgba(255,215,0,0.4);
         }
         @keyframes gentleGlow {
-            0% { text-shadow: 0 0 0 rgba(251, 191, 36, 0); filter: brightness(1); }
-            50% { text-shadow: 0 0 16px rgba(251, 191, 36, 0.8); filter: brightness(1.05); letter-spacing: -0.02em; }
-            100% { text-shadow: 0 0 0 rgba(251, 191, 36, 0); filter: brightness(1); }
+            0% { text-shadow: 0 0 0px rgba(251, 191, 36, 0); filter: brightness(1); }
+            50% { text-shadow: 0 0 16px rgba(251, 191, 36, 0.7); filter: brightness(1.05); }
+            100% { text-shadow: 0 0 0px rgba(251, 191, 36, 0); filter: brightness(1); }
         }
-        .stat-card {
-            background: rgba(255,255,255,0.12);
-            backdrop-filter: blur(4px);
-            border: 1px solid rgba(255,255,255,0.25);
-            transition: all 0.2s;
+        .shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
         }
-        .stat-card:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
-        /* Botones de navegación */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e9d5ff; border-radius: 10px; }
+        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; }
         .nav-btn {
-            background: white;
-            border: 1px solid #f3e8ff;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .nav-btn:hover {
@@ -87,28 +96,6 @@
             box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.2);
             border-color: #d8b4fe;
         }
-        .nav-btn:active { transform: scale(0.96); }
-        
-        /* Lista de pedidos pendientes */
-        .pedido-item {
-            transition: all 0.2s;
-            border-left: 3px solid #f59e0b;
-        }
-        .pedido-item:hover {
-            background-color: #fffbeb;
-            transform: translateX(4px);
-        }
-        
-        /* Ranking clientes con barra de progreso */
-        .cliente-bar {
-            height: 6px;
-            background: linear-gradient(90deg, #c084fc, #8b5cf6);
-            border-radius: 3px;
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-        
-        /* Badges animados */
         .badge-pulse {
             animation: pulse-badge 1.5s infinite;
         }
@@ -117,154 +104,244 @@
             70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
-        
-        /* Filtros más elegantes */
-        .filter-select, .filter-date {
-            background-color: #faf5ff;
-            border-radius: 9999px;
-            font-weight: 600;
-            transition: all 0.15s;
-        }
-        .filter-select:hover, .filter-date:hover {
-            background-color: #f3e8ff;
-        }
-        
-        /* Scroll personalizado */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px; }
-        ::-webkit-scrollbar-thumb { background: #c084fc; border-radius: 8px; }
     </style>
 </head>
-<body class="bg-background text-slate-800 font-sans antialiased pb-10">
+<body class="text-on-surface">
 
     <div id="loading-overlay">
-        <div class="flex flex-col items-center gap-3 bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-xl">
+        <div class="flex flex-col items-center gap-3 bg-white/90 backdrop-blur-xl p-6 rounded-3xl shadow-xl">
             <span class="material-symbols-outlined text-5xl text-primary animate-spin">sync</span>
-            <span class="text-xs font-black uppercase tracking-widest text-primary">Cargando datos lácteos...</span>
+            <span class="text-xs font-black uppercase tracking-widest text-primary">Sincronizando datos...</span>
         </div>
     </div>
 
-    <!-- HEADER MEJORADO -->
-    <header class="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-outline shadow-sm px-5 py-3 flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primaryDark flex items-center justify-center shadow-md">
-                <span class="material-symbols-outlined text-white text-2xl">analytics</span>
+    <!-- Header Superior (estilo primer diseño) -->
+    <header class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-purple-100 h-16 flex justify-between items-center px-8">
+        <div class="flex items-center gap-4">
+            <span class="text-primary font-black text-2xl tracking-tighter">Lógica Láctea</span>
+            <div class="h-6 w-px bg-purple-200"></div>
+            <!-- Filtros avanzados integrados (estilo moderno) -->
+            <div class="flex items-center gap-2">
+                <select id="filtro-tipo" onchange="toggleFiltrosAvanzados()" class="text-xs font-bold bg-purple-50 border-0 rounded-full px-3 py-1.5 text-slate-700 focus:ring-2 focus:ring-primary">
+                    <option value="hoy">📅 Hoy</option>
+                    <option value="dia">📆 Día específico</option>
+                    <option value="semana">📅 Semana del mes</option>
+                    <option value="mes">🗓️ Mes</option>
+                    <option value="anio">📆 Año</option>
+                </select>
+                <div id="controles-dia" class="hidden"><input type="date" id="filtro-fecha-dia" class="text-xs font-bold bg-purple-50 border-0 rounded-full px-3 py-1.5"></div>
+                <div id="controles-semana" class="hidden flex gap-1">
+                    <select id="filtro-semana-ano" class="text-xs font-bold bg-purple-50 rounded-full px-2 py-1.5"></select>
+                    <select id="filtro-semana-mes" class="text-xs font-bold bg-purple-50 rounded-full px-2 py-1.5"></select>
+                    <select id="filtro-semana-numero" class="text-xs font-bold bg-purple-50 rounded-full px-2 py-1.5"></select>
+                </div>
+                <div id="controles-mes" class="hidden flex gap-1">
+                    <select id="filtro-mes-ano" class="text-xs font-bold bg-purple-50 rounded-full px-2 py-1.5"></select>
+                    <select id="filtro-mes-numero" class="text-xs font-bold bg-purple-50 rounded-full px-2 py-1.5"></select>
+                </div>
+                <div id="controles-anio" class="hidden"><select id="filtro-anio" class="text-xs font-bold bg-purple-50 rounded-full px-2 py-1.5"></select></div>
+                <button onclick="cargarDatos()" class="bg-primary text-white text-xs font-bold rounded-full px-4 py-1.5 shadow-md hover:bg-primary/90 transition">Aplicar</button>
             </div>
-            <div>
-                <h1 class="text-base font-black text-primary tracking-tight uppercase italic leading-tight">Lógica Láctea</h1>
-                <div class="flex flex-wrap items-center gap-2 mt-1">
-                    <select id="filtro-tipo" onchange="toggleFiltrosAvanzados()" class="filter-select text-[10px] font-bold px-3 py-1.5 border-0 bg-purple-50 text-slate-700">
-                        <option value="hoy">📅 Hoy</option>
-                        <option value="dia">📆 Día específico</option>
-                        <option value="semana">📅 Semana del mes</option>
-                        <option value="mes">🗓️ Mes</option>
-                        <option value="anio">📆 Año</option>
-                    </select>
-                    <div id="controles-dia" class="hidden"><input type="date" id="filtro-fecha-dia" class="filter-date text-[10px] font-bold px-3 py-1.5 border-0 bg-purple-50"></div>
-                    <div id="controles-semana" class="hidden flex gap-1">
-                        <select id="filtro-semana-ano" class="filter-select text-[10px]"></select>
-                        <select id="filtro-semana-mes" class="filter-select text-[10px]"></select>
-                        <select id="filtro-semana-numero" class="filter-select text-[10px]"></select>
-                    </div>
-                    <div id="controles-mes" class="hidden flex gap-1">
-                        <select id="filtro-mes-ano" class="filter-select text-[10px]"></select>
-                        <select id="filtro-mes-numero" class="filter-select text-[10px]"></select>
-                    </div>
-                    <div id="controles-anio" class="hidden"><select id="filtro-anio" class="filter-select text-[10px]"></select></div>
-                    <button onclick="cargarDatos()" class="bg-primary hover:bg-primaryDark text-white text-[10px] font-bold rounded-full px-4 py-1.5 shadow-md transition-all active:scale-95">Aplicar</button>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="relative group">
+                <span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-primary transition">search</span>
+            </div>
+            <div class="relative">
+                <span class="material-symbols-outlined text-slate-400 cursor-pointer">notifications</span>
+                <span class="absolute -top-1 -right-1 bg-secondary w-2 h-2 rounded-full border-2 border-white"></span>
+            </div>
+            <div class="flex items-center gap-3 pl-4 border-l border-purple-100">
+                <div class="text-right hidden lg:block">
+                    <p class="text-xs font-bold text-slate-900 leading-none">Admin Central</p>
+                    <p class="text-[10px] text-primary font-medium uppercase tracking-widest">En Línea</p>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold border-2 border-white shadow-sm">
+                    <span class="text-sm">LC</span>
                 </div>
             </div>
         </div>
-        <button onclick="cargarDatos()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-primary hover:text-white transition shadow-sm active:scale-90">
-            <span class="material-symbols-outlined text-sm">sync</span>
-        </button>
     </header>
 
-    <main class="pt-32 px-5 max-w-7xl mx-auto space-y-6">
-        <!-- TARJETA PRINCIPAL CON EFECTO GLASS Y BRILLO -->
-        <div class="glass-card-modern p-6 rounded-3xl shadow-2xl text-white relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
-            <div class="relative z-10 space-y-4">
-                <div class="flex justify-between items-start">
+    <main class="pt-24 pb-12 px-8 max-w-[1600px] mx-auto space-y-8">
+        <!-- Hero Section: Ventas Brillantes + Tarjeta de estado -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 glow-sales-card rounded-3xl p-8 flex flex-col justify-between text-white relative">
+                <div>
+                    <div class="flex justify-between items-start">
+                        <span class="bg-white/20 backdrop-blur-md px-4 py-1 rounded-full text-sm font-bold tracking-wide">TOTAL VENTAS</span>
+                        <span class="material-symbols-outlined opacity-50">trending_up</span>
+                    </div>
+                    <div class="mt-4">
+                        <p id="comparativa-ventas" class="text-white/70 text-sm font-medium mb-1">Selecciona un período</p>
+                        <h1 id="ventas-total-hoy" class="text-5xl md:text-6xl font-black tracking-tight ventas-brillantes">$0.00</h1>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-6 mt-8 pt-6 border-t border-white/20">
                     <div>
-                        <p class="text-[11px] font-black uppercase tracking-[0.2em] text-purple-200 italic">📊 Ventas Totales</p>
-                        <p id="comparativa-ventas" class="text-[11px] text-purple-200 font-semibold mt-1">Selecciona un período</p>
-                        <div class="flex items-baseline gap-2 flex-wrap">
-                            <h2 id="ventas-total-hoy" class="text-5xl md:text-6xl font-black tracking-tighter ventas-brillantes">$0.00</h2>
-                            <span class="text-purple-200 text-sm animate-pulse">✨</span>
-                        </div>
+                        <p class="text-white/70 text-xs font-bold uppercase tracking-widest">Utilidad Estimada</p>
+                        <p id="ganancia-real" class="text-2xl font-bold text-green-300">$0.00</p>
                     </div>
-                    <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/40 shadow-lg animate-float">
-                        <span class="material-symbols-outlined text-3xl">payments</span>
+                    <div>
+                        <p class="text-white/70 text-xs font-bold uppercase tracking-widest">Unidades Vendidas</p>
+                        <p id="ganancia-proyectada" class="text-2xl font-bold">0 <span class="text-sm font-normal opacity-70">unid</span></p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4 border-t border-white/30 pt-5">
-                    <div class="stat-card rounded-2xl p-3">
-                        <p class="text-[10px] font-bold uppercase text-purple-200">Utilidad Bruta Est.</p>
-                        <p id="ganancia-real" class="text-2xl font-black text-green-300">$0.00</p>
-                        <p class="text-[10px] font-bold text-green-200">~35% margen</p>
+                <div class="grid grid-cols-2 gap-4 mt-4">
+                    <div class="bg-white/10 rounded-xl p-3 backdrop-blur-sm flex justify-between items-center">
+                        <span class="text-[10px] font-bold uppercase text-white/80">Items SKU</span>
+                        <span id="valor-invertido" class="font-black text-sm">0</span>
                     </div>
-                    <div class="stat-card rounded-2xl p-3 text-right">
-                        <p class="text-[10px] font-bold uppercase text-purple-200">📦 Pedidos Totales</p>
-                        <p id="ganancia-proyectada" class="text-2xl font-black text-amber-300">0 Unid.</p>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="stat-card rounded-xl p-2 flex items-center justify-between">
-                        <span class="text-[9px] font-bold uppercase text-white/70">Items Registrados</span>
-                        <span id="valor-invertido" class="font-black text-sm bg-white/20 px-2 py-0.5 rounded-full">0 SKU</span>
-                    </div>
-                    <div class="stat-card rounded-xl p-2 flex items-center justify-between">
-                        <span class="text-[9px] font-bold uppercase text-white/70">Por Recaudar</span>
-                        <span id="por-recaudar" class="font-black text-sm bg-amber-500/30 px-2 py-0.5 rounded-full">$0.00</span>
+                    <div class="bg-white/10 rounded-xl p-3 backdrop-blur-sm flex justify-between items-center">
+                        <span class="text-[10px] font-bold uppercase text-white/80">Por Recaudar</span>
+                        <span id="por-recaudar" class="font-black text-sm">$0.00</span>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- BOTONES NAVEGACIÓN CON HOVER Y SOMBRAS -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            <button onclick="location.href='RegistrodeVentas.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center shadow-sm"><div class="w-12 h-12 rounded-xl bg-purple-100 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">add_shopping_cart</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Vender</span></button>
-            <button id="btn-ruta" onclick="location.href='GestiondeDespachos.html'" class="nav-btn relative p-4 rounded-2xl flex flex-col items-center"><span id="badge-ruta" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden badge-pulse">0</span><div class="w-12 h-12 rounded-xl bg-green-100 text-success flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">local_shipping</span></div><span class="text-[10px] font-bold uppercase text-slate-700">En Ruta</span></button>
-            <button id="btn-stock" onclick="location.href='ControldeInventario.html'" class="nav-btn relative p-4 rounded-2xl flex flex-col items-center"><span id="badge-stock" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">inventory</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Inventario</span></button>
-            <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="nav-btn relative p-4 rounded-2xl flex flex-col items-center"><span id="badge-recepcion" class="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-xl bg-blue-100 text-electric flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">inventory_2</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Recibir</span></button>
-            <button onclick="location.href='NuevaCompra.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center"><div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">shopping_cart</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Compras</span></button>
-            <button onclick="location.href='finanzas.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center"><div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">account_balance</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Finanzas</span></button>
-            <button onclick="location.href='Proveedores.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center"><div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">factory</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Proveedores</span></button>
-            <button onclick="location.href='GestiondeClientes.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center"><div class="w-12 h-12 rounded-xl bg-indigo-50 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">groups</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Clientes</span></button>
-        </div>
-
-        <!-- PRIORIDAD DE DESPACHO CON ESTILO TIMELINE -->
-        <section class="bg-white rounded-3xl border border-outline shadow-md overflow-hidden">
-            <div class="bg-amber-50 px-5 py-3 border-b border-amber-100 flex justify-between items-center">
-                <h3 class="text-[11px] font-black text-amber-700 uppercase tracking-wide flex items-center gap-2"><span class="material-symbols-outlined text-base">priority_high</span> Prioridad de Despacho</h3>
-                <span class="text-[9px] text-amber-500 bg-amber-100 px-2 py-0.5 rounded-full">SOLO PENDIENTES</span>
+            <!-- Tarjeta de sincronización / estado -->
+            <div class="glass-card rounded-3xl p-8 flex flex-col justify-center items-center text-center space-y-4">
+                <div class="relative">
+                    <svg class="w-24 h-24 transform -rotate-90">
+                        <circle class="text-purple-50" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-width="8"></circle>
+                        <circle class="text-primary" cx="48" cy="48" fill="transparent" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="60" stroke-width="8"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary text-3xl animate-spin">sync</span>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">Actualización en tiempo real</h3>
+                    <p class="text-sm text-slate-500 max-w-[200px] mx-auto">Datos sincronizados con el servidor</p>
+                </div>
+                <button onclick="cargarDatos()" class="bg-primary/10 text-primary px-6 py-2 rounded-full text-sm font-bold hover:bg-primary hover:text-white transition-all">
+                    Refrescar ahora
+                </button>
             </div>
-            <div class="p-5 space-y-3 max-h-80 overflow-y-auto" id="lista-pedidos"></div>
-            <div id="sin-pendientes" class="text-center text-slate-400 text-sm py-8 italic hidden bg-white">✨ No hay pedidos pendientes de despacho</div>
         </section>
 
-        <!-- RANKING CLIENTES CON BARRAS Y STOCK CRÍTICO -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <section class="bg-white rounded-3xl border border-outline shadow-md">
-                <div class="bg-gradient-to-r from-purple-50 to-white px-5 py-3 border-b border-purple-100 rounded-t-3xl">
-                    <h3 class="text-[11px] font-black text-primary uppercase tracking-wide flex items-center gap-2"><span class="material-symbols-outlined text-base">leaderboard</span> Top Clientes (Gasto Histórico)</h3>
+        <!-- Quick Actions Grid (Botones de navegación) -->
+        <section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+            <button onclick="location.href='RegistrodeVentas.html'" class="nav-btn bg-white p-4 rounded-2xl border border-purple-100 hover:border-primary shadow-sm flex flex-col items-center gap-2">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 group-hover:bg-primary flex items-center justify-center transition-colors">
+                    <span class="material-symbols-outlined text-primary">point_of_sale</span>
                 </div>
-                <div class="p-5 space-y-3 max-h-96 overflow-y-auto" id="ranking-clientes"></div>
-                <div id="sin-clientes" class="text-center text-slate-400 text-sm py-8 italic hidden">📭 No hay clientes registrados</div>
-            </section>
-            <section class="bg-white rounded-3xl border border-red-100 shadow-md">
-                <div class="bg-red-50 px-5 py-3 border-b border-red-100 rounded-t-3xl">
-                    <h3 class="text-[11px] font-black text-red-500 uppercase tracking-wide flex items-center gap-2"><span class="material-symbols-outlined text-base">warning</span> Agotándose (Stock ≤5)</h3>
+                <span class="text-xs font-bold text-slate-700">Vender</span>
+            </button>
+            <button id="btn-ruta" onclick="location.href='GestiondeDespachos.html'" class="nav-btn relative bg-white p-4 rounded-2xl border border-purple-100 hover:border-accent-green shadow-sm flex flex-col items-center gap-2">
+                <span id="badge-ruta" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden badge-pulse">0</span>
+                <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-accent-green">local_shipping</span>
                 </div>
-                <div class="p-5 space-y-2" id="cont-criticos"></div>
-                <div id="sin-criticos" class="text-center text-slate-400 text-sm py-8 italic hidden">✅ Sin productos críticos</div>
-            </section>
-        </div>
+                <span class="text-xs font-bold text-slate-700">En Ruta</span>
+            </button>
+            <button id="btn-stock" onclick="location.href='ControldeInventario.html'" class="nav-btn relative bg-white p-4 rounded-2xl border border-purple-100 hover:border-accent-blue shadow-sm flex flex-col items-center gap-2">
+                <span id="badge-stock" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-accent-blue">inventory_2</span>
+                </div>
+                <span class="text-xs font-bold text-slate-700">Inventario</span>
+            </button>
+            <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="nav-btn relative bg-white p-4 rounded-2xl border border-purple-100 hover:border-primary shadow-sm flex flex-col items-center gap-2">
+                <span id="badge-recepcion" class="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary">input</span>
+                </div>
+                <span class="text-xs font-bold text-slate-700">Recibir</span>
+            </button>
+            <button onclick="location.href='NuevaCompra.html'" class="nav-btn bg-white p-4 rounded-2xl border border-purple-100 hover:border-accent-amber shadow-sm flex flex-col items-center gap-2">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-accent-amber">shopping_cart</span>
+                </div>
+                <span class="text-xs font-bold text-slate-700">Compras</span>
+            </button>
+            <button onclick="location.href='finanzas.html'" class="nav-btn bg-white p-4 rounded-2xl border border-purple-100 hover:border-secondary shadow-sm flex flex-col items-center gap-2">
+                <div class="w-12 h-12 rounded-xl bg-pink-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-secondary">account_balance_wallet</span>
+                </div>
+                <span class="text-xs font-bold text-slate-700">Finanzas</span>
+            </button>
+            <button onclick="location.href='Proveedores.html'" class="nav-btn bg-white p-4 rounded-2xl border border-purple-100 hover:border-slate-400 shadow-sm flex flex-col items-center gap-2">
+                <div class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-slate-500">factory</span>
+                </div>
+                <span class="text-xs font-bold text-slate-700">Proveedores</span>
+            </button>
+            <button onclick="location.href='GestiondeClientes.html'" class="nav-btn bg-white p-4 rounded-2xl border border-purple-100 hover:border-primary shadow-sm flex flex-col items-center gap-2">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary">groups</span>
+                </div>
+                <span class="text-xs font-bold text-slate-700">Clientes</span>
+            </button>
+        </section>
+
+        <!-- Main Content Area: Prioridad de Despacho + Top Clientes + Stock Crítico -->
+        <section class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <!-- Dispatch Priority (Izquierda) -->
+            <div class="xl:col-span-7 space-y-4">
+                <div class="flex justify-between items-end">
+                    <h2 class="text-2xl font-bold text-slate-800">Prioridad de Despacho</h2>
+                    <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">Ver mapa de rutas <span class="material-symbols-outlined text-sm">arrow_forward</span></button>
+                </div>
+                <div class="bg-white rounded-3xl border border-purple-100 overflow-hidden">
+                    <div id="lista-pedidos" class="divide-y divide-purple-50 max-h-[400px] overflow-y-auto custom-scrollbar"></div>
+                    <div id="sin-pendientes" class="text-center text-slate-400 text-sm py-12 italic hidden">✨ No hay pedidos pendientes de despacho</div>
+                </div>
+            </div>
+
+            <!-- Columna derecha: Top Clientes + Stock Crítico -->
+            <div class="xl:col-span-5 grid grid-cols-1 gap-8">
+                <!-- Top Clientes con barras de progreso -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-bold text-slate-800">Top Clientes (Gasto Histórico)</h2>
+                    <div class="bg-white rounded-3xl border border-purple-100 p-6 space-y-4">
+                        <div id="ranking-clientes" class="space-y-4"></div>
+                        <div id="sin-clientes" class="text-center text-slate-400 text-sm py-6 italic hidden">📭 No hay clientes registrados</div>
+                    </div>
+                </div>
+
+                <!-- Stock Crítico (Agotándose) -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-bold text-slate-800">⚠️ Agotándose (Stock ≤5)</h2>
+                    <div class="grid grid-cols-2 gap-4" id="cont-criticos"></div>
+                    <div id="sin-criticos" class="text-center text-slate-400 text-sm py-4 italic hidden">✅ Sin productos críticos</div>
+                    <button class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                        Crear Orden de Compra Automática
+                    </button>
+                </div>
+            </div>
+        </section>
     </main>
 
+    <!-- Bottom Navigation (Mobile) -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-purple-100 px-6 py-3 flex justify-around items-center z-50">
+        <button class="flex flex-col items-center gap-1 text-primary">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest">Inicio</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-slate-400">
+            <span class="material-symbols-outlined">local_shipping</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest">Rutas</span>
+        </button>
+        <div class="relative -top-8">
+            <button class="w-14 h-14 bg-primary text-white rounded-full shadow-lg shadow-primary/40 flex items-center justify-center border-4 border-white">
+                <span class="material-symbols-outlined text-3xl">add</span>
+            </button>
+        </div>
+        <button class="flex flex-col items-center gap-1 text-slate-400">
+            <span class="material-symbols-outlined">assessment</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest">Reportes</span>
+        </button>
+        <button class="flex flex-col items-center gap-1 text-slate-400">
+            <span class="material-symbols-outlined">settings</span>
+            <span class="text-[10px] font-bold uppercase tracking-widest">Ajustes</span>
+        </button>
+    </nav>
+
     <script>
-        // Toda la lógica original se mantiene exactamente igual, solo se añade la mejora visual de barras en ranking clientes
+        // --------------------------------------------------------------
+        // LÓGICA COMPLETA DEL SEGUNDO HTML (FILTROS, API, RENDERIZADO)
+        // Conservamos todas las funciones y variables originales
         // --------------------------------------------------------------
         const tipoSelect = document.getElementById('filtro-tipo');
         const diaDiv = document.getElementById('controles-dia');
@@ -294,7 +371,6 @@
         llenarAnios(mesAno);
         llenarAnios(anioSelect);
         
-        // Rellenar meses
         const mesesNombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
         function llenarMeses(selectEl) {
             selectEl.innerHTML = '';
@@ -311,7 +387,10 @@
         
         function toggleFiltrosAvanzados() {
             const tipo = tipoSelect.value;
-            diaDiv.classList.add('hidden'); semanaDiv.classList.add('hidden'); mesDiv.classList.add('hidden'); anioDiv.classList.add('hidden');
+            diaDiv.classList.add('hidden');
+            semanaDiv.classList.add('hidden');
+            mesDiv.classList.add('hidden');
+            anioDiv.classList.add('hidden');
             if(tipo === 'dia') diaDiv.classList.remove('hidden');
             else if(tipo === 'semana') semanaDiv.classList.remove('hidden');
             else if(tipo === 'mes') mesDiv.classList.remove('hidden');
@@ -339,12 +418,12 @@
         
         function obtenerTextoFiltro() {
             const tipo = tipoSelect.value;
-            if(tipo === 'hoy') return "🔥 Ventas de hoy";
-            if(tipo === 'dia') return `📆 Ventas del ${diaInput.value}`;
-            if(tipo === 'semana') return `📅 Semana ${semanaNum.value} de ${mesesNombres[parseInt(semanaMes.value)]} ${semanaAno.value}`;
-            if(tipo === 'mes') return `🗓️ ${mesesNombres[parseInt(mesNum.value)]} ${mesAno.value}`;
-            if(tipo === 'anio') return `📆 Año ${anioSelect.value}`;
-            return "Ventas del período";
+            if(tipo === 'hoy') return "Ventas de hoy";
+            if(tipo === 'dia') return `Ventas del día ${diaInput.value}`;
+            if(tipo === 'semana') return `Semana ${semanaNum.value} de ${mesesNombres[parseInt(semanaMes.value)]} ${semanaAno.value}`;
+            if(tipo === 'mes') return `${mesesNombres[parseInt(mesNum.value)]} ${mesAno.value}`;
+            if(tipo === 'anio') return `Año ${anioSelect.value}`;
+            return "Período seleccionado";
         }
         
         function mostrarCargando(show){ document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
@@ -370,13 +449,14 @@
                 if(criticos.length === 0) sinCriticosDiv.classList.remove('hidden');
                 else sinCriticosDiv.classList.add('hidden');
                 criticos.forEach(item => {
-                    contenedorCriticos.innerHTML += `<div class="flex justify-between items-center p-3 bg-red-50 rounded-xl border-l-4 border-red-500"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-red-500 text-sm">inventory</span><span class="font-bold text-slate-700">${item.producto || item.Nombre || 'Desconocido'}</span></div><span class="bg-red-600 text-white font-bold px-2 py-0.5 rounded-full text-xs">${item.stock || item.Cantidad} u.</span></div>`;
+                    contenedorCriticos.innerHTML += `<div class="bg-white p-4 rounded-2xl border-l-4 border-l-secondary shadow-sm flex flex-col gap-2"><div class="flex justify-between"><span class="material-symbols-outlined text-secondary">inventory</span><span class="bg-secondary/10 text-secondary text-[10px] font-bold px-2 py-0.5 rounded-full">CRÍTICO</span></div><p class="text-sm font-bold text-slate-800 truncate">${item.producto || item.Nombre || 'Desconocido'}</p><p class="text-2xl font-black text-slate-900">${item.stock || item.Cantidad} <span class="text-xs font-normal text-slate-500">uds</span></p></div>`;
                 });
                 
                 const pendientesCompras = com.filter(c => normalizar(c.Estado_Entrega || c.estadoEntrega || c.estado || '') === 'PENDIENTE');
                 const badgeRecepcion = document.getElementById('badge-recepcion');
                 badgeRecepcion.innerText = pendientesCompras.length;
-                pendientesCompras.length > 0 ? badgeRecepcion.classList.remove('hidden') : badgeRecepcion.classList.add('hidden');
+                if(pendientesCompras.length > 0) badgeRecepcion.classList.remove('hidden');
+                else badgeRecepcion.classList.add('hidden');
                 
                 const rankingGastoTotal = {};
                 let totalVentasFiltrado = 0, totalItemsPeriodo = 0, totalPorRecaudar = 0, contadorRutaPendientes = 0;
@@ -394,7 +474,7 @@
                     if(estadoNorm === 'PENDIENTE') {
                         totalPorRecaudar += totalVenta;
                         contadorRutaPendientes++;
-                        contenedorPedidos.innerHTML += `<div class="pedido-item flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100"><div><p class="font-bold text-slate-800">${cliente}</p><p class="text-[10px] text-slate-500">${fechaVenta || 'Sin fecha'} • #${v.Id || v.id || 'N/A'}</p></div><span class="font-black text-primary bg-primary/10 px-3 py-1 rounded-full text-sm">$${totalVenta.toFixed(2)}</span></div>`;
+                        contenedorPedidos.innerHTML += `<div class="p-5 flex items-center justify-between hover:bg-purple-50/50 transition-colors cursor-pointer group border-b border-purple-50 last:border-0"><div class="flex items-center gap-4"><div class="w-12 h-12 rounded-full bg-amber-100 text-accent-amber flex items-center justify-center"><span class="material-symbols-outlined">timer</span></div><div><p class="font-bold text-slate-800">${cliente}</p><p class="text-xs text-slate-500 font-medium">Pedido #${v.Id || v.id || 'N/A'} • ${fechaVenta || 'Sin fecha'}</p></div></div><div class="text-right"><p class="font-bold text-slate-800">$${totalVenta.toFixed(2)}</p><p class="text-xs text-accent-amber font-bold flex items-center justify-end gap-1 uppercase tracking-tighter">Pendiente <span class="w-2 h-2 rounded-full bg-accent-amber animate-pulse"></span></p></div><span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span></div>`;
                     }
                     if(fechaEnFiltroAvanzado(fechaVenta)) {
                         totalVentasFiltrado += totalVenta;
@@ -406,11 +486,12 @@
                 else sinPendientesDiv.classList.add('hidden');
                 const badgeRuta = document.getElementById('badge-ruta');
                 badgeRuta.innerText = contadorRutaPendientes;
-                contadorRutaPendientes > 0 ? badgeRuta.classList.remove('hidden') : badgeRuta.classList.add('hidden');
+                if(contadorRutaPendientes > 0) badgeRuta.classList.remove('hidden');
+                else badgeRuta.classList.add('hidden');
                 
                 document.getElementById('ventas-total-hoy').innerText = `$${totalVentasFiltrado.toFixed(2)}`;
                 document.getElementById('ganancia-real').innerText = `$${(totalVentasFiltrado * 0.35).toFixed(2)}`;
-                document.getElementById('ganancia-proyectada').innerText = `${totalItemsPeriodo} Unidades`;
+                document.getElementById('ganancia-proyectada').innerText = `${totalItemsPeriodo}`;
                 document.getElementById('por-recaudar').innerText = `$${totalPorRecaudar.toFixed(2)}`;
                 document.getElementById('comparativa-ventas').innerHTML = obtenerTextoFiltro();
                 
@@ -423,17 +504,11 @@
                     sinClientesDiv.classList.add('hidden');
                     clientesArray.sort((a,b) => b[1] - a[1]);
                     const maxGasto = clientesArray[0][1];
-                    clientesArray.slice(0, 10).forEach(([nombre, totalGastado], idx) => {
+                    clientesArray.slice(0, 5).forEach(([nombre, totalGastado], idx) => {
                         const porcentaje = (totalGastado / maxGasto) * 100;
-                        const medalla = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}º`;
+                        const medalla = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `0${idx+1}`;
                         rankingContainer.innerHTML += `
-                            <div class="group transition-all">
-                                <div class="flex justify-between items-center mb-1">
-                                    <div class="flex items-center gap-2"><span class="text-sm font-black text-purple-600 w-7">${medalla}</span><span class="font-bold text-slate-700">${nombre}</span></div>
-                                    <span class="bg-purple-100 text-primary font-bold px-2 py-0.5 rounded-full text-xs">$${totalGastado.toFixed(2)}</span>
-                                </div>
-                                <div class="w-full bg-purple-100 rounded-full h-1.5 overflow-hidden"><div class="cliente-bar" style="width: ${porcentaje}%"></div></div>
-                            </div>
+                            <div><div class="flex items-center gap-4 mb-1"><span class="text-primary font-black text-xl italic opacity-30">${medalla}</span><div class="flex-1"><div class="flex justify-between items-center mb-1"><p class="text-sm font-bold text-slate-800">${nombre}</p><p class="text-sm font-bold text-primary">$${totalGastado.toFixed(2)}</p></div><div class="w-full bg-purple-50 h-2 rounded-full overflow-hidden"><div class="bg-primary h-full rounded-full" style="width: ${porcentaje}%"></div></div></div></div></div>
                         `;
                     });
                 }

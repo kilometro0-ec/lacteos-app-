@@ -9,8 +9,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <meta name="theme-color" content="#059669">
     <style>
-        .animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
-        @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .transition-all { transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16 relative">
@@ -59,7 +60,7 @@
     <header class="bg-emerald-600 text-white shadow-md px-6 py-4 flex justify-between items-center">
         <div class="flex items-center gap-3"><i data-lucide="shopping-cart" class="w-8 h-8"></i><div><h1 class="text-xl font-bold tracking-tight">Punto de Venta / Salidas</h1><p class="text-xs text-emerald-100">Facturación, Despachos y Consumo Interno</p></div></div>
         <div class="flex items-center gap-2">
-            <label class="inline-flex items-center cursor-pointer bg-emerald-700/50 px-3 py-1.5 rounded-lg border border-emerald-500">
+            <label class="inline-flex items-center cursor-pointer bg-emerald-700/50 px-3 py-1.5 rounded-lg border border-emerald-500 select-none">
                 <input type="checkbox" id="chkConsumoInterno" onchange="alternarConsumoInterno()" class="sr-only peer">
                 <span class="text-xs font-bold mr-2 text-emerald-100 peer-checked:text-white">CONSUMO INTERNO</span>
                 <div class="relative w-9 h-5 bg-emerald-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
@@ -87,6 +88,7 @@
                     <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Fecha de Entrega *</label><input type="date" id="fechaEntrega" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50"></div>
                 </div>
             </div>
+
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-sm font-black text-slate-700 uppercase tracking-wider mb-4 flex items-center gap-2"><i data-lucide="package" class="w-4 h-4 text-emerald-600"></i>Agregar Producto</h2>
                 <div class="space-y-4">
@@ -98,16 +100,26 @@
                         </div>
                         <div id="listaProductosFlotante" class="hidden absolute z-50 w-full bg-white mt-1 max-h-60 overflow-y-auto rounded-lg border border-slate-200 shadow-xl divide-y divide-slate-100"></div>
                     </div>
-                    <div id="wrapperStock" class="hidden p-3 rounded-lg border text-xs flex justify-between items-center bg-slate-50"><div><span class="font-bold block text-slate-600">Disponibilidad:</span><span id="txtStockMinimo" class="text-base font-black">0 Uds</span></div><span id="badgeEstadoStock" class="px-2 py-1 rounded font-bold uppercase text-[10px] bg-emerald-100 text-emerald-800">Disponible</span></div>
-                    <div class="grid grid-cols-2 gap-3"><div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Precio Unitario ($)</label><input type="number" id="numPrecioUnitario" readonly class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-100 font-bold text-slate-600 outline-none"></div><div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Cantidad a Vender</label><input type="number" id="numCantidadVenta" min="1" value="1" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 font-black outline-none"></div></div>
+                    <div id="wrapperStock" class="hidden p-3 rounded-lg border text-xs flex justify-between items-center bg-slate-50">
+                        <div><span class="font-bold block text-slate-600">Disponibilidad en Kárdex:</span><span id="txtStockMinimo" class="text-base font-black">0 Uds</span></div>
+                        <span id="badgeEstadoStock" class="px-2 py-1 rounded font-bold uppercase text-[10px] bg-emerald-100 text-emerald-800">Disponible</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Precio Unitario ($)</label><input type="number" id="numPrecioUnitario" readonly class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-slate-100 font-bold text-slate-600 outline-none"></div>
+                        <div><label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Cantidad a Vender</label><input type="number" id="numCantidadVenta" min="1" value="1" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 font-black outline-none"></div>
+                    </div>
                     <button type="button" onclick="agregarItemAlCarrito()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-sm transition-all duration-300 transform hover:scale-[1.02] active:scale-95 animate-pulse"><i data-lucide="list-plus" class="w-4 h-4"></i>Insertar a la Lista</button>
                 </div>
             </div>
         </div>
+
         <!-- Derecha -->
         <div class="lg:col-span-7 bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col justify-between h-[calc(100vh-12rem)] min-h-[500px]">
             <div class="flex flex-col flex-1 overflow-hidden">
-                <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center"><h2 class="font-black text-slate-700 uppercase tracking-wider text-sm flex items-center gap-2"><i data-lucide="receipt" class="w-4 h-4 text-emerald-600"></i>Detalle de la Operación</h2><span id="badgeTipoVenta" class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider">Venta Comercial</span></div>
+                <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
+                    <h2 class="font-black text-slate-700 uppercase tracking-wider text-sm flex items-center gap-2"><i data-lucide="receipt" class="w-4 h-4 text-emerald-600"></i>Detalle de la Operación</h2>
+                    <span id="badgeTipoVenta" class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider">Venta Comercial</span>
+                </div>
                 <div class="flex-1 overflow-y-auto pr-1">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead><tr class="bg-slate-50 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]"><th class="py-3 px-4">Producto</th><th class="py-3 px-2 text-center">Cant.</th><th class="py-3 px-2 text-right">P. Unit</th><th class="py-3 px-2 text-right">Subtotal</th><th class="py-3 px-4 text-center">Acción</th></tr></thead>
@@ -124,8 +136,21 @@
 
     <script>
         // ==================== CONFIGURACIÓN ====================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBIeQQ22yBye1IGcbtVbAbF0_J2BTTxuD4ayhNZa9sY51VIKBet2QKoPUBaaBlOe070Q/exec";
+        // Reemplaza con la URL de tu Apps Script (la misma que usas en finanzas, pero que tenga estas acciones)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxbWlYzGkgYnXPKIDcahi-Q-zMFvns90Kp5nFOo88hiQBru_Ki4uk4wba3sB8pzgo8Oog/exec";
 
+        // ==================== FUNCIÓN FETCH GENÉRICA ====================
+        async function fetchRequest(paramsObj) {
+            const urlParams = new URLSearchParams(paramsObj);
+            const fullUrl = `${SCRIPT_URL}?${urlParams.toString()}`;
+            const response = await fetch(fullUrl);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data.status === 'success') return data;
+            else throw new Error(data.message || 'Error en la petición');
+        }
+
+        // ==================== VARIABLES GLOBALES ====================
         let catalogoProductos = [];
         let clientesGlobal = [];
         let carrito = [];
@@ -134,46 +159,36 @@
         let telefonoClienteSeleccionado = "";
         let productoSeleccionado = null;
 
-        // ==================== FUNCIÓN DE LLAMADA A LA API ====================
-        async function callAPI(params) {
-            const url = new URL(SCRIPT_URL);
-            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            if (data.status !== 'success') throw new Error(data.message || 'Error de API');
-            return data.data;
-        }
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            establecerFechaPorDefecto();
+            inicializarModulo();
+            // Menú simple
+            document.getElementById("menu-container").innerHTML = `<div class="bg-white shadow-sm border-b border-slate-200 px-4 py-2 text-xs text-slate-500">🧀 Lógica Láctea - Sistema de Ventas (Fetch)</div>`;
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest('#buscarCliente') && !e.target.closest('#listaClientesFlotante')) document.getElementById("listaClientesFlotante").classList.add("hidden");
+                if (!e.target.closest('#buscarProducto') && !e.target.closest('#listaProductosFlotante')) document.getElementById("listaProductosFlotante").classList.add("hidden");
+            });
+        });
 
-        // ==================== AUXILIARES ====================
         function establecerFechaPorDefecto() {
             document.getElementById("fechaEntrega").value = new Date().toISOString().split('T')[0];
         }
 
-        const limpiarMoneda = (valor) => {
-            if (!valor) return 0;
-            let texto = String(valor).replace(/[^0-9.,-]/g, '').replace(',', '.');
-            return parseFloat(texto) || 0;
-        };
-
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
-        }
+        const limpiarMoneda = (valor) => { let n = parseFloat(String(valor).replace(',', '.')); return isNaN(n) ? 0 : n; };
 
         // ==================== INICIALIZACIÓN ====================
         async function inicializarModulo() {
             const overlay = document.getElementById("loadingOverlay");
-            overlay.classList.remove("hidden", "opacity-0");
+            overlay.classList.remove("hidden");
             try {
-                clientesGlobal = await callAPI({ accion: "getClientes" });
-                const inventario = await callAPI({ accion: "getInventario" });
-                catalogoProductos = inventario.filter(p => parseInt(p.Stock) > 0);
-                if (clientesGlobal.length === 0) console.warn("No hay clientes");
-                if (catalogoProductos.length === 0) console.warn("No hay productos con stock");
+                const clientesResp = await fetchRequest({ accion: 'getClientes' });
+                clientesGlobal = clientesResp.data || [];
+                const inventarioResp = await fetchRequest({ accion: 'getInventario' });
+                catalogoProductos = (inventarioResp.data || []).filter(p => parseInt(p.stock) > 0);
             } catch (err) {
                 console.error(err);
-                Swal.fire("Error", "No se pudo conectar con Google Sheets: " + err.message, "error");
+                Swal.fire("Error", "No se pudo conectar con Google Sheets: " + (err.message || JSON.stringify(err)), "error");
             } finally {
                 overlay.classList.add("opacity-0");
                 setTimeout(() => overlay.classList.add("hidden"), 300);
@@ -186,8 +201,8 @@
 
         async function guardarNuevoCliente(e) {
             e.preventDefault();
-            Swal.fire({ title: 'Registrando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            const autoId = "CLI-" + Date.now();
+            Swal.fire({ title: 'Registrando cliente...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const autoId = "CLI-" + Math.floor(Date.now() / 1000);
             const fechaRegistro = new Date().toISOString().split('T')[0];
             const params = {
                 accion: 'registrarCliente',
@@ -201,13 +216,14 @@
                 fechaRegistro: fechaRegistro
             };
             try {
-                await callAPI(params);
-                Swal.fire("Éxito", "Cliente registrado", "success");
+                const resp = await fetchRequest(params);
+                if (resp.status !== "success") throw new Error(resp.message);
+                Swal.fire("¡Éxito!", `Cliente registrado con ID: ${autoId}`, "success");
                 cerrarModalCliente();
                 await inicializarModulo();
                 seleccionarCliente(params.nombre, params.telefono);
-            } catch (err) {
-                Swal.fire("Error", err.message, "error");
+            } catch (error) {
+                Swal.fire("Error", "No se pudo sincronizar el nuevo cliente: " + (error.message || JSON.stringify(error)), "error");
             }
         }
 
@@ -215,12 +231,11 @@
             if (esConsumoInterno) return;
             const termino = document.getElementById("buscarCliente").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaClientesFlotante");
-            const filtrados = clientesGlobal.filter(c =>
-                (c.Nombre || "").toLowerCase().includes(termino) ||
-                String(c.CI_RUC || "").toLowerCase().includes(termino)
-            );
+            const filtrados = clientesGlobal.filter(c => (c.nombre || "").toLowerCase().includes(termino) || String(c.ci_ruc || c.id || "").toLowerCase().includes(termino));
             if (filtrados.length === 0) listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No se encontraron clientes</div>`;
-            else listaDiv.innerHTML = filtrados.map(c => `<div onclick="seleccionarCliente('${escapeHtml(c.Nombre)}', '${escapeHtml(c.Teléfono || '')}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer border-b"><div class="font-bold">${escapeHtml(c.Nombre)}</div><div class="text-[10px] text-slate-500">${escapeHtml(c.CI_RUC || '')} | ${escapeHtml(c.Teléfono || '')}</div></div>`).join('');
+            else {
+                listaDiv.innerHTML = filtrados.map(c => `<div onclick="seleccionarCliente('${escapeHtml(c.nombre)}', '${escapeHtml(String(c.telefono || ''))}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer flex flex-col"><span class="font-bold text-slate-900">${escapeHtml(c.nombre)}</span><span class="text-[10px] text-slate-400">RUC/CI: ${escapeHtml(String(c.ci_ruc || c.id || ''))} | Telf: ${escapeHtml(String(c.telefono || 'S/N'))}</span></div>`).join('');
+            }
             listaDiv.classList.remove("hidden");
         }
 
@@ -229,7 +244,7 @@
             telefonoClienteSeleccionado = telefono;
             const input = document.getElementById("buscarCliente");
             input.value = nombre;
-            input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold");
+            input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
             document.getElementById("btnLimpiarCliente").classList.remove("hidden");
             document.getElementById("listaClientesFlotante").classList.add("hidden");
             evaluarEstadoBotonRegistrar();
@@ -240,7 +255,7 @@
             telefonoClienteSeleccionado = "";
             const input = document.getElementById("buscarCliente");
             input.value = "";
-            input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold");
+            input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
             document.getElementById("btnLimpiarCliente").classList.add("hidden");
             evaluarEstadoBotonRegistrar();
         }
@@ -249,9 +264,11 @@
         function filtrarProductos() {
             const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaProductosFlotante");
-            const filtrados = catalogoProductos.filter(p => (p.Producto || "").toLowerCase().includes(termino));
+            const filtrados = catalogoProductos.filter(p => (p.producto || "").toLowerCase().includes(termino));
             if (filtrados.length === 0) listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No hay productos disponibles</div>`;
-            else listaDiv.innerHTML = filtrados.map(p => `<div onclick="seleccionarProducto('${p.ID}', '${escapeHtml(p.Producto)}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer flex justify-between border-b"><span class="font-bold">${escapeHtml(p.Producto)}</span><span class="bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">Stock: ${p.Stock}</span></div>`).join('');
+            else {
+                listaDiv.innerHTML = filtrados.map(p => `<div onclick="seleccionarProducto('${escapeHtml(String(p.id))}', '${escapeHtml(p.producto)}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer flex justify-between"><span class="font-bold text-slate-900">${escapeHtml(p.producto)}</span><span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px]">Stock: ${p.stock}</span></div>`).join('');
+            }
             listaDiv.classList.remove("hidden");
         }
 
@@ -259,13 +276,13 @@
             productoSeleccionado = id;
             const input = document.getElementById("buscarProducto");
             input.value = nombre;
-            input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold");
+            input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
             document.getElementById("btnLimpiarProducto").classList.remove("hidden");
             document.getElementById("listaProductosFlotante").classList.add("hidden");
-            const prod = catalogoProductos.find(p => p.ID === id);
+            const prod = catalogoProductos.find(p => String(p.id).trim() === id);
             if (prod) {
-                const stock = parseInt(prod.Stock) || 0;
-                const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.Precio_Venta || 0);
+                const stock = parseInt(prod.stock || 0);
+                const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.precioVenta || 0);
                 document.getElementById("wrapperStock").classList.remove("hidden");
                 document.getElementById("txtStockMinimo").innerText = `${stock} Unidades`;
                 document.getElementById("numPrecioUnitario").value = precio.toFixed(2);
@@ -277,13 +294,14 @@
             productoSeleccionado = null;
             const input = document.getElementById("buscarProducto");
             input.value = "";
-            input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold");
+            input.classList.remove("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
             document.getElementById("btnLimpiarProducto").classList.add("hidden");
             document.getElementById("wrapperStock").classList.add("hidden");
             document.getElementById("numPrecioUnitario").value = "";
             document.querySelector("button[onclick='agregarItemAlCarrito()']")?.classList.add("animate-pulse");
         }
 
+        // ==================== CARRITO ====================
         function alternarConsumoInterno() {
             esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
             const buscarCli = document.getElementById("buscarCliente");
@@ -292,113 +310,113 @@
             limpiarSeleccionCliente();
             if (esConsumoInterno) {
                 clienteSeleccionado = "CONSUMO INTERNO";
-                buscarCli.value = "CONSUMO INTERNO"; buscarCli.disabled = true;
+                buscarCli.value = "CONSUMO INTERNO";
+                buscarCli.disabled = true;
                 btnModalCli.classList.add("hidden");
                 buscarCli.classList.add("bg-amber-50", "border-amber-300", "font-bold", "text-amber-900");
-                badgeTipo.innerText = "Consumo Interno"; badgeTipo.className = "bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded uppercase";
+                badgeTipo.innerText = "Consumo Interno";
+                badgeTipo.className = "bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
             } else {
-                buscarCli.disabled = false; btnModalCli.classList.remove("hidden");
+                buscarCli.disabled = false;
+                btnModalCli.classList.remove("hidden");
                 buscarCli.classList.remove("bg-amber-50", "border-amber-300", "font-bold", "text-amber-900");
-                badgeTipo.innerText = "Venta Comercial"; badgeTipo.className = "bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase";
+                badgeTipo.innerText = "Venta Comercial";
+                badgeTipo.className = "bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider";
             }
-            if(productoSeleccionado) seleccionarProducto(productoSeleccionado, document.getElementById("buscarProducto").value);
+            if (productoSeleccionado) seleccionarProducto(productoSeleccionado, document.getElementById("buscarProducto").value);
             carrito = carrito.map(item => {
-                const prodOriginal = catalogoProductos.find(p => p.ID === item.id);
-                const nuevoPrecio = esConsumoInterno ? 0 : limpiarMoneda(prodOriginal?.Precio_Venta || 0);
+                const prod = catalogoProductos.find(p => p.id === item.id);
+                const nuevoPrecio = esConsumoInterno ? 0 : limpiarMoneda(prod?.precioVenta || 0);
                 return { ...item, precio: nuevoPrecio, subtotal: item.cantidad * nuevoPrecio };
             });
             renderCarritoYTotales();
         }
 
         function agregarItemAlCarrito() {
-            if (!productoSeleccionado) return Swal.fire("Falta Producto", "Seleccione un producto", "warning");
+            if (!productoSeleccionado) return Swal.fire("Falta Producto", "Seleccione un producto válido.", "warning");
             const cantidad = parseInt(document.getElementById("numCantidadVenta").value) || 0;
-            if (cantidad <= 0) return Swal.fire("Cantidad inválida", "Mayor a 0", "warning");
-            const prod = catalogoProductos.find(p => p.ID === productoSeleccionado);
-            if (cantidad > parseInt(prod.Stock)) return Swal.fire("Stock Insuficiente", `Solo ${prod.Stock} unidades`, "error");
-            const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.Precio_Venta);
+            if (cantidad <= 0) return Swal.fire("Cantidad inválida", "Defina una cantidad mayor a 0", "warning");
+            const prod = catalogoProductos.find(p => String(p.id).trim() === productoSeleccionado);
+            if (!prod) return Swal.fire("Error", "Producto no encontrado", "error");
+            if (cantidad > parseInt(prod.stock || 0)) return Swal.fire("Stock Insuficiente", `Solo quedan ${prod.stock} unidades.`, "error");
+            const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.precioVenta);
             const existente = carrito.find(item => item.id === productoSeleccionado);
             if (existente) {
-                if (existente.cantidad + cantidad > parseInt(prod.Stock)) return Swal.fire("Excede stock", "Cantidad total supera stock", "error");
-                existente.cantidad += cantidad; existente.subtotal = existente.cantidad * existente.precio;
+                if (existente.cantidad + cantidad > parseInt(prod.stock)) return Swal.fire("Excede inventario", "La cantidad total acumulada supera el stock disponible.", "error");
+                existente.cantidad += cantidad;
+                existente.subtotal = existente.cantidad * existente.precio;
             } else {
-                carrito.push({ id: productoSeleccionado, producto: prod.Producto, cantidad, precio, subtotal: cantidad * precio });
+                carrito.push({ id: productoSeleccionado, producto: prod.producto, cantidad, precio, subtotal: cantidad * precio });
             }
             renderCarritoYTotales();
             limpiarSeleccionProducto();
             document.getElementById("numCantidadVenta").value = "1";
         }
 
-        function eliminarItem(index) { carrito.splice(index,1); renderCarritoYTotales(); }
+        function eliminarItem(index) { carrito.splice(index, 1); renderCarritoYTotales(); }
 
         function renderCarritoYTotales() {
             const tbody = document.getElementById("tbodyCarrito");
             if (carrito.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="5" class="text-center py-16 text-slate-400 italic"><i data-lucide="shopping-bag" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>No hay productos agregados.</td></tr>`;
                 document.getElementById("txtTotalFactura").innerText = "$0.00";
-                evaluarEstadoBotonRegistrar(); lucide.createIcons(); return;
+                evaluarEstadoBotonRegistrar();
+                lucide.createIcons();
+                return;
             }
             let total = 0;
-            tbody.innerHTML = carrito.map((item,idx) => {
+            tbody.innerHTML = "";
+            carrito.forEach((item, index) => {
                 total += item.subtotal;
-                return `<tr class="border-b border-slate-100"><td class="py-3 px-4 font-bold">${escapeHtml(item.producto)}</td><td class="py-3 px-2 text-center">${item.cantidad}</td><td class="py-3 px-2 text-right">$${item.precio.toFixed(2)}</td><td class="py-3 px-2 text-right font-bold text-emerald-700">$${item.subtotal.toFixed(2)}</td><td class="py-3 px-4 text-center"><button onclick="eliminarItem(${idx})" class="text-rose-500 hover:text-rose-700"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td></tr>`;
-            }).join('');
+                tbody.innerHTML += `<tr class="border-b border-slate-100 hover:bg-slate-50/50"><td class="py-3 px-4 font-bold">${escapeHtml(item.producto)}</td><td class="py-3 px-2 text-center font-medium">${item.cantidad}</td><td class="py-3 px-2 text-right">$${item.precio.toFixed(2)}</td><td class="py-3 px-2 text-right font-bold text-emerald-700">$${item.subtotal.toFixed(2)}</td><td class="py-3 px-4 text-center"><button onclick="eliminarItem(${index})" class="text-rose-500 hover:text-rose-700"><i data-lucide="trash-2" class="w-4 h-4 mx-auto"></i></button></td></tr>`;
+            });
             document.getElementById("txtTotalFactura").innerText = `$${total.toFixed(2)}`;
-            evaluarEstadoBotonRegistrar(); lucide.createIcons();
+            evaluarEstadoBotonRegistrar();
+            lucide.createIcons();
         }
 
         function evaluarEstadoBotonRegistrar() {
             const btn = document.getElementById("btnRegistrarVenta");
-            if (carrito.length > 0 && clienteSeleccionado) {
+            if (carrito.length > 0 && clienteSeleccionado !== null) {
                 btn.disabled = false;
-                btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-pointer transition-all uppercase tracking-widest text-sm";
+                btn.className = "w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-pointer transition-all uppercase tracking-widest text-sm active:scale-95";
             } else {
                 btn.disabled = true;
                 btn.className = "w-full bg-slate-400 text-white font-black py-4 rounded-xl shadow-lg flex items-center justify-center gap-3 cursor-not-allowed transition-all uppercase tracking-widest text-sm";
             }
         }
 
+        // ==================== REGISTRAR VENTA ====================
         async function confirmarYEnviarVenta() {
             if (carrito.length === 0 || !clienteSeleccionado) return;
-            const confirm = await Swal.fire({ title: '¿Confirmar Operación?', text: `Registrar ${carrito.length} productos y actualizar stock`, icon:'question', showCancelButton:true, confirmButtonColor:'#059669', confirmButtonText:'Sí, despachar' });
+            const confirm = await Swal.fire({ title: '¿Confirmar Operación?', text: `Se registrarán ${carrito.length} productos y se actualizará el stock.`, icon: 'question', showCancelButton: true, confirmButtonColor: '#059669', cancelButtonColor: '#64748b', confirmButtonText: 'Sí, despachar' });
             if (!confirm.isConfirmed) return;
-            Swal.fire({ title:'Procesando...', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+            Swal.fire({ title: 'Procesando transacción...', text: 'Sincronizando con Google Sheets', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             const fechaOp = document.getElementById("fechaEntrega").value;
-            const productos = carrito.map(item => ({ producto: item.producto, cantidad: item.cantidad, precio: item.precio }));
-            const totalAcumulado = carrito.reduce((s,i)=>s+i.subtotal,0);
+            let totalAcumulado = 0;
+            const productosMapeados = carrito.map(item => { totalAcumulado += item.subtotal; return { producto: item.producto, cantidad: item.cantidad, precio: item.precio }; });
             try {
-                const result = await callAPI({
-                    accion: 'registrarVenta',
-                    cliente: clienteSeleccionado,
-                    fecha: fechaOp,
-                    esConsumoInterno: esConsumoInterno,
-                    productos: JSON.stringify(productos)
-                });
-                let mensajeWa = `*🥛 LÓGICA LÁCTEA - NOTIFICACIÓN DE DESPACHO*\n\nCliente: ${clienteSeleccionado}\nCódigo: ${result.idVenta}\nFecha: ${fechaOp}\n----------------------------------------\n${carrito.map(i=>`• ${i.cantidad}x ${i.producto} ($${i.precio.toFixed(2)} c/u) -> *$${i.subtotal.toFixed(2)}*`).join('\n')}\n----------------------------------------\n*TOTAL: $${totalAcumulado.toFixed(2)}*\n\n¡Gracias por su confianza!`;
+                const resp = await fetchRequest({ accion: 'registrarVenta', cliente: clienteSeleccionado, fecha: fechaOp, esConsumoInterno: esConsumoInterno, productos: JSON.stringify(productosMapeados) });
+                if (resp.status !== "success") throw new Error(resp.message);
+                let mensajeWa = `*🥛 LÓGICA LÁCTEA - NOTIFICACIÓN DE DESPACHO*\n\n*Cliente:* ${clienteSeleccionado}\n*Código Operación:* ${resp.idVenta}\n*Fecha Entrega:* ${fechaOp}\n${esConsumoInterno ? '*Tipo:* Consumo Interno\n' : ''}----------------------------------------\n${carrito.map(i => `• ${i.cantidad}x ${i.producto} ($${i.precio.toFixed(2)} c/u) -> *$${i.subtotal.toFixed(2)}*`).join('\n')}\n----------------------------------------\n*TOTAL NETO: $${totalAcumulado.toFixed(2)}*\n\nGracias por su confianza.`;
                 if (telefonoClienteSeleccionado && !esConsumoInterno) {
-                    let num = telefonoClienteSeleccionado.replace(/[^0-9]/g,'');
-                    if (num.startsWith('0')) num = '593'+num.substring(1);
+                    let num = telefonoClienteSeleccionado.replace(/[^0-9]/g, '');
+                    if (num.startsWith('0')) num = '593' + num.substring(1);
                     window.open(`https://wa.me/${num}?text=${encodeURIComponent(mensajeWa)}`, '_blank');
                 }
-                await Swal.fire("¡Éxito!", `Venta ID: ${result.idVenta}`, "success");
-                carrito = []; renderCarritoYTotales(); limpiarSeleccionProducto();
+                await Swal.fire("¡Éxito!", `Transacción guardada. ID: ${resp.idVenta}`, "success");
+                carrito = [];
+                renderCarritoYTotales();
+                limpiarSeleccionProducto();
                 if (esConsumoInterno) { document.getElementById("chkConsumoInterno").checked = false; alternarConsumoInterno(); }
                 else limpiarSeleccionCliente();
                 await inicializarModulo();
-            } catch(err) { Swal.fire("Error crítico", err.message, "error"); }
+            } catch (err) {
+                Swal.fire("Error crítico", "No se pudieron procesar las salidas: " + (err.message || JSON.stringify(err)), "error");
+            }
         }
 
-        // ==================== EVENTOS GLOBALES ====================
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            establecerFechaPorDefecto();
-            inicializarModulo();
-            document.getElementById("menu-container").innerHTML = `<div class="bg-white shadow-sm border-b border-slate-200 px-4 py-2 text-xs text-slate-500">🧀 Lógica Láctea - Sistema de Ventas (Corregido)</div>`;
-            document.addEventListener("click", (e) => {
-                if (!e.target.closest('#buscarCliente') && !e.target.closest('#listaClientesFlotante')) document.getElementById("listaClientesFlotante").classList.add("hidden");
-                if (!e.target.closest('#buscarProducto') && !e.target.closest('#listaProductosFlotante')) document.getElementById("listaProductosFlotante").classList.add("hidden");
-            });
-        });
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m)); }
     </script>
 </body>
 </html>

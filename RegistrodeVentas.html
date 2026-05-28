@@ -123,7 +123,7 @@
     </main>
 
     <script>
-        // ==================== CONFIGURACIÓN ====================
+                // ==================== CONFIGURACIÓN ====================
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbygPvkbCUxeJKdh8Kv7F_Fhe2zneBM-uPndvQtFfYXbJSmBv5YOShaJV-eMghHB_96a9Q/exec";
 
         let catalogoProductos = [];
@@ -156,9 +156,15 @@
             return parseFloat(texto) || 0;
         };
 
+        // FUNCIÓN ESCAPE HTML CORREGIDA
         function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m] || m));
+            if (str == null) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
         }
 
         // ==================== INICIALIZACIÓN ====================
@@ -166,17 +172,15 @@
             const overlay = document.getElementById("loadingOverlay");
             overlay.classList.remove("hidden", "opacity-0");
             try {
-                // Clientes con diagnóstico
                 console.log("📡 Solicitando clientes...");
                 const clientesRaw = await callAPI({ accion: "getClientes" });
                 console.log("✅ Respuesta de clientes:", clientesRaw);
                 if (!Array.isArray(clientesRaw)) throw new Error("La respuesta no es un array");
-                // Normalizar las claves (por si vienen en minúscula o con otro nombre)
                 clientesGlobal = clientesRaw.map(c => ({
                     Nombre: c.Nombre || c.nombre || c.NOMBRE || "",
                     CI_RUC: c.CI_RUC || c.ci_ruc || c.CI_Ruc || "",
                     Teléfono: c.Teléfono || c.telefono || c.TELEFONO || ""
-                })).filter(c => c.Nombre); // solo los que tienen nombre
+                })).filter(c => c.Nombre);
                 console.log(`📋 Clientes procesados: ${clientesGlobal.length}`);
                 if (clientesGlobal.length === 0) {
                     Swal.fire("Atención", "No se encontraron clientes en la hoja de cálculo. Verifica que la hoja 'Clientes' tenga datos y que la columna se llame 'Nombre'.", "warning");
@@ -236,7 +240,7 @@
             if (filtrados.length === 0) {
                 listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No se encontraron clientes</div>`;
             } else {
-                listaDiv.innerHTML = filtrados.map(c => `<div onclick="seleccionarCliente('${escapeHtml(c.Nombre)}', '${escapeHtml(c.Teléfono || '')}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer border-b"><div class="font-bold">${escapeHtml(c.Nombre)}</div><div class="text-[10px] text-slate-500">${escapeHtml(c.CI_RUC || '')} | ${escapeHtml(c.Teléfono || '')}</div></div>`).join('');
+                listaDiv.innerHTML = filtrados.map(c => `<div onclick="seleccionarCliente('${escapeHtml(c.Nombre)}', '${escapeHtml(c.Teléfono)}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer border-b"><div class="font-bold">${escapeHtml(c.Nombre)}</div><div class="text-[10px] text-slate-500">${escapeHtml(c.CI_RUC)} | ${escapeHtml(c.Teléfono)}</div></div>`).join('');
             }
             listaDiv.classList.remove("hidden");
         }
@@ -262,13 +266,13 @@
             evaluarEstadoBotonRegistrar();
         }
 
-        // ==================== PRODUCTOS (igual que antes, funciona) ====================
+        // ==================== PRODUCTOS ====================
         function filtrarProductos() {
             const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaProductosFlotante");
             const filtrados = catalogoProductos.filter(p => (p.Producto || "").toLowerCase().includes(termino));
             if (filtrados.length === 0) listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No hay productos disponibles</div>`;
-            else listaDiv.innerHTML = filtrados.map(p => `<div onclick="seleccionarProducto('${p.ID}', '${escapeHtml(p.Producto)}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer flex justify-between border-b"><span class="font-bold">${escapeHtml(p.Producto)}</span><span class="bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">Stock: ${p.Stock}</span></div>`).join('');
+            else listaDiv.innerHTML = filtrados.map(p => `<div onclick="seleccionarProducto('${escapeHtml(p.ID)}', '${escapeHtml(p.Producto)}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer flex justify-between border-b"><span class="font-bold">${escapeHtml(p.Producto)}</span><span class="bg-slate-100 px-1.5 py-0.5 rounded text-[10px]">Stock: ${p.Stock}</span></div>`).join('');
             listaDiv.classList.remove("hidden");
         }
 
@@ -416,6 +420,6 @@
                 if (!e.target.closest('#buscarProducto') && !e.target.closest('#listaProductosFlotante')) document.getElementById("listaProductosFlotante").classList.add("hidden");
             });
         });
-    </script>
+           </script>
 </body>
 </html>

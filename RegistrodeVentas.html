@@ -26,7 +26,7 @@
         </div>
     </div>
 
-    <!-- Modal nuevo cliente -->
+    <!-- Modal nuevo cliente (igual que antes) -->
     <div id="modalNuevoCliente" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
             <div class="bg-emerald-600 px-6 py-4 text-white flex justify-between items-center">
@@ -166,13 +166,27 @@
             const overlay = document.getElementById("loadingOverlay");
             overlay.classList.remove("hidden", "opacity-0");
             try {
-                clientesGlobal = await callAPI({ accion: "getClientes" });
+                // Clientes con diagnóstico
+                console.log("📡 Solicitando clientes...");
+                const clientesRaw = await callAPI({ accion: "getClientes" });
+                console.log("✅ Respuesta de clientes:", clientesRaw);
+                if (!Array.isArray(clientesRaw)) throw new Error("La respuesta no es un array");
+                // Normalizar las claves (por si vienen en minúscula o con otro nombre)
+                clientesGlobal = clientesRaw.map(c => ({
+                    Nombre: c.Nombre || c.nombre || c.NOMBRE || "",
+                    CI_RUC: c.CI_RUC || c.ci_ruc || c.CI_Ruc || "",
+                    Teléfono: c.Teléfono || c.telefono || c.TELEFONO || ""
+                })).filter(c => c.Nombre); // solo los que tienen nombre
+                console.log(`📋 Clientes procesados: ${clientesGlobal.length}`);
+                if (clientesGlobal.length === 0) {
+                    Swal.fire("Atención", "No se encontraron clientes en la hoja de cálculo. Verifica que la hoja 'Clientes' tenga datos y que la columna se llame 'Nombre'.", "warning");
+                }
+
                 const inventario = await callAPI({ accion: "getInventario" });
                 catalogoProductos = inventario.filter(p => parseInt(p.Stock) > 0);
-                if (clientesGlobal.length === 0) console.warn("No hay clientes");
-                if (catalogoProductos.length === 0) console.warn("No hay productos con stock");
+                console.log(`📦 Productos con stock: ${catalogoProductos.length}`);
             } catch (err) {
-                console.error(err);
+                console.error("❌ Error en inicialización:", err);
                 Swal.fire("Error", "No se pudo conectar con Google Sheets: " + err.message, "error");
             } finally {
                 overlay.classList.add("opacity-0");
@@ -219,8 +233,11 @@
                 (c.Nombre || "").toLowerCase().includes(termino) ||
                 String(c.CI_RUC || "").toLowerCase().includes(termino)
             );
-            if (filtrados.length === 0) listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No se encontraron clientes</div>`;
-            else listaDiv.innerHTML = filtrados.map(c => `<div onclick="seleccionarCliente('${escapeHtml(c.Nombre)}', '${escapeHtml(c.Teléfono || '')}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer border-b"><div class="font-bold">${escapeHtml(c.Nombre)}</div><div class="text-[10px] text-slate-500">${escapeHtml(c.CI_RUC || '')} | ${escapeHtml(c.Teléfono || '')}</div></div>`).join('');
+            if (filtrados.length === 0) {
+                listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">No se encontraron clientes</div>`;
+            } else {
+                listaDiv.innerHTML = filtrados.map(c => `<div onclick="seleccionarCliente('${escapeHtml(c.Nombre)}', '${escapeHtml(c.Teléfono || '')}')" class="p-3 text-xs font-medium hover:bg-emerald-50 cursor-pointer border-b"><div class="font-bold">${escapeHtml(c.Nombre)}</div><div class="text-[10px] text-slate-500">${escapeHtml(c.CI_RUC || '')} | ${escapeHtml(c.Teléfono || '')}</div></div>`).join('');
+            }
             listaDiv.classList.remove("hidden");
         }
 
@@ -245,7 +262,7 @@
             evaluarEstadoBotonRegistrar();
         }
 
-        // ==================== PRODUCTOS ====================
+        // ==================== PRODUCTOS (igual que antes, funciona) ====================
         function filtrarProductos() {
             const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaProductosFlotante");

@@ -4,15 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Ventas - Lógica Láctea</title>
-
-    <link rel="stylesheet" href="estilos-lacteos.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#059669">
+    <style>
+        /* Estilos adicionales para mejorar la experiencia */
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+    </style>
 </head>
-
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16 relative">
 
     <!-- PANTALLA DE CARGA INICIAL -->
@@ -249,24 +260,36 @@
 
     <script>
         // =====================================================
-        // CONFIGURACIÓN DE LA API - Google Apps Script
+        // CONFIGURACIÓN - REEMPLAZA CON LA URL DE TU APPS SCRIPT
         // =====================================================
-        const DairyConfig = {
-            SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxomUV1OTB-zqQ9EzI7UqKfQS-klXUj5IQbJ-8e-JkjWyu-fxbQUlRF8be8YkgsN3ndLA/exec"
-        };
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxomUV1OTB-zqQ9EzI7UqKfQS-klXUj5IQbJ-8e-JkjWyu-fxbQUlRF8be8YkgsN3ndLA/exec"; // <--- CAMBIA ESTO
 
-        const DairyAPI = {
-            async obtenerDatos(tabla) {
-                const response = await fetch(DairyConfig.SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify({ action: "obtenerDatos", tabla: tabla })
-                });
-                const result = await response.json();
-                if (result.status !== "success") throw new Error(result.message);
-                return result.data;
-            }
-        };
+        // =====================================================
+        // FUNCIÓN JSONP GENÉRICA (EVITA CORS)
+        // =====================================================
+        function jsonpRequest(paramsObj) {
+            return new Promise((resolve, reject) => {
+                const callbackName = `cb_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+                const urlParams = new URLSearchParams(paramsObj);
+                urlParams.append('callback', callbackName);
+                const fullUrl = `${SCRIPT_URL}?${urlParams.toString()}`;
+                
+                const script = document.createElement('script');
+                window[callbackName] = function(response) {
+                    delete window[callbackName];
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                    if (response.status === 'success') resolve(response);
+                    else reject(response);
+                };
+                script.src = fullUrl;
+                script.onerror = () => {
+                    delete window[callbackName];
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                    reject(new Error('Error de conexión con el servidor'));
+                };
+                document.body.appendChild(script);
+            });
+        }
 
         // =====================================================
         // LÓGICA PRINCIPAL DEL MÓDULO DE VENTAS
@@ -284,7 +307,7 @@
             lucide.createIcons();
             establecerFechaPorDefecto();
             inicializarModulo();
-            cargarMenuSimple();   // Para el contenedor #menu-container
+            cargarMenuSimple();
 
             document.addEventListener("click", (e) => {
                 if (!e.target.closest('#buscarCliente') && !e.target.closest('#listaClientesFlotante')) {
@@ -301,7 +324,7 @@
             if (menuDiv) {
                 menuDiv.innerHTML = `
                     <div class="bg-white shadow-sm border-b border-slate-200 px-4 py-2 text-xs text-slate-500">
-                        🧀 Lógica Láctea - Sistema de Ventas (Integración directa con Google Sheets)
+                        🧀 Lógica Láctea - Sistema de Ventas (JSONP sin CORS)
                     </div>
                 `;
             }
@@ -319,26 +342,29 @@
             return isNaN(numero) ? 0 : numero;
         };
 
+        // ==================== INICIALIZACIÓN ====================
         async function inicializarModulo() {
             const overlay = document.getElementById("loadingOverlay");
             overlay.classList.remove("hidden", "opacity-0");
 
             try {
-                const datosClientes = await DairyAPI.obtenerDatos("Clientes");
-                clientesGlobal = datosClientes || [];
+                // Obtener clientes
+                const clientesResp = await jsonpRequest({ accion: 'getClientes' });
+                clientesGlobal = clientesResp.data || [];
 
-                const datosInventario = await DairyAPI.obtenerDatos("Inventario");
-                catalogoProductos = (datosInventario || []).filter(p => parseInt(p.stock || 0) > 0);
-
+                // Obtener inventario (solo productos con stock > 0)
+                const inventarioResp = await jsonpRequest({ accion: 'getInventario' });
+                catalogoProductos = (inventarioResp.data || []).filter(p => parseInt(p.stock) > 0);
             } catch (err) {
                 console.error(err);
-                Swal.fire("Error", "No se pudo conectar con Google Sheets: " + err.message, "error");
+                Swal.fire("Error", "No se pudo conectar con Google Sheets: " + (err.message || JSON.stringify(err)), "error");
             } finally {
                 overlay.classList.add("opacity-0");
                 setTimeout(() => { overlay.classList.add("hidden"); }, 300);
             }
         }
 
+        // ==================== CLIENTES ====================
         function abrirModalCliente() {
             document.getElementById("formNuevoCliente").reset();
             document.getElementById("modalNuevoCliente").classList.remove("hidden");
@@ -362,8 +388,8 @@
             const telInput = document.getElementById("modalTelefono").value.trim();
             const nombreInput = document.getElementById("modalNombre").value.trim();
 
-            const payloadCliente = {
-                action: "registrarCliente", 
+            const params = {
+                accion: 'registrarCliente',
                 id: autoId,
                 nombre: nombreInput,
                 ci_ruc: document.getElementById("modalRuc").value.trim(),
@@ -375,33 +401,20 @@
             };
 
             try {
-                const response = await fetch(DairyConfig.SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(payloadCliente)
-                });
-
-                const data = await response.json();
-
-                if (data.status !== "success") {
-                    throw new Error(data.message || "Error al insertar fila.");
-                }
-
+                const resp = await jsonpRequest(params);
+                if (resp.status !== "success") throw new Error(resp.message);
                 Swal.fire("¡Éxito!", `Cliente registrado con ID: ${autoId}`, "success");
                 cerrarModalCliente();
-                
-                await inicializarModulo();
+                await inicializarModulo(); // Recargar clientes
                 seleccionarCliente(nombreInput, telInput);
-
             } catch (error) {
                 console.error(error);
-                Swal.fire("Error", "No se pudo sincronizar el nuevo cliente: " + error.message, "error");
+                Swal.fire("Error", "No se pudo sincronizar el nuevo cliente: " + (error.message || JSON.stringify(error)), "error");
             }
         }
 
         function filtrarClientes() {
             if (esConsumoInterno) return;
-            
             const termino = document.getElementById("buscarCliente").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaClientesFlotante");
             
@@ -417,9 +430,9 @@
                     const ruc = String(c.ci_ruc || c.id || "").trim();
                     const tel = String(c.telefono || "").trim();
                     return `
-                        <div onclick="seleccionarCliente('${c.nombre}', '${tel}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex flex-col">
-                            <span class="font-bold text-slate-900">${c.nombre}</span>
-                            <span class="text-[10px] text-slate-400">RUC/CI: ${ruc} | Telf: ${tel || 'S/N'}</span>
+                        <div onclick="seleccionarCliente('${escapeHtml(c.nombre)}', '${escapeHtml(tel)}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex flex-col">
+                            <span class="font-bold text-slate-900">${escapeHtml(c.nombre)}</span>
+                            <span class="text-[10px] text-slate-400">RUC/CI: ${escapeHtml(ruc)} | Telf: ${escapeHtml(tel || 'S/N')}</span>
                         </div>
                     `;
                 }).join('');
@@ -430,7 +443,6 @@
         function seleccionarCliente(nombre, telefono) {
             clienteSeleccionado = nombre;
             telefonoClienteSeleccionado = telefono;
-            
             const input = document.getElementById("buscarCliente");
             input.value = nombre; 
             input.classList.add("bg-emerald-50", "border-emerald-300", "font-bold", "text-emerald-900");
@@ -449,13 +461,11 @@
             evaluarEstadoBotonRegistrar();
         }
 
+        // ==================== PRODUCTOS ====================
         function filtrarProductos() {
             const termino = document.getElementById("buscarProducto").value.toLowerCase().trim();
             const listaDiv = document.getElementById("listaProductosFlotante");
-
-            const filtrados = catalogoProductos.filter(p => 
-                (p.producto || "").toLowerCase().includes(termino)
-            );
+            const filtrados = catalogoProductos.filter(p => (p.producto || "").toLowerCase().includes(termino));
 
             if (filtrados.length === 0) {
                 listaDiv.innerHTML = `<div class="p-3 text-xs text-slate-400 italic bg-white">No hay productos disponibles</div>`;
@@ -463,8 +473,8 @@
                 listaDiv.innerHTML = filtrados.map(p => {
                     const id = String(p.id || "").trim();
                     return `
-                        <div onclick="seleccionarProducto('${id}', '${p.producto}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex justify-between items-center">
-                            <span class="font-bold text-slate-900">${p.producto}</span>
+                        <div onclick="seleccionarProducto('${escapeHtml(id)}', '${escapeHtml(p.producto)}')" class="p-3 text-xs font-medium text-slate-700 hover:bg-emerald-50 cursor-pointer transition-colors flex justify-between items-center">
+                            <span class="font-bold text-slate-900">${escapeHtml(p.producto)}</span>
                             <span class="bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded text-[10px] font-mono">Stock: ${p.stock}</span>
                         </div>
                     `;
@@ -484,12 +494,10 @@
             const prod = catalogoProductos.find(p => String(p.id).trim() === id);
             if (prod) {
                 const stock = parseInt(prod.stock || 0);
-                const precio = limpiarMoneda(prod.precioVenta || 0);
-
+                const precio = esConsumoInterno ? 0 : limpiarMoneda(prod.precioVenta || 0);
                 document.getElementById("wrapperStock").classList.remove("hidden");
                 document.getElementById("txtStockMinimo").innerText = `${stock} Unidades`;
-                document.getElementById("numPrecioUnitario").value = esConsumoInterno ? "0.00" : precio.toFixed(2);
-                
+                document.getElementById("numPrecioUnitario").value = precio.toFixed(2);
                 const btnInsertar = document.querySelector("button[onclick='agregarItemAlCarrito()']");
                 if(btnInsertar) btnInsertar.classList.remove("animate-pulse");
             }
@@ -503,11 +511,11 @@
             document.getElementById("btnLimpiarProducto").classList.add("hidden");
             document.getElementById("wrapperStock").classList.add("hidden");
             document.getElementById("numPrecioUnitario").value = "";
-            
             const btnInsertar = document.querySelector("button[onclick='agregarItemAlCarrito()']");
             if(btnInsertar) btnInsertar.classList.add("animate-pulse");
         }
 
+        // ==================== CARRITO ====================
         function alternarConsumoInterno() {
             esConsumoInterno = document.getElementById("chkConsumoInterno").checked;
             const buscarCli = document.getElementById("buscarCliente");
@@ -537,14 +545,11 @@
                 seleccionarProducto(productoSeleccionado, document.getElementById("buscarProducto").value);
             }
 
+            // Recalcular precios del carrito
             carrito = carrito.map(item => {
                 const prodOriginal = catalogoProductos.find(p => p.id === item.id);
-                const nuevoPrecio = esConsumoInterno ? 0 : limpiarMoneda(prodOriginal.precioVenta);
-                return {
-                    ...item,
-                    precio: nuevoPrecio,
-                    subtotal: item.cantidad * nuevoPrecio
-                };
+                const nuevoPrecio = esConsumoInterno ? 0 : limpiarMoneda(prodOriginal?.precioVenta || 0);
+                return { ...item, precio: nuevoPrecio, subtotal: item.cantidad * nuevoPrecio };
             });
             renderCarritoYTotales();
         }
@@ -562,6 +567,10 @@
             }
 
             const prod = catalogoProductos.find(p => String(p.id).trim() === productoSeleccionado);
+            if (!prod) {
+                Swal.fire("Error", "Producto no encontrado en el catálogo", "error");
+                return;
+            }
             
             if (cantidad > parseInt(prod.stock || 0)) {
                 Swal.fire("Stock Insuficiente", `Solo quedan ${prod.stock} unidades de este producto.`, "error");
@@ -622,7 +631,7 @@
                 total += item.subtotal;
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-100 hover:bg-slate-50/50">
-                        <td class="py-3 px-4 font-bold">${item.producto}</td>
+                        <td class="py-3 px-4 font-bold">${escapeHtml(item.producto)}</td>
                         <td class="py-3 px-2 text-center font-medium">${item.cantidad}</td>
                         <td class="py-3 px-2 text-right">$${item.precio.toFixed(2)}</td>
                         <td class="py-3 px-2 text-right font-bold text-emerald-700">$${item.subtotal.toFixed(2)}</td>
@@ -651,6 +660,7 @@
             }
         }
 
+        // ==================== REGISTRAR VENTA (CON JSONP) ====================
         async function confirmarYEnviarVenta() {
             if (carrito.length === 0 || !clienteSeleccionado) return;
 
@@ -676,68 +686,51 @@
 
             const fechaOp = document.getElementById("fechaEntrega").value;
             let totalAcumulado = 0;
-
             const productosMapeados = carrito.map(item => {
                 totalAcumulado += item.subtotal;
                 return {
-                    producto: item.producto, 
+                    producto: item.producto,
                     cantidad: item.cantidad,
                     precio: item.precio
                 };
             });
 
-            const payloadVenta = {
-                action: "registrarVenta", 
+            const params = {
+                accion: 'registrarVenta',
                 cliente: clienteSeleccionado,
                 fecha: fechaOp,
                 esConsumoInterno: esConsumoInterno,
-                productos: productosMapeados 
+                productos: JSON.stringify(productosMapeados)
             };
 
             try {
-                const response = await fetch(DairyConfig.SCRIPT_URL, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(payloadVenta)
-                });
-
-                const data = await response.json();
-
-                if (data.status !== "success") {
-                    throw new Error(data.message || "Error devuelto por el servidor.");
-                }
+                const resp = await jsonpRequest(params);
+                if (resp.status !== "success") throw new Error(resp.message);
 
                 // Mensaje para WhatsApp
                 let mensajeWa = `*🥛 LÓGICA LÁCTEA - NOTIFICACIÓN DE DESPACHO *\n\n`;
                 mensajeWa += `*Cliente:* ${clienteSeleccionado}\n`;
-                mensajeWa += `*Código Operación:* ${data.idVenta}\n`;
+                mensajeWa += `*Código Operación:* ${resp.idVenta}\n`;
                 mensajeWa += `*Fecha de Entrega:* ${fechaOp}\n`;
-                if(esConsumoInterno) {
-                    mensajeWa += `*Tipo:* Consumo Interno\n`;
-                }
+                if(esConsumoInterno) mensajeWa += `*Tipo:* Consumo Interno\n`;
                 mensajeWa += `----------------------------------------\n`;
-                
                 carrito.forEach(item => {
                     mensajeWa += `• ${item.cantidad}x ${item.producto} ($${item.precio.toFixed(2)} c/u) -> *$${item.subtotal.toFixed(2)}*\n`;
                 });
-                
                 mensajeWa += `----------------------------------------\n`;
                 mensajeWa += `*TOTAL NETO A LIQUIDAR: $${totalAcumulado.toFixed(2)}*\n\n`;
                 mensajeWa += `Muchas gracias por su confianza. Su pedido ha sido procesado e ingresado en nuestra hoja de ruta.`;
 
-                // Enviar WhatsApp si hay número y no es consumo interno
                 if (telefonoClienteSeleccionado && !esConsumoInterno) {
                     let numLimpio = telefonoClienteSeleccionado.replace(/[^0-9]/g, '');
-                    if (numLimpio.startsWith('0')) {
-                        numLimpio = '593' + numLimpio.substring(1);
-                    }
+                    if (numLimpio.startsWith('0')) numLimpio = '593' + numLimpio.substring(1);
                     const urlWhatsapp = `https://wa.me/${numLimpio}?text=${encodeURIComponent(mensajeWa)}`;
                     window.open(urlWhatsapp, '_blank');
                 }
 
-                await Swal.fire("¡Éxito!", `La transacción se guardó correctamente. ID: ${data.idVenta}`, "success");
+                await Swal.fire("¡Éxito!", `La transacción se guardó correctamente. ID: ${resp.idVenta}`, "success");
                 
-                // Limpiar carrito y resetear formulario
+                // Limpiar carrito y resetear
                 carrito = [];
                 renderCarritoYTotales();
                 limpiarSeleccionProducto();
@@ -747,13 +740,25 @@
                 } else {
                     limpiarSeleccionCliente();
                 }
-                
-                await inicializarModulo();
+                await inicializarModulo(); // Recargar stocks y clientes
 
             } catch (err) {
                 console.error(err);
-                Swal.fire("Error crítico", "No se pudieron procesar las salidas del almacén: " + err.message, "error");
+                Swal.fire("Error crítico", "No se pudieron procesar las salidas del almacén: " + (err.message || JSON.stringify(err)), "error");
             }
+        }
+
+        // ==================== UTILIDADES ====================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+                return c;
+            });
         }
     </script>
 </body>

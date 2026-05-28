@@ -20,8 +20,25 @@
         @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
         #loading-overlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,.85); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; }
         .glass-card { background:linear-gradient(135deg,#a21caf 0%,#6b21a8 100%); }
-        .pulse-notif { animation:shadow-pulse 1.5s infinite; }
-        @keyframes shadow-pulse { 0% { box-shadow:0 0 0 0 rgba(0,85,255,.4); } 70% { box-shadow:0 0 0 8px rgba(0,85,255,0); } 100% { box-shadow:0 0 0 0 rgba(0,85,255,0); } }
+        
+        /* Animación de brillo agradable para el total de ventas */
+        .ventas-brillantes {
+            animation: gentleGlow 2s ease-in-out infinite;
+            text-shadow: 0 0 8px rgba(255,215,0,0.4);
+            transition: all 0.2s;
+        }
+        @keyframes gentleGlow {
+            0% { text-shadow: 0 0 0px rgba(255, 223, 0, 0); filter: brightness(1); }
+            50% { text-shadow: 0 0 12px rgba(255, 215, 0, 0.7); filter: brightness(1.08); }
+            100% { text-shadow: 0 0 0px rgba(255, 223, 0, 0); filter: brightness(1); }
+        }
+        /* Suave resplandor en el contenedor */
+        .resplandor-card {
+            transition: box-shadow 0.3s;
+        }
+        .resplandor-card:has(.ventas-brillantes) {
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
     </style>
 </head>
 <body class="bg-background text-[#1f012a] font-[Work_Sans] antialiased pb-10">
@@ -33,37 +50,69 @@
         </div>
     </div>
 
-    <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-24 bg-white border-b border-outline shadow-sm">
+    <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-auto py-3 bg-white border-b border-outline shadow-sm flex-wrap gap-2">
         <div class="flex items-center gap-2">
             <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary border border-purple-200">
                 <span class="material-symbols-outlined text-3xl">analytics</span>
             </div>
             <div class="flex flex-col">
                 <h1 class="text-xs font-black text-primary tracking-tight uppercase italic leading-none mb-1">Lógica Láctea</h1>
-                <select id="periodo-filtro" onchange="cambiarPeriodo()" class="text-[11px] font-black border-none p-0 bg-transparent text-slate-600 focus:ring-0 uppercase">
-                    <option value="hoy">Hoy</option>
-                    <option value="semana">Esta Semana</option>
-                    <option value="mes">Este Mes</option>
-                    <option value="mes-1">Mes Pasado</option>
-                    <option value="personalizado">Día Específico</option>
-                </select>
-                <input type="date" id="filtro-fecha" onchange="cargarDatos()" class="hidden text-[10px] font-bold border-none p-0 bg-transparent text-gray-500 focus:ring-0">
+                <!-- Nuevo sistema de filtros flexible: día, semana, mes, año -->
+                <div class="flex flex-wrap items-center gap-2 mt-1">
+                    <select id="filtro-tipo" onchange="toggleFiltrosAvanzados()" class="text-[10px] font-black border border-slate-200 rounded-full px-2 py-1 bg-slate-50 text-slate-700 uppercase">
+                        <option value="hoy">📅 Hoy</option>
+                        <option value="dia">📆 Día específico</option>
+                        <option value="semana">📅 Semana del mes</option>
+                        <option value="mes">🗓️ Mes</option>
+                        <option value="anio">📆 Año</option>
+                    </select>
+                    
+                    <!-- Controles dinámicos para filtros avanzados -->
+                    <div id="controles-dia" class="hidden">
+                        <input type="date" id="filtro-fecha-dia" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50">
+                    </div>
+                    
+                    <div id="controles-semana" class="hidden items-center gap-1">
+                        <select id="filtro-semana-ano" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50"></select>
+                        <select id="filtro-semana-mes" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50">
+                            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+                            <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+                        </select>
+                        <select id="filtro-semana-numero" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50">
+                            <option value="1">Semana 1</option><option value="2">Semana 2</option><option value="3">Semana 3</option><option value="4">Semana 4</option><option value="5">Semana 5</option><option value="6">Semana 6</option>
+                        </select>
+                    </div>
+                    
+                    <div id="controles-mes" class="hidden items-center gap-1">
+                        <select id="filtro-mes-ano" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50"></select>
+                        <select id="filtro-mes-numero" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50">
+                            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+                            <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+                        </select>
+                    </div>
+                    
+                    <div id="controles-anio" class="hidden">
+                        <select id="filtro-anio" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50"></select>
+                    </div>
+                    
+                    <button onclick="cargarDatos()" class="bg-primary text-white text-[10px] font-black rounded-full px-3 py-1 shadow-sm active:scale-95 transition">Aplicar</button>
+                </div>
             </div>
         </div>
-        <button onclick="cargarDatos()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:scale-90 transition-transform">
-            <span class="material-symbols-outlined text-slate-500">sync</span>
+        <button onclick="cargarDatos()" class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:scale-90">
+            <span class="material-symbols-outlined text-slate-500 text-sm">sync</span>
         </button>
     </header>
 
-    <main class="pt-28 px-4 max-w-7xl mx-auto space-y-5">
-        <!-- TARJETA PRINCIPAL DE VENTAS (AFECTADA POR FILTROS) -->
-        <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
+    <main class="pt-32 px-4 max-w-7xl mx-auto space-y-5">
+        <!-- TARJETA PRINCIPAL DE VENTAS CON BRILLO -->
+        <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden resplandor-card">
             <div class="relative z-10 space-y-4">
                 <div class="flex justify-between items-start">
                     <div>
                         <p id="label-dinero" class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-200 italic">Ventas Totales</p>
-                        <p id="comparativa-ventas" class="text-[10px] text-purple-100 font-bold italic mt-1">Análisis del periodo seleccionado</p>
-                        <h2 id="ventas-total-hoy" class="text-5xl font-black tracking-tighter">$0.00</h2>
+                        <p id="comparativa-ventas" class="text-[10px] text-purple-100 font-bold italic mt-1">Selecciona un período</p>
+                        <h2 id="ventas-total-hoy" class="text-5xl font-black tracking-tighter ventas-brillantes">$0.00</h2>
                     </div>
                     <div class="bg-white/20 p-2 rounded-xl backdrop-blur-md border border-white/30">
                         <span class="material-symbols-outlined text-3xl">payments</span>
@@ -105,91 +154,155 @@
             <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-50 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">groups</span></div><span class="text-[11px] font-black uppercase text-slate-800">Clientes</span></button>
         </div>
 
-        <!-- SECCIÓN: PRIORIDAD DE DESPACHO (SOLO PEDIDOS PENDIENTES) -->
+        <!-- PRIORIDAD DE DESPACHO (SOLO PENDIENTES) -->
         <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-            <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center justify-between italic"><span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">priority_high</span> Prioridad de Despacho</span><span class="text-[8px] text-slate-400">ORDEN: MÁS ANTIGUO PRIMERO</span></h3>
+            <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center justify-between italic"><span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">priority_high</span> Prioridad de Despacho</span><span class="text-[8px] text-slate-400">SOLO PENDIENTES · MÁS ANTIGUO</span></h3>
             <div id="lista-pedidos" class="space-y-3"></div>
             <div id="sin-pendientes" class="text-center text-slate-400 text-xs py-6 italic hidden">✨ No hay pedidos pendientes de despacho</div>
         </section>
 
-        <!-- RANKING CLIENTES (SIN FILTRO, MUESTRA GASTO TOTAL HISTÓRICO) Y STOCK CRÍTICO -->
+        <!-- RANKING CLIENTES (SIN FILTRO) Y STOCK CRÍTICO -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-                <h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.1em] italic flex items-center gap-1"><span class="material-symbols-outlined text-sm">leaderboard</span> Top Ventas Clientes (Gasto Histórico)</h3>
+                <h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.1em] italic flex items-center gap-1"><span class="material-symbols-outlined text-sm">leaderboard</span> Top Clientes (Gasto Histórico Total)</h3>
                 <div id="ranking-clientes" class="space-y-2"></div>
                 <div id="sin-clientes" class="text-center text-slate-400 text-xs py-6 italic hidden">📭 No hay clientes registrados</div>
             </section>
             <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
                 <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest italic">Agotándose (Stock ≤5)</h3>
                 <div id="cont-criticos" class="grid grid-cols-1 gap-2"></div>
-                <div id="sin-criticos" class="text-center text-slate-400 text-xs py-6 italic hidden">✅ No hay productos con stock crítico</div>
+                <div id="sin-criticos" class="text-center text-slate-400 text-xs py-6 italic hidden">✅ Sin productos críticos</div>
             </section>
         </div>
     </main>
 
     <script>
-        // ------ Helper: normalizar texto ------
-        function normalizar(t){ if(!t) return ""; return t.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
-
-        // ------ Filtro de fecha PERIODO (solo para métricas de ventas totales) ------
-        const fInput = document.getElementById('filtro-fecha');
-        const hoy = new Date();
-        fInput.value = new Date(hoy - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-
-        function mostrarCargando(show){ document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
+        // ---------- LÓGICA DE FILTROS AVANZADOS ----------
+        const tipoSelect = document.getElementById('filtro-tipo');
+        const diaDiv = document.getElementById('controles-dia');
+        const semanaDiv = document.getElementById('controles-semana');
+        const mesDiv = document.getElementById('controles-mes');
+        const anioDiv = document.getElementById('controles-anio');
+        const diaInput = document.getElementById('filtro-fecha-dia');
+        const semanaAno = document.getElementById('filtro-semana-ano');
+        const semanaMes = document.getElementById('filtro-semana-mes');
+        const semanaNum = document.getElementById('filtro-semana-numero');
+        const mesAno = document.getElementById('filtro-mes-ano');
+        const mesNum = document.getElementById('filtro-mes-numero');
+        const anioSelect = document.getElementById('filtro-anio');
         
-        function cambiarPeriodo(){ 
-            const periodo = document.getElementById('periodo-filtro').value; 
-            const fechaInput = document.getElementById('filtro-fecha');
-            fechaInput.classList.toggle('hidden', periodo !== 'personalizado'); 
-            cargarDatos(); 
-        }
-        
-        // Función que determina si una fecha pertenece al período seleccionado (SOLO PARA VENTAS)
-        function perteneceAPeriodo(fechaStr) {
-            if(!fechaStr) return false;
-            const refDate = new Date(fechaStr + 'T00:00:00');
-            const today = new Date(); today.setHours(0,0,0,0);
-            const periodo = document.getElementById('periodo-filtro').value;
-            switch(periodo) {
-                case 'hoy': return refDate.getTime() === today.getTime();
-                case 'semana': {
-                    const unDia = 24 * 60 * 60 * 1000; 
-                    let dayOfWeek = today.getDay(); // domingo=0
-                    let diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
-                    const lunesActual = new Date(today.getTime() - diffToMonday * unDia);
-                    const domingoActual = new Date(lunesActual.getTime() + 6 * unDia);
-                    return refDate >= lunesActual && refDate <= domingoActual;
-                }
-                case 'mes': return refDate.getMonth() === today.getMonth() && refDate.getFullYear() === today.getFullYear();
-                case 'mes-1': {
-                    let mPasado = today.getMonth() - 1; 
-                    let aPasado = today.getFullYear(); 
-                    if(mPasado < 0) { mPasado = 11; aPasado--; } 
-                    return refDate.getMonth() === mPasado && refDate.getFullYear() === aPasado;
-                }
-                case 'personalizado': return fechaStr === fInput.value;
-                default: return true;
+        // Llenar selects de años (desde 2020 hasta año actual + 2)
+        const añoActual = new Date().getFullYear();
+        function llenarAnios(selectEl) {
+            selectEl.innerHTML = '';
+            for(let y = 2020; y <= añoActual + 2; y++) {
+                const option = document.createElement('option');
+                option.value = y;
+                option.textContent = y;
+                if(y === añoActual) option.selected = true;
+                selectEl.appendChild(option);
             }
         }
-
-        // ----- Carga principal -----
+        llenarAnios(semanaAno);
+        llenarAnios(mesAno);
+        llenarAnios(anioSelect);
+        
+        function toggleFiltrosAvanzados() {
+            const tipo = tipoSelect.value;
+            diaDiv.classList.add('hidden');
+            semanaDiv.classList.add('hidden');
+            mesDiv.classList.add('hidden');
+            anioDiv.classList.add('hidden');
+            if(tipo === 'dia') diaDiv.classList.remove('hidden');
+            else if(tipo === 'semana') semanaDiv.classList.remove('hidden');
+            else if(tipo === 'mes') mesDiv.classList.remove('hidden');
+            else if(tipo === 'anio') anioDiv.classList.remove('hidden');
+            // Si es hoy, no se muestran controles adicionales
+            if(tipo === 'hoy') {
+                // Forzar recarga de datos con filtro hoy
+                cargarDatos();
+            }
+        }
+        
+        // Determinar si una fecha (YYYY-MM-DD) cumple el filtro avanzado seleccionado
+        function fechaEnFiltroAvanzado(fechaStr) {
+            if(!fechaStr) return false;
+            const tipo = tipoSelect.value;
+            const fecha = new Date(fechaStr + 'T00:00:00');
+            if(isNaN(fecha.getTime())) return false;
+            const today = new Date(); today.setHours(0,0,0,0);
+            
+            if(tipo === 'hoy') {
+                return fecha.toDateString() === today.toDateString();
+            }
+            else if(tipo === 'dia') {
+                const fechaDia = diaInput.value;
+                if(!fechaDia) return false;
+                return fechaStr === fechaDia;
+            }
+            else if(tipo === 'semana') {
+                const ano = parseInt(semanaAno.value);
+                const mesIndex = parseInt(semanaMes.value);
+                const semanaNumero = parseInt(semanaNum.value);
+                // Calcular el primer día del mes
+                const primerDiaMes = new Date(ano, mesIndex, 1);
+                const diaSemanaInicio = primerDiaMes.getDay(); // 0 domingo
+                // Ajustar para considerar lunes como inicio (opcional, pero para semana natural usamos domingo como inicio o lunes? Usaremos lunes como primer día laboral)
+                // Definimos semana: días desde el inicio del mes según semana elegida (semana 1: días 1-7, semana2:8-14,...)
+                const diaInicioSemana = (semanaNumero - 1) * 7 + 1;
+                const diaFinSemana = diaInicioSemana + 6;
+                const diaDelMes = fecha.getDate();
+                return fecha.getMonth() === mesIndex && fecha.getFullYear() === ano && diaDelMes >= diaInicioSemana && diaDelMes <= diaFinSemana;
+            }
+            else if(tipo === 'mes') {
+                const ano = parseInt(mesAno.value);
+                const mes = parseInt(mesNum.value);
+                return fecha.getFullYear() === ano && fecha.getMonth() === mes;
+            }
+            else if(tipo === 'anio') {
+                const ano = parseInt(anioSelect.value);
+                return fecha.getFullYear() === ano;
+            }
+            return false;
+        }
+        
+        // Función para mostrar etiqueta descriptiva del filtro
+        function obtenerTextoFiltro() {
+            const tipo = tipoSelect.value;
+            if(tipo === 'hoy') return "Ventas de hoy";
+            if(tipo === 'dia') return `Ventas del día ${diaInput.value || 'no seleccionado'}`;
+            if(tipo === 'semana') {
+                const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+                return `Ventas de semana ${semanaNum.value} de ${meses[parseInt(semanaMes.value)]} ${semanaAno.value}`;
+            }
+            if(tipo === 'mes') {
+                const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+                return `Ventas de ${meses[parseInt(mesNum.value)]} ${mesAno.value}`;
+            }
+            if(tipo === 'anio') return `Ventas del año ${anioSelect.value}`;
+            return "Ventas del período";
+        }
+        
+        // Mostrar carga y helpers
+        function mostrarCargando(show){ document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
+        function normalizar(t){ if(!t) return ""; return t.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+        
+        // CARGA PRINCIPAL
         async function cargarDatos(){
             mostrarCargando(true);
             try {
-                // Obtener datos desde API (Inventario, Ventas, ComprasPendientes)
                 const [inventario, ventas, compras] = await Promise.all([DairyAPI.obtenerDatos("Inventario"), DairyAPI.obtenerDatos("Ventas"), DairyAPI.obtenerDatos("ComprasPendientes")]);
                 const inv = Array.isArray(inventario) ? inventario : inventario?.data || [];
                 const ven = Array.isArray(ventas) ? ventas : ventas?.data || [];
                 const com = Array.isArray(compras) ? compras : compras?.data || [];
-
-                // 1. Badges de inventario (SKU)
+                
+                // Badges stock
                 document.getElementById('badge-stock').innerText = inv.length;
                 if(inv.length > 0) document.getElementById('badge-stock').classList.remove('hidden');
                 else document.getElementById('badge-stock').classList.add('hidden');
                 document.getElementById('valor-invertido').innerText = `${inv.length} SKU`;
-
-                // 2. Productos agotándose (stock ≤5)
+                
+                // Stock crítico
                 const contenedorCriticos = document.getElementById('cont-criticos');
                 const sinCriticosDiv = document.getElementById('sin-criticos');
                 contenedorCriticos.innerHTML = "";
@@ -199,15 +312,17 @@
                 criticos.forEach(item => {
                     contenedorCriticos.innerHTML += `<div class="flex justify-between items-center text-xs p-2 bg-red-50 text-red-700 rounded-xl border border-red-100"><span class="font-bold">${item.producto || item.Nombre || 'Desconocido'}</span><span class="bg-red-600 text-white font-black px-2 py-0.5 rounded-lg">${item.stock || item.Cantidad} u.</span></div>`;
                 });
-
-                // 3. Badge recepción compras pendientes
+                
+                // Recepciones pendientes
                 const pendientesCompras = com.filter(c => normalizar(c.Estado_Entrega || c.estadoEntrega || c.estado || '') === 'PENDIENTE');
                 const badgeRecepcion = document.getElementById('badge-recepcion');
                 badgeRecepcion.innerText = pendientesCompras.length;
                 if(pendientesCompras.length > 0) badgeRecepcion.classList.remove('hidden');
                 else badgeRecepcion.classList.add('hidden');
-
-                // ---------- FILTRO DE VENTAS: métricas globales y ranking TOTAL de clientes (sin filtro) ----------
+                
+                // Ranking de clientes (GASTO TOTAL HISTÓRICO, SIN FILTRO)
+                const rankingGastoTotal = {};
+                // Despacho pendiente y ventas filtradas
                 let totalVentasFiltrado = 0;
                 let totalItemsPeriodo = 0;
                 let totalPorRecaudar = 0;
@@ -216,129 +331,91 @@
                 const sinPendientesDiv = document.getElementById('sin-pendientes');
                 contenedorPedidos.innerHTML = "";
                 
-                // RANKING CLIENTES: ACUMULADOR SIN FILTRO (GASTO HISTÓRICO TOTAL)
-                const rankingGastoTotal = {};  // clave: nombre cliente, valor: suma total de todos sus pedidos (sin importar estado ni fecha)
-
-                // Preparar array de ventas ordenado por fecha para despacho pendiente
-                const ventasOrdenadas = [...ven].sort((a,b) => {
-                    const fa = a.fecha || a.Fecha || '';
-                    const fb = b.fecha || b.Fecha || '';
-                    return fa.localeCompare(fb);
-                });
-
+                const ventasOrdenadas = [...ven].sort((a,b) => (a.fecha || a.Fecha || '').localeCompare(b.fecha || b.Fecha || ''));
                 ventasOrdenadas.forEach(v => {
-                    const estadoRaw = v.Estado || v.estado || '';
-                    const estadoNorm = normalizar(estadoRaw);
+                    const estadoNorm = normalizar(v.Estado || v.estado || '');
                     const totalVenta = Number(v.Total || v.total || 0);
-                    const clienteName = v.Cliente || v.cliente || 'Consumidor Final';
+                    const cliente = v.Cliente || v.cliente || 'Consumidor Final';
                     const fechaVenta = v.Fecha || v.fecha || '';
                     
-                    // 🔹 RANKING CLIENTES: Acumula TODAS las ventas (sin importar filtro de fecha ni estado) -> gasto histórico
-                    if (totalVenta > 0) {
-                        rankingGastoTotal[clienteName] = (rankingGastoTotal[clienteName] || 0) + totalVenta;
+                    // Ranking histórico (todas las ventas, cualquier estado)
+                    if(totalVenta > 0) {
+                        rankingGastoTotal[cliente] = (rankingGastoTotal[cliente] || 0) + totalVenta;
                     }
                     
-                    // 🔸 Pedidos pendientes (PARA PRIORIDAD DE DESPACHO) SOLO estado PENDIENTE y se muestran todos sin filtro de fecha
-                    if (estadoNorm === 'PENDIENTE') {
+                    // Pedidos pendientes para prioridad de despacho (sin filtro de fecha)
+                    if(estadoNorm === 'PENDIENTE') {
                         totalPorRecaudar += totalVenta;
                         contadorRutaPendientes++;
-                        contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${clienteName}</p><p class="text-[10px] text-slate-400 font-medium">${fechaVenta || 'Sin fecha'} • #${v.Id || v.id || 'N/A'}</p></div><span class="text-right font-bold text-primary">$${totalVenta.toFixed(2)}</span></div>`;
+                        contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${cliente}</p><p class="text-[10px] text-slate-400 font-medium">${fechaVenta || 'Sin fecha'} • #${v.Id || v.id || 'N/A'}</p></div><span class="text-right font-bold text-primary">$${totalVenta.toFixed(2)}</span></div>`;
                     }
                     
-                    // 🔸 MÉTRICAS DE VENTAS TOTALES: solo se aplica filtro de período a los totales (para la tarjeta principal)
-                    if (perteneceAPeriodo(fechaVenta)) {
+                    // Métricas de ventas totales según filtro avanzado (SOLO para el recuadro brillante)
+                    if(fechaEnFiltroAvanzado(fechaVenta)) {
                         totalVentasFiltrado += totalVenta;
                         totalItemsPeriodo += Number(v.Items || v.items || 1);
                     }
                 });
                 
-                // Mostrar/ocultar mensaje de pedidos pendientes
-                if (contadorRutaPendientes === 0) {
-                    sinPendientesDiv.classList.remove('hidden');
-                } else {
-                    sinPendientesDiv.classList.add('hidden');
-                }
-                
-                // Badge "En Ruta" (pedidos pendientes)
+                // Mostrar estado de pendientes
+                if(contadorRutaPendientes === 0) sinPendientesDiv.classList.remove('hidden');
+                else sinPendientesDiv.classList.add('hidden');
                 const badgeRuta = document.getElementById('badge-ruta');
                 badgeRuta.innerText = contadorRutaPendientes;
                 if(contadorRutaPendientes > 0) badgeRuta.classList.remove('hidden');
                 else badgeRuta.classList.add('hidden');
                 
-                // Actualizar tarjeta principal con datos filtrados por fecha
+                // Actualizar tarjeta principal con datos filtrados
                 document.getElementById('ventas-total-hoy').innerText = `$${totalVentasFiltrado.toFixed(2)}`;
                 document.getElementById('ganancia-real').innerText = `$${(totalVentasFiltrado * 0.35).toFixed(2)}`;
                 document.getElementById('ganancia-proyectada').innerText = `${totalItemsPeriodo} Unidades`;
                 document.getElementById('por-recaudar').innerText = `$${totalPorRecaudar.toFixed(2)}`;
+                document.getElementById('comparativa-ventas').innerHTML = obtenerTextoFiltro();
                 
-                // ---------- RENDERIZAR RANKING DE CLIENTES (GASTO HISTÓRICO TOTAL, SIN FILTROS, DESCENDENTE) ----------
+                // Renderizar ranking de clientes (top por gasto histórico)
                 const rankingContainer = document.getElementById('ranking-clientes');
                 const sinClientesDiv = document.getElementById('sin-clientes');
                 rankingContainer.innerHTML = "";
-                
                 const clientesArray = Object.entries(rankingGastoTotal);
-                if(clientesArray.length === 0) {
-                    sinClientesDiv.classList.remove('hidden');
-                } else {
+                if(clientesArray.length === 0) sinClientesDiv.classList.remove('hidden');
+                else {
                     sinClientesDiv.classList.add('hidden');
-                    // Ordenar de mayor a menor gasto
                     clientesArray.sort((a,b) => b[1] - a[1]);
-                    // Mostrar top 10 o todos
-                    const topClientes = clientesArray.slice(0, 12);
-                    topClientes.forEach(([nombre, totalGastado], idx) => {
+                    clientesArray.slice(0, 12).forEach(([nombre, totalGastado], idx) => {
                         const medalla = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}°`;
-                        rankingContainer.innerHTML += `
-                            <div class="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-white rounded-xl border border-purple-100 shadow-sm">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm font-black text-purple-600 w-7">${medalla}</span>
-                                    <span class="font-bold text-slate-700 text-sm">${nombre}</span>
-                                </div>
-                                <span class="bg-purple-100 text-primary font-black px-3 py-1 rounded-full text-xs">$${totalGastado.toFixed(2)}</span>
-                            </div>
-                        `;
+                        rankingContainer.innerHTML += `<div class="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-white rounded-xl border border-purple-100"><div class="flex items-center gap-2"><span class="text-sm font-black text-purple-600 w-7">${medalla}</span><span class="font-bold text-slate-700 text-sm">${nombre}</span></div><span class="bg-purple-100 text-primary font-black px-3 py-1 rounded-full text-xs">$${totalGastado.toFixed(2)}</span></div>`;
                     });
                 }
                 
-                // Adicional: Actualizar texto de comparativa en tarjeta principal para informar el rango
-                const periodoSelect = document.getElementById('periodo-filtro');
-                let periodoTexto = "";
-                switch(periodoSelect.value) {
-                    case 'hoy': periodoTexto = "Ventas de hoy"; break;
-                    case 'semana': periodoTexto = "Ventas de esta semana"; break;
-                    case 'mes': periodoTexto = "Ventas de este mes"; break;
-                    case 'mes-1': periodoTexto = "Ventas del mes pasado"; break;
-                    case 'personalizado': periodoTexto = `Ventas del día ${fInput.value}`; break;
-                    default: periodoTexto = "Ventas del periodo";
-                }
-                document.getElementById('comparativa-ventas').innerHTML = periodoTexto;
+                // Pequeña animación adicional: refrescar el brillo forzando clase
+                const ventasEl = document.getElementById('ventas-total-hoy');
+                ventasEl.classList.remove('ventas-brillantes');
+                void ventasEl.offsetWidth; // reflow
+                ventasEl.classList.add('ventas-brillantes');
                 
-                // Pequeño detalle: si hay filtro personalizado sin datos, mostrar cero
-                if(totalVentasFiltrado === 0 && periodoSelect.value !== 'personalizado') {
-                    // no hacemos nada, ya está en cero
-                }
-                
-            } catch(err) { 
-                console.error("Error al cargar datos:", err); 
-                // Mensaje amigable en consola
-            } finally { 
-                mostrarCargando(false); 
-            }
+            } catch(err) { console.error("Error:", err); } finally { mostrarCargando(false); }
         }
         
+        // Inicializar eventos
         window.onload = () => {
+            // Fijar fecha por defecto en input día
+            diaInput.value = new Date().toISOString().split('T')[0];
+            toggleFiltrosAvanzados();
             cargarDatos();
-            // Asegurar que el listener para cambio de fecha funciona
-            const fechaPicker = document.getElementById('filtro-fecha');
-            if(fechaPicker) fechaPicker.addEventListener('change', () => cargarDatos());
+            // Eventos adicionales
+            diaInput.addEventListener('change', () => cargarDatos());
+            semanaAno.addEventListener('change', () => cargarDatos());
+            semanaMes.addEventListener('change', () => cargarDatos());
+            semanaNum.addEventListener('change', () => cargarDatos());
+            mesAno.addEventListener('change', () => cargarDatos());
+            mesNum.addEventListener('change', () => cargarDatos());
+            anioSelect.addEventListener('change', () => cargarDatos());
         };
     </script>
-
     <script>
-        // Registro de Service Worker (opcional)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js', { scope: '/lacteos-app-/' })
-                    .then(reg => console.log('SW registrado'))
                     .catch(err => console.error('Error SW:', err));
             });
         }

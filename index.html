@@ -24,7 +24,6 @@
         @keyframes shadow-pulse { 0% { box-shadow:0 0 0 0 rgba(0,85,255,.4); } 70% { box-shadow:0 0 0 8px rgba(0,85,255,0); } 100% { box-shadow:0 0 0 0 rgba(0,85,255,0); } }
     </style>
 </head>
-
 <body class="bg-background text-[#1f012a] font-[Work_Sans] antialiased pb-10">
 
     <div id="loading-overlay">
@@ -57,6 +56,7 @@
     </header>
 
     <main class="pt-28 px-4 max-w-7xl mx-auto space-y-5">
+        <!-- TARJETA PRINCIPAL DE VENTAS (AFECTADA POR FILTROS) -->
         <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
             <div class="relative z-10 space-y-4">
                 <div class="flex justify-between items-start">
@@ -93,6 +93,7 @@
             </div>
         </div>
 
+        <!-- BOTONES DE NAVEGACIÓN -->
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">add_shopping_cart</span></div><span class="text-[11px] font-black uppercase text-slate-800">Vender</span></button>
             <button id="btn-ruta" onclick="location.href='GestiondeDespachos.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-ruta" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-green-100 text-success flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">local_shipping</span></div><span class="text-[11px] font-black uppercase text-slate-800">En Ruta</span></button>
@@ -104,26 +105,47 @@
             <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-50 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">groups</span></div><span class="text-[11px] font-black uppercase text-slate-800">Clientes</span></button>
         </div>
 
+        <!-- SECCIÓN: PRIORIDAD DE DESPACHO (SOLO PEDIDOS PENDIENTES) -->
         <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
             <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center justify-between italic"><span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">priority_high</span> Prioridad de Despacho</span><span class="text-[8px] text-slate-400">ORDEN: MÁS ANTIGUO PRIMERO</span></h3>
             <div id="lista-pedidos" class="space-y-3"></div>
+            <div id="sin-pendientes" class="text-center text-slate-400 text-xs py-6 italic hidden">✨ No hay pedidos pendientes de despacho</div>
         </section>
 
+        <!-- RANKING CLIENTES (SIN FILTRO, MUESTRA GASTO TOTAL HISTÓRICO) Y STOCK CRÍTICO -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm"><h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.1em] italic">Top Ventas Clientes</h3><div id="ranking-productos" class="space-y-2"></div></section>
-            <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm"><h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest italic">Agotándose</h3><div id="cont-criticos" class="grid grid-cols-1 gap-2"></div></section>
+            <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
+                <h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.1em] italic flex items-center gap-1"><span class="material-symbols-outlined text-sm">leaderboard</span> Top Ventas Clientes (Gasto Histórico)</h3>
+                <div id="ranking-clientes" class="space-y-2"></div>
+                <div id="sin-clientes" class="text-center text-slate-400 text-xs py-6 italic hidden">📭 No hay clientes registrados</div>
+            </section>
+            <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
+                <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest italic">Agotándose (Stock ≤5)</h3>
+                <div id="cont-criticos" class="grid grid-cols-1 gap-2"></div>
+                <div id="sin-criticos" class="text-center text-slate-400 text-xs py-6 italic hidden">✅ No hay productos con stock crítico</div>
+            </section>
         </div>
     </main>
 
     <script>
+        // ------ Helper: normalizar texto ------
+        function normalizar(t){ if(!t) return ""; return t.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
+
+        // ------ Filtro de fecha PERIODO (solo para métricas de ventas totales) ------
         const fInput = document.getElementById('filtro-fecha');
         const hoy = new Date();
         fInput.value = new Date(hoy - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
         function mostrarCargando(show){ document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
-        function normalizar(t){ if(!t) return ""; return t.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
-        function cambiarPeriodo(){ const periodo = document.getElementById('periodo-filtro').value; fInput.classList.toggle('hidden', periodo !== 'personalizado'); cargarDatos(); }
         
+        function cambiarPeriodo(){ 
+            const periodo = document.getElementById('periodo-filtro').value; 
+            const fechaInput = document.getElementById('filtro-fecha');
+            fechaInput.classList.toggle('hidden', periodo !== 'personalizado'); 
+            cargarDatos(); 
+        }
+        
+        // Función que determina si una fecha pertenece al período seleccionado (SOLO PARA VENTAS)
         function perteneceAPeriodo(fechaStr) {
             if(!fechaStr) return false;
             const refDate = new Date(fechaStr + 'T00:00:00');
@@ -131,67 +153,193 @@
             const periodo = document.getElementById('periodo-filtro').value;
             switch(periodo) {
                 case 'hoy': return refDate.getTime() === today.getTime();
-                case 'semana': const unDia = 24 * 60 * 60 * 1000; const lunesActual = new Date(today.getTime() - ((today.getDay() === 0 ? 7 : today.getDay()) - 1) * unDia); return refDate >= lunesActual && refDate <= today;
+                case 'semana': {
+                    const unDia = 24 * 60 * 60 * 1000; 
+                    let dayOfWeek = today.getDay(); // domingo=0
+                    let diffToMonday = (dayOfWeek === 0 ? 6 : dayOfWeek - 1);
+                    const lunesActual = new Date(today.getTime() - diffToMonday * unDia);
+                    const domingoActual = new Date(lunesActual.getTime() + 6 * unDia);
+                    return refDate >= lunesActual && refDate <= domingoActual;
+                }
                 case 'mes': return refDate.getMonth() === today.getMonth() && refDate.getFullYear() === today.getFullYear();
-                case 'mes-1': let mPasado = today.getMonth() - 1; let aPasado = today.getFullYear(); if(mPasado < 0) { mPasado = 11; aPasado--; } return refDate.getMonth() === mPasado && refDate.getFullYear() === aPasado;
+                case 'mes-1': {
+                    let mPasado = today.getMonth() - 1; 
+                    let aPasado = today.getFullYear(); 
+                    if(mPasado < 0) { mPasado = 11; aPasado--; } 
+                    return refDate.getMonth() === mPasado && refDate.getFullYear() === aPasado;
+                }
                 case 'personalizado': return fechaStr === fInput.value;
                 default: return true;
             }
         }
 
+        // ----- Carga principal -----
         async function cargarDatos(){
             mostrarCargando(true);
             try {
+                // Obtener datos desde API (Inventario, Ventas, ComprasPendientes)
                 const [inventario, ventas, compras] = await Promise.all([DairyAPI.obtenerDatos("Inventario"), DairyAPI.obtenerDatos("Ventas"), DairyAPI.obtenerDatos("ComprasPendientes")]);
                 const inv = Array.isArray(inventario) ? inventario : inventario?.data || [];
                 const ven = Array.isArray(ventas) ? ventas : ventas?.data || [];
                 const com = Array.isArray(compras) ? compras : compras?.data || [];
 
+                // 1. Badges de inventario (SKU)
                 document.getElementById('badge-stock').innerText = inv.length;
                 if(inv.length > 0) document.getElementById('badge-stock').classList.remove('hidden');
+                else document.getElementById('badge-stock').classList.add('hidden');
                 document.getElementById('valor-invertido').innerText = `${inv.length} SKU`;
 
+                // 2. Productos agotándose (stock ≤5)
                 const contenedorCriticos = document.getElementById('cont-criticos');
+                const sinCriticosDiv = document.getElementById('sin-criticos');
                 contenedorCriticos.innerHTML = "";
-                inv.filter(i => { const c = parseInt(i.stock || i.Cantidad || 0); return c > 0 && c <= 5; }).forEach(item => {
+                const criticos = inv.filter(i => { const c = parseInt(i.stock || i.Cantidad || 0); return c > 0 && c <= 5; });
+                if(criticos.length === 0) sinCriticosDiv.classList.remove('hidden');
+                else sinCriticosDiv.classList.add('hidden');
+                criticos.forEach(item => {
                     contenedorCriticos.innerHTML += `<div class="flex justify-between items-center text-xs p-2 bg-red-50 text-red-700 rounded-xl border border-red-100"><span class="font-bold">${item.producto || item.Nombre || 'Desconocido'}</span><span class="bg-red-600 text-white font-black px-2 py-0.5 rounded-lg">${item.stock || item.Cantidad} u.</span></div>`;
                 });
 
+                // 3. Badge recepción compras pendientes
                 const pendientesCompras = com.filter(c => normalizar(c.Estado_Entrega || c.estadoEntrega || c.estado || '') === 'PENDIENTE');
-                document.getElementById('badge-recepcion').innerText = pendientesCompras.length;
-                pendientesCompras.length > 0 ? document.getElementById('badge-recepcion').classList.remove('hidden') : document.getElementById('badge-recepcion').classList.add('hidden');
+                const badgeRecepcion = document.getElementById('badge-recepcion');
+                badgeRecepcion.innerText = pendientesCompras.length;
+                if(pendientesCompras.length > 0) badgeRecepcion.classList.remove('hidden');
+                else badgeRecepcion.classList.add('hidden');
 
-                let totalVentas = 0, totalItemsPeriodo = 0, totalPorRecaudar = 0, contadorRutaPendientes = 0;
-                const rankingClientes = {};
+                // ---------- FILTRO DE VENTAS: métricas globales y ranking TOTAL de clientes (sin filtro) ----------
+                let totalVentasFiltrado = 0;
+                let totalItemsPeriodo = 0;
+                let totalPorRecaudar = 0;
+                let contadorRutaPendientes = 0;
                 const contenedorPedidos = document.getElementById('lista-pedidos');
+                const sinPendientesDiv = document.getElementById('sin-pendientes');
                 contenedorPedidos.innerHTML = "";
+                
+                // RANKING CLIENTES: ACUMULADOR SIN FILTRO (GASTO HISTÓRICO TOTAL)
+                const rankingGastoTotal = {};  // clave: nombre cliente, valor: suma total de todos sus pedidos (sin importar estado ni fecha)
 
-                [...ven].sort((a,b) => String(a.fecha || a.Fecha || '').localeCompare(String(b.fecha || b.Fecha || ''))).forEach(v => {
-                    const est = normalizar(v.Estado || v.estado || '');
-                    const totalDeEstaVenta = Number(v.Total || v.total || 0);
-                    if(est === 'PENDIENTE') { totalPorRecaudar += totalDeEstaVenta; contadorRutaPendientes++; contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${v.Cliente || v.cliente || 'Consumidor Final'}</p><p class="text-[10px] text-slate-400 font-medium">${v.Fecha || v.fecha || ''} • #${v.Id || v.id || 'N/A'}</p></div><span class="text-right font-bold text-primary">$${totalDeEstaVenta.toFixed(2)}</span></div>`; }
-                    if(perteneceAPeriodo(v.Fecha || v.fecha)) { totalVentas += totalDeEstaVenta; totalItemsPeriodo += Number(v.Items || v.items || 1); const cNom = v.Cliente || v.cliente || 'Desconocido'; rankingClientes[cNom] = (rankingClientes[cNom] || 0) + totalDeEstaVenta; }
+                // Preparar array de ventas ordenado por fecha para despacho pendiente
+                const ventasOrdenadas = [...ven].sort((a,b) => {
+                    const fa = a.fecha || a.Fecha || '';
+                    const fb = b.fecha || b.Fecha || '';
+                    return fa.localeCompare(fb);
                 });
 
-                document.getElementById('badge-ruta').innerText = contadorRutaPendientes;
-                contadorRutaPendientes > 0 ? document.getElementById('badge-ruta').classList.remove('hidden') : document.getElementById('badge-ruta').classList.add('hidden');
+                ventasOrdenadas.forEach(v => {
+                    const estadoRaw = v.Estado || v.estado || '';
+                    const estadoNorm = normalizar(estadoRaw);
+                    const totalVenta = Number(v.Total || v.total || 0);
+                    const clienteName = v.Cliente || v.cliente || 'Consumidor Final';
+                    const fechaVenta = v.Fecha || v.fecha || '';
+                    
+                    // 🔹 RANKING CLIENTES: Acumula TODAS las ventas (sin importar filtro de fecha ni estado) -> gasto histórico
+                    if (totalVenta > 0) {
+                        rankingGastoTotal[clienteName] = (rankingGastoTotal[clienteName] || 0) + totalVenta;
+                    }
+                    
+                    // 🔸 Pedidos pendientes (PARA PRIORIDAD DE DESPACHO) SOLO estado PENDIENTE y se muestran todos sin filtro de fecha
+                    if (estadoNorm === 'PENDIENTE') {
+                        totalPorRecaudar += totalVenta;
+                        contadorRutaPendientes++;
+                        contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${clienteName}</p><p class="text-[10px] text-slate-400 font-medium">${fechaVenta || 'Sin fecha'} • #${v.Id || v.id || 'N/A'}</p></div><span class="text-right font-bold text-primary">$${totalVenta.toFixed(2)}</span></div>`;
+                    }
+                    
+                    // 🔸 MÉTRICAS DE VENTAS TOTALES: solo se aplica filtro de período a los totales (para la tarjeta principal)
+                    if (perteneceAPeriodo(fechaVenta)) {
+                        totalVentasFiltrado += totalVenta;
+                        totalItemsPeriodo += Number(v.Items || v.items || 1);
+                    }
+                });
                 
-                document.getElementById('ventas-total-hoy').innerText = `$${totalVentas.toFixed(2)}`;
-                document.getElementById('ganancia-real').innerText = `$${(totalVentas * 0.35).toFixed(2)}`;
+                // Mostrar/ocultar mensaje de pedidos pendientes
+                if (contadorRutaPendientes === 0) {
+                    sinPendientesDiv.classList.remove('hidden');
+                } else {
+                    sinPendientesDiv.classList.add('hidden');
+                }
+                
+                // Badge "En Ruta" (pedidos pendientes)
+                const badgeRuta = document.getElementById('badge-ruta');
+                badgeRuta.innerText = contadorRutaPendientes;
+                if(contadorRutaPendientes > 0) badgeRuta.classList.remove('hidden');
+                else badgeRuta.classList.add('hidden');
+                
+                // Actualizar tarjeta principal con datos filtrados por fecha
+                document.getElementById('ventas-total-hoy').innerText = `$${totalVentasFiltrado.toFixed(2)}`;
+                document.getElementById('ganancia-real').innerText = `$${(totalVentasFiltrado * 0.35).toFixed(2)}`;
                 document.getElementById('ganancia-proyectada').innerText = `${totalItemsPeriodo} Unidades`;
                 document.getElementById('por-recaudar').innerText = `$${totalPorRecaudar.toFixed(2)}`;
-            } catch(err) { console.error(err); } finally { mostrarCargando(false); }
+                
+                // ---------- RENDERIZAR RANKING DE CLIENTES (GASTO HISTÓRICO TOTAL, SIN FILTROS, DESCENDENTE) ----------
+                const rankingContainer = document.getElementById('ranking-clientes');
+                const sinClientesDiv = document.getElementById('sin-clientes');
+                rankingContainer.innerHTML = "";
+                
+                const clientesArray = Object.entries(rankingGastoTotal);
+                if(clientesArray.length === 0) {
+                    sinClientesDiv.classList.remove('hidden');
+                } else {
+                    sinClientesDiv.classList.add('hidden');
+                    // Ordenar de mayor a menor gasto
+                    clientesArray.sort((a,b) => b[1] - a[1]);
+                    // Mostrar top 10 o todos
+                    const topClientes = clientesArray.slice(0, 12);
+                    topClientes.forEach(([nombre, totalGastado], idx) => {
+                        const medalla = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}°`;
+                        rankingContainer.innerHTML += `
+                            <div class="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-white rounded-xl border border-purple-100 shadow-sm">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-black text-purple-600 w-7">${medalla}</span>
+                                    <span class="font-bold text-slate-700 text-sm">${nombre}</span>
+                                </div>
+                                <span class="bg-purple-100 text-primary font-black px-3 py-1 rounded-full text-xs">$${totalGastado.toFixed(2)}</span>
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Adicional: Actualizar texto de comparativa en tarjeta principal para informar el rango
+                const periodoSelect = document.getElementById('periodo-filtro');
+                let periodoTexto = "";
+                switch(periodoSelect.value) {
+                    case 'hoy': periodoTexto = "Ventas de hoy"; break;
+                    case 'semana': periodoTexto = "Ventas de esta semana"; break;
+                    case 'mes': periodoTexto = "Ventas de este mes"; break;
+                    case 'mes-1': periodoTexto = "Ventas del mes pasado"; break;
+                    case 'personalizado': periodoTexto = `Ventas del día ${fInput.value}`; break;
+                    default: periodoTexto = "Ventas del periodo";
+                }
+                document.getElementById('comparativa-ventas').innerHTML = periodoTexto;
+                
+                // Pequeño detalle: si hay filtro personalizado sin datos, mostrar cero
+                if(totalVentasFiltrado === 0 && periodoSelect.value !== 'personalizado') {
+                    // no hacemos nada, ya está en cero
+                }
+                
+            } catch(err) { 
+                console.error("Error al cargar datos:", err); 
+                // Mensaje amigable en consola
+            } finally { 
+                mostrarCargando(false); 
+            }
         }
-
-        window.onload = cargarDatos;
+        
+        window.onload = () => {
+            cargarDatos();
+            // Asegurar que el listener para cambio de fecha funciona
+            const fechaPicker = document.getElementById('filtro-fecha');
+            if(fechaPicker) fechaPicker.addEventListener('change', () => cargarDatos());
+        };
     </script>
 
     <script>
+        // Registro de Service Worker (opcional)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js', { scope: '/lacteos-app-/' })
                     .then(reg => console.log('SW registrado'))
-                    .catch(err => console.error('Error:', err));
+                    .catch(err => console.error('Error SW:', err));
             });
         }
     </script>

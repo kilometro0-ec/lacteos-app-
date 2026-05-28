@@ -1,7 +1,7 @@
 {
   "name": "Lógica Láctea - Gestión Integrada",
   "short_name": "LogicaLactea",
-  "description": "Sistema integral de ventas, inventario, compras y finanzas.",
+  "description": "Sistema integral de ventas, inventario, compras, mucho mas  y finanzas.",
   "start_url": "/lacteos-app-/index.html",
   "scope": "/lacteos-app-/",
   "display": "standalone",

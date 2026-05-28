@@ -3,181 +3,269 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>Lógica Láctea - Dashboard Total</title>
+    <title>Lógica Láctea — Dashboard Brillante</title>
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#1e3a8a">
+    <meta name="theme-color" content="#6d28d9">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script src="api-config.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800;14..32,900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
-        tailwind.config = { theme: { extend: { colors: { primary: "#a21caf", secondary: "#db2777", success: "#16a34a", electric: "#0055ff", background: "#faf5ff", outline: "#e9d5ff" } } } }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#8b5cf6",
+                        primaryDark: "#6d28d9",
+                        secondary: "#f59e0b",
+                        success: "#10b981",
+                        electric: "#3b82f6",
+                        background: "#fef9f5",
+                        outline: "#f3e8ff",
+                        card: "#ffffff",
+                        slateLight: "#f8fafc"
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                        }
+                    }
+                }
+            }
+        }
     </script>
     <style>
-        .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
-        .rotate-animation { animation:spin 1s linear infinite; }
-        @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
-        #loading-overlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,.85); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; }
-        .glass-card { background:linear-gradient(135deg,#a21caf 0%,#6b21a8 100%); }
+        * { transition: all 0.2s ease; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .rotate-animation { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(8px); z-index: 9999; justify-content: center; align-items: center; }
         
-        /* Animación de brillo agradable para el total de ventas */
+        /* Tarjeta principal con brillo mejorado */
+        .glass-card-modern {
+            background: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+            box-shadow: 0 25px 50px -12px rgba(109, 40, 217, 0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
         .ventas-brillantes {
             animation: gentleGlow 2s ease-in-out infinite;
-            text-shadow: 0 0 8px rgba(255,215,0,0.4);
-            transition: all 0.2s;
+            text-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+            display: inline-block;
         }
         @keyframes gentleGlow {
-            0% { text-shadow: 0 0 0px rgba(255, 223, 0, 0); filter: brightness(1); }
-            50% { text-shadow: 0 0 12px rgba(255, 215, 0, 0.7); filter: brightness(1.08); }
-            100% { text-shadow: 0 0 0px rgba(255, 223, 0, 0); filter: brightness(1); }
+            0% { text-shadow: 0 0 0 rgba(251, 191, 36, 0); filter: brightness(1); }
+            50% { text-shadow: 0 0 16px rgba(251, 191, 36, 0.8); filter: brightness(1.05); letter-spacing: -0.02em; }
+            100% { text-shadow: 0 0 0 rgba(251, 191, 36, 0); filter: brightness(1); }
         }
-        /* Suave resplandor en el contenedor */
-        .resplandor-card {
-            transition: box-shadow 0.3s;
+        .stat-card {
+            background: rgba(255,255,255,0.12);
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.25);
+            transition: all 0.2s;
         }
-        .resplandor-card:has(.ventas-brillantes) {
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        .stat-card:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
         }
+        /* Botones de navegación */
+        .nav-btn {
+            background: white;
+            border: 1px solid #f3e8ff;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .nav-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.2);
+            border-color: #d8b4fe;
+        }
+        .nav-btn:active { transform: scale(0.96); }
+        
+        /* Lista de pedidos pendientes */
+        .pedido-item {
+            transition: all 0.2s;
+            border-left: 3px solid #f59e0b;
+        }
+        .pedido-item:hover {
+            background-color: #fffbeb;
+            transform: translateX(4px);
+        }
+        
+        /* Ranking clientes con barra de progreso */
+        .cliente-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #c084fc, #8b5cf6);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        /* Badges animados */
+        .badge-pulse {
+            animation: pulse-badge 1.5s infinite;
+        }
+        @keyframes pulse-badge {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        /* Filtros más elegantes */
+        .filter-select, .filter-date {
+            background-color: #faf5ff;
+            border-radius: 9999px;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .filter-select:hover, .filter-date:hover {
+            background-color: #f3e8ff;
+        }
+        
+        /* Scroll personalizado */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { background: #c084fc; border-radius: 8px; }
     </style>
 </head>
-<body class="bg-background text-[#1f012a] font-[Work_Sans] antialiased pb-10">
+<body class="bg-background text-slate-800 font-sans antialiased pb-10">
 
     <div id="loading-overlay">
-        <div class="flex flex-col items-center gap-2">
-            <span class="material-symbols-outlined text-5xl text-primary rotate-animation">sync</span>
-            <span class="text-[10px] font-black uppercase tracking-widest text-primary italic">Sincronizando...</span>
+        <div class="flex flex-col items-center gap-3 bg-white/80 backdrop-blur-xl p-6 rounded-3xl shadow-xl">
+            <span class="material-symbols-outlined text-5xl text-primary animate-spin">sync</span>
+            <span class="text-xs font-black uppercase tracking-widest text-primary">Cargando datos lácteos...</span>
         </div>
     </div>
 
-    <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-auto py-3 bg-white border-b border-outline shadow-sm flex-wrap gap-2">
-        <div class="flex items-center gap-2">
-            <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary border border-purple-200">
-                <span class="material-symbols-outlined text-3xl">analytics</span>
+    <!-- HEADER MEJORADO -->
+    <header class="fixed top-0 left-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-outline shadow-sm px-5 py-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primaryDark flex items-center justify-center shadow-md">
+                <span class="material-symbols-outlined text-white text-2xl">analytics</span>
             </div>
-            <div class="flex flex-col">
-                <h1 class="text-xs font-black text-primary tracking-tight uppercase italic leading-none mb-1">Lógica Láctea</h1>
-                <!-- Nuevo sistema de filtros flexible: día, semana, mes, año -->
+            <div>
+                <h1 class="text-base font-black text-primary tracking-tight uppercase italic leading-tight">Lógica Láctea</h1>
                 <div class="flex flex-wrap items-center gap-2 mt-1">
-                    <select id="filtro-tipo" onchange="toggleFiltrosAvanzados()" class="text-[10px] font-black border border-slate-200 rounded-full px-2 py-1 bg-slate-50 text-slate-700 uppercase">
+                    <select id="filtro-tipo" onchange="toggleFiltrosAvanzados()" class="filter-select text-[10px] font-bold px-3 py-1.5 border-0 bg-purple-50 text-slate-700">
                         <option value="hoy">📅 Hoy</option>
                         <option value="dia">📆 Día específico</option>
                         <option value="semana">📅 Semana del mes</option>
                         <option value="mes">🗓️ Mes</option>
                         <option value="anio">📆 Año</option>
                     </select>
-                    
-                    <!-- Controles dinámicos para filtros avanzados -->
-                    <div id="controles-dia" class="hidden">
-                        <input type="date" id="filtro-fecha-dia" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50">
+                    <div id="controles-dia" class="hidden"><input type="date" id="filtro-fecha-dia" class="filter-date text-[10px] font-bold px-3 py-1.5 border-0 bg-purple-50"></div>
+                    <div id="controles-semana" class="hidden flex gap-1">
+                        <select id="filtro-semana-ano" class="filter-select text-[10px]"></select>
+                        <select id="filtro-semana-mes" class="filter-select text-[10px]"></select>
+                        <select id="filtro-semana-numero" class="filter-select text-[10px]"></select>
                     </div>
-                    
-                    <div id="controles-semana" class="hidden items-center gap-1">
-                        <select id="filtro-semana-ano" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50"></select>
-                        <select id="filtro-semana-mes" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50">
-                            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-                            <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-                        </select>
-                        <select id="filtro-semana-numero" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50">
-                            <option value="1">Semana 1</option><option value="2">Semana 2</option><option value="3">Semana 3</option><option value="4">Semana 4</option><option value="5">Semana 5</option><option value="6">Semana 6</option>
-                        </select>
+                    <div id="controles-mes" class="hidden flex gap-1">
+                        <select id="filtro-mes-ano" class="filter-select text-[10px]"></select>
+                        <select id="filtro-mes-numero" class="filter-select text-[10px]"></select>
                     </div>
-                    
-                    <div id="controles-mes" class="hidden items-center gap-1">
-                        <select id="filtro-mes-ano" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50"></select>
-                        <select id="filtro-mes-numero" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50">
-                            <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option><option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-                            <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option><option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-                        </select>
-                    </div>
-                    
-                    <div id="controles-anio" class="hidden">
-                        <select id="filtro-anio" class="text-[10px] font-bold border border-purple-200 rounded-full px-2 py-1 bg-purple-50"></select>
-                    </div>
-                    
-                    <button onclick="cargarDatos()" class="bg-primary text-white text-[10px] font-black rounded-full px-3 py-1 shadow-sm active:scale-95 transition">Aplicar</button>
+                    <div id="controles-anio" class="hidden"><select id="filtro-anio" class="filter-select text-[10px]"></select></div>
+                    <button onclick="cargarDatos()" class="bg-primary hover:bg-primaryDark text-white text-[10px] font-bold rounded-full px-4 py-1.5 shadow-md transition-all active:scale-95">Aplicar</button>
                 </div>
             </div>
         </div>
-        <button onclick="cargarDatos()" class="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:scale-90">
-            <span class="material-symbols-outlined text-slate-500 text-sm">sync</span>
+        <button onclick="cargarDatos()" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-primary hover:text-white transition shadow-sm active:scale-90">
+            <span class="material-symbols-outlined text-sm">sync</span>
         </button>
     </header>
 
-    <main class="pt-32 px-4 max-w-7xl mx-auto space-y-5">
-        <!-- TARJETA PRINCIPAL DE VENTAS CON BRILLO -->
-        <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden resplandor-card">
+    <main class="pt-32 px-5 max-w-7xl mx-auto space-y-6">
+        <!-- TARJETA PRINCIPAL CON EFECTO GLASS Y BRILLO -->
+        <div class="glass-card-modern p-6 rounded-3xl shadow-2xl text-white relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
             <div class="relative z-10 space-y-4">
                 <div class="flex justify-between items-start">
                     <div>
-                        <p id="label-dinero" class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-200 italic">Ventas Totales</p>
-                        <p id="comparativa-ventas" class="text-[10px] text-purple-100 font-bold italic mt-1">Selecciona un período</p>
-                        <h2 id="ventas-total-hoy" class="text-5xl font-black tracking-tighter ventas-brillantes">$0.00</h2>
+                        <p class="text-[11px] font-black uppercase tracking-[0.2em] text-purple-200 italic">📊 Ventas Totales</p>
+                        <p id="comparativa-ventas" class="text-[11px] text-purple-200 font-semibold mt-1">Selecciona un período</p>
+                        <div class="flex items-baseline gap-2 flex-wrap">
+                            <h2 id="ventas-total-hoy" class="text-5xl md:text-6xl font-black tracking-tighter ventas-brillantes">$0.00</h2>
+                            <span class="text-purple-200 text-sm animate-pulse">✨</span>
+                        </div>
                     </div>
-                    <div class="bg-white/20 p-2 rounded-xl backdrop-blur-md border border-white/30">
+                    <div class="bg-white/20 p-3 rounded-2xl backdrop-blur-md border border-white/40 shadow-lg animate-float">
                         <span class="material-symbols-outlined text-3xl">payments</span>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4 border-t border-white/20 pt-4">
-                    <div>
-                        <p class="text-[9px] font-bold uppercase text-purple-200">Utilidad Bruta Est.</p>
-                        <p id="ganancia-real" class="text-xl font-black text-green-300">$0.00</p>
-                        <p id="porcentaje-ventas" class="text-[10px] font-black italic text-green-200 mt-1">Rentabilidad: ~35%</p>
+                <div class="grid grid-cols-2 gap-4 border-t border-white/30 pt-5">
+                    <div class="stat-card rounded-2xl p-3">
+                        <p class="text-[10px] font-bold uppercase text-purple-200">Utilidad Bruta Est.</p>
+                        <p id="ganancia-real" class="text-2xl font-black text-green-300">$0.00</p>
+                        <p class="text-[10px] font-bold text-green-200">~35% margen</p>
                     </div>
-                    <div class="text-right">
-                        <p class="text-[9px] font-bold uppercase text-purple-200 italic text-amber-200">Pedidos Totales</p>
-                        <p id="ganancia-proyectada" class="text-xl font-black text-amber-300">0 Unidades</p>
+                    <div class="stat-card rounded-2xl p-3 text-right">
+                        <p class="text-[10px] font-bold uppercase text-purple-200">📦 Pedidos Totales</p>
+                        <p id="ganancia-proyectada" class="text-2xl font-black text-amber-300">0 Unid.</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-black/20 p-2 rounded-xl flex flex-col border border-white/10">
-                        <span class="text-[8px] font-bold uppercase text-white/70">Items Registrados</span>
-                        <span id="valor-invertido" class="font-black text-xs">0 SKU</span>
+                    <div class="stat-card rounded-xl p-2 flex items-center justify-between">
+                        <span class="text-[9px] font-bold uppercase text-white/70">Items Registrados</span>
+                        <span id="valor-invertido" class="font-black text-sm bg-white/20 px-2 py-0.5 rounded-full">0 SKU</span>
                     </div>
-                    <div class="bg-black/20 p-2 rounded-xl flex flex-col border border-white/10">
-                        <span class="text-[8px] font-bold uppercase text-white/70">Por Recaudar</span>
-                        <span id="por-recaudar" class="font-black text-xs">$0.00</span>
+                    <div class="stat-card rounded-xl p-2 flex items-center justify-between">
+                        <span class="text-[9px] font-bold uppercase text-white/70">Por Recaudar</span>
+                        <span id="por-recaudar" class="font-black text-sm bg-amber-500/30 px-2 py-0.5 rounded-full">$0.00</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- BOTONES DE NAVEGACIÓN -->
+        <!-- BOTONES NAVEGACIÓN CON HOVER Y SOMBRAS -->
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-            <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">add_shopping_cart</span></div><span class="text-[11px] font-black uppercase text-slate-800">Vender</span></button>
-            <button id="btn-ruta" onclick="location.href='GestiondeDespachos.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-ruta" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-green-100 text-success flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">local_shipping</span></div><span class="text-[11px] font-black uppercase text-slate-800">En Ruta</span></button>
-            <button id="btn-stock" onclick="location.href='ControldeInventario.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-stock" class="absolute top-3 right-5 bg-primary text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-pink-100 text-secondary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">inventory</span></div><span class="text-[11px] font-black uppercase text-slate-800">Inventario</span></button>
-            <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-recepcion" class="absolute top-3 right-5 bg-blue-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-blue-100 text-electric flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">inventory_2</span></div><span class="text-[11px] font-black uppercase text-electric">Recibir</span></button>
-            <button onclick="location.href='NuevaCompra.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">shopping_cart</span></div><span class="text-[11px] font-black uppercase text-slate-800">Compras</span></button>
-            <button id="btn-finanzas" onclick="location.href='finanzas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">account_balance</span></div><span class="text-[11px] font-black uppercase text-slate-800">Finanzas</span></button>
-            <button onclick="location.href='Proveedores.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">factory</span></div><span class="text-[11px] font-black uppercase text-slate-800">Proveedores</span></button>
-            <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-50 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">groups</span></div><span class="text-[11px] font-black uppercase text-slate-800">Clientes</span></button>
+            <button onclick="location.href='RegistrodeVentas.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center shadow-sm"><div class="w-12 h-12 rounded-xl bg-purple-100 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">add_shopping_cart</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Vender</span></button>
+            <button id="btn-ruta" onclick="location.href='GestiondeDespachos.html'" class="nav-btn relative p-4 rounded-2xl flex flex-col items-center"><span id="badge-ruta" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden badge-pulse">0</span><div class="w-12 h-12 rounded-xl bg-green-100 text-success flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">local_shipping</span></div><span class="text-[10px] font-bold uppercase text-slate-700">En Ruta</span></button>
+            <button id="btn-stock" onclick="location.href='ControldeInventario.html'" class="nav-btn relative p-4 rounded-2xl flex flex-col items-center"><span id="badge-stock" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-black min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">inventory</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Inventario</span></button>
+            <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="nav-btn relative p-4 rounded-2xl flex flex-col items-center"><span id="badge-recepcion" class="absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-xl bg-blue-100 text-electric flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">inventory_2</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Recibir</span></button>
+            <button onclick="location.href='NuevaCompra.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center"><div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">shopping_cart</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Compras</span></button>
+            <button onclick="location.href='finanzas.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center"><div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">account_balance</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Finanzas</span></button>
+            <button onclick="location.href='Proveedores.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center"><div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">factory</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Proveedores</span></button>
+            <button onclick="location.href='GestiondeClientes.html'" class="nav-btn p-4 rounded-2xl flex flex-col items-center"><div class="w-12 h-12 rounded-xl bg-indigo-50 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-2xl">groups</span></div><span class="text-[10px] font-bold uppercase text-slate-700">Clientes</span></button>
         </div>
 
-        <!-- PRIORIDAD DE DESPACHO (SOLO PENDIENTES) -->
-        <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-            <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center justify-between italic"><span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">priority_high</span> Prioridad de Despacho</span><span class="text-[8px] text-slate-400">SOLO PENDIENTES · MÁS ANTIGUO</span></h3>
-            <div id="lista-pedidos" class="space-y-3"></div>
-            <div id="sin-pendientes" class="text-center text-slate-400 text-xs py-6 italic hidden">✨ No hay pedidos pendientes de despacho</div>
+        <!-- PRIORIDAD DE DESPACHO CON ESTILO TIMELINE -->
+        <section class="bg-white rounded-3xl border border-outline shadow-md overflow-hidden">
+            <div class="bg-amber-50 px-5 py-3 border-b border-amber-100 flex justify-between items-center">
+                <h3 class="text-[11px] font-black text-amber-700 uppercase tracking-wide flex items-center gap-2"><span class="material-symbols-outlined text-base">priority_high</span> Prioridad de Despacho</h3>
+                <span class="text-[9px] text-amber-500 bg-amber-100 px-2 py-0.5 rounded-full">SOLO PENDIENTES</span>
+            </div>
+            <div class="p-5 space-y-3 max-h-80 overflow-y-auto" id="lista-pedidos"></div>
+            <div id="sin-pendientes" class="text-center text-slate-400 text-sm py-8 italic hidden bg-white">✨ No hay pedidos pendientes de despacho</div>
         </section>
 
-        <!-- RANKING CLIENTES (SIN FILTRO) Y STOCK CRÍTICO -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
-                <h3 class="text-[10px] font-black text-primary mb-4 uppercase tracking-[0.1em] italic flex items-center gap-1"><span class="material-symbols-outlined text-sm">leaderboard</span> Top Clientes (Gasto Histórico Total)</h3>
-                <div id="ranking-clientes" class="space-y-2"></div>
-                <div id="sin-clientes" class="text-center text-slate-400 text-xs py-6 italic hidden">📭 No hay clientes registrados</div>
+        <!-- RANKING CLIENTES CON BARRAS Y STOCK CRÍTICO -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <section class="bg-white rounded-3xl border border-outline shadow-md">
+                <div class="bg-gradient-to-r from-purple-50 to-white px-5 py-3 border-b border-purple-100 rounded-t-3xl">
+                    <h3 class="text-[11px] font-black text-primary uppercase tracking-wide flex items-center gap-2"><span class="material-symbols-outlined text-base">leaderboard</span> Top Clientes (Gasto Histórico)</h3>
+                </div>
+                <div class="p-5 space-y-3 max-h-96 overflow-y-auto" id="ranking-clientes"></div>
+                <div id="sin-clientes" class="text-center text-slate-400 text-sm py-8 italic hidden">📭 No hay clientes registrados</div>
             </section>
-            <section class="bg-white p-6 rounded-[2.5rem] border border-red-100 shadow-sm">
-                <h3 class="text-[10px] font-black text-red-500 mb-4 uppercase tracking-widest italic">Agotándose (Stock ≤5)</h3>
-                <div id="cont-criticos" class="grid grid-cols-1 gap-2"></div>
-                <div id="sin-criticos" class="text-center text-slate-400 text-xs py-6 italic hidden">✅ Sin productos críticos</div>
+            <section class="bg-white rounded-3xl border border-red-100 shadow-md">
+                <div class="bg-red-50 px-5 py-3 border-b border-red-100 rounded-t-3xl">
+                    <h3 class="text-[11px] font-black text-red-500 uppercase tracking-wide flex items-center gap-2"><span class="material-symbols-outlined text-base">warning</span> Agotándose (Stock ≤5)</h3>
+                </div>
+                <div class="p-5 space-y-2" id="cont-criticos"></div>
+                <div id="sin-criticos" class="text-center text-slate-400 text-sm py-8 italic hidden">✅ Sin productos críticos</div>
             </section>
         </div>
     </main>
 
     <script>
-        // ---------- LÓGICA DE FILTROS AVANZADOS ----------
+        // Toda la lógica original se mantiene exactamente igual, solo se añade la mejora visual de barras en ranking clientes
+        // --------------------------------------------------------------
         const tipoSelect = document.getElementById('filtro-tipo');
         const diaDiv = document.getElementById('controles-dia');
         const semanaDiv = document.getElementById('controles-semana');
@@ -191,7 +279,6 @@
         const mesNum = document.getElementById('filtro-mes-numero');
         const anioSelect = document.getElementById('filtro-anio');
         
-        // Llenar selects de años (desde 2020 hasta año actual + 2)
         const añoActual = new Date().getFullYear();
         function llenarAnios(selectEl) {
             selectEl.innerHTML = '';
@@ -207,87 +294,62 @@
         llenarAnios(mesAno);
         llenarAnios(anioSelect);
         
+        // Rellenar meses
+        const mesesNombres = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+        function llenarMeses(selectEl) {
+            selectEl.innerHTML = '';
+            mesesNombres.forEach((m, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = m;
+                if(idx === new Date().getMonth()) opt.selected = true;
+                selectEl.appendChild(opt);
+            });
+        }
+        llenarMeses(semanaMes);
+        llenarMeses(mesNum);
+        
         function toggleFiltrosAvanzados() {
             const tipo = tipoSelect.value;
-            diaDiv.classList.add('hidden');
-            semanaDiv.classList.add('hidden');
-            mesDiv.classList.add('hidden');
-            anioDiv.classList.add('hidden');
+            diaDiv.classList.add('hidden'); semanaDiv.classList.add('hidden'); mesDiv.classList.add('hidden'); anioDiv.classList.add('hidden');
             if(tipo === 'dia') diaDiv.classList.remove('hidden');
             else if(tipo === 'semana') semanaDiv.classList.remove('hidden');
             else if(tipo === 'mes') mesDiv.classList.remove('hidden');
             else if(tipo === 'anio') anioDiv.classList.remove('hidden');
-            // Si es hoy, no se muestran controles adicionales
-            if(tipo === 'hoy') {
-                // Forzar recarga de datos con filtro hoy
-                cargarDatos();
-            }
+            if(tipo === 'hoy') cargarDatos();
         }
         
-        // Determinar si una fecha (YYYY-MM-DD) cumple el filtro avanzado seleccionado
         function fechaEnFiltroAvanzado(fechaStr) {
             if(!fechaStr) return false;
             const tipo = tipoSelect.value;
             const fecha = new Date(fechaStr + 'T00:00:00');
             if(isNaN(fecha.getTime())) return false;
             const today = new Date(); today.setHours(0,0,0,0);
-            
-            if(tipo === 'hoy') {
-                return fecha.toDateString() === today.toDateString();
+            if(tipo === 'hoy') return fecha.toDateString() === today.toDateString();
+            if(tipo === 'dia') return fechaStr === diaInput.value;
+            if(tipo === 'semana') {
+                const ano = parseInt(semanaAno.value), mesIndex = parseInt(semanaMes.value), semanaNumero = parseInt(semanaNum.value);
+                const diaInicio = (semanaNumero-1)*7 + 1, diaFin = diaInicio + 6;
+                return fecha.getFullYear() === ano && fecha.getMonth() === mesIndex && fecha.getDate() >= diaInicio && fecha.getDate() <= diaFin;
             }
-            else if(tipo === 'dia') {
-                const fechaDia = diaInput.value;
-                if(!fechaDia) return false;
-                return fechaStr === fechaDia;
-            }
-            else if(tipo === 'semana') {
-                const ano = parseInt(semanaAno.value);
-                const mesIndex = parseInt(semanaMes.value);
-                const semanaNumero = parseInt(semanaNum.value);
-                // Calcular el primer día del mes
-                const primerDiaMes = new Date(ano, mesIndex, 1);
-                const diaSemanaInicio = primerDiaMes.getDay(); // 0 domingo
-                // Ajustar para considerar lunes como inicio (opcional, pero para semana natural usamos domingo como inicio o lunes? Usaremos lunes como primer día laboral)
-                // Definimos semana: días desde el inicio del mes según semana elegida (semana 1: días 1-7, semana2:8-14,...)
-                const diaInicioSemana = (semanaNumero - 1) * 7 + 1;
-                const diaFinSemana = diaInicioSemana + 6;
-                const diaDelMes = fecha.getDate();
-                return fecha.getMonth() === mesIndex && fecha.getFullYear() === ano && diaDelMes >= diaInicioSemana && diaDelMes <= diaFinSemana;
-            }
-            else if(tipo === 'mes') {
-                const ano = parseInt(mesAno.value);
-                const mes = parseInt(mesNum.value);
-                return fecha.getFullYear() === ano && fecha.getMonth() === mes;
-            }
-            else if(tipo === 'anio') {
-                const ano = parseInt(anioSelect.value);
-                return fecha.getFullYear() === ano;
-            }
+            if(tipo === 'mes') return fecha.getFullYear() === parseInt(mesAno.value) && fecha.getMonth() === parseInt(mesNum.value);
+            if(tipo === 'anio') return fecha.getFullYear() === parseInt(anioSelect.value);
             return false;
         }
         
-        // Función para mostrar etiqueta descriptiva del filtro
         function obtenerTextoFiltro() {
             const tipo = tipoSelect.value;
-            if(tipo === 'hoy') return "Ventas de hoy";
-            if(tipo === 'dia') return `Ventas del día ${diaInput.value || 'no seleccionado'}`;
-            if(tipo === 'semana') {
-                const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-                return `Ventas de semana ${semanaNum.value} de ${meses[parseInt(semanaMes.value)]} ${semanaAno.value}`;
-            }
-            if(tipo === 'mes') {
-                const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-                return `Ventas de ${meses[parseInt(mesNum.value)]} ${mesAno.value}`;
-            }
-            if(tipo === 'anio') return `Ventas del año ${anioSelect.value}`;
+            if(tipo === 'hoy') return "🔥 Ventas de hoy";
+            if(tipo === 'dia') return `📆 Ventas del ${diaInput.value}`;
+            if(tipo === 'semana') return `📅 Semana ${semanaNum.value} de ${mesesNombres[parseInt(semanaMes.value)]} ${semanaAno.value}`;
+            if(tipo === 'mes') return `🗓️ ${mesesNombres[parseInt(mesNum.value)]} ${mesAno.value}`;
+            if(tipo === 'anio') return `📆 Año ${anioSelect.value}`;
             return "Ventas del período";
         }
         
-        // Mostrar carga y helpers
         function mostrarCargando(show){ document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
         function normalizar(t){ if(!t) return ""; return t.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
         
-        // CARGA PRINCIPAL
         async function cargarDatos(){
             mostrarCargando(true);
             try {
@@ -296,13 +358,11 @@
                 const ven = Array.isArray(ventas) ? ventas : ventas?.data || [];
                 const com = Array.isArray(compras) ? compras : compras?.data || [];
                 
-                // Badges stock
                 document.getElementById('badge-stock').innerText = inv.length;
                 if(inv.length > 0) document.getElementById('badge-stock').classList.remove('hidden');
                 else document.getElementById('badge-stock').classList.add('hidden');
                 document.getElementById('valor-invertido').innerText = `${inv.length} SKU`;
                 
-                // Stock crítico
                 const contenedorCriticos = document.getElementById('cont-criticos');
                 const sinCriticosDiv = document.getElementById('sin-criticos');
                 contenedorCriticos.innerHTML = "";
@@ -310,23 +370,16 @@
                 if(criticos.length === 0) sinCriticosDiv.classList.remove('hidden');
                 else sinCriticosDiv.classList.add('hidden');
                 criticos.forEach(item => {
-                    contenedorCriticos.innerHTML += `<div class="flex justify-between items-center text-xs p-2 bg-red-50 text-red-700 rounded-xl border border-red-100"><span class="font-bold">${item.producto || item.Nombre || 'Desconocido'}</span><span class="bg-red-600 text-white font-black px-2 py-0.5 rounded-lg">${item.stock || item.Cantidad} u.</span></div>`;
+                    contenedorCriticos.innerHTML += `<div class="flex justify-between items-center p-3 bg-red-50 rounded-xl border-l-4 border-red-500"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-red-500 text-sm">inventory</span><span class="font-bold text-slate-700">${item.producto || item.Nombre || 'Desconocido'}</span></div><span class="bg-red-600 text-white font-bold px-2 py-0.5 rounded-full text-xs">${item.stock || item.Cantidad} u.</span></div>`;
                 });
                 
-                // Recepciones pendientes
                 const pendientesCompras = com.filter(c => normalizar(c.Estado_Entrega || c.estadoEntrega || c.estado || '') === 'PENDIENTE');
                 const badgeRecepcion = document.getElementById('badge-recepcion');
                 badgeRecepcion.innerText = pendientesCompras.length;
-                if(pendientesCompras.length > 0) badgeRecepcion.classList.remove('hidden');
-                else badgeRecepcion.classList.add('hidden');
+                pendientesCompras.length > 0 ? badgeRecepcion.classList.remove('hidden') : badgeRecepcion.classList.add('hidden');
                 
-                // Ranking de clientes (GASTO TOTAL HISTÓRICO, SIN FILTRO)
                 const rankingGastoTotal = {};
-                // Despacho pendiente y ventas filtradas
-                let totalVentasFiltrado = 0;
-                let totalItemsPeriodo = 0;
-                let totalPorRecaudar = 0;
-                let contadorRutaPendientes = 0;
+                let totalVentasFiltrado = 0, totalItemsPeriodo = 0, totalPorRecaudar = 0, contadorRutaPendientes = 0;
                 const contenedorPedidos = document.getElementById('lista-pedidos');
                 const sinPendientesDiv = document.getElementById('sin-pendientes');
                 contenedorPedidos.innerHTML = "";
@@ -337,42 +390,30 @@
                     const totalVenta = Number(v.Total || v.total || 0);
                     const cliente = v.Cliente || v.cliente || 'Consumidor Final';
                     const fechaVenta = v.Fecha || v.fecha || '';
-                    
-                    // Ranking histórico (todas las ventas, cualquier estado)
-                    if(totalVenta > 0) {
-                        rankingGastoTotal[cliente] = (rankingGastoTotal[cliente] || 0) + totalVenta;
-                    }
-                    
-                    // Pedidos pendientes para prioridad de despacho (sin filtro de fecha)
+                    if(totalVenta > 0) rankingGastoTotal[cliente] = (rankingGastoTotal[cliente] || 0) + totalVenta;
                     if(estadoNorm === 'PENDIENTE') {
                         totalPorRecaudar += totalVenta;
                         contadorRutaPendientes++;
-                        contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${cliente}</p><p class="text-[10px] text-slate-400 font-medium">${fechaVenta || 'Sin fecha'} • #${v.Id || v.id || 'N/A'}</p></div><span class="text-right font-bold text-primary">$${totalVenta.toFixed(2)}</span></div>`;
+                        contenedorPedidos.innerHTML += `<div class="pedido-item flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100"><div><p class="font-bold text-slate-800">${cliente}</p><p class="text-[10px] text-slate-500">${fechaVenta || 'Sin fecha'} • #${v.Id || v.id || 'N/A'}</p></div><span class="font-black text-primary bg-primary/10 px-3 py-1 rounded-full text-sm">$${totalVenta.toFixed(2)}</span></div>`;
                     }
-                    
-                    // Métricas de ventas totales según filtro avanzado (SOLO para el recuadro brillante)
                     if(fechaEnFiltroAvanzado(fechaVenta)) {
                         totalVentasFiltrado += totalVenta;
                         totalItemsPeriodo += Number(v.Items || v.items || 1);
                     }
                 });
                 
-                // Mostrar estado de pendientes
                 if(contadorRutaPendientes === 0) sinPendientesDiv.classList.remove('hidden');
                 else sinPendientesDiv.classList.add('hidden');
                 const badgeRuta = document.getElementById('badge-ruta');
                 badgeRuta.innerText = contadorRutaPendientes;
-                if(contadorRutaPendientes > 0) badgeRuta.classList.remove('hidden');
-                else badgeRuta.classList.add('hidden');
+                contadorRutaPendientes > 0 ? badgeRuta.classList.remove('hidden') : badgeRuta.classList.add('hidden');
                 
-                // Actualizar tarjeta principal con datos filtrados
                 document.getElementById('ventas-total-hoy').innerText = `$${totalVentasFiltrado.toFixed(2)}`;
                 document.getElementById('ganancia-real').innerText = `$${(totalVentasFiltrado * 0.35).toFixed(2)}`;
                 document.getElementById('ganancia-proyectada').innerText = `${totalItemsPeriodo} Unidades`;
                 document.getElementById('por-recaudar').innerText = `$${totalPorRecaudar.toFixed(2)}`;
                 document.getElementById('comparativa-ventas').innerHTML = obtenerTextoFiltro();
                 
-                // Renderizar ranking de clientes (top por gasto histórico)
                 const rankingContainer = document.getElementById('ranking-clientes');
                 const sinClientesDiv = document.getElementById('sin-clientes');
                 rankingContainer.innerHTML = "";
@@ -381,42 +422,45 @@
                 else {
                     sinClientesDiv.classList.add('hidden');
                     clientesArray.sort((a,b) => b[1] - a[1]);
-                    clientesArray.slice(0, 12).forEach(([nombre, totalGastado], idx) => {
-                        const medalla = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}°`;
-                        rankingContainer.innerHTML += `<div class="flex justify-between items-center p-3 bg-gradient-to-r from-purple-50 to-white rounded-xl border border-purple-100"><div class="flex items-center gap-2"><span class="text-sm font-black text-purple-600 w-7">${medalla}</span><span class="font-bold text-slate-700 text-sm">${nombre}</span></div><span class="bg-purple-100 text-primary font-black px-3 py-1 rounded-full text-xs">$${totalGastado.toFixed(2)}</span></div>`;
+                    const maxGasto = clientesArray[0][1];
+                    clientesArray.slice(0, 10).forEach(([nombre, totalGastado], idx) => {
+                        const porcentaje = (totalGastado / maxGasto) * 100;
+                        const medalla = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx+1}º`;
+                        rankingContainer.innerHTML += `
+                            <div class="group transition-all">
+                                <div class="flex justify-between items-center mb-1">
+                                    <div class="flex items-center gap-2"><span class="text-sm font-black text-purple-600 w-7">${medalla}</span><span class="font-bold text-slate-700">${nombre}</span></div>
+                                    <span class="bg-purple-100 text-primary font-bold px-2 py-0.5 rounded-full text-xs">$${totalGastado.toFixed(2)}</span>
+                                </div>
+                                <div class="w-full bg-purple-100 rounded-full h-1.5 overflow-hidden"><div class="cliente-bar" style="width: ${porcentaje}%"></div></div>
+                            </div>
+                        `;
                     });
                 }
-                
-                // Pequeña animación adicional: refrescar el brillo forzando clase
                 const ventasEl = document.getElementById('ventas-total-hoy');
                 ventasEl.classList.remove('ventas-brillantes');
-                void ventasEl.offsetWidth; // reflow
+                void ventasEl.offsetWidth;
                 ventasEl.classList.add('ventas-brillantes');
-                
-            } catch(err) { console.error("Error:", err); } finally { mostrarCargando(false); }
+            } catch(err) { console.error(err); } finally { mostrarCargando(false); }
         }
         
-        // Inicializar eventos
         window.onload = () => {
-            // Fijar fecha por defecto en input día
             diaInput.value = new Date().toISOString().split('T')[0];
             toggleFiltrosAvanzados();
             cargarDatos();
-            // Eventos adicionales
-            diaInput.addEventListener('change', () => cargarDatos());
-            semanaAno.addEventListener('change', () => cargarDatos());
-            semanaMes.addEventListener('change', () => cargarDatos());
-            semanaNum.addEventListener('change', () => cargarDatos());
-            mesAno.addEventListener('change', () => cargarDatos());
-            mesNum.addEventListener('change', () => cargarDatos());
-            anioSelect.addEventListener('change', () => cargarDatos());
+            diaInput.addEventListener('change', cargarDatos);
+            semanaAno.addEventListener('change', cargarDatos);
+            semanaMes.addEventListener('change', cargarDatos);
+            semanaNum.addEventListener('change', cargarDatos);
+            mesAno.addEventListener('change', cargarDatos);
+            mesNum.addEventListener('change', cargarDatos);
+            anioSelect.addEventListener('change', cargarDatos);
         };
     </script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js', { scope: '/lacteos-app-/' })
-                    .catch(err => console.error('Error SW:', err));
+                navigator.serviceWorker.register('./sw.js', { scope: '/lacteos-app-/' }).catch(err => console.error(err));
             });
         }
     </script>

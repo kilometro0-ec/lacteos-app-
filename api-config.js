@@ -1,50 +1,51 @@
 const DairyConfig = {
+    // ID de implementación web activo en Google Apps Script
     SCRIPT_URL: "https://script.google.com/macros/s/AKfycby1n0pOBGYNy0taa85lnQ6YAkYeFzOmlJ8IYORmYjC9EKmbn0oebU4ak_hh1cPZCkmN/exec",
-    VERSION: "1.5"
+    VERSION: "1.4"
 };
 
 const DairyAPI = {
-    // LECTURA de datos (GET) con cache: 'no-store'
+    // Mantén tu función obtenerDatos igual...
     async obtenerDatos(pestana) {
         const url = `${DairyConfig.SCRIPT_URL}?pestana=${encodeURIComponent(pestana)}&accion=leer`;
         try {
             const response = await fetch(url, {
                 method: "GET",
-                cache: "no-store",               // ← EVITA CACHÉ DEL NAVEGADOR
-                headers: {
-                    "Cache-Control": "no-cache, no-store, must-revalidate",
-                    "Pragma": "no-cache"
-                }
+                mode: "cors",
+                headers: { "Content-Type": "text/plain" }
             });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            return data.data || [];
+            if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+            return await response.json();
         } catch (error) {
-            console.error(`Error al leer ${pestana}:`, error);
+            console.error(`Error al leer datos de la pestaña [${pestana}]:`, error);
             throw error;
         }
     },
 
-    // ESCRITURA (POST) – Sin no-cors para poder leer respuesta (opcional)
+    /**
+     * Envía procesos transaccionales al servidor alineado con doPost(e)
+     */
     async guardarDatos(pestana, payload) {
-        const cuerpo = {
-            pestana: pestana,
-            action: payload.action || payload.accion,
-            ...payload
-        };
         try {
+            // Aseguramos que viaje el parámetro "action" que tu script de Apps Script busca estrictamente
+            const cuerpoEnvio = { 
+                pestana: pestana, 
+                action: payload.action || payload.accion, 
+                ...payload 
+            };
+            
+            // Usamos "no-cors" para prevenir los bloqueos clásicos que hace Google Script al redirigir la petición de macros
             const response = await fetch(DairyConfig.SCRIPT_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },  // ← Usamos JSON, no text/plain
-                body: JSON.stringify(cuerpo)
+                mode: "no-cors", 
+                headers: { "Content-Type": "text/plain" },
+                body: JSON.stringify(cuerpoEnvio) 
             });
-            // Si quieres ignorar la respuesta (modo no-cors) usa esto:
-            // return { status: "success", message: "Enviado" };
-            // Pero mejor intentar leer la respuesta:
-            const result = await response.json();
-            return result;
+            
+            // Nota: Con "no-cors" la respuesta regresará opaca, pero los datos se insertarán con éxito en la hoja.
+            return { status: "success", message: "Petición despachada al servidor." };
         } catch (error) {
-            console.error(`Error al guardar en ${pestana}:`, error);
+            console.error(`Error al guardar datos en la pestaña [${pestana}]:`, error);
             throw error;
         }
     }

@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <!-- METAS ANTI-CACHÉ (OBLIGATORIAS PARA QUE EL MÓVIL SIEMPRE CARGUE LA ÚLTIMA VERSIÓN) -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -12,7 +11,6 @@
     <meta name="theme-color" content="#b70dbd">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="api-config.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script>
@@ -24,8 +22,6 @@
         @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
         #loading-overlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,.85); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; }
         .glass-card { background:linear-gradient(135deg,#a21caf 0%,#6b21a8 100%); }
-        .pulse-notif { animation:shadow-pulse 1.5s infinite; }
-        @keyframes shadow-pulse { 0% { box-shadow:0 0 0 0 rgba(0,85,255,.4); } 70% { box-shadow:0 0 0 8px rgba(0,85,255,0); } 100% { box-shadow:0 0 0 0 rgba(0,85,255,0); } }
     </style>
 </head>
 
@@ -74,36 +70,23 @@
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4 border-t border-white/20 pt-4">
-                    <div>
-                        <p class="text-[9px] font-bold uppercase text-purple-200">Utilidad Bruta Est.</p>
-                        <p id="ganancia-real" class="text-xl font-black text-green-300">$0.00</p>
-                        <p id="porcentaje-ventas" class="text-[10px] font-black italic text-green-200 mt-1">Rentabilidad: ~35%</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[9px] font-bold uppercase text-purple-200 italic text-amber-200">Pedidos Totales</p>
-                        <p id="ganancia-proyectada" class="text-xl font-black text-amber-300">0 Unidades</p>
-                    </div>
+                    <div><p class="text-[9px] font-bold uppercase text-purple-200">Utilidad Bruta Est.</p><p id="ganancia-real" class="text-xl font-black text-green-300">$0.00</p><p id="porcentaje-ventas" class="text-[10px] font-black italic text-green-200 mt-1">Rentabilidad: ~35%</p></div>
+                    <div class="text-right"><p class="text-[9px] font-bold uppercase text-purple-200 italic text-amber-200">Pedidos Totales</p><p id="ganancia-proyectada" class="text-xl font-black text-amber-300">0 Unidades</p></div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-black/20 p-2 rounded-xl flex flex-col border border-white/10">
-                        <span class="text-[8px] font-bold uppercase text-white/70">Items Registrados</span>
-                        <span id="valor-invertido" class="font-black text-xs">0 SKU</span>
-                    </div>
-                    <div class="bg-black/20 p-2 rounded-xl flex flex-col border border-white/10">
-                        <span class="text-[8px] font-bold uppercase text-white/70">Por Recaudar</span>
-                        <span id="por-recaudar" class="font-black text-xs">$0.00</span>
-                    </div>
+                    <div class="bg-black/20 p-2 rounded-xl flex flex-col border border-white/10"><span class="text-[8px] font-bold uppercase text-white/70">Items Registrados</span><span id="valor-invertido" class="font-black text-xs">0 SKU</span></div>
+                    <div class="bg-black/20 p-2 rounded-xl flex flex-col border border-white/10"><span class="text-[8px] font-bold uppercase text-white/70">Por Recaudar</span><span id="por-recaudar" class="font-black text-xs">$0.00</span></div>
                 </div>
             </div>
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">add_shopping_cart</span></div><span class="text-[11px] font-black uppercase text-slate-800">Vender</span></button>
-            <button id="btn-ruta" onclick="location.href='GestiondeDespachos.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-ruta" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-green-100 text-success flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">local_shipping</span></div><span class="text-[11px] font-black uppercase text-slate-800">En Ruta</span></button>
-            <button id="btn-stock" onclick="location.href='ControldeInventario.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-stock" class="absolute top-3 right-5 bg-primary text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-pink-100 text-secondary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">inventory</span></div><span class="text-[11px] font-black uppercase text-slate-800">Inventario</span></button>
-            <button id="btn-recepcion" onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-recepcion" class="absolute top-3 right-5 bg-blue-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-blue-100 text-electric flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">inventory_2</span></div><span class="text-[11px] font-black uppercase text-electric">Recibir</span></button>
+            <button onclick="location.href='GestiondeDespachos.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-ruta" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-green-100 text-success flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">local_shipping</span></div><span class="text-[11px] font-black uppercase text-slate-800">En Ruta</span></button>
+            <button onclick="location.href='ControldeInventario.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-stock" class="absolute top-3 right-5 bg-primary text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-pink-100 text-secondary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">inventory</span></div><span class="text-[11px] font-black uppercase text-slate-800">Inventario</span></button>
+            <button onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><span id="badge-recepcion" class="absolute top-3 right-5 bg-blue-600 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white hidden">0</span><div class="w-12 h-12 rounded-2xl bg-blue-100 text-electric flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">inventory_2</span></div><span class="text-[11px] font-black uppercase text-electric">Recibir</span></button>
             <button onclick="location.href='NuevaCompra.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">shopping_cart</span></div><span class="text-[11px] font-black uppercase text-slate-800">Compras</span></button>
-            <button id="btn-finanzas" onclick="location.href='finanzas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">account_balance</span></div><span class="text-[11px] font-black uppercase text-slate-800">Finanzas</span></button>
+            <button onclick="location.href='finanzas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">account_balance</span></div><span class="text-[11px] font-black uppercase text-slate-800">Finanzas</span></button>
             <button onclick="location.href='Proveedores.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">factory</span></div><span class="text-[11px] font-black uppercase text-slate-800">Proveedores</span></button>
             <button onclick="location.href='GestiondeClientes.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-50 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">groups</span></div><span class="text-[11px] font-black uppercase text-slate-800">Clientes</span></button>
         </div>
@@ -120,94 +103,169 @@
     </main>
 
     <script>
-        const fInput = document.getElementById('filtro-fecha');
-        const hoy = new Date();
-        fInput.value = new Date(hoy - (hoy.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        // ========== CONFIGURACIÓN ==========
+        // 👇 REEMPLAZA CON LA URL DE TU APPS SCRIPT (EL MISMO QUE TIENE LA ACCIÓN "getData")
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfKJcI1AtsfUCbbr_MHsh3QvYOUrpq0HFS6YBKFgoCUIrosX-Dn3W1LHDRpihp7M0dDQ/exec";
 
-        function mostrarCargando(show){ document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; }
-        function normalizar(t){ if(!t) return ""; return t.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""); }
-        function cambiarPeriodo(){ const periodo = document.getElementById('periodo-filtro').value; fInput.classList.toggle('hidden', periodo !== 'personalizado'); cargarDatos(); }
-        
-        function perteneceAPeriodo(fechaStr) {
-            if(!fechaStr) return false;
-            const refDate = new Date(fechaStr + 'T00:00:00');
-            const today = new Date(); today.setHours(0,0,0,0);
-            const periodo = document.getElementById('periodo-filtro').value;
-            switch(periodo) {
-                case 'hoy': return refDate.getTime() === today.getTime();
-                case 'semana': const unDia = 24 * 60 * 60 * 1000; const lunesActual = new Date(today.getTime() - ((today.getDay() === 0 ? 7 : today.getDay()) - 1) * unDia); return refDate >= lunesActual && refDate <= today;
-                case 'mes': return refDate.getMonth() === today.getMonth() && refDate.getFullYear() === today.getFullYear();
-                case 'mes-1': let mPasado = today.getMonth() - 1; let aPasado = today.getFullYear(); if(mPasado < 0) { mPasado = 11; aPasado--; } return refDate.getMonth() === mPasado && refDate.getFullYear() === aPasado;
-                case 'personalizado': return fechaStr === fInput.value;
-                default: return true;
-            }
+        // ========== FUNCIONES AUXILIARES ==========
+        async function obtenerDatos(sheetName) {
+            const url = `${SCRIPT_URL}?action=getData&sheet=${encodeURIComponent(sheetName)}`;
+            const response = await fetch(url, { cache: "no-store" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const json = await response.json();
+            if (!json.success) throw new Error(json.error || "Error al obtener datos");
+            return json.data;
         }
 
-        async function cargarDatos(){
+        function normalizarTexto(t) {
+            if (!t) return "";
+            return t.toString().trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        // ========== LÓGICA DEL DASHBOARD ==========
+        const fInput = document.getElementById('filtro-fecha');
+        const hoy = new Date();
+        fInput.value = hoy.toISOString().split('T')[0];
+
+        function mostrarCargando(show) { 
+            document.getElementById('loading-overlay').style.display = show ? 'flex' : 'none'; 
+        }
+
+        function cambiarPeriodo() { 
+            const periodo = document.getElementById('periodo-filtro').value; 
+            fInput.classList.toggle('hidden', periodo !== 'personalizado'); 
+            cargarDatos(); 
+        }
+
+        function perteneceAPeriodo(fechaStr) {
+            if (!fechaStr) return false;
+            try {
+                const refDate = new Date(fechaStr);
+                if (isNaN(refDate)) return false;
+                const today = new Date(); today.setHours(0,0,0,0);
+                const periodo = document.getElementById('periodo-filtro').value;
+                switch(periodo) {
+                    case 'hoy': return refDate.toDateString() === today.toDateString();
+                    case 'semana': {
+                        const unDia = 24*60*60*1000;
+                        const lunesActual = new Date(today.getTime() - ((today.getDay() === 0 ? 7 : today.getDay()) - 1) * unDia);
+                        return refDate >= lunesActual && refDate <= today;
+                    }
+                    case 'mes': return refDate.getMonth() === today.getMonth() && refDate.getFullYear() === today.getFullYear();
+                    case 'mes-1': {
+                        let mesPasado = today.getMonth() - 1;
+                        let anioPasado = today.getFullYear();
+                        if (mesPasado < 0) { mesPasado = 11; anioPasado--; }
+                        return refDate.getMonth() === mesPasado && refDate.getFullYear() === anioPasado;
+                    }
+                    case 'personalizado': return fechaStr === fInput.value;
+                    default: return true;
+                }
+            } catch(e) { return false; }
+        }
+
+        async function cargarDatos() {
             mostrarCargando(true);
             try {
-                const [inventario, ventas, compras] = await Promise.all([DairyAPI.obtenerDatos("Inventario"), DairyAPI.obtenerDatos("Ventas"), DairyAPI.obtenerDatos("ComprasPendientes")]);
-                const inv = Array.isArray(inventario) ? inventario : inventario?.data || [];
-                const ven = Array.isArray(ventas) ? ventas : ventas?.data || [];
-                const com = Array.isArray(compras) ? compras : compras?.data || [];
+                // Obtener datos desde el mismo Apps Script usando la acción getData
+                const inventario = await obtenerDatos("Inventario");
+                const ventas = await obtenerDatos("Ventas");
+                const compras = await obtenerDatos("ComprasPendientes");
 
+                const inv = Array.isArray(inventario) ? inventario : [];
+                const ven = Array.isArray(ventas) ? ventas : [];
+                const com = Array.isArray(compras) ? compras : [];
+
+                // Badge stock
                 document.getElementById('badge-stock').innerText = inv.length;
-                if(inv.length > 0) document.getElementById('badge-stock').classList.remove('hidden');
+                if (inv.length > 0) document.getElementById('badge-stock').classList.remove('hidden');
+                else document.getElementById('badge-stock').classList.add('hidden');
                 document.getElementById('valor-invertido').innerText = `${inv.length} SKU`;
 
+                // Productos críticos (stock bajo <= 5)
                 const contenedorCriticos = document.getElementById('cont-criticos');
                 contenedorCriticos.innerHTML = "";
-                inv.filter(i => { const c = parseInt(i.stock || i.Cantidad || 0); return c > 0 && c <= 5; }).forEach(item => {
-                    contenedorCriticos.innerHTML += `<div class="flex justify-between items-center text-xs p-2 bg-red-50 text-red-700 rounded-xl border border-red-100"><span class="font-bold">${item.producto || item.Nombre || 'Desconocido'}</span><span class="bg-red-600 text-white font-black px-2 py-0.5 rounded-lg">${item.stock || item.Cantidad} u.</span></div>`;
+                const criticos = inv.filter(p => { const stock = parseInt(p.Stock || p.stock || 0); return stock > 0 && stock <= 5; });
+                criticos.forEach(item => {
+                    const nombre = item.Producto || item.producto || 'Desconocido';
+                    const stock = item.Stock || item.stock || 0;
+                    contenedorCriticos.innerHTML += `<div class="flex justify-between items-center text-xs p-2 bg-red-50 text-red-700 rounded-xl border border-red-100"><span class="font-bold">${nombre}</span><span class="bg-red-600 text-white font-black px-2 py-0.5 rounded-lg">${stock} u.</span></div>`;
                 });
+                if (contenedorCriticos.innerHTML === "") contenedorCriticos.innerHTML = '<div class="text-center text-slate-400 text-xs p-4">No hay productos con stock bajo</div>';
 
-                const pendientesCompras = com.filter(c => normalizar(c.Estado_Entrega || c.estadoEntrega || c.estado || '') === 'PENDIENTE');
+                // Compras pendientes
+                const pendientesCompras = com.filter(c => normalizarTexto(c.Estado_Entrega || c.estadoEntrega || c.estado) === 'PENDIENTE');
                 document.getElementById('badge-recepcion').innerText = pendientesCompras.length;
-                pendientesCompras.length > 0 ? document.getElementById('badge-recepcion').classList.remove('hidden') : document.getElementById('badge-recepcion').classList.add('hidden');
+                if (pendientesCompras.length > 0) document.getElementById('badge-recepcion').classList.remove('hidden');
+                else document.getElementById('badge-recepcion').classList.add('hidden');
 
                 let totalVentas = 0, totalItemsPeriodo = 0, totalPorRecaudar = 0, contadorRutaPendientes = 0;
                 const rankingClientes = {};
                 const contenedorPedidos = document.getElementById('lista-pedidos');
                 contenedorPedidos.innerHTML = "";
 
-                [...ven].sort((a,b) => String(a.fecha || a.Fecha || '').localeCompare(String(b.fecha || b.Fecha || ''))).forEach(v => {
-                    const est = normalizar(v.Estado || v.estado || '');
+                // Recorrer ventas
+                for (let v of ven) {
+                    const fechaVenta = v.Fecha || v.fecha || "";
+                    const estado = normalizarTexto(v.Estado || v.estado);
                     const totalDeEstaVenta = Number(v.Total || v.total || 0);
-                    if(est === 'PENDIENTE') { totalPorRecaudar += totalDeEstaVenta; contadorRutaPendientes++; contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${v.Cliente || v.cliente || 'Consumidor Final'}</p><p class="text-[10px] text-slate-400 font-medium">${v.Fecha || v.fecha || ''} • #${v.Id || v.id || 'N/A'}</p></div><span class="text-right font-bold text-primary">$${totalDeEstaVenta.toFixed(2)}</span></div>`; }
-                    if(perteneceAPeriodo(v.Fecha || v.fecha)) { totalVentas += totalDeEstaVenta; totalItemsPeriodo += Number(v.Items || v.items || 1); const cNom = v.Cliente || v.cliente || 'Desconocido'; rankingClientes[cNom] = (rankingClientes[cNom] || 0) + totalDeEstaVenta; }
-                });
+                    const clienteNombre = v.Cliente || v.cliente || 'Consumidor Final';
+                    const idVenta = v.ID_Venta || v.id || 'N/A';
 
-                // Mostrar top 5 clientes (opcional)
+                    if (estado === 'PENDIENTE') {
+                        totalPorRecaudar += totalDeEstaVenta;
+                        contadorRutaPendientes++;
+                        contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${clienteNombre}</p><p class="text-[10px] text-slate-400 font-medium">${fechaVenta} • #${idVenta}</p></div><span class="text-right font-bold text-primary">$${totalDeEstaVenta.toFixed(2)}</span></div>`;
+                    }
+
+                    if (perteneceAPeriodo(fechaVenta)) {
+                        totalVentas += totalDeEstaVenta;
+                        // Para items totales, usar Cantidad (si no, 1 por fila)
+                        const items = Number(v.Cantidad || v.cantidad || v.Items || v.items || 1);
+                        totalItemsPeriodo += items;
+                        rankingClientes[clienteNombre] = (rankingClientes[clienteNombre] || 0) + totalDeEstaVenta;
+                    }
+                }
+
+                // Top 5 clientes
                 const rankingDiv = document.getElementById('ranking-productos');
                 rankingDiv.innerHTML = "";
                 Object.entries(rankingClientes).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([cliente, monto]) => {
                     rankingDiv.innerHTML += `<div class="flex justify-between items-center text-xs p-2 border-b border-slate-100"><span class="font-bold truncate">${cliente}</span><span class="text-primary font-black">$${monto.toFixed(2)}</span></div>`;
                 });
-                if(rankingDiv.innerHTML === "") rankingDiv.innerHTML = "<div class='text-xs text-slate-400 italic text-center p-4'>No hay ventas en el periodo</div>";
+                if (rankingDiv.innerHTML === "") rankingDiv.innerHTML = "<div class='text-xs text-slate-400 italic text-center p-4'>No hay ventas en el periodo</div>";
 
+                // Badge en ruta
                 document.getElementById('badge-ruta').innerText = contadorRutaPendientes;
-                contadorRutaPendientes > 0 ? document.getElementById('badge-ruta').classList.remove('hidden') : document.getElementById('badge-ruta').classList.add('hidden');
-                
+                if (contadorRutaPendientes > 0) document.getElementById('badge-ruta').classList.remove('hidden');
+                else document.getElementById('badge-ruta').classList.add('hidden');
+
+                // Actualizar valores principales
                 document.getElementById('ventas-total-hoy').innerText = `$${totalVentas.toFixed(2)}`;
                 document.getElementById('ganancia-real').innerText = `$${(totalVentas * 0.35).toFixed(2)}`;
                 document.getElementById('ganancia-proyectada').innerText = `${totalItemsPeriodo} Unidades`;
                 document.getElementById('por-recaudar').innerText = `$${totalPorRecaudar.toFixed(2)}`;
-            } catch(err) { console.error(err); } finally { mostrarCargando(false); }
+
+            } catch (err) {
+                console.error("Error en cargarDatos:", err);
+                Swal.fire("Error", "No se pudieron cargar los datos: " + err.message, "error");
+            } finally {
+                mostrarCargando(false);
+            }
         }
 
+        // Inicializar
         window.onload = cargarDatos;
     </script>
 
-    <!-- SERVICE WORKER CON ACTUALIZACIÓN FORZADA Y DETECCIÓN DE NUEVA VERSIÓN -->
+    <!-- SERVICE WORKER CON ACTUALIZACIÓN FORZADA -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js', { scope: '/lacteos-app-/' })
                     .then(reg => {
                         console.log('SW registrado correctamente');
-                        // Forzar búsqueda de actualizaciones cada vez que se abre la app
                         reg.update();
-                        // Detectar nueva versión del Service Worker
                         reg.addEventListener('updatefound', () => {
                             const newWorker = reg.installing;
                             newWorker.addEventListener('statechange', () => {

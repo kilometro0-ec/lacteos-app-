@@ -5,159 +5,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <meta name="theme-color" content="#059669">
     <title>Despachos - Lógica Láctea</title>
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Librerías de Exportación -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-    
     <link rel="manifest" href="manifest.json">
-    
     <style>
-        @media (max-width: 640px) {
-            .touch-active:active { transform: scale(0.97); transition: transform 0.05s; }
-        }
+        @media (max-width: 640px) { .touch-active:active { transform: scale(0.97); } }
         .card-pendiente { border-left: 6px solid #d946ef !important; background-color: #faf5ff !important; }
         .card-entregado { border-left: 6px solid #10b981 !important; opacity: 0.85; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
         .slide-out-right { animation: slideOut 0.6s forwards ease-in-out; }
-        @keyframes slideOut {
-            0% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(100%); opacity: 0; height: 0; padding: 0; margin: 0; border: none; }
-        }
-        .neon-border-btn {
-            position: relative;
-            z-index: 1;
-            overflow: hidden;
-            background: #10b981;
-        }
-        .neon-border-btn::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(transparent, transparent, transparent, #ffffff, #00ffaa);
-            animation: rotateNeon 3s linear infinite;
-            z-index: -1;
-        }
-        .neon-border-btn::after {
-            content: '';
-            position: absolute;
-            inset: 3px;
-            background: #059669;
-            border-radius: 6px;
-            z-index: -1;
-        }
-        @keyframes rotateNeon {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes slideOut { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(100%); opacity: 0; height: 0; padding: 0; margin: 0; border: none; } }
+        .neon-border-btn { position: relative; z-index: 1; overflow: hidden; background: #10b981; }
+        .neon-border-btn::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: conic-gradient(transparent, transparent, transparent, #ffffff, #00ffaa); animation: rotateNeon 3s linear infinite; z-index: -1; }
+        .neon-border-btn::after { content: ''; position: absolute; inset: 3px; background: #059669; border-radius: 6px; z-index: -1; }
+        @keyframes rotateNeon { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
-
     <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
         <div class="bg-white p-6 rounded-2xl shadow-2xl border border-slate-100 flex flex-col items-center gap-4 max-w-xs w-full mx-4">
             <div class="w-12 h-12 border-4 border-emerald-200 border-t-emerald-600 rounded-full animate-spin"></div>
-            <div class="text-center">
-                <h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Lógica Láctea</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Cargando despachos...</p>
-            </div>
+            <div class="text-center"><h3 class="text-sm font-black text-slate-800 uppercase tracking-wider">Lógica Láctea</h3><p class="text-xs text-slate-500 mt-0.5">Cargando despachos...</p></div>
         </div>
     </div>
-
     <header class="bg-emerald-600 text-white shadow-md px-4 py-3 sticky top-0 z-40">
         <div class="flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <i data-lucide="truck" class="w-6 h-6"></i>
-                <div>
-                    <h1 class="text-base font-bold tracking-tight">Despachos</h1>
-                    <p class="text-[10px] text-emerald-100">Rutas y Entregas</p>
-                </div>
-            </div>
-            <button onclick="recargarDatos()" class="bg-emerald-700 active:bg-emerald-800 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 touch-active">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                <span>Actualizar</span>
-            </button>
+            <div class="flex items-center gap-2"><i data-lucide="truck" class="w-6 h-6"></i><div><h1 class="text-base font-bold tracking-tight">Despachos</h1><p class="text-[10px] text-emerald-100">Rutas y Entregas</p></div></div>
+            <button onclick="recargarDatos()" class="bg-emerald-700 active:bg-emerald-800 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 touch-active"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Actualizar</span></button>
         </div>
     </header>
-
     <main class="flex-1 p-3 pb-24 max-w-7xl mx-auto w-full">
-
         <div class="grid grid-cols-2 gap-3 mb-4">
             <div onclick="filtrarPorEstadoTarjeta('PENDIENTE')" id="cardStatPendiente" class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl shadow-lg p-4 text-white cursor-pointer transform transition-transform active:scale-95 border-4 border-transparent shadow-amber-500/20">
-                <div class="flex items-center justify-between mb-1">
-                    <i data-lucide="clock" class="w-5 h-5 opacity-90"></i>
-                    <span class="text-2xl font-black" id="totalPendientes">0</span>
-                </div>
-                <h3 class="text-[11px] font-bold uppercase tracking-wider">Pendientes</h3>
-                <p class="text-[9px] opacity-70">Clic para filtrar</p>
+                <div class="flex items-center justify-between mb-1"><i data-lucide="clock" class="w-5 h-5 opacity-90"></i><span class="text-2xl font-black" id="totalPendientes">0</span></div>
+                <h3 class="text-[11px] font-bold uppercase tracking-wider">Pendientes</h3><p class="text-[9px] opacity-70">Clic para filtrar</p>
             </div>
-
             <div onclick="filtrarPorEstadoTarjeta('ENTREGADO')" id="cardStatEntregado" class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-4 text-white cursor-pointer transform transition-transform active:scale-95 border-4 border-transparent shadow-emerald-500/20">
-                <div class="flex items-center justify-between mb-1">
-                    <i data-lucide="check-circle" class="w-5 h-5 opacity-90"></i>
-                    <span class="text-2xl font-black" id="totalEntregados">0</span>
-                </div>
-                <h3 class="text-[11px] font-bold uppercase tracking-wider">Entregados</h3>
-                <p class="text-[9px] opacity-70">Clic para filtrar</p>
+                <div class="flex items-center justify-between mb-1"><i data-lucide="check-circle" class="w-5 h-5 opacity-90"></i><span class="text-2xl font-black" id="totalEntregados">0</span></div>
+                <h3 class="text-[11px] font-bold uppercase tracking-wider">Entregados</h3><p class="text-[9px] opacity-70">Clic para filtrar</p>
             </div>
         </div>
-
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4">
-            <button onclick="document.getElementById('panelReportes').classList.toggle('hidden')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active">
-                <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Filtros de Tiempo y Descargas
-            </button>
-            
+            <button onclick="document.getElementById('panelReportes').classList.toggle('hidden')" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active"><i data-lucide="sliders" class="w-3.5 h-3.5"></i> Filtros de Tiempo y Descargas</button>
             <div id="panelReportes" class="hidden mt-3 pt-3 border-t border-slate-100 space-y-3">
                 <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Rango de Tiempo</label>
-                        <select id="filtroTiempo" onchange="aplicarFiltros()" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-slate-50 outline-none">
-                            <option value="TODOS">Histórico Completo</option>
-                            <option value="SEMANA">Esta Semana</option>
-                            <option value="MES">Este Mes</option>
-                            <option value="ESPECIFICA">Fecha Específica...</option>
-                        </select>
-                    </div>
-                    <div id="wrapperFechaEspecifica" class="hidden">
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Seleccione Fecha</label>
-                        <input type="date" id="fechaFiltroExacto" onchange="aplicarFiltros()" class="w-full border border-slate-200 rounded-lg p-1.5 text-xs bg-slate-50 outline-none">
-                    </div>
+                    <div><label class="text-[10px] font-black text-slate-400 uppercase">Rango de Tiempo</label><select id="filtroTiempo" onchange="aplicarFiltros()" class="w-full border border-slate-200 rounded-lg p-2 text-xs bg-slate-50 outline-none"><option value="TODOS">Histórico Completo</option><option value="SEMANA">Esta Semana</option><option value="MES">Este Mes</option><option value="ESPECIFICA">Fecha Específica...</option></select></div>
+                    <div id="wrapperFechaEspecifica" class="hidden"><label class="text-[10px] font-black text-slate-400 uppercase">Seleccione Fecha</label><input type="date" id="fechaFiltroExacto" onchange="aplicarFiltros()" class="w-full border border-slate-200 rounded-lg p-1.5 text-xs bg-slate-50 outline-none"></div>
                 </div>
-
-                <div class="grid grid-cols-2 gap-2 pt-1">
-                    <button onclick="exportarExcel()" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Guardar Excel
-                    </button>
-                    <button onclick="exportarPDF()" class="bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> Guardar PDF
-                    </button>
-                </div>
+                <div class="grid grid-cols-2 gap-2 pt-1"><button onclick="exportarExcel()" class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Guardar Excel</button><button onclick="exportarPDF()" class="bg-rose-600 hover:bg-rose-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 touch-active"><i data-lucide="file-text" class="w-4 h-4"></i> Guardar PDF</button></div>
             </div>
-
-            <div class="relative mt-3">
-                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <input type="text" id="buscarCliente" oninput="filtrarPorBusqueda()" placeholder="Escribe cliente o id de venta..." class="w-full pl-9 pr-3 py-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50">
-            </div>
+            <div class="relative mt-3"><i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400"></i><input type="text" id="buscarCliente" oninput="filtrarPorBusqueda()" placeholder="Escribe cliente o id de venta..." class="w-full pl-9 pr-3 py-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-slate-50"></div>
         </div>
-
         <div id="listaDespachos" class="space-y-4"></div>
     </main>
 
     <script>
-        // ==================== CONFIGURACIÓN ====================
-        // 🔻 REEMPLAZA ESTA URL CON LA DE TU APPS SCRIPT (la misma de los otros módulos)
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBIeQQ22yBye1IGcbtVbAbF0_J2BTTxuD4ayhNZa9sY51VIKBet2QKoPUBaaBlOe070Q/exec";
 
-        // ==================== API HELPER ====================
         async function callAPI(params, method = "GET") {
             const url = new URL(SCRIPT_URL);
             if (method === "GET") {
@@ -168,7 +75,6 @@
                 if (data.status !== "success") throw new Error(data.message || "Error en API");
                 return data.data;
             } else {
-                // POST
                 const response = await fetch(SCRIPT_URL, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -180,88 +86,61 @@
             }
         }
 
-        // ==================== VARIABLES GLOBALES ====================
-        let todasLasVentasAgrupadas = [];
-        let ventasFiltradas = [];
-        let filtroActual = "TODOS";
-        let textoBusqueda = "";
-
+        let todasLasVentasAgrupadas = [], ventasFiltradas = [], filtroActual = "TODOS", textoBusqueda = "";
         const audioDinero = new Audio('https://assets.mixkit.co/active_storage/sfx/1633/1633-84.wav');
 
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            cargarDespachos();
-        });
+        document.addEventListener("DOMContentLoaded", () => { lucide.createIcons(); cargarDespachos(); });
 
-        // ==================== CARGA Y AGRUPACIÓN ====================
         async function cargarDespachos() {
             const overlay = document.getElementById("loadingOverlay");
             overlay.classList.remove("hidden", "opacity-0");
-
             try {
-                // Obtener ventas (cada fila es un producto)
                 const ventasRaw = await callAPI({ accion: "leer", pestana: "Ventas" });
                 if (!Array.isArray(ventasRaw)) throw new Error("Datos de ventas no válidos");
-
-                // Obtener clientes para direcciones
                 let mapaClientes = {};
                 try {
                     const clientes = await callAPI({ accion: "leer", pestana: "Clientes" });
-                    clientes.forEach(c => {
-                        if (c.Nombre) mapaClientes[c.Nombre.toString().trim().toLowerCase()] = c.Dirección || "Dirección no registrada";
-                    });
-                } catch(e) { console.warn("No se pudieron cargar direcciones de clientes", e); }
-
-                // Agrupar ventas por ID_Venta
+                    clientes.forEach(c => { if (c.Nombre) mapaClientes[c.Nombre.toString().trim().toLowerCase()] = c.Dirección || "Dirección no registrada"; });
+                } catch(e) { console.warn(e); }
                 const ventasPorId = new Map();
                 ventasRaw.forEach(v => {
                     const id = v.ID_Venta;
                     if (!id) return;
+                    let fechaStr = "";
+                    if (v.Fecha) {
+                        if (typeof v.Fecha === 'object' && v.Fecha.toISOString) fechaStr = v.Fecha.toISOString().split('T')[0];
+                        else {
+                            fechaStr = String(v.Fecha);
+                            if (fechaStr.includes('/')) { let partes = fechaStr.split('/'); if (partes.length===3) fechaStr = `${partes[2]}-${partes[1]}-${partes[0]}`; }
+                        }
+                    }
                     if (!ventasPorId.has(id)) {
                         ventasPorId.set(id, {
-                            id: id,
-                            fecha: v.Fecha,
-                            cliente: v.Cliente || "Cliente Desconocido",
-                            telefono: v.Teléfono || "",
+                            id: id, fecha: fechaStr, cliente: v.Cliente || "Cliente Desconocido", telefono: v.Teléfono || "",
                             direccion: mapaClientes[v.Cliente?.trim().toLowerCase()] || "Dirección no registrada",
-                            productos: [],
-                            itemsTotal: 0,
-                            total: 0,
-                            estado: (v.Estado || "PENDIENTE").toUpperCase()
+                            productos: [], itemsTotal: 0, total: 0, estado: (v.Estado || "PENDIENTE").toUpperCase()
                         });
                     }
                     const grupo = ventasPorId.get(id);
                     const cantidad = parseFloat(v.Cantidad) || 1;
                     const precio = parseFloat(v.Precio_PVP) || 0;
-                    const subtotal = cantidad * precio;
                     grupo.productos.push(`${v.Producto} (${cantidad})`);
                     grupo.itemsTotal += cantidad;
-                    grupo.total += subtotal;
+                    grupo.total += cantidad * precio;
                 });
-
-                // Convertir mapa a array y ordenar
                 todasLasVentasAgrupadas = Array.from(ventasPorId.values());
-                todasLasVentasAgrupadas.sort((a, b) => {
-                    if (a.estado === b.estado) return b.fecha.localeCompare(a.fecha);
+                todasLasVentasAgrupadas.sort((a,b) => {
+                    if (a.estado === b.estado) return String(b.fecha).localeCompare(String(a.fecha));
                     return a.estado === "PENDIENTE" ? -1 : 1;
                 });
-
                 aplicarFiltros();
-            } catch (err) {
-                console.error(err);
-                Swal.fire("Error", "No se pudo cargar los despachos: " + err.message, "error");
-                mostrarSinDatos();
-            } finally {
-                overlay.classList.add("opacity-0");
-                setTimeout(() => overlay.classList.add("hidden"), 300);
-            }
+            } catch(err) { console.error(err); Swal.fire("Error","No se pudo cargar los despachos: "+err.message,"error"); mostrarSinDatos(); }
+            finally { overlay.classList.add("opacity-0"); setTimeout(()=>overlay.classList.add("hidden"),300); }
         }
 
-        // ==================== FILTRADO Y RENDERIZADO ====================
         function aplicarFiltros() {
             let filtradas = [...todasLasVentasAgrupadas];
             if (filtroActual !== "TODOS") filtradas = filtradas.filter(v => v.estado === filtroActual);
-
             const modoTiempo = document.getElementById("filtroTiempo").value;
             const contenedorFecha = document.getElementById("wrapperFechaEspecifica");
             if (modoTiempo === "ESPECIFICA") {
@@ -272,22 +151,17 @@
                 contenedorFecha.classList.add("hidden");
                 const hoy = new Date();
                 if (modoTiempo === "SEMANA") {
-                    const unaSemanaAtras = new Date(hoy.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    const unaSemanaAtras = new Date(hoy.getTime() - 7*24*60*60*1000);
                     filtradas = filtradas.filter(v => new Date(v.fecha) >= unaSemanaAtras);
                 } else if (modoTiempo === "MES") {
                     const mesActual = hoy.getMonth(), anioActual = hoy.getFullYear();
-                    filtradas = filtradas.filter(v => {
-                        const fv = new Date(v.fecha);
-                        return fv.getMonth() === mesActual && fv.getFullYear() === anioActual;
-                    });
+                    filtradas = filtradas.filter(v => { const fv = new Date(v.fecha); return fv.getMonth()===mesActual && fv.getFullYear()===anioActual; });
                 }
             }
-
             if (textoBusqueda.trim() !== "") {
                 const b = textoBusqueda.toLowerCase().trim();
                 filtradas = filtradas.filter(v => v.cliente.toLowerCase().includes(b) || v.id.toLowerCase().includes(b));
             }
-
             ventasFiltradas = filtradas;
             renderizarLista();
             actualizarContadores();
@@ -295,247 +169,56 @@
 
         function renderizarLista() {
             const container = document.getElementById("listaDespachos");
-            if (ventasFiltradas.length === 0) {
-                container.innerHTML = `<div class="text-center py-16 text-slate-400 italic"><i data-lucide="package-x" class="w-16 h-16 mx-auto mb-3 opacity-50"></i><p class="text-sm">No hay pedidos para este filtro</p></div>`;
-                lucide.createIcons();
-                return;
-            }
-
+            if (ventasFiltradas.length === 0) { container.innerHTML = `<div class="text-center py-16 text-slate-400 italic"><i data-lucide="package-x" class="w-16 h-16 mx-auto mb-3 opacity-50"></i><p class="text-sm">No hay pedidos para este filtro</p></div>`; lucide.createIcons(); return; }
             container.innerHTML = ventasFiltradas.map(v => {
                 const esEntregado = v.estado === "ENTREGADO";
                 const listaProductos = v.productos.map(p => `<div class="w-full flex justify-between items-center bg-white/80 text-emerald-900 border border-slate-200/80 text-xs font-medium px-3 py-2 rounded-lg m-1 shadow-sm"><span class="font-bold text-slate-800">${p}</span></div>`).join('');
-                
-                return `
-                    <div id="card-${v.id}" class="rounded-xl shadow-md border border-slate-200 overflow-hidden ${esEntregado ? 'card-entregado bg-white' : 'card-pendiente'}">
-                        <div class="p-4 border-b border-slate-100 bg-white/40">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-emerald-700 font-black text-sm bg-emerald-100/70 px-2 py-0.5 rounded-md">#${v.id}</span>
-                                        <span class="text-[11px] text-slate-500 font-bold">${v.fecha}</span>
-                                    </div>
-                                    <h3 class="font-black text-slate-800 text-base mt-1.5 tracking-tight">${v.cliente}</h3>
-                                    <div class="flex items-center justify-between gap-3 mt-2.5 bg-white/90 p-2 rounded-xl border border-slate-200">
-                                        <div class="flex items-center gap-1.5 text-[11px] text-slate-600 truncate">
-                                            <i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0"></i>
-                                            <span class="truncate font-semibold">${v.direccion}</span>
-                                        </div>
-                                        <button onclick="abrirNavegadorGps('${encodeURIComponent(v.direccion)}')" class="bg-blue-600 active:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-[10px] font-black tracking-wider shadow-md shrink-0 touch-active">
-                                            <i data-lucide="navigation" class="w-3.5 h-3.5"></i> NAVEGAR
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="p-4 bg-white/30">
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Productos</span>
-                                <span class="text-emerald-700 font-black text-lg bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm">$${v.total.toFixed(2)}</span>
-                            </div>
-                            <div class="space-y-1">${listaProductos}</div>
-                        </div>
-                        
-                        <div class="p-3 bg-white/80 border-t border-slate-100 flex gap-2 justify-end">
-                            ${!esEntregado ? `
-                                <button onclick="modificarProductosOrden('${v.id}')" class="bg-slate-200 active:bg-slate-300 text-slate-700 px-3 py-2.5 rounded-lg text-xs font-bold flex items-center gap-1 touch-active">
-                                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar
-                                </button>
-                                <button onclick="enviarWhatsApp('${v.telefono}', '${v.id}', '${v.cliente}')" class="bg-green-500 active:bg-green-600 text-white px-3 py-2.5 rounded-lg touch-active">
-                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
-                                </button>
-                                <button onclick="marcarComoEntregado('${v.id}')" class="flex-1 neon-border-btn text-white py-2.5 rounded-lg text-xs font-black touch-active flex items-center justify-center gap-1">
-                                    <span class="relative z-10 flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i> Entregar</span>
-                                </button>
-                            ` : `
-                                <div class="w-full text-center text-[11px] text-slate-400 italic flex items-center justify-center gap-1 py-1">
-                                    <i data-lucide="lock" class="w-3 h-3"></i> Pedido Entregado Correctamente
-                                </div>
-                            `}
-                        </div>
-                    </div>`;
+                return `<div id="card-${v.id}" class="rounded-xl shadow-md border border-slate-200 overflow-hidden ${esEntregado ? 'card-entregado bg-white' : 'card-pendiente'}">
+                    <div class="p-4 border-b border-slate-100 bg-white/40"><div class="flex justify-between items-start"><div class="flex-1"><div class="flex items-center gap-2"><span class="text-emerald-700 font-black text-sm bg-emerald-100/70 px-2 py-0.5 rounded-md">#${v.id}</span><span class="text-[11px] text-slate-500 font-bold">${v.fecha}</span></div><h3 class="font-black text-slate-800 text-base mt-1.5 tracking-tight">${v.cliente}</h3><div class="flex items-center justify-between gap-3 mt-2.5 bg-white/90 p-2 rounded-xl border border-slate-200"><div class="flex items-center gap-1.5 text-[11px] text-slate-600 truncate"><i data-lucide="map-pin" class="w-4 h-4 text-rose-500 shrink-0"></i><span class="truncate font-semibold">${v.direccion}</span></div><button onclick="abrirNavegadorGps('${encodeURIComponent(v.direccion)}')" class="bg-blue-600 active:bg-blue-700 text-white px-3 py-1.5 rounded-lg flex items-center gap-1 text-[10px] font-black tracking-wider shadow-md shrink-0 touch-active"><i data-lucide="navigation" class="w-3.5 h-3.5"></i> NAVEGAR</button></div></div></div></div>
+                    <div class="p-4 bg-white/30"><div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Productos</span><span class="text-emerald-700 font-black text-lg bg-white px-3 py-1 rounded-lg border border-slate-200 shadow-sm">$${v.total.toFixed(2)}</span></div><div class="space-y-1">${listaProductos}</div></div>
+                    <div class="p-3 bg-white/80 border-t border-slate-100 flex gap-2 justify-end">${!esEntregado ? `<button onclick="modificarProductosOrden('${v.id}')" class="bg-slate-200 active:bg-slate-300 text-slate-700 px-3 py-2.5 rounded-lg text-xs font-bold flex items-center gap-1 touch-active"><i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Editar</button><button onclick="enviarWhatsApp('${v.telefono}', '${v.id}', '${v.cliente}')" class="bg-green-500 active:bg-green-600 text-white px-3 py-2.5 rounded-lg touch-active"><i data-lucide="message-circle" class="w-4 h-4"></i></button><button onclick="marcarComoEntregado('${v.id}')" class="flex-1 neon-border-btn text-white py-2.5 rounded-lg text-xs font-black touch-active flex items-center justify-center gap-1"><span class="relative z-10 flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i> Entregar</span></button>` : `<div class="w-full text-center text-[11px] text-slate-400 italic flex items-center justify-center gap-1 py-1"><i data-lucide="lock" class="w-3 h-3"></i> Pedido Entregado Correctamente</div>`}</div>
+                </div>`;
             }).join('');
             lucide.createIcons();
         }
 
-        function abrirNavegadorGps(direccionCodificada) {
-            const dir = decodeURIComponent(direccionCodificada);
-            Swal.fire({
-                title: 'Seleccionar Navegador',
-                text: '¿Con qué aplicación deseas armar la ruta?',
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonText: '🗺️ Google Maps',
-                cancelButtonText: '🚙 Waze',
-                confirmButtonColor: '#4285F4',
-                cancelButtonColor: '#33CCFF',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`, '_blank');
-                else if (result.dismiss === Swal.DismissReason.cancel) window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`, '_blank');
-            });
-        }
+        function abrirNavegadorGps(dirEnc) { const dir = decodeURIComponent(dirEnc); Swal.fire({ title:'Seleccionar Navegador', text:'¿Con qué aplicación deseas armar la ruta?', icon:'info', showCancelButton:true, confirmButtonText:'🗺️ Google Maps', cancelButtonText:'🚙 Waze', confirmButtonColor:'#4285F4', cancelButtonColor:'#33CCFF', reverseButtons:true }).then(result => { if(result.isConfirmed) window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(dir)}`,'_blank'); else if(result.dismiss === Swal.DismissReason.cancel) window.open(`https://waze.com/ul?q=${encodeURIComponent(dir)}&navigate=yes`,'_blank'); }); }
 
         async function modificarProductosOrden(idVenta) {
             const orden = todasLasVentasAgrupadas.find(v => v.id === idVenta);
             if (!orden) return;
-
-            let listaItems = orden.productos.map((item, idx) => {
-                const partes = item.match(/(.+)\s\((\d+)\)/);
-                return { idOriginal: idx, nombre: partes ? partes[1].trim() : item, cantidad: partes ? parseInt(partes[2]) : 1 };
-            });
-
+            let listaItems = orden.productos.map((item, idx) => { const partes = item.match(/(.+)\s\((\d+)\)/); return { idOriginal: idx, nombre: partes ? partes[1].trim() : item, cantidad: partes ? parseInt(partes[2]) : 1 }; });
             let htmlFormulario = `<div class="text-left text-sm space-y-2 max-h-64 overflow-y-auto pr-1">`;
-            listaItems.forEach(prod => {
-                htmlFormulario += `
-                    <div id="row-edit-${prod.idOriginal}" class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200">
-                        <div class="flex-1">
-                            <p class="font-bold text-slate-800 text-xs">${prod.nombre}</p>
-                            <p class="text-[10px] text-slate-400">Cantidad: ${prod.cantidad} u</p>
-                        </div>
-                        <button type="button" onclick="document.getElementById('row-edit-${prod.idOriginal}').remove()" class="bg-rose-50 text-rose-600 p-2 rounded-lg btn-borrado-item" data-name="${prod.nombre}" data-qty="${prod.cantidad}">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>`;
-            });
+            listaItems.forEach(prod => { htmlFormulario += `<div id="row-edit-${prod.idOriginal}" class="flex items-center justify-between p-2.5 bg-slate-50 rounded-xl border border-slate-200"><div class="flex-1"><p class="font-bold text-slate-800 text-xs">${prod.nombre}</p><p class="text-[10px] text-slate-400">Cantidad: ${prod.cantidad} u</p></div><button type="button" onclick="document.getElementById('row-edit-${prod.idOriginal}').remove()" class="bg-rose-50 text-rose-600 p-2 rounded-lg btn-borrado-item" data-name="${prod.nombre}" data-qty="${prod.cantidad}"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`; });
             htmlFormulario += `</div>`;
-
-            const resModal = await Swal.fire({
-                title: 'Editar Ítems',
-                html: htmlFormulario,
-                showCancelButton: true,
-                confirmButtonText: '💾 Guardar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#059669',
-                didOpen: () => lucide.createIcons()
-            });
-
+            const resModal = await Swal.fire({ title:'Editar Ítems', html:htmlFormulario, showCancelButton:true, confirmButtonText:'💾 Guardar', cancelButtonText:'Cancelar', confirmButtonColor:'#059669', didOpen:()=>lucide.createIcons() });
             if (!resModal.isConfirmed) return;
-
             const botonesRestantes = document.querySelectorAll('.btn-borrado-item');
-            if (botonesRestantes.length === 0) {
-                Swal.fire("Error", "No puedes dejar la orden sin productos.", "error");
-                return;
-            }
-
-            let nuevosProductos = [];
-            let nuevoTotalVenta = 0;
-            let totalUnidadesNuevas = 0;
+            if (botonesRestantes.length === 0) { Swal.fire("Error","No puedes dejar la orden sin productos.","error"); return; }
+            let nuevosProductos = [], nuevoTotalVenta = 0, totalUnidadesNuevas = 0;
             const factorPrecioProporcional = orden.total / orden.itemsTotal;
-
-            botonesRestantes.forEach(b => {
-                const n = b.getAttribute('data-name');
-                const c = parseInt(b.getAttribute('data-qty')) || 1;
-                nuevosProductos.push(`${n} (${c})`);
-                nuevoTotalVenta += c * factorPrecioProporcional;
-                totalUnidadesNuevas += c;
-            });
-
-            // Actualizar localmente
-            orden.productos = nuevosProductos;
-            orden.total = nuevoTotalVenta;
-            orden.itemsTotal = totalUnidadesNuevas;
-
-            // Sincronizar con servidor
-            try {
-                await callAPI({
-                    action: "actualizarEstadoDespacho",
-                    idVenta: idVenta,
-                    productos: nuevosProductos.join(', '),
-                    items: totalUnidadesNuevas,
-                    total: nuevoTotalVenta
-                }, "POST");
-                Swal.fire({ icon: 'success', title: 'Sincronizado en Sheets', timer: 1200, showConfirmButton: false });
-            } catch(err) {
-                Swal.fire("Aviso", "Guardado localmente. Error de red al subir a Sheets.", "warning");
-            }
+            botonesRestantes.forEach(b => { const n = b.getAttribute('data-name'), c = parseInt(b.getAttribute('data-qty')) || 1; nuevosProductos.push(`${n} (${c})`); nuevoTotalVenta += c * factorPrecioProporcional; totalUnidadesNuevas += c; });
+            orden.productos = nuevosProductos; orden.total = nuevoTotalVenta; orden.itemsTotal = totalUnidadesNuevas;
+            try { await callAPI({ action:"actualizarEstadoDespacho", idVenta:idVenta, productos:nuevosProductos.join(', '), items:totalUnidadesNuevas, total:nuevoTotalVenta }, "POST"); Swal.fire({ icon:'success', title:'Sincronizado en Sheets', timer:1200, showConfirmButton:false }); } catch(err) { Swal.fire("Aviso","Guardado localmente. Error de red al subir a Sheets.","warning"); }
             aplicarFiltros();
         }
 
         async function marcarComoEntregado(idVenta) {
-            const result = await Swal.fire({
-                title: '¿Confirmar Entrega?',
-                text: `El pedido #${idVenta} cambiará a completado.`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: '✅ Sí, Entregar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#10b981'
-            });
+            const result = await Swal.fire({ title:'¿Confirmar Entrega?', text:`El pedido #${idVenta} cambiará a completado.`, icon:'question', showCancelButton:true, confirmButtonText:'✅ Sí, Entregar', cancelButtonText:'Cancelar', confirmButtonColor:'#10b981' });
             if (!result.isConfirmed) return;
-
-            try {
-                await callAPI({
-                    action: "actualizarEstadoDespacho",
-                    idVenta: idVenta,
-                    estado: "ENTREGADO",
-                    fechaEntrega: new Date().toISOString().split('T')[0]
-                }, "POST");
-                try { audioDinero.currentTime = 0; audioDinero.play(); } catch(e) {}
-                const card = document.getElementById(`card-${idVenta}`);
-                if (card) {
-                    card.classList.add("slide-out-right");
-                    setTimeout(() => cargarDespachos(), 600);
-                } else {
-                    await cargarDespachos();
-                }
-            } catch (error) {
-                Swal.fire("Error", "Fallo al despachar: " + error.message, "error");
-            }
+            try { await callAPI({ action:"actualizarEstadoDespacho", idVenta:idVenta, estado:"ENTREGADO", fechaEntrega:new Date().toISOString().split('T')[0] }, "POST"); try { audioDinero.currentTime=0; audioDinero.play(); } catch(e){} const card = document.getElementById(`card-${idVenta}`); if(card){ card.classList.add("slide-out-right"); setTimeout(()=>cargarDespachos(),600); } else await cargarDespachos(); } catch(error) { Swal.fire("Error","Fallo al despachar: "+error.message,"error"); }
         }
 
-        function filtrarPorEstadoTarjeta(estado) {
-            filtroActual = (filtroActual === estado) ? "TODOS" : estado;
-            document.getElementById("cardStatPendiente").style.border = filtroActual === "PENDIENTE" ? "4px solid #ffffff" : "4px solid transparent";
-            document.getElementById("cardStatEntregado").style.border = filtroActual === "ENTREGADO" ? "4px solid #ffffff" : "4px solid transparent";
-            aplicarFiltros();
-        }
+        function filtrarPorEstadoTarjeta(estado) { filtroActual = (filtroActual === estado) ? "TODOS" : estado; document.getElementById("cardStatPendiente").style.border = filtroActual === "PENDIENTE" ? "4px solid #ffffff" : "4px solid transparent"; document.getElementById("cardStatEntregado").style.border = filtroActual === "ENTREGADO" ? "4px solid #ffffff" : "4px solid transparent"; aplicarFiltros(); }
 
-        function enviarWhatsApp(t, idVenta, cliente) {
-            if (!t) { Swal.fire("Aviso", "Este cliente no posee celular registrado", "warning"); return; }
-            const msj = `*LÓGICA LÁCTEA* 🥛🧀\n\nHola *${cliente}*, tu pedido *#${idVenta}* ha sido despachado y está en camino.\n\n📦 *Estado:* En ruta de entrega\n⏰ *Tiempo estimado:* Próximas horas\n\n¡Gracias por tu confianza! 🙌`;
-            window.open(`https://api.whatsapp.com/send?phone=${t}&text=${encodeURIComponent(msj)}`, '_blank');
-        }
+        function enviarWhatsApp(t, idVenta, cliente) { if(!t) { Swal.fire("Aviso","Este cliente no posee celular registrado","warning"); return; } const msj = `*LÓGICA LÁCTEA* 🥛🧀\n\nHola *${cliente}*, tu pedido *#${idVenta}* ha sido despachado y está en camino.\n\n📦 *Estado:* En ruta de entrega\n⏰ *Tiempo estimado:* Próximas horas\n\n¡Gracias por tu confianza! 🙌`; window.open(`https://api.whatsapp.com/send?phone=${t}&text=${encodeURIComponent(msj)}`,'_blank'); }
 
-        function actualizarContadores() {
-            const p = todasLasVentasAgrupadas.filter(v => v.estado === "PENDIENTE").length;
-            const e = todasLasVentasAgrupadas.filter(v => v.estado === "ENTREGADO").length;
-            document.getElementById("totalPendientes").innerText = p;
-            document.getElementById("totalEntregados").innerText = e;
-        }
-
-        function filtrarPorBusqueda() {
-            textoBusqueda = document.getElementById("buscarCliente").value;
-            aplicarFiltros();
-        }
-
-        function mostrarSinDatos() {
-            document.getElementById("listaDespachos").innerHTML = `<div class="text-center py-16 text-slate-400 italic"><i data-lucide="database" class="w-16 h-16 mx-auto mb-3 opacity-50"></i><p class="text-sm">Sin pedidos en el historial</p></div>`;
-            lucide.createIcons();
-        }
-
+        function actualizarContadores() { document.getElementById("totalPendientes").innerText = todasLasVentasAgrupadas.filter(v=>v.estado==="PENDIENTE").length; document.getElementById("totalEntregados").innerText = todasLasVentasAgrupadas.filter(v=>v.estado==="ENTREGADO").length; }
+        function filtrarPorBusqueda() { textoBusqueda = document.getElementById("buscarCliente").value; aplicarFiltros(); }
+        function mostrarSinDatos() { document.getElementById("listaDespachos").innerHTML = `<div class="text-center py-16 text-slate-400 italic"><i data-lucide="database" class="w-16 h-16 mx-auto mb-3 opacity-50"></i><p class="text-sm">Sin pedidos en el historial</p></div>`; lucide.createIcons(); }
         async function recargarDatos() { await cargarDespachos(); }
-
-        function exportarExcel() {
-            if (ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay registros para exportar.", "warning");
-            const matriz = ventasFiltradas.map(v => ({
-                "ID Pedido": v.id, "Fecha": v.fecha, "Cliente": v.cliente, "Dirección": v.direccion, "Productos": v.productos.join(', '), "Total ($)": v.total, "Estado": v.estado
-            }));
-            const libro = XLSX.utils.book_new();
-            const hoja = XLSX.utils.json_to_sheet(matriz);
-            XLSX.utils.book_append_sheet(libro, hoja, "Despachos");
-            XLSX.writeFile(libro, `Reporte_Despachos.xlsx`);
-        }
-
-        function exportarPDF() {
-            if (ventasFiltradas.length === 0) return Swal.fire("Aviso", "No hay registros para exportar.", "warning");
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-            doc.text("LÓGICA LÁCTEA - REPORTE OPERATIVO", 14, 15);
-            const filas = ventasFiltradas.map(v => [v.id, v.fecha, v.cliente, v.direccion, v.productos.join(', '), `$${v.total.toFixed(2)}`, v.estado]);
-            doc.autoTable({ head: [['ID', 'Fecha', 'Cliente', 'Dirección', 'Productos', 'Total', 'Estado']], body: filas, startY: 22, theme: 'striped', headStyles: { fillColor: [5, 150, 105] } });
-            doc.save(`Reporte_Despachos.pdf`);
-        }
+        function exportarExcel() { if(ventasFiltradas.length===0) return Swal.fire("Aviso","No hay registros para exportar.","warning"); const matriz = ventasFiltradas.map(v=>({"ID Pedido":v.id,"Fecha":v.fecha,"Cliente":v.cliente,"Dirección":v.direccion,"Productos":v.productos.join(', '),"Total ($)":v.total,"Estado":v.estado})); const libro = XLSX.utils.book_new(); const hoja = XLSX.utils.json_to_sheet(matriz); XLSX.utils.book_append_sheet(libro,hoja,"Despachos"); XLSX.writeFile(libro,`Reporte_Despachos.xlsx`); }
+        function exportarPDF() { if(ventasFiltradas.length===0) return Swal.fire("Aviso","No hay registros para exportar.","warning"); const {jsPDF} = window.jspdf; const doc = new jsPDF('l','mm','a4'); doc.text("LÓGICA LÁCTEA - REPORTE OPERATIVO",14,15); const filas = ventasFiltradas.map(v=>[v.id,v.fecha,v.cliente,v.direccion,v.productos.join(', '),`$${v.total.toFixed(2)}`,v.estado]); doc.autoTable({ head:[['ID','Fecha','Cliente','Dirección','Productos','Total','Estado']], body:filas, startY:22, theme:'striped', headStyles:{ fillColor:[5,150,105] } }); doc.save(`Reporte_Despachos.pdf`); }
     </script>
 </body>
 </html>

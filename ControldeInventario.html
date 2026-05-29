@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <meta name="theme-color" content="#0f172a">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col pb-16">
 
@@ -84,14 +85,14 @@
                             <th class="py-3 px-4 text-center">Stock</th>
                             <th class="py-3 px-4">Proveedor Habitual</th>
                             <th class="py-3 px-6 text-center text-slate-500">Acciones</th>
-                        </tr>
+                        </table>
                     </thead>
                     <tbody id="tbodyInventario" class="divide-y divide-slate-100 font-medium text-slate-700">
                         <tr>
                             <td colspan="7" class="text-center py-20 text-slate-400">
                                 <i data-lucide="loader-2" class="w-10 h-10 animate-spin mx-auto mb-4 text-blue-600"></i>
                                 <p class="text-xs">Cargando datos desde Google Sheets...</p>
-                            </td>
+                             </td>
                         </tr>
                     </tbody>
                 </table>
@@ -172,10 +173,10 @@
         </div>
     </div>
 
- 
+    <script src="menu-logic.js"></script>
     <script>
-        // URL de tu Google Apps Script Web App
-        // IMPORTANTE: Reemplaza esta URL con la de tu script desplegado
+        // ==================== CONFIGURACIÓN ====================
+        // 🔻 REEMPLAZA CON LA URL DE TU APPS SCRIPT (VERSIÓN GET)
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzghL_5JdtVPdUQ8Q6c873AdLN5tiaTnW_ZUdnnw6lcR9PLjpPTElG3oNBYVnNv27Ah1w/exec";
 
         let inventarioGlobal = [];
@@ -187,109 +188,46 @@
             cargarProveedoresDesplegable();
         });
 
-        // ============ FUNCIONES DE CONEXIÓN A GOOGLE SHEETS ============
+        // ============ FUNCIONES DE CONEXIÓN VÍA GET ============
         
-        /**
-         * Obtiene datos desde Google Sheets via Google Apps Script
-         * @param {string} sheetName - Nombre de la hoja a consultar
-         * @returns {Promise<Array>} - Datos obtenidos
-         */
         async function obtenerDatosSheet(sheetName) {
-            try {
-                const response = await fetch(`${SCRIPT_URL}?action=getData&sheet=${encodeURIComponent(sheetName)}`, {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    return data.data;
-                } else {
-                    throw new Error(data.error || 'Error al obtener datos');
-                }
-            } catch (error) {
-                console.error(`Error obteniendo datos de ${sheetName}:`, error);
-                throw error;
-            }
+            const url = `${SCRIPT_URL}?action=getData&sheet=${encodeURIComponent(sheetName)}`;
+            const response = await fetch(url, { cache: "no-store" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (data.success) return data.data;
+            else throw new Error(data.error || 'Error al obtener datos');
         }
 
-        /**
-         * Guarda/escribe datos en Google Sheets
-         * @param {string} sheetName - Nombre de la hoja
-         * @param {Object} data - Datos a guardar
-         * @returns {Promise<Object>} - Respuesta del servidor
-         */
         async function guardarDatosSheet(sheetName, data) {
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'saveData',
-                        sheet: sheetName,
-                        data: data
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+            const params = new URLSearchParams();
+            params.append("action", "saveData");
+            params.append("sheet", sheetName);
+            for (let [key, value] of Object.entries(data)) {
+                if (value !== undefined && value !== null) {
+                    params.append(key, value.toString());
                 }
-                
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error(`Error guardando datos en ${sheetName}:`, error);
-                throw error;
             }
+            const url = `${SCRIPT_URL}?${params.toString()}`;
+            const response = await fetch(url, { cache: "no-store" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            return result;
         }
 
-        /**
-         * Elimina un registro de Google Sheets
-         * @param {string} sheetName - Nombre de la hoja
-         * @param {string} id - ID del producto a eliminar
-         * @returns {Promise<Object>} - Respuesta del servidor
-         */
         async function eliminarProductoSheet(sheetName, id) {
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        action: 'deleteProduct',
-                        sheet: sheetName,
-                        id: id
-                    })
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error(`Error eliminando producto:`, error);
-                throw error;
-            }
+            const url = `${SCRIPT_URL}?action=deleteProduct&sheet=${encodeURIComponent(sheetName)}&id=${encodeURIComponent(id)}`;
+            const response = await fetch(url, { cache: "no-store" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            return result;
         }
 
-        // 👥 CARGAR PROVEEDORES DESDE LA HOJA CENTRAL
+        // 👥 CARGAR PROVEEDORES
         async function cargarProveedoresDesplegable() {
             try {
                 const datos = await obtenerDatosSheet("Proveedores");
                 const selectProveedor = document.getElementById("prod_proveedor");
-                
                 if (Array.isArray(datos) && datos.length > 0) {
                     proveedoresGlobal = datos;
                     selectProveedor.innerHTML = '<option value="" disabled selected>-- Seleccione un Proveedor --</option>';
@@ -306,8 +244,8 @@
                     selectProveedor.innerHTML = '<option value="" disabled>No se hallaron proveedores</option>';
                 }
             } catch (err) {
-                console.error("Error al colectar lista de proveedores:", err);
-                document.getElementById("prod_proveedor").innerHTML = '<option value="" disabled>Error al enlazar proveedores</option>';
+                console.error(err);
+                document.getElementById("prod_proveedor").innerHTML = '<option value="" disabled>Error al cargar proveedores</option>';
             }
         }
 
@@ -324,7 +262,6 @@
                             let numero = parseFloat(texto);
                             return isNaN(numero) ? 0 : numero;
                         };
-
                         return {
                             Fecha: p.Fecha || p.fecha || "",
                             ID: String(p.ID || p.id || "").trim(),
@@ -336,9 +273,7 @@
                             Proveedor_Habitual: p["Proveedor Habitual"] || p.Proveedor_Habitual || p.proveedor || ""
                         };
                     });
-
                     inventarioGlobal = normalizados.sort((a, b) => b.Stock - a.Stock);
-                    
                     procesarFiltrosYBusqueda();
                     calcularResumenContadores(inventarioGlobal);
                 }
@@ -350,7 +285,7 @@
                             <i data-lucide="alert-triangle" class="w-8 h-8 mx-auto mb-2"></i>
                             Fallo de sincronización con la Base Central de Google Sheets.<br>
                             <span class="text-xs">Error: ${err.message}</span>
-                        </td>
+                         </td>
                     </tr>
                 `;
                 lucide.createIcons();
@@ -401,7 +336,6 @@
                 else if (p.Stock <= 5) porAgotar++;
                 else optimos++;
             });
-            
             document.getElementById("lblTotalProductos").innerText = `${lista.length} Totales`;
             document.getElementById("lblCriticos").innerText = `${criticos} Críticos`;
             document.getElementById("lblPorAgotar").innerText = `${porAgotar} Por Agotar`;
@@ -412,14 +346,12 @@
         function procesarFiltrosYBusqueda() {
             const query = document.getElementById("buscarProducto").value.toLowerCase();
             const selector = document.getElementById("filtroEstadoLogistico").value;
-
             const filtrados = inventarioGlobal.filter(p => {
                 const cumpleTexto = p.ID.toLowerCase().includes(query) || p.Producto.toLowerCase().includes(query);
                 let cumpleEstado = true;
                 if (selector === "CRITICO") cumpleEstado = (p.Stock <= 0);
                 else if (selector === "BAJO") cumpleEstado = (p.Stock > 0 && p.Stock <= 5);
                 else if (selector === "OPTIMO") cumpleEstado = (p.Stock > 5);
-
                 return cumpleTexto && cumpleEstado;
             });
             renderizarInventario(filtrados);
@@ -433,7 +365,6 @@
         // 📦 GESTIÓN DE MODAL
         function abrirModalProducto(p = null) {
             document.getElementById("formProducto").reset();
-
             if (p) {
                 document.getElementById("modalProductoTitulo").innerHTML = `<i data-lucide="edit-3" class="w-4 h-4 text-blue-400"></i> Editar Producto Maestro`;
                 document.getElementById("prod_id_interno").value = p.ID;
@@ -449,13 +380,13 @@
                 document.getElementById("prod_id_interno").value = "";
                 document.getElementById("prod_stock_actual").value = "0";
                 document.getElementById("prod_ventas_actual").value = "0";
-                
                 let maxNum = 0;
                 inventarioGlobal.forEach(item => {
                     const num = parseInt(item.ID.replace(/\D/g, ""));
                     if (!isNaN(num) && num > maxNum) maxNum = num;
                 });
-                document.getElementById("prod_codigo").value = `P-${maxNum + 181}`;
+                const nuevoId = maxNum + 1;
+                document.getElementById("prod_codigo").value = `P-${nuevoId}`;
             }
             document.getElementById("modalProducto").classList.remove("hidden");
             lucide.createIcons();
@@ -465,12 +396,11 @@
             document.getElementById("modalProducto").classList.add("hidden");
         }
 
-        // 💾 GUARDAR PRODUCTO
+        // 💾 GUARDAR PRODUCTO (VÍA GET)
         async function guardarEstructuraProducto(e) {
             e.preventDefault();
             const idInterno = document.getElementById("prod_id_interno").value;
             const esEdicion = idInterno !== "";
-
             const payload = {
                 Fecha: new Date().toISOString(),
                 ID: document.getElementById("prod_codigo").value,
@@ -481,13 +411,8 @@
                 Ventas: parseInt(document.getElementById("prod_ventas_actual").value),
                 "Proveedor Habitual": document.getElementById("prod_proveedor").value
             };
-
-            if (esEdicion) {
-                payload.oldId = idInterno;
-            }
-
+            if (esEdicion) payload.oldId = idInterno;
             Swal.fire({ title: 'Actualizando Almacén Central...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
-
             try {
                 const result = await guardarDatosSheet("Inventario", payload);
                 if (result.success) {
@@ -504,7 +429,7 @@
             }
         }
 
-        // ❌ ELIMINAR PRODUCTO
+        // ❌ ELIMINAR PRODUCTO (VÍA GET)
         function eliminarProductoIntegridad(idProducto) {
             Swal.fire({
                 title: '¿Eliminar Producto?',
@@ -518,7 +443,6 @@
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     Swal.fire({ title: 'Removiendo registro...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
-                    
                     try {
                         const result = await eliminarProductoSheet("Inventario", idProducto);
                         if (result.success) {
@@ -535,38 +459,41 @@
             });
         }
 
-        // 🕒 KÁRDEX
+        // 🕒 KÁRDEX COMBINADO (usa la acción getKardex)
         async function verMovimientosKardex(idProducto, nombreProducto) {
             document.getElementById("kardexProductoNombre").innerText = `Producto: ${nombreProducto} (#${idProducto})`;
             const tbody = document.getElementById("tbodyKardex");
-            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500"></i>Buscando historial...</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto mb-2 text-amber-500"></i>Cargando movimientos...</td></tr>`;
             document.getElementById("modalKardex").classList.remove("hidden");
             lucide.createIcons();
 
             try {
-                const todosLosMovimientos = await obtenerDatosSheet("HistorialRecepciones");
+                const url = `${SCRIPT_URL}?action=getKardex&producto=${encodeURIComponent(nombreProducto)}`;
+                const response = await fetch(url, { cache: "no-store" });
+                const result = await response.json();
+                if (!result.success) throw new Error(result.error);
+                const movimientos = result.data || [];
                 tbody.innerHTML = "";
-                const filtrados = todosLosMovimientos.filter(m => String(m.ID_Producto || m.Producto || m.id || m.ID) === String(idProducto));
-
-                if (!filtrados.length) {
-                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">Sin movimientos registrados.</td></tr>`;
+                if (movimientos.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">No hay movimientos (ni ingresos ni salidas) registrados para este producto.</td></tr>`;
                     return;
                 }
-
-                filtrados.forEach(m => {
+                movimientos.forEach(m => {
                     const tr = document.createElement("tr");
                     tr.className = "border-b border-slate-50 hover:bg-slate-50/50";
+                    const esIngreso = m.accion === "INGRESO";
                     tr.innerHTML = `
-                        <td class="p-2.5 text-slate-400 font-mono">${m.FechaReal || m.Fecha || 'S/F'}</td>
-                        <td class="p-2.5"><span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-50 text-emerald-700">INGRESO</span></td>
-                        <td class="p-2.5 text-center font-bold text-emerald-600">+${m.CantidadRecibida || m.Cantidad || 0}</td>
-                        <td class="p-2.5 text-slate-500">Compra: ${m["Guía/Factura"] || m.IDCompra || 'N/A'}</td>
+                        <td class="p-2.5 text-slate-500 font-mono text-xs">${m.fecha || 'S/F'}</td>
+                        <td class="p-2.5"><span class="px-2 py-0.5 rounded-full text-[10px] font-black ${esIngreso ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">${m.accion}</span></td>
+                        <td class="p-2.5 text-center font-bold ${esIngreso ? 'text-emerald-600' : 'text-rose-600'}">${esIngreso ? '+' : '-'}${m.cantidad}</td>
+                        <td class="p-2.5 text-slate-500 text-xs">${m.referencia || ''}</td>
                     `;
                     tbody.appendChild(tr);
                 });
                 lucide.createIcons();
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-rose-500 text-xs">No se pudo leer el histórico de movimientos.</td></tr>`;
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-rose-500 text-xs">Error al cargar el historial: ${err.message}</td></tr>`;
             }
         }
 
@@ -617,12 +544,10 @@
             doc.text("LÓGICA LÁCTEA - REPORTE DE EXHAUSTIVIDAD DE INVENTARIO", 14, 15);
             doc.setFontSize(9);
             doc.text(`Fecha de emisión: ${new Date().toLocaleString()}`, 14, 22);
-
             const columnas = ["ID", "Producto", "P. Distribuidor", "P. Venta", "Stock", "Proveedor"];
             const filas = inventarioGlobal.map(p => [
                 p.ID, p.Producto, `$${p.Precio_Distribuidor.toFixed(2)}`, `$${p.Precio_Venta.toFixed(2)}`, p.Stock, p.Proveedor_Habitual
             ]);
-
             doc.autoTable({
                 startY: 26,
                 head: [columnas],

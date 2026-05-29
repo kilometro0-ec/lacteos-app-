@@ -1,4 +1,4 @@
-const CACHE_NAME = "logica-lactea-v16";  // 👈 Incrementa este número cada vez que subas cambios
+const CACHE_NAME = "logica-lactea-v17";  // 👈 Incrementa este número cada vez que subas cambios
 const urlsToCache = [
     "/lacteos-app-/",
     "/lacteos-app-/index.html",

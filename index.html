@@ -25,6 +25,8 @@
         .trend-up { color: #4ade80; }
         .trend-down { color: #f87171; }
         .badge-ratio { font-size: 10px; font-weight: 900; }
+        .clickeable-ventas { cursor: pointer; transition: transform 0.1s ease, opacity 0.2s; }
+        .clickeable-ventas:active { transform: scale(0.98); }
     </style>
 </head>
 
@@ -60,9 +62,11 @@
     </header>
 
     <main class="pt-28 px-4 max-w-7xl mx-auto space-y-5">
+        <!-- Tarjeta principal: ahora el bloque de ventas totales es clickeable -->
         <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
             <div class="relative z-10 space-y-4">
-                <div class="flex justify-between items-start">
+                <!-- El área de "Ventas Totales" se vuelve clickeable -->
+                <div class="flex justify-between items-start clickeable-ventas" onclick="window.location.href='AnalisisDeVentas.html'">
                     <div>
                         <p id="label-dinero" class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-200 italic">Ventas Totales</p>
                         <p id="comparativa-ventas" class="text-[10px] text-purple-100 font-bold italic mt-1">Análisis del periodo seleccionado</p>
@@ -97,6 +101,7 @@
             </div>
         </div>
 
+        <!-- Botones de navegación (sin cambios) -->
         <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">add_shopping_cart</span></div><span class="text-[11px] font-black uppercase text-slate-800">Vender</span></button>
             
@@ -135,6 +140,7 @@
             </button>
         </div>
 
+        <!-- Sección de pedidos pendientes y otros (sin cambios) -->
         <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
             <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center justify-between italic"><span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">priority_high</span> Prioridad de Despacho</span><span class="text-[8px] text-slate-400">ORDEN: MÁS ANTIGUO PRIMERO</span></h3>
             <div id="lista-pedidos" class="space-y-3"></div>
@@ -152,7 +158,7 @@
 
         // ========== FUNCIONES AUXILIARES ==========
         async function obtenerDatos(sheetName) {
-            const url = `${SCRIPT_URL}?action=getData&sheet=${encodeURIComponent(sheetName)}`;
+            const url = `${SCRIPT_URL}?action=getData&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
             const response = await fetch(url, { cache: "no-store" });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const json = await response.json();
@@ -339,7 +345,7 @@
                 // ------------------------------
                 // 3. COMPRAS PENDIENTES (RECIBIR) - Group by ID_Compra
                 // ------------------------------
-                const comprasMap = new Map(); // key = ID_Compra, value = { cantidadTotal, id }
+                const comprasMap = new Map(); // key = ID_Compra, value = { cantidadTotal }
                 com.forEach(comp => {
                     const estado = normalizarTexto(comp.Estado_Entrega || comp.estadoEntrega || comp.estado);
                     if (estado === 'PENDIENTE') {
@@ -385,7 +391,7 @@
                 }
 
                 // ------------------------------
-                // 5. PROVEEDORES (Badge propio)
+                // 5. PROVEEDORES
                 // ------------------------------
                 let proveedoresUnicos = new Set();
                 if (Array.isArray(proveedoresData) && proveedoresData.length) {
@@ -396,7 +402,6 @@
                         }
                     });
                 } else {
-                    // Fallback: extraer de compras pendientes si existe campo Proveedor
                     com.forEach(comp => {
                         const provName = comp.Proveedor || comp.proveedor;
                         if (provName && provName.trim() !== "") proveedoresUnicos.add(normalizarTexto(provName));
@@ -430,12 +435,11 @@
                 let totalPorRecaudar = 0;
                 
                 // MAP para pedidos PENDIENTES (En Ruta) agrupados por ID_Venta
-                const pedidosPendientesMap = new Map(); // key = ID_Venta, value = { cantidadTotal, cliente, fecha, totalMonto }
+                const pedidosPendientesMap = new Map();
                 const rankingClientes = {};
                 const contenedorPedidos = document.getElementById('lista-pedidos');
                 contenedorPedidos.innerHTML = "";
                 
-                // Recorrer todas las ventas
                 for (let v of ven) {
                     const fechaVenta = v.Fecha || v.fecha || "";
                     const estado = normalizarTexto(v.Estado || v.estado);
@@ -444,7 +448,6 @@
                     const idVenta = v.ID_Venta || v.id || `row_${Math.random()}`;
                     const cantidad = Number(v.Cantidad || v.cantidad || v.Items || v.items || 1);
                     
-                    // PENDIENTES para "En Ruta" -> agrupar por pedido (ID_Venta)
                     if (estado === 'PENDIENTE') {
                         totalPorRecaudar += totalDeEstaVenta;
                         if (!pedidosPendientesMap.has(idVenta)) {
@@ -458,27 +461,22 @@
                         const grupo = pedidosPendientesMap.get(idVenta);
                         grupo.cantidadTotal += cantidad;
                         grupo.totalMonto += totalDeEstaVenta;
-                        // Actualizar fecha a la más reciente si se quiere, pero mantenemos la primera para orden
                     }
                     
-                    // Ventas del periodo actual
                     if (estaEnPeriodo(fechaVenta, limitesActual.inicio, limitesActual.fin)) {
                         totalVentasActual += totalDeEstaVenta;
                         rankingClientes[clienteNombre] = (rankingClientes[clienteNombre] || 0) + totalDeEstaVenta;
                     }
                     
-                    // Ventas del periodo anterior (para comparativa)
                     if (estaEnPeriodo(fechaVenta, limitesAnterior.inicio, limitesAnterior.fin)) {
                         totalVentasAnterior += totalDeEstaVenta;
                     }
                     
-                    // Unidades entregadas (solo estado ENTREGADO y dentro del periodo actual)
                     if (estado === 'ENTREGADO' && estaEnPeriodo(fechaVenta, limitesActual.inicio, limitesActual.fin)) {
                         unidadesEntregadasActual += cantidad;
                     }
                 }
                 
-                // Construir lista de pedidos pendientes (En Ruta) a partir del MAP agrupado
                 const pedidosAgrupados = Array.from(pedidosPendientesMap.entries()).map(([id, data]) => ({
                     id,
                     clienteNombre: data.cliente,
@@ -486,14 +484,12 @@
                     totalDeEstaVenta: data.totalMonto,
                     cantidadTotal: data.cantidadTotal
                 }));
-                // Ordenar por fecha más antigua
                 pedidosAgrupados.sort((a,b) => new Date(a.fechaVenta) - new Date(b.fechaVenta));
                 pedidosAgrupados.forEach(p => {
                     contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${p.clienteNombre}</p><p class="text-[10px] text-slate-400 font-medium">${p.fechaVenta} • #${p.id}</p><span class="text-[9px] text-slate-500">${p.cantidadTotal} productos</span></div><span class="text-right font-bold text-primary">$${p.totalDeEstaVenta.toFixed(2)}</span></div>`;
                 });
                 if (pedidosAgrupados.length === 0) contenedorPedidos.innerHTML = '<div class="text-center text-slate-400 text-xs p-4">No hay pedidos pendientes</div>';
                 
-                // *** BADGE EN RUTA: formato "pedidos únicos / total productos en esos pedidos"
                 const totalPedidosUnicos = pedidosAgrupados.length;
                 let totalProductosEnRuta = 0;
                 pedidosAgrupados.forEach(p => { totalProductosEnRuta += p.cantidadTotal; });
@@ -505,12 +501,9 @@
                     badgeRuta.classList.add('hidden');
                 }
                 
-                // Actualizar Por Recaudar (total acumulado de pendientes sin agrupar, pero suma correcta)
                 document.getElementById('por-recaudar').innerText = `$${totalPorRecaudar.toFixed(2)}`;
                 
-                // ------------------------------
-                // 7. UTILIDAD Y COMPARATIVA
-                // ------------------------------
+                // Utilidad y comparativas
                 const utilidadActual = totalVentasActual * 0.35;
                 const utilidadAnterior = totalVentasAnterior * 0.35;
                 const diferenciaUtilidad = utilidadActual - utilidadAnterior;
@@ -521,7 +514,6 @@
                 document.getElementById('ganancia-real').innerText = `$${utilidadActual.toFixed(2)}`;
                 document.getElementById('unidades-entregadas').innerText = `${unidadesEntregadasActual} Unidades`;
                 
-                // Ranking Top Clientes
                 const rankingDiv = document.getElementById('ranking-productos');
                 rankingDiv.innerHTML = "";
                 Object.entries(rankingClientes).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([cliente, monto]) => {

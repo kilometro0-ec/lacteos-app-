@@ -101,19 +101,19 @@
             <button onclick="location.href='RegistrodeVentas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-purple-100 text-primary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">add_shopping_cart</span></div><span class="text-[11px] font-black uppercase text-slate-800">Vender</span></button>
             
             <button onclick="location.href='GestiondeDespachos.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95">
-                <span id="badge-ruta" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+                <span id="badge-ruta" class="absolute top-3 right-5 bg-red-600 text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0/0</span>
                 <div class="w-12 h-12 rounded-2xl bg-green-100 text-success flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">local_shipping</span></div>
                 <span class="text-[11px] font-black uppercase text-slate-800">En Ruta</span>
             </button>
             
             <button onclick="location.href='ControldeInventario.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95">
-                <span id="badge-stock" class="absolute top-3 right-5 bg-primary text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+                <span id="badge-stock" class="absolute top-3 right-5 bg-primary text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0/0</span>
                 <div class="w-12 h-12 rounded-2xl bg-pink-100 text-secondary flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">inventory</span></div>
                 <span class="text-[11px] font-black uppercase text-slate-800">Inventario</span>
             </button>
             
             <button onclick="location.href='ConfirmarRecepcion.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95">
-                <span id="badge-recepcion" class="absolute top-3 right-5 bg-blue-600 text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+                <span id="badge-recepcion" class="absolute top-3 right-5 bg-blue-600 text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0/0</span>
                 <div class="w-12 h-12 rounded-2xl bg-blue-100 text-electric flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">inventory_2</span></div>
                 <span class="text-[11px] font-black uppercase text-electric">Recibir</span>
             </button>
@@ -122,7 +122,11 @@
             
             <button onclick="location.href='finanzas.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">account_balance</span></div><span class="text-[11px] font-black uppercase text-slate-800">Finanzas</span></button>
             
-            <button onclick="location.href='Proveedores.html'" class="bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95"><div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">factory</span></div><span class="text-[11px] font-black uppercase text-slate-800">Proveedores</span></button>
+            <button onclick="location.href='Proveedores.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95">
+                <span id="badge-proveedores" class="absolute top-3 right-5 bg-slate-700 text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
+                <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mb-1"><span class="material-symbols-outlined text-3xl">factory</span></div>
+                <span class="text-[11px] font-black uppercase text-slate-800">Proveedores</span>
+            </button>
             
             <button onclick="location.href='GestiondeClientes.html'" class="relative bg-white border border-outline p-4 rounded-[2rem] flex flex-col items-center shadow-sm active:scale-95">
                 <span id="badge-clientes" class="absolute top-3 right-5 bg-purple-600 text-white text-[10px] font-black min-w-[24px] h-6 px-2 rounded-full flex items-center justify-center border-2 border-white hidden">0</span>
@@ -281,17 +285,21 @@
         async function cargarDatos() {
             mostrarCargando(true);
             try {
-                // Obtener datos de las tres hojas
+                // Obtener datos de las hojas necesarias
                 const inventario = await obtenerDatos("Inventario");
                 const ventas = await obtenerDatos("Ventas");
                 const compras = await obtenerDatos("ComprasPendientes");
+                let proveedoresData = [];
+                try {
+                    proveedoresData = await obtenerDatos("Proveedores");
+                } catch(e) { console.warn("No se pudo cargar hoja Proveedores", e); }
 
                 const inv = Array.isArray(inventario) ? inventario : [];
                 const ven = Array.isArray(ventas) ? ventas : [];
                 const com = Array.isArray(compras) ? compras : [];
 
                 // ------------------------------
-                // 1. VALOR EN BODEGA (antes SKU)
+                // 1. VALOR EN BODEGA
                 // ------------------------------
                 let valorInventarioTotal = 0;
                 inv.forEach(item => {
@@ -301,10 +309,19 @@
                 });
                 document.getElementById('valor-inventario-dinero').innerText = `$${valorInventarioTotal.toFixed(2)}`;
                 
-                // Badge inventario: número de productos distintos (SKU)
-                document.getElementById('badge-stock').innerText = inv.length;
-                if (inv.length > 0) document.getElementById('badge-stock').classList.remove('hidden');
-                else document.getElementById('badge-stock').classList.add('hidden');
+                // *** BADGE INVENTARIO: formato "productos con stock / total productos"
+                const totalProductos = inv.length;
+                const productosConStock = inv.filter(p => {
+                    const stock = Number(p.Stock || p.stock || 0);
+                    return stock > 0;
+                }).length;
+                const badgeStock = document.getElementById('badge-stock');
+                if (totalProductos > 0) {
+                    badgeStock.innerText = `${productosConStock}/${totalProductos}`;
+                    badgeStock.classList.remove('hidden');
+                } else {
+                    badgeStock.classList.add('hidden');
+                }
 
                 // ------------------------------
                 // 2. PRODUCTOS CRÍTICOS (stock ≤5)
@@ -320,21 +337,29 @@
                 if (contenedorCriticos.innerHTML === "") contenedorCriticos.innerHTML = '<div class="text-center text-slate-400 text-xs p-4">No hay productos con stock bajo</div>';
 
                 // ------------------------------
-                // 3. COMPRAS PENDIENTES (badge recibir con formato ratio)
+                // 3. COMPRAS PENDIENTES (RECIBIR) - Group by ID_Compra
                 // ------------------------------
-                let comprasPendientesCount = 0;
-                let totalProductosEnComprasPendientes = 0;
+                const comprasMap = new Map(); // key = ID_Compra, value = { cantidadTotal, id }
                 com.forEach(comp => {
                     const estado = normalizarTexto(comp.Estado_Entrega || comp.estadoEntrega || comp.estado);
                     if (estado === 'PENDIENTE') {
-                        comprasPendientesCount++;
+                        let idCompra = comp.ID_Compra || comp.id_compra || comp["ID Compra"] || comp.id;
+                        if (!idCompra) idCompra = `tmp_${Math.random()}`;
                         const cantidad = Number(comp.Cantidad || comp.cantidad || 1);
-                        totalProductosEnComprasPendientes += cantidad;
+                        if (!comprasMap.has(idCompra)) {
+                            comprasMap.set(idCompra, { cantidadTotal: 0 });
+                        }
+                        comprasMap.get(idCompra).cantidadTotal += cantidad;
                     }
                 });
+                const pedidosCompraCount = comprasMap.size;
+                let totalProductosCompra = 0;
+                for (let grupo of comprasMap.values()) {
+                    totalProductosCompra += grupo.cantidadTotal;
+                }
                 const badgeRecepcion = document.getElementById('badge-recepcion');
-                if (comprasPendientesCount > 0) {
-                    badgeRecepcion.innerText = `${comprasPendientesCount}/${totalProductosEnComprasPendientes}`;
+                if (pedidosCompraCount > 0) {
+                    badgeRecepcion.innerText = `${pedidosCompraCount}/${totalProductosCompra}`;
                     badgeRecepcion.classList.remove('hidden');
                 } else {
                     badgeRecepcion.classList.add('hidden');
@@ -360,7 +385,34 @@
                 }
 
                 // ------------------------------
-                // 5. PERIODOS (actual y anterior)
+                // 5. PROVEEDORES (Badge propio)
+                // ------------------------------
+                let proveedoresUnicos = new Set();
+                if (Array.isArray(proveedoresData) && proveedoresData.length) {
+                    proveedoresData.forEach(prov => {
+                        const nombre = prov.Nombre || prov.nombre || prov.Proveedor;
+                        if (nombre && nombre.trim() !== "") {
+                            proveedoresUnicos.add(normalizarTexto(nombre));
+                        }
+                    });
+                } else {
+                    // Fallback: extraer de compras pendientes si existe campo Proveedor
+                    com.forEach(comp => {
+                        const provName = comp.Proveedor || comp.proveedor;
+                        if (provName && provName.trim() !== "") proveedoresUnicos.add(normalizarTexto(provName));
+                    });
+                }
+                const totalProveedores = proveedoresUnicos.size;
+                const badgeProveedores = document.getElementById('badge-proveedores');
+                if (totalProveedores > 0) {
+                    badgeProveedores.innerText = totalProveedores;
+                    badgeProveedores.classList.remove('hidden');
+                } else {
+                    badgeProveedores.classList.add('hidden');
+                }
+
+                // ------------------------------
+                // 6. PERIODOS (actual y anterior)
                 // ------------------------------
                 const periodoActual = document.getElementById('periodo-filtro').value;
                 let fechaReferencia;
@@ -376,31 +428,37 @@
                 let totalVentasAnterior = 0;
                 let unidadesEntregadasActual = 0;
                 let totalPorRecaudar = 0;
-                let pedidosPendientesCount = 0;
-                let totalProductosEnPedidosPendientes = 0;
+                
+                // MAP para pedidos PENDIENTES (En Ruta) agrupados por ID_Venta
+                const pedidosPendientesMap = new Map(); // key = ID_Venta, value = { cantidadTotal, cliente, fecha, totalMonto }
                 const rankingClientes = {};
                 const contenedorPedidos = document.getElementById('lista-pedidos');
                 contenedorPedidos.innerHTML = "";
                 
-                // También para la lista de pedidos (solo pendientes)
-                const pedidosPendientesLista = [];
-
                 // Recorrer todas las ventas
                 for (let v of ven) {
                     const fechaVenta = v.Fecha || v.fecha || "";
                     const estado = normalizarTexto(v.Estado || v.estado);
-                    // Usar columna G: Total (puede venir como "Total" o "total")
                     const totalDeEstaVenta = Number(v.Total || v.total || 0);
                     const clienteNombre = v.Cliente || v.cliente || 'Consumidor Final';
-                    const idVenta = v.ID_Venta || v.id || 'N/A';
+                    const idVenta = v.ID_Venta || v.id || `row_${Math.random()}`;
                     const cantidad = Number(v.Cantidad || v.cantidad || v.Items || v.items || 1);
                     
-                    // Pendientes para "En Ruta"
+                    // PENDIENTES para "En Ruta" -> agrupar por pedido (ID_Venta)
                     if (estado === 'PENDIENTE') {
                         totalPorRecaudar += totalDeEstaVenta;
-                        pedidosPendientesCount++;
-                        totalProductosEnPedidosPendientes += cantidad;
-                        pedidosPendientesLista.push({ clienteNombre, fechaVenta, idVenta, totalDeEstaVenta });
+                        if (!pedidosPendientesMap.has(idVenta)) {
+                            pedidosPendientesMap.set(idVenta, {
+                                cantidadTotal: 0,
+                                cliente: clienteNombre,
+                                fecha: fechaVenta,
+                                totalMonto: 0
+                            });
+                        }
+                        const grupo = pedidosPendientesMap.get(idVenta);
+                        grupo.cantidadTotal += cantidad;
+                        grupo.totalMonto += totalDeEstaVenta;
+                        // Actualizar fecha a la más reciente si se quiere, pero mantenemos la primera para orden
                     }
                     
                     // Ventas del periodo actual
@@ -420,27 +478,38 @@
                     }
                 }
                 
-                // Mostrar lista de pedidos pendientes (ordenados por fecha antigua primero)
-                pedidosPendientesLista.sort((a,b) => new Date(a.fechaVenta) - new Date(b.fechaVenta));
-                pedidosPendientesLista.forEach(p => {
-                    contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${p.clienteNombre}</p><p class="text-[10px] text-slate-400 font-medium">${p.fechaVenta} • #${p.idVenta}</p></div><span class="text-right font-bold text-primary">$${p.totalDeEstaVenta.toFixed(2)}</span></div>`;
+                // Construir lista de pedidos pendientes (En Ruta) a partir del MAP agrupado
+                const pedidosAgrupados = Array.from(pedidosPendientesMap.entries()).map(([id, data]) => ({
+                    id,
+                    clienteNombre: data.cliente,
+                    fechaVenta: data.fecha,
+                    totalDeEstaVenta: data.totalMonto,
+                    cantidadTotal: data.cantidadTotal
+                }));
+                // Ordenar por fecha más antigua
+                pedidosAgrupados.sort((a,b) => new Date(a.fechaVenta) - new Date(b.fechaVenta));
+                pedidosAgrupados.forEach(p => {
+                    contenedorPedidos.innerHTML += `<div class="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 rounded-2xl text-xs"><div><p class="font-black text-slate-800">${p.clienteNombre}</p><p class="text-[10px] text-slate-400 font-medium">${p.fechaVenta} • #${p.id}</p><span class="text-[9px] text-slate-500">${p.cantidadTotal} productos</span></div><span class="text-right font-bold text-primary">$${p.totalDeEstaVenta.toFixed(2)}</span></div>`;
                 });
-                if (pedidosPendientesLista.length === 0) contenedorPedidos.innerHTML = '<div class="text-center text-slate-400 text-xs p-4">No hay pedidos pendientes</div>';
+                if (pedidosAgrupados.length === 0) contenedorPedidos.innerHTML = '<div class="text-center text-slate-400 text-xs p-4">No hay pedidos pendientes</div>';
                 
-                // Badge En Ruta con formato ratio
+                // *** BADGE EN RUTA: formato "pedidos únicos / total productos en esos pedidos"
+                const totalPedidosUnicos = pedidosAgrupados.length;
+                let totalProductosEnRuta = 0;
+                pedidosAgrupados.forEach(p => { totalProductosEnRuta += p.cantidadTotal; });
                 const badgeRuta = document.getElementById('badge-ruta');
-                if (pedidosPendientesCount > 0) {
-                    badgeRuta.innerText = `${pedidosPendientesCount}/${totalProductosEnPedidosPendientes}`;
+                if (totalPedidosUnicos > 0) {
+                    badgeRuta.innerText = `${totalPedidosUnicos}/${totalProductosEnRuta}`;
                     badgeRuta.classList.remove('hidden');
                 } else {
                     badgeRuta.classList.add('hidden');
                 }
                 
-                // Actualizar Por Recaudar
+                // Actualizar Por Recaudar (total acumulado de pendientes sin agrupar, pero suma correcta)
                 document.getElementById('por-recaudar').innerText = `$${totalPorRecaudar.toFixed(2)}`;
                 
                 // ------------------------------
-                // 6. UTILIDAD Y COMPARATIVA
+                // 7. UTILIDAD Y COMPARATIVA
                 // ------------------------------
                 const utilidadActual = totalVentasActual * 0.35;
                 const utilidadAnterior = totalVentasAnterior * 0.35;

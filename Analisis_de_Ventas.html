@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Lógica Láctea - Dashboard Estratégico</title>
+<title>Analisis de Ventas - Dashboard Estratégico</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
@@ -13,14 +13,132 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-    body { background: #faf5ff; font-family: 'Inter', sans-serif; }
-    .card { background: white; border-radius: 1.5rem; border: 1px solid #f0e6ff; transition: all 0.2s; box-shadow: 0 4px 6px -2px rgba(0,0,0,0.05); }
-    .card:hover { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08); transform: translateY(-2px); }
-    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-    .loading-overlay { position: fixed; inset: 0; background: rgba(250,245,255,0.9); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; }
-    .trend-up { color: #16a34a; }
-    .trend-down { color: #e11d48; }
-    .kpi-card { border-left: 6px solid #a21caf; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+        background: radial-gradient(circle at 10% 20%, rgba(250, 245, 255, 1) 0%, rgba(243, 232, 255, 0.7) 100%);
+        font-family: 'Inter', sans-serif;
+    }
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" opacity="0.03"><path fill="%23a21caf" d="M50 40 L70 40 L70 60 L50 60 Z M90 80 L110 80 L110 100 L90 100 Z M130 20 L150 20 L150 40 L130 40 Z M20 120 L40 120 L40 140 L20 140 Z"/><circle cx="160" cy="150" r="8" fill="%23db2777"/><circle cx="30" cy="180" r="12" fill="%23a21caf"/></svg>');
+        background-repeat: repeat;
+        pointer-events: none;
+        z-index: 0;
+    }
+    main, header, .card, .loading-overlay { position: relative; z-index: 2; }
+    
+    .card {
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(0px);
+        border-radius: 1.75rem;
+        border: 1px solid rgba(162, 28, 175, 0.12);
+        transition: all 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+    }
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 30px -12px rgba(162, 28, 175, 0.15);
+        border-color: rgba(162, 28, 175, 0.3);
+    }
+    
+    /* KPI cards con colores */
+    .kpi-card {
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s;
+        border-left-width: 5px;
+        border-left-style: solid;
+    }
+    .kpi-card:hover {
+        transform: translateY(-3px);
+    }
+    .kpi-ventas { border-left-color: #ec489a; background: linear-gradient(135deg, #ffffff, #fdf2f8); }
+    .kpi-productos { border-left-color: #10b981; background: linear-gradient(135deg, #ffffff, #ecfdf5); }
+    .kpi-ganancia { border-left-color: #8b5cf6; background: linear-gradient(135deg, #ffffff, #f5f3ff); }
+    .kpi-clientes { border-left-color: #14b8a6; background: linear-gradient(135deg, #ffffff, #f0fdfa); }
+    .kpi-pendientes { border-left-color: #f97316; background: linear-gradient(135deg, #ffffff, #fff7ed); }
+    
+    .kpi-card .material-symbols-outlined {
+        transition: transform 0.2s ease;
+    }
+    .kpi-card:hover .material-symbols-outlined {
+        transform: scale(1.05);
+    }
+    
+    .kpi-value {
+        font-size: 1.85rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #1e1b2e, #4c1d5e);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+    
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+    th {
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        color: #6b21a5;
+        border-bottom: 1.5px solid #e9d5ff;
+    }
+    td {
+        padding: 0.9rem 0.5rem;
+        border-bottom: 1px solid #f3e8ff;
+        transition: background 0.2s;
+    }
+    tr:hover td {
+        background-color: #faf5ff;
+    }
+    
+    .action-btn {
+        transition: all 0.25s ease;
+    }
+    .action-btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 10px rgba(162,28,175,0.2);
+    }
+    
+    .loading-overlay {
+        background: rgba(250, 245, 255, 0.92);
+        backdrop-filter: blur(12px);
+        z-index: 2000;
+    }
+    
+    .ia-badge {
+        background: linear-gradient(135deg, #f3e8ff 0%, #fae8ff 100%);
+        border: 1px solid rgba(162,28,175,0.3);
+    }
+    
+    header {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(162,28,175,0.2);
+    }
+    
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #f1e6ff;
+        border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #c084fc;
+        border-radius: 10px;
+    }
 </style>
 <script>
     tailwind.config = {
@@ -30,9 +148,6 @@
                     primary: "#a21caf",
                     secondary: "#db2777",
                     success: "#16a34a",
-                    electric: "#0055ff",
-                    beige: "#faf5ff",
-                    outline: "#e9d5ff",
                 },
                 fontFamily: { 'sans': ['Inter', 'sans-serif'] },
             }
@@ -40,50 +155,51 @@
     }
 </script>
 </head>
-<body class="bg-beige antialiased pb-32">
+<body class="antialiased pb-32">
 
-<div id="loadingOverlay" class="loading-overlay">
+<div id="loadingOverlay" class="loading-overlay fixed inset-0 flex items-center justify-center flex-col gap-4">
     <span class="material-symbols-outlined text-5xl text-primary animate-spin">sync</span>
-    <span class="text-xs font-bold text-primary">Cargando datos financieros...</span>
+    <span class="text-xs font-semibold tracking-wide text-primary bg-white/40 px-4 py-1 rounded-full backdrop-blur-sm">Cargando datos financieros...</span>
 </div>
 
-<header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-outline px-6 py-4 flex justify-between items-center shadow-sm">
+<header class="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-primary/10 px-6 py-4 flex justify-between items-center shadow-md shadow-primary/5">
     <div class="flex items-center gap-3">
-        <span class="material-symbols-outlined text-primary text-3xl">factory</span>
-        <h1 class="text-xl font-bold text-primary">Lógica Láctea</h1>
+        <div class="bg-gradient-to-br from-primary to-secondary p-2 rounded-xl shadow-md">
+            <span class="material-symbols-outlined text-white text-2xl">analytics</span>
+        </div>
+        <h1 class="text-xl font-extrabold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Analisis de Ventas</h1>
     </div>
     <div class="flex gap-3">
-        <button onclick="exportarExcelConFeedback()" class="bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition hover:bg-primary/20"><span class="material-symbols-outlined text-sm">table_chart</span> Excel</button>
-        <button onclick="exportarPDFConFeedback()" class="bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition hover:bg-primary/20"><span class="material-symbols-outlined text-sm">picture_as_pdf</span> PDF</button>
-        <button onclick="recargarDatos()" class="bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold transition hover:bg-primary/20"><span class="material-symbols-outlined text-sm">sync</span></button>
+        <button onclick="exportarExcelConFeedback()" class="action-btn bg-primary/10 text-primary px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition hover:bg-primary/25 hover:shadow-md"><span class="material-symbols-outlined text-sm">table_chart</span> Excel</button>
+        <button onclick="exportarPDFConFeedback()" class="action-btn bg-primary/10 text-primary px-5 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition hover:bg-primary/25 hover:shadow-md"><span class="material-symbols-outlined text-sm">picture_as_pdf</span> PDF</button>
+        <button onclick="recargarDatos()" class="action-btn bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold transition hover:bg-primary/25 hover:rotate-180 duration-300"><span class="material-symbols-outlined text-sm">sync</span></button>
     </div>
 </header>
 
 <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-    <!-- Título y Badge IA -->
     <div class="flex items-end justify-between">
         <div>
-            <h2 class="text-primary/60 text-xs uppercase tracking-widest font-semibold mb-1">Dashboard de Control</h2>
-            <h3 class="text-2xl font-bold text-gray-800">Estrategia e Insights</h3>
+            <h2 class="text-primary/70 text-xs uppercase tracking-widest font-semibold mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">dashboard</span> Dashboard de Control</h2>
+            <h3 class="text-3xl font-bold text-gray-800 tracking-tight">Estrategia e Insights</h3>
         </div>
-        <div class="flex items-center gap-1 text-primary text-xs font-bold bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
-            <span class="material-symbols-outlined text-[14px]">auto_awesome</span>
+        <div class="flex items-center gap-1 text-primary text-xs font-bold ia-badge px-4 py-2 rounded-full shadow-sm">
+            <span class="material-symbols-outlined text-[16px] animate-pulse">auto_awesome</span>
             IA Activa
         </div>
     </div>
 
-    <!-- Filtros: solo Año y Mes (sin proveedor) -->
+    <!-- Filtros -->
     <div class="card p-5">
         <div class="flex flex-wrap gap-4 items-end">
             <div class="min-w-[130px]">
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Año</label>
-                <select id="filtroAno" class="w-full border border-outline rounded-full px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary/20">
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">calendar_month</span>Año</label>
+                <select id="filtroAno" class="w-full border border-outline rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
                     <option value="">Cargando...</option>
                 </select>
             </div>
             <div class="min-w-[150px]">
-                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider">Mes</label>
-                <select id="filtroMes" class="w-full border border-outline rounded-full px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary/20">
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1 tracking-wider flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">event</span>Mes</label>
+                <select id="filtroMes" class="w-full border border-outline rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary/30">
                     <option value="todos">Todo el año</option>
                     <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
                     <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
@@ -92,56 +208,101 @@
                 </select>
             </div>
             <div>
-                <button id="aplicarFiltros" class="bg-primary text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-purple-700 transition shadow-md">Aplicar</button>
+                <button id="aplicarFiltros" class="bg-gradient-to-r from-primary to-secondary text-white px-7 py-2 rounded-xl text-sm font-bold hover:shadow-lg transition-all duration-200 flex items-center gap-2"><span class="material-symbols-outlined text-sm">filter_alt</span> Aplicar</button>
             </div>
         </div>
     </div>
 
-    <!-- KPI Grid (6 tarjetas mejoradas) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-5">
-        <div class="card p-5 kpi-card"><div class="flex justify-between items-start"><div><p class="text-gray-400 text-[10px] font-bold uppercase mb-1">Margen Bruto</p><h3 id="kpiMargen" class="text-2xl font-black text-gray-800">0%</h3></div><span class="material-symbols-outlined text-primary text-2xl">percent</span></div><span id="kpiMargenTrend" class="text-xs font-bold"></span></div>
-        <div class="card p-5 kpi-card"><div><p class="text-gray-400 text-[10px] font-bold uppercase mb-1">Ventas Totales</p><h3 id="kpiTotal" class="text-2xl font-black text-gray-800">$0</h3></div><span id="kpiTotalTrend" class="text-xs font-bold"></span></div>
-        <div class="card p-5 kpi-card"><div><p class="text-gray-400 text-[10px] font-bold uppercase mb-1">Ticket Promedio</p><h3 id="kpiTicket" class="text-2xl font-black text-gray-800">$0</h3></div><span id="kpiTicketTrend" class="text-xs font-bold"></span></div>
-        <div class="card p-5 kpi-card"><div><p class="text-gray-400 text-[10px] font-bold uppercase mb-1">Clientes Activos</p><h3 id="kpiClientes" class="text-2xl font-black text-gray-800">0</h3></div></div>
-        <div class="card p-5 kpi-card"><div><p class="text-gray-400 text-[10px] font-bold uppercase mb-1">Deuda Proveedores</p><h3 id="kpiDeuda" class="text-2xl font-black text-gray-800">$0</h3></div></div>
-        <div class="card p-5 kpi-card"><div><p class="text-gray-400 text-[10px] font-bold uppercase mb-1">Producto + Rentable</p><h3 id="productoTop" class="text-sm font-black text-gray-800 truncate">---</h3><p id="productoGanancia" class="text-[10px] text-success mt-1">$0</p></div></div>
+    <!-- KPI Grid (5 indicadores clave) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+        <div class="card p-5 kpi-card kpi-ventas">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-[11px] font-bold uppercase mb-1 tracking-wide">Ventas Totales</p>
+                    <h3 id="kpiTotal" class="kpi-value text-2xl font-black">$0</h3>
+                </div>
+                <span class="material-symbols-outlined text-pink-500 text-3xl opacity-80">attach_money</span>
+            </div>
+        </div>
+        <div class="card p-5 kpi-card kpi-productos">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-[11px] font-bold uppercase mb-1">Productos Vendidos</p>
+                    <h3 id="kpiProductos" class="kpi-value text-2xl font-black">0</h3>
+                </div>
+                <span class="material-symbols-outlined text-emerald-500 text-3xl opacity-80">inventory_2</span>
+            </div>
+        </div>
+        <div class="card p-5 kpi-card kpi-ganancia">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-[11px] font-bold uppercase mb-1">Ganancia Total</p>
+                    <h3 id="kpiGanancia" class="kpi-value text-2xl font-black">$0</h3>
+                </div>
+                <span class="material-symbols-outlined text-purple-500 text-3xl opacity-80">trending_up</span>
+            </div>
+        </div>
+        <div class="card p-5 kpi-card kpi-clientes">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-[11px] font-bold uppercase mb-1">Clientes Activos</p>
+                    <h3 id="kpiClientes" class="kpi-value text-2xl font-black">0</h3>
+                </div>
+                <span class="material-symbols-outlined text-teal-500 text-3xl opacity-80">groups</span>
+            </div>
+        </div>
+        <div class="card p-5 kpi-card kpi-pendientes">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-500 text-[11px] font-bold uppercase mb-1">Pedidos Pendientes</p>
+                    <h3 id="kpiPendientes" class="kpi-value text-2xl font-black">0</h3>
+                </div>
+                <span class="material-symbols-outlined text-orange-500 text-3xl opacity-80">pending_actions</span>
+            </div>
+        </div>
     </div>
 
     <!-- Resumen IA + Alertas -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="card p-5 bg-gradient-to-r from-purple-50/40 to-white"><div class="flex gap-2 items-center mb-3"><span class="material-symbols-outlined text-primary">psychiatry</span><h3 class="font-bold text-primary">Resumen Ejecutivo (IA)</h3></div><p id="resumenIA" class="text-sm text-gray-700">Cargando...</p></div>
-        <div class="card p-5 bg-gradient-to-r from-red-50/30 to-white"><div class="flex gap-2 items-center mb-3"><span class="material-symbols-outlined text-red-500">warning</span><h3 class="font-bold text-red-500">Alertas Financieras</h3></div><ul id="alertasLista" class="text-sm list-disc pl-5 space-y-1 text-gray-700"><li>Cargando...</li></ul></div>
+        <div class="card p-6 bg-gradient-to-br from-purple-50/60 to-white border-l-8 border-l-primary">
+            <div class="flex gap-2 items-center mb-3"><span class="material-symbols-outlined text-primary text-2xl">psychiatry</span><h3 class="font-bold text-primary text-lg">Resumen Ejecutivo (IA)</h3></div>
+            <p id="resumenIA" class="text-sm text-gray-700 leading-relaxed">Cargando...</p>
+        </div>
+        <div class="card p-6 bg-gradient-to-br from-red-50/40 to-white border-l-8 border-l-red-400">
+            <div class="flex gap-2 items-center mb-3"><span class="material-symbols-outlined text-red-500 text-2xl">warning</span><h3 class="font-bold text-red-500 text-lg">Alertas Financieras</h3></div>
+            <ul id="alertasLista" class="text-sm list-disc pl-5 space-y-1.5 text-gray-700 marker:text-red-400"><li>Cargando...</li></ul>
+        </div>
     </div>
 
-    <!-- Tendencia de Ventas (7 Días) - ya existente -->
+    <!-- Tendencia de Ventas (7 Días) -->
     <div class="card p-5">
         <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-gray-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">trending_up</span> Tendencia de Ventas (7 Días)</h2><span class="text-[10px] text-primary font-bold bg-primary/10 px-2 py-1 rounded-full">Datos reales</span></div>
         <canvas id="tendencia7dias" height="100" style="max-height: 150px;"></canvas>
-        <p id="forecastText" class="text-xs text-gray-500 mt-4 leading-relaxed">Cargando análisis...</p>
+        <p id="forecastText" class="text-xs text-gray-600 mt-4 leading-relaxed bg-gray-50 p-3 rounded-xl border border-outline">Cargando análisis...</p>
     </div>
 
-    <!-- Top Proveedores (con Ventas, Ganancia, Valor a Pagar) -->
+    <!-- Top Proveedores (mantiene funcionalidad pero sin deuda, solo ventas/ganancia pendiente de pago) -->
     <div class="card p-5">
-        <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-gray-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">local_shipping</span> Top Proveedores</h2><span class="text-[10px] text-primary font-bold">Rendimiento y deuda</span></div>
-        <div class="overflow-x-auto">
+        <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-gray-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">local_shipping</span> Top Proveedores</h2><span class="text-[10px] text-primary font-bold">Ventas generadas y ganancia</span></div>
+        <div class="overflow-x-auto rounded-xl">
             <table class="w-full text-sm">
-                <thead class="border-b border-outline"><tr class="text-left text-[10px] font-bold text-gray-400 uppercase"><th class="pb-2">Proveedor</th><th class="pb-2 text-right">Ventas Generadas</th><th class="pb-2 text-right">Ganancia Generada</th><th class="pb-2 text-right">Valor a Pagar (Deuda)</th></tr></thead>
-                <tbody id="tablaProveedoresBody"><tr><td colspan="4" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
+                <thead><tr class="text-left"><th class="pb-2">Proveedor</th><th class="pb-2 text-right">Ventas Generadas</th><th class="pb-2 text-right">Ganancia Generada</th></tr></thead>
+                <tbody id="tablaProveedoresBody"><tr><td colspan="3" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
             </table>
         </div>
     </div>
 
-    <!-- Tendencia Mensual (Ventas en fucsia + Ganancia en verde superpuesta) -->
+    <!-- Tendencia Mensual (Ventas + Ganancia) -->
     <div class="card p-5">
         <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-gray-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">bar_chart</span> Tendencia Mensual</h2><div class="flex gap-3 text-[10px]"><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-primary"></span> Ventas</span><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-success"></span> Ganancia</span></div></div>
         <canvas id="tendenciaMensual" height="200" style="max-height: 280px;"></canvas>
     </div>
 
-    <!-- Análisis por Producto (TODOS los productos, ordenados por ganancia) -->
+    <!-- Análisis por Producto -->
     <div class="card p-5 overflow-x-auto">
         <div class="flex justify-between items-center mb-4"><h2 class="font-bold text-gray-800 flex items-center gap-2"><span class="material-symbols-outlined text-primary">inventory_2</span> Análisis por Producto</h2><span class="text-[10px] text-primary font-bold">Todos los productos</span></div>
         <table class="w-full text-sm">
-            <thead class="border-b border-outline"><tr class="text-left text-[10px] font-bold text-gray-400 uppercase"><th class="pb-2">Producto</th><th class="pb-2 text-right">Unidades</th><th class="pb-2 text-right">Ventas</th><th class="pb-2 text-right">Ganancia</th><th class="pb-2 text-right">Margen %</th></tr></thead>
+            <thead><tr class="text-left"><th class="pb-2">Producto</th><th class="pb-2 text-right">Unidades</th><th class="pb-2 text-right">Ventas</th><th class="pb-2 text-right">Ganancia</th><th class="pb-2 text-right">Margen %</th></tr></thead>
             <tbody id="tablaProductosBody"><tr><td colspan="5" class="text-center py-6 text-gray-400">Cargando...</td></tr></tbody>
         </table>
     </div>
@@ -149,9 +310,10 @@
 
 <script>
     // ========== CONFIGURACIÓN ==========
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdRAAYsWPrGE8jqK3sZYxTou0iAEY0SEAuaxzKeEgWcaBRjvKtF9AUV9VDXQCnn_YRdA/exec"; // REEMPLAZA CON TU URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxdRAAYsWPrGE8jqK3sZYxTou0iAEY0SEAuaxzKeEgWcaBRjvKtF9AUV9VDXQCnn_YRdA/exec";
 
-    let finanzasData = [];
+    let finanzasData = [];      // Datos filtrados (excluye INTERNO/CADUCADO)
+    let finanzasRaw = [];       // Datos completos sin filtrar por estado (para contar pendientes)
     let comprasPendientes = [];
     let clientesMap = new Map();
 
@@ -165,6 +327,15 @@
     const selectAno = document.getElementById('filtroAno');
     const selectMes = document.getElementById('filtroMes');
     const btnAplicar = document.getElementById('aplicarFiltros');
+
+    // Funciones auxiliares de formato
+    function formatMoney(value) {
+        return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value);
+    }
+
+    function formatNumber(value) {
+        return new Intl.NumberFormat('es-ES').format(value);
+    }
 
     async function obtenerDatos(sheetName) {
         const url = `${SCRIPT_URL}?action=getData&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
@@ -180,6 +351,7 @@
         try {
             if (memoryCache.data && Date.now() - memoryCache.timestamp < CACHE_DURACION) {
                 finanzasData = memoryCache.data.finanzasData;
+                finanzasRaw = memoryCache.data.finanzasRaw;
                 comprasPendientes = memoryCache.data.comprasPendientes;
                 clientesMap = new Map(memoryCache.data.clientesMap);
                 poblarFiltros();
@@ -201,7 +373,8 @@
                 if (id && nombre) clientesMap.set(id, { nombre, sector });
             });
 
-            finanzasData = rawFinanzas.map(row => {
+            // Procesar datos crudos de Finanzas (incluir todos los estados para contar pendientes)
+            const procesados = rawFinanzas.map(row => {
                 let fechaRaw = row.Fecha || row.fecha;
                 if (!fechaRaw) return null;
                 let fecha = new Date(fechaRaw);
@@ -214,18 +387,30 @@
                 let total = parseFloat(row["Total Venta"] || row.total_venta || 0);
                 let costo = parseFloat(row["Costo Proveedor"] || row.costo_proveedor || 0);
                 let ganancia = total - costo;
-                let estado = (row.Estado || "").toUpperCase();
-                if (estado === "INTERNO" || estado === "CADUCADO") return null;
+                let estado = (row.Estado || row.estado || "").toUpperCase();
                 if (isNaN(total) || total === 0) return null;
-                return { fecha, cliente: clienteInfo.nombre, sector: clienteInfo.sector, proveedor, producto, cantidad, total, ganancia };
+                return { fecha, cliente: clienteInfo.nombre, sector: clienteInfo.sector, proveedor, producto, cantidad, total, ganancia, estado };
             }).filter(v => v !== null);
+
+            // finanzasData: excluye INTERNO y CADUCADO (para ventas reales)
+            finanzasData = procesados.filter(v => v.estado !== "INTERNO" && v.estado !== "CADUCADO");
+            // finanzasRaw: todos los registros (para contar pendientes)
+            finanzasRaw = procesados;
 
             comprasPendientes = rawCompras
                 .filter(row => (row.Estado_Entrega || "").toUpperCase() === "PENDIENTE")
                 .map(row => ({ proveedor: row.Proveedor || row.proveedor || "Desconocido", total: parseFloat(row.Total || row.total || 0) }))
                 .filter(v => v.total > 0);
 
-            memoryCache = { timestamp: Date.now(), data: { finanzasData, comprasPendientes, clientesMap: Array.from(clientesMap.entries()) } };
+            memoryCache = {
+                timestamp: Date.now(),
+                data: {
+                    finanzasData,
+                    finanzasRaw,
+                    comprasPendientes,
+                    clientesMap: Array.from(clientesMap.entries())
+                }
+            };
             poblarFiltros();
             await actualizarDashboard();
         } catch (err) {
@@ -250,61 +435,46 @@
         return { inicio, fin };
     }
 
-    function filtrarVentas() {
-        let ventas = [...finanzasData];
+    function filtrarVentas(baseData = finanzasData) {
+        let ventas = [...baseData];
         const { inicio, fin } = getFiltroFechas();
         if (inicio) ventas = ventas.filter(v => v.fecha >= inicio && v.fecha <= fin);
         return ventas;
     }
 
-    function ventasPeriodoAnterior() {
-        if (!filtroAno) return [];
-        let añoAnt = parseInt(filtroAno) - 1;
-        let ventasAnt = finanzasData.filter(v => v.fecha.getFullYear() === añoAnt);
-        if (filtroMes !== "todos") { let m = parseInt(filtroMes); ventasAnt = ventasAnt.filter(v => v.fecha.getMonth() + 1 === m); }
-        return ventasAnt;
-    }
-
-    function calcularKPIs(ventas) {
-        let total = 0, ganancia = 0;
-        ventas.forEach(v => { total += v.total; ganancia += v.ganancia; });
-        let margen = total ? (ganancia/total)*100 : 0;
-        let ticket = ventas.length ? total/ventas.length : 0;
+    function calcularKPIs(ventas, ventasRaw) {
+        let totalVentas = 0, gananciaTotal = 0, totalProductos = 0;
+        ventas.forEach(v => {
+            totalVentas += v.total;
+            gananciaTotal += v.ganancia;
+            totalProductos += v.cantidad;
+        });
         let clientesActivos = new Set(ventas.map(v => v.cliente)).size;
-        let deudaTotal = comprasPendientes.reduce((sum, c) => sum + c.total, 0);
-        let gananciaPorProducto = new Map();
-        ventas.forEach(v => gananciaPorProducto.set(v.producto, (gananciaPorProducto.get(v.producto)||0) + v.ganancia));
-        let productoTop = { nombre: "---", ganancia: 0 };
-        for (let [prod, gan] of gananciaPorProducto) if (gan > productoTop.ganancia) productoTop = { nombre: prod, ganancia: gan };
-        return { total, ganancia, margen, ticket, clientesActivos, deudaTotal, productoTop };
+        // Pedidos pendientes: contar registros con estado "PENDIENTE" en el mismo período filtrado
+        let pendientes = ventasRaw.filter(v => v.estado === "PENDIENTE").length;
+        return { totalVentas, gananciaTotal, totalProductos, clientesActivos, pendientes };
     }
 
     async function actualizarDashboard() {
-        const ventas = filtrarVentas();
-        const ventasAnt = ventasPeriodoAnterior();
-        const kpi = calcularKPIs(ventas);
-        const kpiAnt = calcularKPIs(ventasAnt);
+        const ventas = filtrarVentas(finanzasData);
+        const ventasRaw = filtrarVentas(finanzasRaw);
+        const kpi = calcularKPIs(ventas, ventasRaw);
 
-        document.getElementById('kpiMargen').innerText = `${kpi.margen.toFixed(1)}%`;
-        document.getElementById('kpiTotal').innerText = `$${kpi.total.toFixed(0)}k`;
-        document.getElementById('kpiTicket').innerText = `$${kpi.ticket.toFixed(2)}k`;
-        document.getElementById('kpiClientes').innerText = kpi.clientesActivos;
-        document.getElementById('kpiDeuda').innerText = `$${kpi.deudaTotal.toFixed(2)}k`;
-        document.getElementById('productoTop').innerText = kpi.productoTop.nombre;
-        document.getElementById('productoGanancia').innerHTML = `$${kpi.productoTop.ganancia.toFixed(2)} ganancia`;
+        // Actualizar KPI
+        document.getElementById('kpiTotal').innerHTML = formatMoney(kpi.totalVentas);
+        document.getElementById('kpiProductos').innerText = formatNumber(kpi.totalProductos);
+        document.getElementById('kpiGanancia').innerHTML = formatMoney(kpi.gananciaTotal);
+        document.getElementById('kpiClientes').innerText = formatNumber(kpi.clientesActivos);
+        document.getElementById('kpiPendientes').innerText = formatNumber(kpi.pendientes);
 
-        const trend = (act, ant) => ant ? ((act-ant)/ant*100).toFixed(1) : (act>0?"+100":"0");
-        document.getElementById('kpiMargenTrend').innerHTML = `${trend(kpi.margen, kpiAnt.margen)}pp vs ant`;
-        document.getElementById('kpiTotalTrend').innerHTML = `${trend(kpi.total, kpiAnt.total)}% vs ant`;
-        document.getElementById('kpiTicketTrend').innerHTML = `${trend(kpi.ticket, kpiAnt.ticket)}% vs ant`;
+        // Resumen IA
+        document.getElementById('resumenIA').innerHTML = `📊 ${ventas.length} transacciones reales. Ventas totales: ${formatMoney(kpi.totalVentas)}. Ganancia: ${formatMoney(kpi.gananciaTotal)}. Productos vendidos: ${formatNumber(kpi.totalProductos)} unidades. Clientes activos: ${kpi.clientesActivos}. Pedidos pendientes: ${kpi.pendientes}.`;
 
-        let ticketStr = ventas.length ? (kpi.total/ventas.length).toFixed(2) : 0;
-        document.getElementById('resumenIA').innerHTML = `📊 ${ventas.length} transacciones, ticket promedio $${ticketStr}. Margen ${kpi.margen.toFixed(1)}%. Producto más rentable: "${kpi.productoTop.nombre}" ($${kpi.productoTop.ganancia.toFixed(2)}). ${kpi.clientesActivos} clientes activos. Deuda a proveedores: $${kpi.deudaTotal.toFixed(2)}.`;
-
+        // Alertas
         let alertas = [];
-        if (kpi.margen < 20) alertas.push("⚠️ Margen bruto bajo (<20%). Revisar precios o costos.");
-        if (ventas.length === 0) alertas.push("❌ No hay ventas en el período seleccionado.");
-        if (kpi.deudaTotal > 1000) alertas.push(`💰 Deuda pendiente con proveedores alta: $${kpi.deudaTotal.toFixed(2)}. Gestionar pagos.`);
+        if (kpi.pendientes > 10) alertas.push(`⚠️ Hay ${kpi.pendientes} pedidos en estado pendiente. Revisar entregas.`);
+        if (kpi.totalVentas === 0) alertas.push("❌ No hay ventas en el período seleccionado.");
+        if (kpi.gananciaTotal < 0) alertas.push("📉 Ganancia negativa, revisar costos.");
         if (alertas.length === 0) alertas.push("✅ Sin alertas críticas.");
         document.getElementById('alertasLista').innerHTML = alertas.map(a=>`<li>${a}</li>`).join('');
 
@@ -312,7 +482,7 @@
         actualizarTopProveedores(ventas);
         actualizarTendenciaMensual();
         actualizarTablaProductos(ventas);
-        document.getElementById('forecastText').innerHTML = `<span class="text-primary font-bold">Tendencia:</span> Basado en ${ventas.length} transacciones. Producto estrella: ${kpi.productoTop.nombre}.`;
+        document.getElementById('forecastText').innerHTML = `<span class="text-primary font-bold">📈 Tendencia:</span> Basado en ${ventas.length} transacciones. Productividad estable.`;
     }
 
     function actualizarTendencia7Dias() {
@@ -331,8 +501,8 @@
         if (chartTendencia7d) chartTendencia7d.destroy();
         chartTendencia7d = new Chart(ctx, {
             type: 'line',
-            data: { labels, datasets: [{ label: 'Ventas ($)', data, borderColor: '#a21caf', backgroundColor: 'rgba(162,28,175,0.05)', tension: 0.3, fill: true, pointBackgroundColor: '#db2777' }] },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+            data: { labels, datasets: [{ label: 'Ventas ($)', data, borderColor: '#a21caf', backgroundColor: 'rgba(162,28,175,0.05)', tension: 0.3, fill: true, pointBackgroundColor: '#db2777', pointBorderColor: '#fff', pointRadius: 3 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, ticks: { callback: (val) => formatMoney(val) }, grid: { color: '#f3e8ff' } } } }
         });
     }
 
@@ -343,23 +513,18 @@
             ventasPorProveedor.set(v.proveedor, (ventasPorProveedor.get(v.proveedor)||0) + v.total);
             gananciaPorProveedor.set(v.proveedor, (gananciaPorProveedor.get(v.proveedor)||0) + v.ganancia);
         });
-        const deudaPorProveedor = new Map();
-        comprasPendientes.forEach(d => deudaPorProveedor.set(d.proveedor, (deudaPorProveedor.get(d.proveedor)||0) + d.total));
-        const proveedores = [...new Set([...ventasPorProveedor.keys(), ...deudaPorProveedor.keys()])];
-        const ranking = proveedores.map(prov => ({
+        const ranking = Array.from(ventasPorProveedor.keys()).map(prov => ({
             proveedor: prov,
             ventas: ventasPorProveedor.get(prov) || 0,
-            ganancia: gananciaPorProveedor.get(prov) || 0,
-            deuda: deudaPorProveedor.get(prov) || 0
+            ganancia: gananciaPorProveedor.get(prov) || 0
         })).sort((a,b) => b.ventas - a.ventas).slice(0,10);
         const tbody = document.getElementById('tablaProveedoresBody');
-        if (ranking.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-6 text-gray-400">Sin datos</td></tr>'; return; }
+        if (ranking.length === 0) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-gray-400">Sin datos</td></tr>'; return; }
         tbody.innerHTML = ranking.map(p => `
-            <tr class="border-b border-outline/30">
+            <tr class="border-b border-outline/30 hover:bg-purple-50/30 transition">
                 <td class="py-3 font-bold text-gray-800">${p.proveedor}</td>
-                <td class="py-3 text-right text-primary font-bold">$${p.ventas.toFixed(2)}</td>
-                <td class="py-3 text-right text-success font-bold">$${p.ganancia.toFixed(2)}</td>
-                <td class="py-3 text-right text-amber-600 font-bold">$${p.deuda.toFixed(2)}</td>
+                <td class="py-3 text-right text-primary font-bold">${formatMoney(p.ventas)}</td>
+                <td class="py-3 text-right text-success font-bold">${formatMoney(p.ganancia)}</td>
             </tr>
         `).join('');
     }
@@ -392,7 +557,7 @@
                     { label: 'Ganancia ($)', data: gananciaData, backgroundColor: '#16a34a', borderRadius: 8, barPercentage: 0.6 }
                 ]
             },
-            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Monto ($)' } } } }
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'Monto ($)' }, ticks: { callback: (val) => formatMoney(val) }, grid: { color: '#f3e8ff' } } } }
         });
     }
 
@@ -410,19 +575,19 @@
         const tbody = document.getElementById('tablaProductosBody');
         if (ranking.length === 0) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400">Sin datos</td></tr>'; return; }
         tbody.innerHTML = ranking.map(p => `
-            <tr class="border-b border-outline/30">
+            <tr class="border-b border-outline/30 hover:bg-purple-50/30 transition">
                 <td class="py-3 font-bold text-gray-800">${p.nombre}</td>
                 <td class="py-3 text-right">${Math.round(p.unidades)}</td>
-                <td class="py-3 text-right text-primary font-bold">$${p.total.toFixed(2)}</td>
-                <td class="py-3 text-right text-success font-bold">$${p.ganancia.toFixed(2)}</td>
-                <td class="py-3 text-right text-gray-600">${p.margen.toFixed(1)}%</td>
+                <td class="py-3 text-right text-primary font-bold">${formatMoney(p.total)}</td>
+                <td class="py-3 text-right text-success font-bold">${formatMoney(p.ganancia)}</td>
+                <td class="py-3 text-right text-gray-600 font-medium">${p.margen.toFixed(1)}%</td>
             </tr>
         `).join('');
     }
 
-    // Exportaciones con feedback visual
+    // Exportaciones (sin cambios funcionales)
     async function exportarExcelConFeedback() {
-        const ventas = filtrarVentas();
+        const ventas = filtrarVentas(finanzasData);
         if (!ventas.length) { Swal.fire("Sin datos", "No hay ventas con los filtros actuales", "warning"); return; }
         Swal.fire({ title: "Generando Excel...", text: "Procesando datos", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         setTimeout(() => {
@@ -435,14 +600,14 @@
     }
 
     async function exportarPDFConFeedback() {
-        const ventas = filtrarVentas();
+        const ventas = filtrarVentas(finanzasData);
         if (!ventas.length) { Swal.fire("Sin datos", "No hay ventas con los filtros actuales", "warning"); return; }
         Swal.fire({ title: "Generando PDF...", text: "Preparando documento", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
         setTimeout(async () => {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('landscape');
             const headers = [["Fecha","Proveedor","Producto","Cantidad","Total","Ganancia"]];
-            const rows = ventas.map(v => [v.fecha.toISOString().slice(0,10), v.proveedor, v.producto, v.cantidad, `$${v.total.toFixed(2)}`, `$${v.ganancia.toFixed(2)}`]);
+            const rows = ventas.map(v => [v.fecha.toISOString().slice(0,10), v.proveedor, v.producto, v.cantidad, formatMoney(v.total), formatMoney(v.ganancia)]);
             doc.autoTable({ head: headers, body: rows, theme: 'striped', headStyles: { fillColor: [162,28,175] } });
             doc.save(`reporte_${Date.now()}.pdf`);
             Swal.fire({ icon: "success", title: "✅ PDF listo", text: "La descarga ha comenzado", toast: true, position: "top-end", showConfirmButton: false, timer: 3000 });

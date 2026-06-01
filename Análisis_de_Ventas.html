@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Análisis de Ventas - Lógica Láctea</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#b70dbd">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                primary: "#a21caf",
+                secondary: "#db2777",
+                success: "#16a34a",
+                electric: "#0055ff",
+                background: "#faf5ff",
+                outline: "#e9d5ff"
+              },
+              fontFamily: {
+                'sans': ['Work Sans', 'sans-serif']
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+        .chart-bar { transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,.85); backdrop-filter: blur(4px); z-index: 9999; justify-content: center; align-items: center; z-index: 1000; }
+        .trend-up { color: #16a34a; }
+        .trend-down { color: #e11d48; }
+        .glass-card { background: linear-gradient(135deg, #a21caf 0%, #6b21a8 100%); }
+    </style>
+</head>
+<body class="bg-background text-[#1f012a] font-sans antialiased pb-10">
+
+<div id="loading-overlay">
+    <div class="flex flex-col items-center gap-2">
+        <span class="material-symbols-outlined text-5xl text-primary animate-spin">sync</span>
+        <span class="text-[10px] font-black uppercase tracking-widest text-primary italic">Cargando datos financieros...</span>
+    </div>
+</div>
+
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 h-24 bg-white border-b border-outline shadow-sm">
+    <div class="flex items-center gap-2">
+        <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary border border-purple-200">
+            <span class="material-symbols-outlined text-3xl">analytics</span>
+        </div>
+        <div class="flex flex-col">
+            <h1 class="text-xs font-black text-primary tracking-tight uppercase italic leading-none mb-1">Lógica Láctea</h1>
+            <h2 class="text-sm font-bold text-slate-700 -mt-1">Análisis de Ventas</h2>
+        </div>
+    </div>
+    <button onclick="cargarDatosFinanzas()" class="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 active:scale-90 transition-transform">
+        <span class="material-symbols-outlined text-slate-500">sync</span>
+    </button>
+</header>
+
+<main class="pt-28 px-4 max-w-7xl mx-auto space-y-5">
+    <!-- Filtros de periodo -->
+    <section class="bg-white p-4 rounded-3xl border border-outline shadow-sm">
+        <div class="flex flex-wrap gap-2 justify-between items-center">
+            <div class="flex flex-wrap gap-2">
+                <button data-periodo="hoy" class="btn-periodo bg-primary text-white px-5 py-2 rounded-full text-xs font-black uppercase tracking-wide shadow-sm">Hoy</button>
+                <button data-periodo="semana" class="btn-periodo bg-white border border-outline text-slate-700 px-5 py-2 rounded-full text-xs font-black uppercase tracking-wide">Esta Semana</button>
+                <button data-periodo="mes" class="btn-periodo bg-white border border-outline text-slate-700 px-5 py-2 rounded-full text-xs font-black uppercase tracking-wide">Este Mes</button>
+                <button data-periodo="mes-1" class="btn-periodo bg-white border border-outline text-slate-700 px-5 py-2 rounded-full text-xs font-black uppercase tracking-wide">Mes Pasado</button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Selector de Mes/Año -->
+                <select id="selector-mes" class="text-xs font-bold border border-outline rounded-full px-3 py-1.5 bg-white text-slate-700">
+                    <option value="">Mes específico</option>
+                </select>
+                <!-- Selector de Semana/Año -->
+                <input type="week" id="selector-semana" class="text-xs font-bold border border-outline rounded-full px-3 py-1.5 bg-white text-slate-700 hidden">
+                <button id="btn-semana" class="text-primary text-xs font-black uppercase tracking-wide flex items-center gap-1 border border-outline rounded-full px-3 py-1.5"><span class="material-symbols-outlined text-sm">calendar_view_week</span> Semana</button>
+                <button id="btn-personalizado" class="text-primary text-xs font-black uppercase tracking-wide flex items-center gap-1 border border-outline rounded-full px-3 py-1.5"><span class="material-symbols-outlined text-sm">edit_calendar</span> Día</button>
+                <input type="date" id="fecha-personalizada" class="text-xs font-bold border border-outline rounded-full px-3 py-1.5 bg-transparent focus:ring-1 focus:ring-primary hidden">
+            </div>
+        </div>
+    </section>
+
+    <!-- KPI Cards con comparativa (5 KPIs) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="bg-white rounded-2xl p-5 border-l-8 border-primary shadow-sm">
+            <div class="flex justify-between items-start">
+                <div><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Ventas</p><h3 id="kpi-total" class="text-2xl font-black text-slate-800 mt-1">$0</h3></div>
+                <span class="material-symbols-outlined text-3xl text-primary">payments</span>
+            </div>
+            <div class="mt-2 flex items-center gap-1 text-xs font-bold"><span id="kpi-total-trend" class="trend-up">+0%</span><span class="text-slate-400 text-[9px]">vs anterior</span></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border-l-8 border-success shadow-sm">
+            <div class="flex justify-between items-start"><div><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Ganancia Bruta</p><h3 id="kpi-ganancia" class="text-2xl font-black text-slate-800 mt-1">$0</h3></div><span class="material-symbols-outlined text-3xl text-success">trending_up</span></div>
+            <div class="mt-2 flex items-center gap-1 text-xs font-bold"><span id="kpi-ganancia-trend" class="trend-up">+0%</span><span class="text-slate-400 text-[9px]">vs anterior</span></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border-l-8 border-secondary shadow-sm">
+            <div class="flex justify-between items-start"><div><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Unidades Vendidas</p><h3 id="kpi-unidades" class="text-2xl font-black text-slate-800 mt-1">0</h3></div><span class="material-symbols-outlined text-3xl text-secondary">water_drop</span></div>
+            <div class="mt-2 flex items-center gap-1 text-xs font-bold"><span id="kpi-unidades-trend" class="trend-up">+0%</span><span class="text-slate-400 text-[9px]">vs anterior</span></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border-l-8 border-electric shadow-sm">
+            <div class="flex justify-between items-start"><div><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Ticket Promedio</p><h3 id="kpi-ticket" class="text-2xl font-black text-slate-800 mt-1">$0</h3></div><span class="material-symbols-outlined text-3xl text-electric">receipt_long</span></div>
+            <div class="mt-2 flex items-center gap-1 text-xs font-bold"><span id="kpi-ticket-trend" class="trend-down">-0%</span><span class="text-slate-400 text-[9px]">vs anterior</span></div>
+        </div>
+        <div class="bg-white rounded-2xl p-5 border-l-8 border-amber-500 shadow-sm">
+            <div class="flex justify-between items-start"><div><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Producto Estrella</p><h3 id="producto-estrella" class="text-sm font-black text-slate-800 mt-1 truncate">---</h3></div><span class="material-symbols-outlined text-3xl text-amber-500">star</span></div>
+            <p id="estrella-unidades" class="text-[9px] text-slate-400 mt-1 font-bold">0 unidades</p>
+        </div>
+    </div>
+
+    <!-- Gráfico de tendencia mensual y categorías -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 bg-white rounded-3xl p-6 border border-outline shadow-sm">
+            <h3 class="text-xs font-black text-primary mb-4 uppercase tracking-wider flex items-center gap-2"><span class="material-symbols-outlined text-sm">trending_up</span> Tendencia Mensual (últimos 12 meses)</h3>
+            <div id="barras-mensuales" class="h-64 flex items-end justify-between gap-2 pt-4"><div class="text-center text-slate-400 w-full text-sm">Cargando...</div></div>
+        </div>
+        <div class="bg-white rounded-3xl p-6 border border-outline shadow-sm">
+            <h3 class="text-xs font-black text-primary mb-4 uppercase tracking-wider flex items-center gap-2"><span class="material-symbols-outlined text-sm">pie_chart</span> Ventas por Categoría</h3>
+            <div id="categorias-lista" class="space-y-3"></div>
+            <div class="mt-6 flex justify-center"><div class="relative w-28 h-28"><svg id="donut-categorias" class="w-full h-full -rotate-90" viewBox="0 0 36 36"><circle cx="18" cy="18" fill="none" r="16" stroke="#e9d5ff" stroke-width="4"></circle></svg><div class="absolute inset-0 flex items-center justify-center text-center text-[9px] font-black text-slate-500">Total</div></div></div>
+        </div>
+    </div>
+
+    <!-- Top productos -->
+    <section class="bg-white rounded-3xl p-6 border border-outline shadow-sm">
+        <div class="flex justify-between items-center mb-4"><h3 class="text-xs font-black text-primary uppercase tracking-wider flex items-center gap-2"><span class="material-symbols-outlined text-sm">leaderboard</span> Top 5 Productos por Ingresos</h3><button id="ver-reporte" class="text-[10px] font-black text-primary underline">Ver completo</button></div>
+        <div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead class="border-b border-outline"><tr class="text-[10px] font-black text-slate-400 uppercase"><th class="pb-2">Producto</th><th class="pb-2">Unidades</th><th class="pb-2">Ingresos</th><th class="pb-2">Ganancia</th><th class="pb-2 text-right">Participación</th></tr></thead><tbody id="top-productos-body"><tr><td colspan="5" class="text-center py-6 text-slate-400 text-sm">Sin datos</td></tr></tbody></table></div>
+    </section>
+</main>
+
+<script>
+    // ========== CONFIGURACIÓN ==========
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfKJcI1AtsfUCbbr_MHsh3QvYOUrpq0HFS6YBKFgoCUIrosX-Dn3W1LHDRpihp7M0dDQ/exec";
+
+    let finanzasData = [];          // Array con objetos: fecha, total, costo, ganancia, producto, cantidad
+    let periodoActual = "hoy";      // hoy, semana, mes, mes-1, personalizado, mes_especifico, semana_especifica
+    let fechaPersonalizada = null;
+    let mesSeleccionado = null;     // formato "YYYY-MM"
+    let semanaSeleccionada = null;  // formato "YYYY-Www"
+
+    // Elementos DOM
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const btnPersonalizado = document.getElementById('btn-personalizado');
+    const fechaInput = document.getElementById('fecha-personalizada');
+    const btnSemana = document.getElementById('btn-semana');
+    const semanaInput = document.getElementById('selector-semana');
+    const selectorMes = document.getElementById('selector-mes');
+    const btnPeriodos = document.querySelectorAll('.btn-periodo');
+
+    // ========== FUNCIONES DE FECHAS ==========
+    function getLimitesPeriodo(periodo, refDate = null) {
+        const ref = refDate ? new Date(refDate) : new Date();
+        ref.setHours(0,0,0,0);
+        let inicio, fin;
+        switch(periodo) {
+            case 'hoy': inicio = new Date(ref); fin = new Date(ref); break;
+            case 'semana': {
+                const diaSemana = ref.getDay() === 0 ? 7 : ref.getDay();
+                const lunes = new Date(ref); lunes.setDate(ref.getDate() - (diaSemana - 1));
+                inicio = lunes; fin = ref; break;
+            }
+            case 'mes': inicio = new Date(ref.getFullYear(), ref.getMonth(), 1); fin = new Date(ref.getFullYear(), ref.getMonth()+1, 0); break;
+            case 'mes-1': {
+                let mes = ref.getMonth()-1, año = ref.getFullYear();
+                if(mes<0){mes=11; año--;}
+                inicio = new Date(año, mes, 1); fin = new Date(año, mes+1, 0); break;
+            }
+            case 'personalizado': {
+                if(!fechaPersonalizada) return getLimitesPeriodo('hoy', ref);
+                const fechaSel = new Date(fechaPersonalizada);
+                inicio = new Date(fechaSel); fin = new Date(fechaSel); break;
+            }
+            case 'mes_especifico': {
+                if(!mesSeleccionado) return getLimitesPeriodo('hoy', ref);
+                const [year, month] = mesSeleccionado.split('-');
+                inicio = new Date(parseInt(year), parseInt(month)-1, 1);
+                fin = new Date(parseInt(year), parseInt(month), 0);
+                break;
+            }
+            case 'semana_especifica': {
+                if(!semanaSeleccionada) return getLimitesPeriodo('hoy', ref);
+                const [year, week] = semanaSeleccionada.split('-W');
+                const primerDia = new Date(parseInt(year), 0, 1);
+                const diasOffset = (parseInt(week)-1)*7 - primerDia.getDay() + 1;
+                const lunesSemana = new Date(parseInt(year), 0, diasOffset);
+                inicio = new Date(lunesSemana);
+                fin = new Date(lunesSemana); fin.setDate(lunesSemana.getDate()+6);
+                break;
+            }
+            default: inicio = new Date(0); fin = new Date();
+        }
+        return { inicio, fin };
+    }
+
+    function getPeriodoAnterior(periodo, refDate = null) {
+        const ref = refDate ? new Date(refDate) : new Date();
+        ref.setHours(0,0,0,0);
+        switch(periodo) {
+            case 'hoy': { const ayer = new Date(ref); ayer.setDate(ayer.getDate()-1); return { inicio: ayer, fin: ayer }; }
+            case 'semana': {
+                const diaSemana = ref.getDay()===0?7:ref.getDay();
+                const lunesActual = new Date(ref); lunesActual.setDate(ref.getDate()-(diaSemana-1));
+                const lunesAnt = new Date(lunesActual); lunesAnt.setDate(lunesAnt.getDate()-7);
+                const domingoAnt = new Date(lunesAnt); domingoAnt.setDate(lunesAnt.getDate()+6);
+                return { inicio: lunesAnt, fin: domingoAnt };
+            }
+            case 'mes': {
+                let mes = ref.getMonth()-1, año = ref.getFullYear();
+                if(mes<0){mes=11; año--;}
+                return { inicio: new Date(año, mes, 1), fin: new Date(año, mes+1, 0) };
+            }
+            case 'mes-1': {
+                let mes = ref.getMonth()-2, año = ref.getFullYear();
+                if(mes<0){mes+=12; año--;}
+                return { inicio: new Date(año, mes, 1), fin: new Date(año, mes+1, 0) };
+            }
+            case 'personalizado': {
+                const ayer = new Date(fechaPersonalizada); ayer.setDate(ayer.getDate()-1);
+                return { inicio: ayer, fin: ayer };
+            }
+            case 'mes_especifico': {
+                if(!mesSeleccionado) return { inicio: new Date(0), fin: new Date(0) };
+                const [year, month] = mesSeleccionado.split('-');
+                let antYear = parseInt(year), antMonth = parseInt(month)-2;
+                if(antMonth < 0) { antMonth += 12; antYear--; }
+                const inicioAnt = new Date(antYear, antMonth, 1);
+                const finAnt = new Date(antYear, antMonth+1, 0);
+                return { inicio: inicioAnt, fin: finAnt };
+            }
+            case 'semana_especifica': {
+                if(!semanaSeleccionada) return { inicio: new Date(0), fin: new Date(0) };
+                const [year, week] = semanaSeleccionada.split('-W');
+                const semanaNum = parseInt(week);
+                const primerDia = new Date(parseInt(year), 0, 1);
+                const diasOffset = (semanaNum-1)*7 - primerDia.getDay() + 1;
+                const lunes = new Date(parseInt(year), 0, diasOffset);
+                const lunesAnt = new Date(lunes); lunesAnt.setDate(lunesAnt.getDate()-7);
+                const domingoAnt = new Date(lunesAnt); domingoAnt.setDate(lunesAnt.getDate()+6);
+                return { inicio: lunesAnt, fin: domingoAnt };
+            }
+            default: return { inicio: new Date(0), fin: new Date(0) };
+        }
+    }
+
+    function estaEnPeriodo(fecha, inicio, fin) {
+        if (!fecha) return false;
+        const d = new Date(fecha); d.setHours(0,0,0,0);
+        return d >= inicio && d <= fin;
+    }
+
+    // ========== OBTENER DATOS DESDE GOOGLE SHEETS (HOJA FINANZAS) ==========
+    async function obtenerDatos(sheetName) {
+        const url = `${SCRIPT_URL}?action=getData&sheet=${encodeURIComponent(sheetName)}&t=${Date.now()}`;
+        const resp = await fetch(url, { cache: "no-store" });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const json = await resp.json();
+        if (!json.success) throw new Error(json.error || "Error en API");
+        return json.data;
+    }
+
+    async function cargarDatosFinanzas() {
+        mostrarCargando(true);
+        try {
+            const raw = await obtenerDatos("Finanzas");
+            if (!Array.isArray(raw)) throw new Error("Datos no válidos");
+            finanzasData = raw.map(row => {
+                let fecha = row.Fecha || row.fecha;
+                if (!fecha) return null;
+                let fechaObj = new Date(fecha);
+                if (isNaN(fechaObj)) return null;
+                const producto = row.Producto || row.producto || "Producto sin nombre";
+                const cantidad = parseFloat(row.Cantidad || row.cantidad || 0);
+                let total = parseFloat(row["Total Venta"] || row.total_venta || row.Total_Venta);
+                if (isNaN(total)) total = 0;
+                let costo = parseFloat(row["Costo Proveedor"] || row.costo_proveedor);
+                if (isNaN(costo)) costo = 0;
+                let ganancia = parseFloat(row.Ganancia || row.ganancia);
+                if (isNaN(ganancia)) ganancia = total - costo;
+                const estado = (row.Estado || "").toUpperCase();
+                if (estado === "INTERNO" || estado === "CADUCADO") return null;
+                return { fecha: fechaObj, producto, cantidad, total, costo, ganancia };
+            }).filter(v => v !== null && v.total > 0);
+            if (finanzasData.length === 0) throw new Error("No se encontraron datos en Finanzas.");
+            // Poblar selectores de meses únicos
+            poblarSelectorMeses();
+            await actualizarTodo();
+        } catch(err) {
+            console.error(err);
+            Swal.fire("Error", "No se pudieron cargar los datos: " + err.message, "error");
+        } finally {
+            mostrarCargando(false);
+        }
+    }
+
+    function poblarSelectorMeses() {
+        const mesesSet = new Set();
+        finanzasData.forEach(v => {
+            const año = v.fecha.getFullYear();
+            const mes = v.fecha.getMonth()+1;
+            mesesSet.add(`${año}-${mes.toString().padStart(2,'0')}`);
+        });
+        const mesesArray = Array.from(mesesSet).sort();
+        selectorMes.innerHTML = '<option value="">📅 Mes específico</option>';
+        mesesArray.forEach(ym => {
+            const [year, month] = ym.split('-');
+            const nombreMes = new Date(parseInt(year), parseInt(month)-1, 1).toLocaleString('es', { month: 'long' });
+            selectorMes.innerHTML += `<option value="${ym}">${nombreMes} ${year}</option>`;
+        });
+    }
+
+    // ========== FILTRADO PRINCIPAL ==========
+    function obtenerVentasFiltradas() {
+        let limites;
+        if (periodoActual === "mes_especifico" && mesSeleccionado) {
+            limites = getLimitesPeriodo("mes_especifico");
+        } else if (periodoActual === "semana_especifica" && semanaSeleccionada) {
+            limites = getLimitesPeriodo("semana_especifica");
+        } else {
+            let refDate = null;
+            if (periodoActual === "personalizado" && fechaPersonalizada) refDate = fechaPersonalizada;
+            limites = getLimitesPeriodo(periodoActual, refDate);
+        }
+        return finanzasData.filter(v => estaEnPeriodo(v.fecha, limites.inicio, limites.fin));
+    }
+
+    function obtenerVentasPeriodoAnterior() {
+        let limitesAnt;
+        if (periodoActual === "mes_especifico" && mesSeleccionado) {
+            limitesAnt = getPeriodoAnterior("mes_especifico");
+        } else if (periodoActual === "semana_especifica" && semanaSeleccionada) {
+            limitesAnt = getPeriodoAnterior("semana_especifica");
+        } else {
+            let refDate = null;
+            if (periodoActual === "personalizado" && fechaPersonalizada) refDate = fechaPersonalizada;
+            limitesAnt = getPeriodoAnterior(periodoActual, refDate);
+        }
+        return finanzasData.filter(v => estaEnPeriodo(v.fecha, limitesAnt.inicio, limitesAnt.fin));
+    }
+
+    function calcularKPIs(ventas) {
+        let total = 0, unidades = 0, ganancia = 0;
+        ventas.forEach(v => { total += v.total; unidades += v.cantidad; ganancia += v.ganancia; });
+        const ticket = ventas.length ? total / ventas.length : 0;
+        const prodMap = new Map();
+        ventas.forEach(v => prodMap.set(v.producto, (prodMap.get(v.producto) || 0) + v.cantidad));
+        let estrella = { nombre: "---", unidades: 0 };
+        for (let [nombre, cant] of prodMap.entries()) if (cant > estrella.unidades) estrella = { nombre, unidades: cant };
+        return { total, unidades, ganancia, ticket, estrella };
+    }
+
+    async function actualizarTodo() {
+        const ventasActual = obtenerVentasFiltradas();
+        const ventasAnterior = obtenerVentasPeriodoAnterior();
+        const kpiActual = calcularKPIs(ventasActual);
+        const kpiAnt = calcularKPIs(ventasAnterior);
+
+        document.getElementById('kpi-total').innerText = `$${kpiActual.total.toFixed(2)}`;
+        document.getElementById('kpi-ganancia').innerText = `$${kpiActual.ganancia.toFixed(2)}`;
+        document.getElementById('kpi-unidades').innerText = Math.round(kpiActual.unidades);
+        document.getElementById('kpi-ticket').innerText = `$${kpiActual.ticket.toFixed(2)}`;
+        document.getElementById('producto-estrella').innerText = kpiActual.estrella.nombre;
+        document.getElementById('estrella-unidades').innerText = `${kpiActual.estrella.unidades} unidades`;
+
+        const calcTrend = (act, ant) => { if(ant===0) return act>0?"+100%":"0%"; const diff=((act-ant)/ant)*100; return `${diff>0?'+':''}${diff.toFixed(1)}%`; };
+        document.getElementById('kpi-total-trend').innerHTML = calcTrend(kpiActual.total, kpiAnt.total);
+        document.getElementById('kpi-ganancia-trend').innerHTML = calcTrend(kpiActual.ganancia, kpiAnt.ganancia);
+        document.getElementById('kpi-unidades-trend').innerHTML = calcTrend(kpiActual.unidades, kpiAnt.unidades);
+        document.getElementById('kpi-ticket-trend').innerHTML = calcTrend(kpiActual.ticket, kpiAnt.ticket);
+        // colores
+        document.getElementById('kpi-total-trend').className = kpiActual.total >= kpiAnt.total ? 'trend-up' : 'trend-down';
+        document.getElementById('kpi-ganancia-trend').className = kpiActual.ganancia >= kpiAnt.ganancia ? 'trend-up' : 'trend-down';
+        document.getElementById('kpi-unidades-trend').className = kpiActual.unidades >= kpiAnt.unidades ? 'trend-up' : 'trend-down';
+        document.getElementById('kpi-ticket-trend').className = kpiActual.ticket >= kpiAnt.ticket ? 'trend-up' : 'trend-down';
+
+        actualizarGraficoMensual();
+        actualizarCategorias(ventasActual);
+        actualizarTopProductos(ventasActual);
+    }
+
+    function actualizarGraficoMensual() {
+        const hoy = new Date();
+        const meses = [];
+        for (let i = 11; i >= 0; i--) {
+            const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+            meses.push({ año: d.getFullYear(), mes: d.getMonth(), label: d.toLocaleString('es', { month: 'short' }).toUpperCase() });
+        }
+        const ventasPorMes = new Array(12).fill(0);
+        finanzasData.forEach(v => {
+            for (let i=0; i<meses.length; i++) {
+                if (v.fecha.getFullYear()===meses[i].año && v.fecha.getMonth()===meses[i].mes) {
+                    ventasPorMes[i] += v.total;
+                    break;
+                }
+            }
+        });
+        const maxVenta = Math.max(...ventasPorMes, 1);
+        const container = document.getElementById('barras-mensuales');
+        container.innerHTML = '';
+        meses.forEach((mes, idx) => {
+            const altura = (ventasPorMes[idx] / maxVenta) * 100;
+            container.innerHTML += `<div class="flex-1 flex flex-col items-center gap-1"><div class="w-full bg-primary/80 hover:bg-primary chart-bar rounded-t-lg transition-all" style="height: ${altura}%; min-height: 4px;"></div><span class="text-[9px] font-bold text-slate-500">${mes.label}</span></div>`;
+        });
+    }
+
+    function inferirCategoria(producto) {
+        const p = producto.toLowerCase();
+        if (p.includes('leche')) return 'Leches';
+        if (p.includes('queso')) return 'Quesos';
+        if (p.includes('yogur') || p.includes('yogurt')) return 'Yogures';
+        return 'Otros';
+    }
+
+    function actualizarCategorias(ventas) {
+        const catMap = new Map();
+        ventas.forEach(v => { const cat = inferirCategoria(v.producto); catMap.set(cat, (catMap.get(cat) || 0) + v.total); });
+        const total = Array.from(catMap.values()).reduce((a,b)=>a+b,0);
+        const sorted = Array.from(catMap.entries()).sort((a,b)=>b[1]-a[1]);
+        const colores = ['#a21caf', '#db2777', '#16a34a', '#f59e0b'];
+        const listaDiv = document.getElementById('categorias-lista');
+        listaDiv.innerHTML = '';
+        sorted.forEach(([cat, monto], idx) => {
+            const pct = total ? ((monto/total)*100).toFixed(0) : 0;
+            listaDiv.innerHTML += `<div><div class="flex justify-between text-xs font-bold"><span>${cat}</span><span class="text-primary">${pct}%</span></div><div class="w-full bg-outline rounded-full h-1.5 mt-1"><div class="h-1.5 rounded-full" style="width: ${pct}%; background: ${colores[idx%colores.length]}"></div></div></div>`;
+        });
+        const svg = document.getElementById('donut-categorias');
+        svg.innerHTML = '';
+        let acumulado = 0;
+        sorted.forEach(([, monto], idx) => {
+            const pct = total ? (monto/total)*100 : 0;
+            const dash = `${pct} ${100-pct}`;
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx","18"); circle.setAttribute("cy","18"); circle.setAttribute("fill","none");
+            circle.setAttribute("r","16"); circle.setAttribute("stroke",colores[idx%colores.length]);
+            circle.setAttribute("stroke-width","4"); circle.setAttribute("stroke-dasharray",dash);
+            circle.setAttribute("stroke-dashoffset",`-${acumulado}`);
+            svg.appendChild(circle);
+            acumulado += pct;
+        });
+        const fondo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        fondo.setAttribute("cx","18"); fondo.setAttribute("cy","18"); fondo.setAttribute("fill","none");
+        fondo.setAttribute("r","16"); fondo.setAttribute("stroke","#e9d5ff"); fondo.setAttribute("stroke-width","4");
+        svg.prepend(fondo);
+    }
+
+    function actualizarTopProductos(ventas) {
+        const prodMap = new Map();
+        ventas.forEach(v => {
+            if (!prodMap.has(v.producto)) prodMap.set(v.producto, { unidades:0, ingresos:0, ganancia:0 });
+            const p = prodMap.get(v.producto);
+            p.unidades += v.cantidad;
+            p.ingresos += v.total;
+            p.ganancia += v.ganancia;
+        });
+        const ranking = Array.from(prodMap.entries()).map(([nombre, d]) => ({ nombre, unidades: d.unidades, ingresos: d.ingresos, ganancia: d.ganancia }));
+        ranking.sort((a,b) => b.ingresos - a.ingresos);
+        const top5 = ranking.slice(0,5);
+        const totalIngresos = ranking.reduce((s,x)=>s+x.ingresos,0);
+        const tbody = document.getElementById('top-productos-body');
+        tbody.innerHTML = '';
+        if(top5.length===0) { tbody.innerHTML='<tr><td colspan="5" class="text-center py-6 text-slate-400">Sin datos</td></tr>'; return; }
+        top5.forEach(p => {
+            const pct = totalIngresos ? ((p.ingresos/totalIngresos)*100).toFixed(1) : 0;
+            tbody.innerHTML += `<tr class="border-b border-outline/30"><td class="py-3 font-bold text-slate-700">${p.nombre}</td><td class="py-3 font-mono">${Math.round(p.unidades)}</td><td class="py-3 font-bold text-primary">$${p.ingresos.toFixed(2)}</td><td class="py-3 text-success">$${p.ganancia.toFixed(2)}</td><td class="py-3 text-right text-xs font-black text-slate-500">${pct}%</td></tr>`;
+        });
+    }
+
+    // ========== UI Y EVENTOS ==========
+    function mostrarCargando(show) { loadingOverlay.style.display = show ? 'flex' : 'none'; }
+
+    function cambiarPeriodo(periodo, valorExtra = null) {
+        periodoActual = periodo;
+        if (periodo === 'personalizado' && valorExtra) fechaPersonalizada = valorExtra;
+        else if (periodo === 'mes_especifico') mesSeleccionado = valorExtra;
+        else if (periodo === 'semana_especifica') semanaSeleccionada = valorExtra;
+        // Resetear otros selectores visuales
+        if (periodo !== 'personalizado') fechaInput.classList.add('hidden');
+        if (periodo !== 'semana_especifica') semanaInput.classList.add('hidden');
+        // Actualizar estilos de botones rápidos
+        btnPeriodos.forEach(btn => {
+            const btnPer = btn.getAttribute('data-periodo');
+            if (btnPer === periodoActual && !mesSeleccionado && !semanaSeleccionada && periodoActual !== 'personalizado') {
+                btn.classList.remove('bg-white','border','border-outline','text-slate-700');
+                btn.classList.add('bg-primary','text-white');
+            } else {
+                btn.classList.remove('bg-primary','text-white');
+                btn.classList.add('bg-white','border','border-outline','text-slate-700');
+            }
+        });
+        actualizarTodo();
+    }
+
+    function initEventListeners() {
+        btnPeriodos.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const per = btn.getAttribute('data-periodo');
+                mesSeleccionado = null;
+                semanaSeleccionada = null;
+                selectorMes.value = "";
+                semanaInput.value = "";
+                fechaPersonalizada = null;
+                fechaInput.classList.add('hidden');
+                semanaInput.classList.add('hidden');
+                cambiarPeriodo(per);
+            });
+        });
+        btnPersonalizado.addEventListener('click', () => {
+            fechaInput.classList.toggle('hidden');
+            if (!fechaInput.classList.contains('hidden')) {
+                fechaInput.value = fechaPersonalizada || new Date().toISOString().split('T')[0];
+                fechaInput.focus();
+            } else if (periodoActual === 'personalizado') {
+                cambiarPeriodo('hoy');
+            }
+        });
+        fechaInput.addEventListener('change', (e) => {
+            const fecha = e.target.value;
+            if (fecha) {
+                mesSeleccionado = null; semanaSeleccionada = null;
+                selectorMes.value = ""; semanaInput.value = "";
+                cambiarPeriodo('personalizado', fecha);
+            }
+        });
+        btnSemana.addEventListener('click', () => {
+            semanaInput.classList.toggle('hidden');
+            if (!semanaInput.classList.contains('hidden')) {
+                const ahora = new Date();
+                const año = ahora.getFullYear();
+                const semana = Math.ceil((((ahora - new Date(año,0,1)) / 86400000) + 1)/7);
+                semanaInput.value = `${año}-W${semana.toString().padStart(2,'0')}`;
+                semanaInput.focus();
+            } else if (periodoActual === 'semana_especifica') {
+                cambiarPeriodo('hoy');
+            }
+        });
+        semanaInput.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val) {
+                mesSeleccionado = null; fechaPersonalizada = null;
+                selectorMes.value = ""; fechaInput.classList.add('hidden');
+                cambiarPeriodo('semana_especifica', val);
+            }
+        });
+        selectorMes.addEventListener('change', (e) => {
+            const val = e.target.value;
+            if (val) {
+                semanaSeleccionada = null; fechaPersonalizada = null;
+                semanaInput.value = ""; fechaInput.classList.add('hidden'); semanaInput.classList.add('hidden');
+                cambiarPeriodo('mes_especifico', val);
+            } else if (periodoActual === 'mes_especifico') {
+                cambiarPeriodo('hoy');
+            }
+        });
+        document.getElementById('ver-reporte').addEventListener('click', () => {
+            Swal.fire("Reporte completo", "Próximamente podrás exportar todos los productos.", "info");
+        });
+    }
+
+    window.onload = () => {
+        initEventListeners();
+        cargarDatosFinanzas();
+    };
+</script>
+</body>
+</html>

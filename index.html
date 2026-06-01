@@ -21,12 +21,12 @@
         .rotate-animation { animation:spin 1s linear infinite; }
         @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
         #loading-overlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,.85); backdrop-filter:blur(4px); z-index:9999; justify-content:center; align-items:center; }
-        .glass-card { background:linear-gradient(135deg,#a21caf 0%,#6b21a8 100%); }
+        .glass-card { background:linear-gradient(135deg,#a21caf 0%,#6b21a8 100%); cursor: pointer; transition: transform 0.1s ease, box-shadow 0.2s; }
+        .glass-card:active { transform: scale(0.99); }
+        .glass-card:hover { box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.25); }
         .trend-up { color: #4ade80; }
         .trend-down { color: #f87171; }
         .badge-ratio { font-size: 10px; font-weight: 900; }
-        .clickeable-ventas { cursor: pointer; transition: transform 0.1s ease, opacity 0.2s; }
-        .clickeable-ventas:active { transform: scale(0.98); }
     </style>
 </head>
 
@@ -62,11 +62,10 @@
     </header>
 
     <main class="pt-28 px-4 max-w-7xl mx-auto space-y-5">
-        <!-- Tarjeta principal: ahora el bloque de ventas totales es clickeable -->
-        <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
+        <!-- Tarjeta principal: toda la card es clickeable -->
+        <div class="glass-card p-6 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden" onclick="window.location.href='Analisis_De_Ventas.html'">
             <div class="relative z-10 space-y-4">
-                <!-- El área de "Ventas Totales" se vuelve clickeable -->
-                <div class="flex justify-between items-start clickeable-ventas" onclick="window.location.href='AnalisisDeVentas.html'">
+                <div class="flex justify-between items-start">
                     <div>
                         <p id="label-dinero" class="text-[10px] font-black uppercase tracking-[0.2em] text-purple-200 italic">Ventas Totales</p>
                         <p id="comparativa-ventas" class="text-[10px] text-purple-100 font-bold italic mt-1">Análisis del periodo seleccionado</p>
@@ -140,7 +139,6 @@
             </button>
         </div>
 
-        <!-- Sección de pedidos pendientes y otros (sin cambios) -->
         <section class="bg-white p-6 rounded-[2.5rem] border border-outline shadow-sm">
             <h3 class="text-[10px] font-black text-amber-600 mb-4 uppercase tracking-[0.1em] flex items-center justify-between italic"><span class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">priority_high</span> Prioridad de Despacho</span><span class="text-[8px] text-slate-400">ORDEN: MÁS ANTIGUO PRIMERO</span></h3>
             <div id="lista-pedidos" class="space-y-3"></div>
